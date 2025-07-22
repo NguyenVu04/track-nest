@@ -1,90 +1,120 @@
-# GuardianTrack
+# 🛡️ GuardianTrack
 
-## Overview
+## 🌟 Overview
 
-This project is an AI-driven microservice system designed to enhance personal safety and aid in the prevention and response to abduction scenarios. The system provides real-time alerts and actionable information to both users and their designated guardians by leveraging intelligent analysis of user mobility, location data, and crime statistics.
+**GuardianTrack** is a microservices-based anti-abduction and public safety platform. The system empowers users with real-time location tracking, anomaly detection, crime information management, and emergency response coordination—all accessible via a dedicated mobile app. Designed for scalability, security, and interoperability, GuardianTrack is suitable for smart city safety initiatives, community protection, and emergency response management.
 
-## Key Features
+## 🧩 Architecture
 
-- **Abnormal Mobility Alerts:**  
-  Detects abnormal movement patterns using AI and notifies the guardian. If abduction is suspected, the guardian can share the user’s live location with law enforcement.
+GuardianTrack is composed of multiple microservices and infrastructure components, each optimized for reliability and performance:
 
-- **Crime Density Warnings:**  
-  Monitors the user's location and sends alerts to both the user and guardian when entering areas with high crime density.
+- **Location Tracking Service**
+  - Technology: Python, TensorFlow, FastAPI
+  - Database: PostgreSQL + PostGIS (geospatial queries)
+  - Storage: MinIO
+  - Functionality: Tracks user locations, detects mobility anomalies, manages tracking sessions, and provides geospatial analytics.
 
-- **Crime Information Service:**  
-  Stores and provides up-to-date information about crimes in nearby areas, empowering users to make safer decisions.
+- **Criminal Information Service**
+  - Technology: Java, Spring Boot
+  - Database: PostgreSQL
+  - Storage: MinIO
+  - Functionality: Stores, updates, and publishes criminal incident data for authorized users and writers, supports advanced search and analytics.
 
-## Microservice Architecture
+- **Identity and Access Management (IAM)**
+  - Technology: Keycloak
+  - Functionality: Centralized authentication and authorization with OAuth2, user management, secure API access, and role-based controls.
 
-The system is composed of the following microservices:
+- **Mobile Application**
+  - Technology: Java (Android)
+  - Functionality: User interface for all features, including location tracking, crime alerts, emergency requests, and secure access.
 
-1. **Identity and Access Management (IAM):**  
-   - Handles authentication, authorization, and user management for secure access.
+- **API Gateway**
+  - Technology: Apache APISIX
+  - Functionality: Secures, manages, and routes API traffic between clients and microservices, supports rate-limiting, authentication, and monitoring.
 
-2. **Abnormal Mobility Alert Service:**  
-   - Leverages AI to monitor and analyze user mobility.
-   - Sends real-time notifications to guardians and provides location sharing capabilities with the police.
+- **Event Streaming**
+  - Technology: Apache Kafka
+  - Functionality: Facilitates real-time data streaming, inter-service communication, event-driven workflows, and scalability.
 
-3. **Crime Information Service:**  
-   - Aggregates, stores, and serves crime data based on location.
-   - Issues alerts when users enter high-risk areas.
+- **Containerization & Orchestration**
+  - Technology: Docker, Kubernetes (K8s)
+  - Functionality: Containerizes microservices for consistent deployment, manages scaling, rolling updates, and service discovery.
 
-## Workflow
+## ✨ Features
 
-1. **User Registration & Guardian Assignment:**  
-   Users register via the IAM service and assign one or more guardians.
+- Real-time detection of user anomalies and dangerous areas
+- Emergency request and response workflow
+- Crime information publishing, searching, and management
+- Scalable user, writer, admin, and emergency service roles
+- Secure authentication and role-based access via Keycloak IAM
+- Mobile app for convenient access and notifications
+- API gateway for secure, scalable communication
+- Real-time event streaming and processing with Apache Kafka
+- Cloud-native deployment with Docker and Kubernetes
 
-2. **Mobility Monitoring:**  
-   The system continuously analyzes user mobility for anomalies. Upon detection, it alerts the guardian, who can then share the location with authorities.
+## 🛠️ Technologies
 
-3. **Crime Density Monitoring:**  
-   User location is cross-referenced with crime data. If a high-risk area is entered, both user and guardian are notified.
+| Component                    | Tech Stack                                  |
+|------------------------------|---------------------------------------------|
+| Location Tracking Service    | Python, TensorFlow, FastAPI, PostgreSQL + PostGIS, MinIO |
+| Criminal Information Service | Java, Spring Boot, PostgreSQL, MinIO        |
+| IAM                         | Keycloak                                    |
+| API Gateway                 | Apache APISIX                               |
+| Event Streaming             | Apache Kafka                                |
+| Mobile App                  | Java (Android)                              |
+| Deployment & Orchestration  | Docker, Kubernetes                          |
 
-4. **Crime Data Access:**  
-   Users can query the system for crime statistics in their vicinity.
-
-## Technologies Used
-
-- AI/ML models for mobility anomaly detection
-- Microservices (REST/gRPC)
-- Secure authentication and authorization (IAM)
-- Real-time messaging/notification system
-- Geolocation and mapping APIs
-- Crime data aggregation (public APIs, databases)
-
-## Getting Started
+## 🚦 Getting Started
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/<owner>/<repo>.git
-   cd <repo>
+   git clone <repo-url>
    ```
+2. **Install dependencies for each microservice**  
+   *(See each service's README for details.)*
+3. **Set up Keycloak for IAM**
+4. **Configure PostgreSQL + PostGIS and MinIO**
+5. **Set up Apache Kafka for event streaming**
+6. **Deploy microservices using Docker and Kubernetes**
+7. **Configure Apache APISIX for API gateway management**
+8. **Build and install the mobile app on your Android device**
+9. **Sign up and start using GuardianTrack!**
 
-2. **Set Up Dependencies**  
-   Install required dependencies for each microservice as described in their respective folders.
+## 📱 Mobile App Features
 
-3. **Configure Environment**  
-   Set environment variables for database connections, API keys, and IAM credentials.
+- Secure login and registration
+- Real-time location sharing and tracking
+- Receive crime and danger alerts
+- Emergency request button
+- View and search nearby crime information
+- Manage personal account and notification settings
 
-4. **Run Microservices**  
-   Start each service as per instructions in their documentation.
+## 🧑‍🤝‍🧑 System Roles
 
-5. **Register Users and Guardians**  
-   Use the IAM service’s API/UI to onboard users and assign guardians.
+- **User**: Main app user; can authenticate, receive alerts, track location, request emergency help
+- **Writer**: Authorized to create, update, or delete criminal information
+- **Emergency Service**: Receives emergency requests, coordinates rapid response
+- **Admin**: Manages users, monitors system
+- **Identity Provider**: Handles authentication and identity management
 
-## API Documentation
+## 🖼️ Documentation
 
-Each microservice exposes its own API. See the `/docs` folder or visit the API reference for details on endpoints, authentication, and usage.
+See the diagram above for a visual representation of system actors and their main interactions.
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please submit issues or pull requests via GitHub.
+1. Fork the repo
+2. Create your feature branch (`git checkout -b feature/xyz`)
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
-## License
+## 📜 License
 
-This project is licensed under the MIT License.
+[MIT](LICENSE)
 
-## Contact
+## 📬 Contact
 
-For questions or support, please contact [support@example.com].
+For questions or support, please contact [nguyenvu04.work@gmail.com].
+
+---
