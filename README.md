@@ -99,7 +99,7 @@ GuardianTrack is composed of multiple microservices and infrastructure component
 
 ## 🖼️ Documentation
 
-- See the diagrams for a visual representation of system: [diragrams](https://drive.google.com/file/d/1QvLAFJZOpmkjzOIqNoP01gEp86QR5JBV/view?usp=sharing)
+- See the [diragrams](https://drive.google.com/file/d/1QvLAFJZOpmkjzOIqNoP01gEp86QR5JBV/view?usp=sharing) for a visual representation of system
 
 ## 🤝 Contributing
 
