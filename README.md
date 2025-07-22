@@ -1,12 +1,12 @@
-# 🛡️ GuardianTrack
+# 🛡️ TrackNest
 
 ## 🌟 Overview
 
-**GuardianTrack** is a microservices-based anti-abduction and public safety platform. The system empowers users with real-time location tracking, anomaly detection, crime information management, and emergency response coordination—all accessible via a dedicated mobile app. Designed for scalability, security, and interoperability, GuardianTrack is suitable for smart city safety initiatives, community protection, and emergency response management.
+**TrackNest** is a microservices-based anti-abduction and public safety platform. The system empowers users with real-time location tracking, anomaly detection, crime information management, and emergency response coordination—all accessible via a dedicated mobile app. Designed for scalability, security, and interoperability, TrackNest is suitable for smart city safety initiatives, community protection, and emergency response management.
 
 ## 🧩 Architecture
 
-GuardianTrack is composed of multiple microservices and infrastructure components, each optimized for reliability and performance:
+TrackNest is composed of multiple microservices and infrastructure components, each optimized for reliability and performance:
 
 - **Location Tracking Service**
   - Technology: Python, TensorFlow, FastAPI
@@ -25,7 +25,7 @@ GuardianTrack is composed of multiple microservices and infrastructure component
   - Functionality: Centralized authentication and authorization with OAuth2, user management, secure API access, and role-based controls.
 
 - **Mobile Application**
-  - Technology: Java (Android)
+  - Technology: React Native
   - Functionality: User interface for all features, including location tracking, crime alerts, emergency requests, and secure access.
 
 - **API Gateway**
@@ -61,7 +61,7 @@ GuardianTrack is composed of multiple microservices and infrastructure component
 | IAM                         | Keycloak                                    |
 | API Gateway                 | Apache APISIX                               |
 | Event Streaming             | Apache Kafka                                |
-| Mobile App                  | Java (Android)                              |
+| Mobile App                  | React Native                                |
 | Deployment & Orchestration  | Docker, Kubernetes                          |
 
 ## 🚦 Getting Started
@@ -77,8 +77,8 @@ GuardianTrack is composed of multiple microservices and infrastructure component
 5. **Set up Apache Kafka for event streaming**
 6. **Deploy microservices using Docker and Kubernetes**
 7. **Configure Apache APISIX for API gateway management**
-8. **Build and install the mobile app on your Android device**
-9. **Sign up and start using GuardianTrack!**
+8. **Build and install the mobile app using React Native on your device**
+9. **Sign up and start using TrackNest!**
 
 ## 📱 Mobile App Features
 
@@ -99,7 +99,8 @@ GuardianTrack is composed of multiple microservices and infrastructure component
 
 ## 🖼️ Documentation
 
-- See the [diragrams](https://drive.google.com/file/d/1QvLAFJZOpmkjzOIqNoP01gEp86QR5JBV/view?usp=sharing) for a visual representation of system
+- See the [diagrams](https://drive.google.com/file/d/1QvLAFJZOpmkjzOIqNoP01gEp86QR5JBV/view?usp=sharing) for a visual representation of the system
+- See the [report](https://www.overleaf.com/read/tbvhpdqvcfqh#b59cf0) for a detailed explanation of the system architecture, design decisions, implementation, and evaluation results
 
 ## 🤝 Contributing
 
