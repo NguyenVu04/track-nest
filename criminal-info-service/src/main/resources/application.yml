@@ -1,0 +1,32 @@
+server:
+  servlet:
+    context-path: /api/v1/criminal-info-service
+  port: 9000
+
+spring:
+  application:
+    name: criminal-info-service
+
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/CRIMINAL_INFO
+    username: postgresadmin
+    password: postgresadmin
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://127.0.0.1:8080/realms/tracknest
+
+logging:
+  file:
+    path: logs
