@@ -1,4 +1,0 @@
-migration/minio/criminal-info/**
-!migration/minio/criminal-info/README.md
-migration/minio/location-tracking/**
-!migration/minio/location-tracking/README.md
