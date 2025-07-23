@@ -1,0 +1,32 @@
+server:
+  servlet:
+    context-path: /api/v1/criminal-info-service
+  port: 12000
+
+spring:
+  application:
+    name: criminal-info-service
+
+  datasource:
+    url: jdbc:postgresql://criminal-info-postgres:5432/CRIMINAL_INFO
+    username: postgresadmin
+    password: postgresadmin
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/tracknest/protocol/openid-connect/certs
+
+logging:
+  file:
+    path: logs/

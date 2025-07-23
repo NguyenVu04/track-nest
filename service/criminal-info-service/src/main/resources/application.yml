@@ -1,14 +1,14 @@
 server:
   servlet:
     context-path: /api/v1/criminal-info-service
-  port: 9000
+  port: 12000
 
 spring:
   application:
     name: criminal-info-service
 
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/CRIMINAL_INFO
+    url: jdbc:postgresql://127.0.0.1:10000/CRIMINAL_INFO
     username: postgresadmin
     password: postgresadmin
     driver-class-name: org.postgresql.Driver
@@ -25,8 +25,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://127.0.0.1:8080/realms/tracknest
+          jwk-set-uri: http://127.0.0.1:8080/realms/tracknest/protocol/openid-connect/certs
 
 logging:
   file:
-    path: logs
+    path: logs/
