@@ -86,6 +86,8 @@ services:
       - "15000:15000"
     networks:
       - tracknest-network
+    environment:
+      ACTIVE_ENV: container
 
   ### IAM SERVICE ###
   keycloak-postgres:
