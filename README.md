@@ -2,7 +2,7 @@
 
 ## 🌟 Overview
 
-**TrackNest** is a microservices-based anti-abduction and public safety platform. The system empowers users with real-time location tracking, anomaly detection, crime information management, and emergency response coordination—all accessible via a dedicated mobile app. Designed for scalability, security, and interoperability, TrackNest is suitable for smart city safety initiatives, community protection, and emergency response management.
+**TrackNest** is a microservices-based real-time abduction prevention system. The system empowers users with real-time location tracking, anomaly detection, crime information management, and emergency response coordination—all accessible via a dedicated mobile app. Designed for scalability, security, and interoperability, TrackNest is suitable for smart city safety initiatives, community protection, and emergency response management.
 
 ## 🧩 Architecture
 
