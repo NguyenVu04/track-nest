@@ -1,7 +1,7 @@
 services:
   ### CRIMINAL INFORMATION SERVICE ###
   criminal-info-postgres:
-    image: postgres:latest
+    image: postgis/postgis:17-3.5-alpine
     container_name: criminal-info-postgres
     environment:
       POSTGRES_USER: postgresadmin
@@ -49,7 +49,7 @@ services:
 
   ### LOCATION TRACKING SERVICE ###
   location-tracking-postgres:
-    image: postgres:latest
+    image: postgis/postgis:17-3.5-alpine
     container_name: location-tracking-postgres
     environment:
       POSTGRES_USER: postgresadmin
@@ -76,7 +76,6 @@ services:
       ACTIVE_ENV: container
     depends_on:
       - location-tracking-postgres
-      - location-tracking-minio
 
   ### IAM SERVICE ###
   keycloak-postgres:
