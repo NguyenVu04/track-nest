@@ -1,0 +1,7 @@
+fastapi
+tensorflow
+uvicorn
+pydantic
+numpy
+pandas
+scikit-learn

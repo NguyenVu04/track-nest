@@ -21,4 +21,57 @@ version: 0.1.0
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "1.16.0"
+appVersion: "0.0.1"
+
+dependencies:
+  - name: redis
+    version: "*"
+    repository: "https://charts.bitnami.com/bitnami"
+
+  - name: kafka
+    version: "*"
+    repository: "https://charts.bitnami.com/bitnami"
+
+  - name: vault
+    version: "*"
+    repository: "https://charts.bitnami.com/bitnami"
+
+  - name: minio
+    version: "*"
+    repository: "https://charts.bitnami.com/bitnami"
+
+  - name: elasticsearch
+    version: "*"
+    repository: "https://charts.bitnami.com/bitnami"
+
+  - name: milvus
+    version: "*"
+    repository: "https://charts.bitnami.com/bitnami"
+
+  - name: postgresql
+    alias: "usertracking-database"
+    version: "*"
+    repository: "https://charts.bitnami.com/bitnami"
+
+  - name: postgresql
+    alias: "emergencyops-database"
+    version: "*"
+    repository: "https://charts.bitnami.com/bitnami"
+
+  - name: postgresql
+    alias: "criminalreports-database"
+    version: "*"
+    repository: "https://charts.bitnami.com/bitnami"
+
+  - name: postgresql
+    alias: "iam-database"
+    version: "*"
+    repository: "https://charts.bitnami.com/bitnami"
+
+  - name: apisix-ingress-controller
+    version: "*"
+    repository: "https://charts.apiseven.com"
+
+  - name: apisix
+    version: "*"
+    repository: "https://charts.apiseven.com"

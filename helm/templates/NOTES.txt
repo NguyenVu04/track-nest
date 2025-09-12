@@ -1,0 +1,9 @@
+Thank you for installing {{ .Values.Name }}!
+
+Application Name: {{ .Values.name }}
+Namespace: {{ .Values.Namespace }}
+
+To get the list of deployed resources:
+    kubectl get all -n {{ .Values.Namespace }}
+
+Happy Helming!

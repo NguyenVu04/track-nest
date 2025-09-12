@@ -4,4 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-ENTRYPOINT [ "bin/kc.sh", "start" ]
+EXPOSE 8080
+
+ENTRYPOINT [ "bin/kc.sh", "start-dev" ]
