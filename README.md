@@ -1,121 +1,184 @@
-# 🛡️ TrackNest
+# TrackNest
 
-## 🌟 Overview
-
-**TrackNest** is a microservices-based real-time abduction prevention system. The system empowers users with real-time location tracking, anomaly detection, crime information management, and emergency response coordination—all accessible via a dedicated mobile app. Designed for scalability, security, and interoperability, TrackNest is suitable for smart city safety initiatives, community protection, and emergency response management.
-
-## 🧩 Architecture
-
-TrackNest is composed of multiple microservices and infrastructure components, each optimized for reliability and performance:
-
-- **Location Tracking Service**
-  - Technology: Python, TensorFlow, FastAPI
-  - Database: PostgreSQL + PostGIS (geospatial queries)
-  - Storage: MinIO
-  - Functionality: Tracks user locations, detects mobility anomalies, manages tracking sessions, and provides geospatial analytics.
-
-- **Criminal Information Service**
-  - Technology: Java, Spring Boot
-  - Database: PostgreSQL
-  - Storage: MinIO
-  - Functionality: Stores, updates, and publishes criminal incident data for authorized users and writers, supports advanced search and analytics.
-
-- **Identity and Access Management (IAM)**
-  - Technology: Keycloak
-  - Functionality: Centralized authentication and authorization with OAuth2, user management, secure API access, and role-based controls.
-
-- **Mobile Application**
-  - Technology: React Native
-  - Functionality: User interface for all features, including location tracking, crime alerts, emergency requests, and secure access.
-
-- **API Gateway**
-  - Technology: Apache APISIX
-  - Functionality: Secures, manages, and routes API traffic between clients and microservices, supports rate-limiting, authentication, and monitoring.
-
-- **Event Streaming**
-  - Technology: Apache Kafka
-  - Functionality: Facilitates real-time data streaming, inter-service communication, event-driven workflows, and scalability.
-
-- **Containerization & Orchestration**
-  - Technology: Docker, Kubernetes (K8s)
-  - Functionality: Containerizes microservices for consistent deployment, manages scaling, rolling updates, and service discovery.
-
-## ✨ Features
-
-- Real-time detection of user anomalies and dangerous areas
-- Emergency request and response workflow
-- Crime information publishing, searching, and management
-- Scalable user, writer, admin, and emergency service roles
-- Secure authentication and role-based access via Keycloak IAM
-- Mobile app for convenient access and notifications
-- API gateway for secure, scalable communication
-- Real-time event streaming and processing with Apache Kafka
-- Cloud-native deployment with Docker and Kubernetes
-
-## 🛠️ Technologies
-
-| Component                    | Tech Stack                                  |
-|------------------------------|---------------------------------------------|
-| Location Tracking Service    | Python, TensorFlow, FastAPI, PostgreSQL + PostGIS, MinIO |
-| Criminal Information Service | Java, Spring Boot, PostgreSQL, MinIO        |
-| IAM                         | Keycloak                                    |
-| API Gateway                 | Apache APISIX                               |
-| Event Streaming             | Apache Kafka                                |
-| Mobile App                  | React Native                                |
-| Deployment & Orchestration  | Docker, Kubernetes                          |
-
-## 🚦 Getting Started
-
-1. **Clone the repository**
-   ```bash
-   git clone <repo-url>
-   ```
-2. **Install dependencies for each microservice**  
-   *(See each service's README for details.)*
-3. **Set up Keycloak for IAM**
-4. **Configure PostgreSQL + PostGIS and MinIO**
-5. **Set up Apache Kafka for event streaming**
-6. **Deploy microservices using Docker and Kubernetes**
-7. **Configure Apache APISIX for API gateway management**
-8. **Build and install the mobile app using React Native on your device**
-9. **Sign up and start using TrackNest!**
-
-## 📱 Mobile App Features
-
-- Secure login and registration
-- Real-time location sharing and tracking
-- Receive crime and danger alerts
-- Emergency request button
-- View and search nearby crime information
-- Manage personal account and notification settings
-
-## 🧑‍🤝‍🧑 System Roles
-
-- **User**: Main app user; can authenticate, receive alerts, track location, request emergency help
-- **Writer**: Authorized to create, update, or delete criminal information
-- **Emergency Service**: Receives emergency requests, coordinates rapid response
-- **Admin**: Manages users, monitors system
-- **Identity Provider**: Handles authentication and identity management
-
-## 🖼️ Documentation
-
-- See the [diagrams](https://drive.google.com/file/d/1QvLAFJZOpmkjzOIqNoP01gEp86QR5JBV/view?usp=sharing) for a visual representation of the system
-- See the [report](https://www.overleaf.com/read/tbvhpdqvcfqh#b59cf0) for a detailed explanation of the system architecture, design decisions, implementation, and evaluation results
-
-## 🤝 Contributing
-
-1. Fork the repo
-2. Create your feature branch (`git checkout -b feature/xyz`)
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
-
-## 📜 License
-
-[MIT](LICENSE)
-
-## 📬 Contact
-
-For questions or support, please contact [nguyenvu04.work@gmail.com].
+TrackNest is a event-driven, microservices-based, real-time abduction prevention system designed to enhance safety and emergency response through advanced location tracking, anomaly detection, and coordinated operations. The platform empowers users, responders, and administrators with robust crime information management and immediate emergency response tools—all accessible via a dedicated mobile app and web interface. TrackNest is built for scalability, security, and interoperability, making it ideal for smart city safety initiatives, community protection, and integrated emergency management.
 
 ---
+
+## Table of Contents
+
+- [Features](#features)
+- [System Architecture](#system-architecture)
+- [Technology Stack](#technology-stack)
+- [Use Case Overview](#use-case-overview)
+- [Component Overview](#component-overview)
+- [Getting Started](#getting-started)
+- [Contributing](#contributing)
+- [License](#license)
+- [Documentation](#documentation)
+
+---
+
+## Features
+
+- **Real-Time Location Tracking**: Continuous monitoring of user and target locations.
+- **Anomaly Detection**: Immediate alerts for abnormal mobility patterns or high-risk zones.
+- **Crime Information Management**: Submit, view, and analyze crime and missing person reports.
+- **Emergency Response Coordination**: Rapid emergency request handling and safe location guidance.
+- **Role-Based Access**: Support for users, emergency services, reporters, and administrators.
+- **Scalable & Secure**: Built using distributed, cloud-ready microservices and secure IAM.
+
+---
+
+## System Architecture
+
+TrackNest leverages a microservices architecture, orchestrating multiple specialized services through an API gateway and message broker for real-time operations and robust data management.
+
+<!-- **Architecture Diagram**:
+![Architecture Diagram](image1) -->
+
+**Key Components:**
+- **API Gateway (APISIX)**: Central entry point for all clients (mobile/web), managing routing, security, and throttling.
+- **User Tracking Service (Python)**: Handles real-time user tracking, anomaly detection, and vector-based mobility analysis.
+- **Emergency Operations Service (Spring Boot)**: Manages emergency requests, safe locations, and response coordination.
+- **Criminal Reports Service (Spring Boot)**: Supports crime/missing person data management and search.
+- **IAM (Keycloak)**: Secure identity and access management for all roles.
+- **Databases**: 
+  - pgEdge (distributed SQL for all services)
+  - Milvus (vector database for advanced tracking)
+  - Elasticsearch (advanced search for crime data)
+- **Message Broker (Kafka)**: Real-time event and alert propagation across services.
+- **Secrets Management (HashiCorp Vault)**: Secures sensitive credentials and secrets for all microservices.
+- **Frontends**: 
+  - Mobile App (Kotlin)
+  - Web App (Nuxt.js)
+- **Deployment**: Kubernetes (K8s) and Helm for scalable, resilient, and automated deployment and orchestration.
+
+---
+
+## Technology Stack
+
+| Layer           | Technology                   |
+|-----------------|-----------------------------|
+| API Gateway     | APISIX                      |
+| Message Broker  | Kafka                       |
+| User Tracking   | Python, Milvus              |
+| Emergency Ops   | Spring Boot, pgEdge         |
+| Crime Reports   | Spring Boot, Elasticsearch, pgEdge |
+| IAM             | Keycloak, pgEdge            |
+| Databases       | pgEdge, Milvus              |
+| Search Engine   | Elasticsearch               |
+| Secrets         | HashiCorp Vault             |
+| Mobile App      | Kotlin                      |
+| Web Frontend    | Nuxt.js                     |
+| Deployment      | Kubernetes, Docker, Helm    |
+
+---
+
+## Use Case Overview
+
+TrackNest supports a diverse set of actors and workflows, including users, emergency services, reporters, and administrators. The system is designed to address real-world scenarios such as abduction alerts, emergency coordination, and crime reporting.
+
+**Use Case Diagram**:
+![Use Case Diagram](docs/TrackNest-usecase.png)
+
+### Example Use Cases
+
+- **Users**: 
+  - Receive anomaly/crime alerts
+  - Track and manage personal safety
+  - Send emergency requests (voice-activated)
+  - Manage guardians and activation voices
+- **Emergency Services**:
+  - Respond to emergencies
+  - Manage safe locations
+- **Reporters/Admins**:
+  - Publish and manage crime/missing person reports
+  - Oversee platform guidelines and data analysis
+
+---
+
+## Component Overview
+
+### Microservices
+
+- **IAM Service**: Authentication and authorization using Keycloak and pgEdge.
+- **UserTrackingService**: Real-time tracking, anomaly detection, and vector similarity search (Python, Milvus).
+- **EmergencyOpsService**: Orchestrates emergency request lifecycle (Spring Boot).
+- **CriminalReportsService**: Manages all crime/missing person report workflows (Spring Boot, Elasticsearch).
+- **API Gateway**: Unified entry point, powered by APISIX.
+- **Secrets Management**: All sensitive configuration and credentials are secured using HashiCorp Vault.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/)
+- [Kubernetes](https://kubernetes.io/)
+- [Helm](https://helm.sh/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+
+### Deployment Steps
+
+1. **Clone the Repository**
+    ```bash
+    git clone https://github.com/NguyenVu04/track-nest.git
+    cd track-nest
+    ```
+
+2. **Configure Secrets and Environment**
+    - Set up your secrets in HashiCorp Vault.
+    - Update the `values.yaml` files in the `helm/` directory with your configuration (database URLs, credentials, etc.).
+
+3. **Install Dependencies**
+    - Ensure your Kubernetes cluster is running.
+    - Install required Helm charts for dependencies (e.g., Kafka, PostgreSQL, Milvus, Elasticsearch, Keycloak) if not already present.
+
+4. **Deploy TrackNest Microservices**
+    ```bash
+    helm install --values values.yaml -f values-prod.yaml tracknest ./helm
+    ```
+
+5. **Access the Platform**
+    - Web app: `http://<your-cluster-ip>:<web-port>`
+    - Mobile app: Configure the API endpoint in the app settings.
+
+### Local Development
+
+```bash
+helm install --values values.yaml -f values-dev.yaml tracknest ./helm
+```
+
+### Troubleshooting
+
+- Check pod and service status:
+  ```bash
+  kubectl get pods
+  kubectl get services
+  ```
+- Review logs for any failed pods:
+  ```bash
+  kubectl logs <pod-name>
+  ```
+
+For detailed setup and advanced configuration, refer to the [documentation](#documentation).
+
+---
+
+## Contributing
+
+Contributions are welcome! Please open issues and pull requests for new features, bug fixes, or suggestions.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## Documentation
+
+- See the [diagrams](https://drive.google.com/file/d/1QvLAFJZOpmkjzOIqNoP01gEp86QR5JBV/view?usp=sharing) for a visual representation of the system.
+- See the [report](https://www.overleaf.com/read/tbvhpdqvcfqh#b59cf0) for a detailed explanation of the system architecture, design decisions, implementation, and evaluation results.
