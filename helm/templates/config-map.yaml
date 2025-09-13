@@ -1,6 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.application.name }}-config
+  name: config-map
 data:
-    APP_NAME: {{ .Values.application.name }}
+    APPLICATION_NAME: track-nest
+    APPLICATION_NAMESPACE: track-nest

@@ -2,9 +2,39 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: iam
-  namespace: {{ .Values.application.namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: iam
+  template:
+    metadata:
+      labels:
+        app: iam
+    spec:
+      containers:
+      - name: iam
+        image: {{ .Values.IAM.Image }}
+        ports:
+        - containerPort: 8080
+        env:
+        - name: KC_DB_VENDOR
+          value: {{ .Values.IAM.DBVendor }}
+        - name: KC_DB_USERNAME
+          value: {{ .Values.IAM.DBUsername }}
+        - name: KC_DB_PASSWORD
+          value: {{ .Values.IAM.DBPassword }}
+        - name: KC_DB_URL
+          value: {{ .Values.IAM.DBUrl }}
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1

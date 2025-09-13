@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: criminal-reports
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: criminal-reports
+  template:
+    metadata:
+      labels:
+        app: criminal-reports
+    spec:
+      containers:
+      - name: criminal-reports
+        image: {{ .Values.CriminalReports.Image }}
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1

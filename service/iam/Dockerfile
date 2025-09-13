@@ -6,4 +6,4 @@ COPY . .
 
 EXPOSE 8080
 
-ENTRYPOINT [ "bin/kc.sh", "start-dev" ]
+ENTRYPOINT [ "bin/kc.sh", "start" ]

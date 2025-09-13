@@ -26,27 +26,27 @@ appVersion: "0.0.1"
 dependencies:
   - name: redis
     version: "*"
-    repository: "https://charts.bitnami.com/bitnami"
+    repository: "oci://registry-1.docker.io/bitnamicharts"
 
   - name: kafka
     version: "*"
-    repository: "https://charts.bitnami.com/bitnami"
+    repository: "oci://registry-1.docker.io/bitnamicharts"
 
   - name: vault
     version: "*"
-    repository: "https://charts.bitnami.com/bitnami"
+    repository: "https://helm.releases.hashicorp.com"
 
   - name: minio
     version: "*"
-    repository: "https://charts.bitnami.com/bitnami"
+    repository: "https://charts.min.io/"
 
   - name: elasticsearch
     version: "*"
-    repository: "https://charts.bitnami.com/bitnami"
+    repository: "https://helm.elastic.co"
 
-  - name: milvus
-    version: "*"
-    repository: "https://charts.bitnami.com/bitnami"
+  # - name: milvus
+  #   version: "*"
+  #   repository: "https://zilliztech.github.io/milvus-helm"
 
   - name: postgresql
     alias: "usertracking-database"
@@ -67,10 +67,6 @@ dependencies:
     alias: "iam-database"
     version: "*"
     repository: "https://charts.bitnami.com/bitnami"
-
-  - name: apisix-ingress-controller
-    version: "*"
-    repository: "https://charts.apiseven.com"
 
   - name: apisix
     version: "*"
