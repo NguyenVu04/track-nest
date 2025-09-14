@@ -11,12 +11,10 @@ redis:
     kind: StatefulSet
 
 kafka:
-  replicaCount: 3
-  image:
-    tag: 3.7.0-debian-11-r0
+  replicaCount: 1
   zookeeper:
     enabled: true
-    replicaCount: 3
+    replicaCount: 1
   auth:
     enabled: false
   service:
@@ -24,7 +22,7 @@ kafka:
     port: 9092
   persistence:
     enabled: true
-    size: 8Gi
+    size: 1Gi
   config:
     log.retention.hours: 168
     log.retention.bytes: 1073741824
@@ -41,13 +39,27 @@ kafka:
     jmx:
       enabled: false
 
-apisix-ingress-controller:
-  enabled: true
+apisix:
   apisix:
-    adminService:
-      namespace: ingress-apisix
-  gatewayProxy:
-    createDefault: true
+    deployment:
+      role: traditional
+      role_traditional:
+        config_provider: yaml
+
+  etcd:
+    enabled: false
+
+  ingress-controller:
+    enabled: true
+    config:
+      provider:
+        type: apisix-standalone
+    apisix:
+      adminService:
+        name: track-nest-apisix-admin
+        namespace: dev
+    gatewayProxy:
+      createDefault: true
 
 elasticsearch:
   enabled: true
@@ -55,29 +67,16 @@ elasticsearch:
   minimumMasterNodes: 1
   resources:
     requests:
-      cpu: 100m
-      memory: 512Mi
+      cpu: 250m
+      memory: 64Mi
     limits:
       cpu: 500m
-      memory: 1Gi
+      memory: 128Mi
   volumeClaimTemplate:
     accessModes: [ "ReadWriteOnce" ]
     resources:
       requests:
-        storage: 2Gi
-
-# milvus:
-#   enabled: true
-#   cluster:
-#     enabled: false
-#   etcd:
-#     replicaCount: 1
-#   minio:
-#     replicaCount: 1
-#   standalone:
-#     enabled: true
-#     service:
-#       type: ClusterIP
+        storage: 1Gi
 
 minio:
   enabled: true
@@ -88,8 +87,8 @@ minio:
     enabled: false
   resources:
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 10m
+      memory: 64Mi
 
 vault:
   enabled: true
@@ -99,12 +98,36 @@ vault:
     dataStorage:
       enabled: false
 
+# usertracking-database:
+#   auth:
+#     username: "database-admin"
+#     password: "database-admin"
+#     database: "tracknest"
+
+# emergencyops-database:
+#   auth:
+#     username: "database-admin"
+#     password: "database-admin"
+#     database: "tracknest"
+
+# criminalreports-database:
+#   auth:
+#     username: "database-admin"
+#     password: "database-admin"
+#     database: "tracknest"
+
+iam-database:
+  auth:
+    username: "database-admin"
+    password: "database-admin"
+    database: "tracknest"
+
 IAM:
   Image: "nguyenvu04/track-nest.iam:dev"
   DBVendor: "postgres"
   DBUsername: "database-admin"
   DBPassword: "database-admin"
-  DBUrl: "jdbc:postgresql://iam-database:5432/tracknest"
+  DBUrl: "jdbc:postgresql://iam-database.dev:5432/tracknest"
 
 UserTracking:
   Image: "nguyenvu04/track-nest.user-tracking:dev"

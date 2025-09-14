@@ -44,24 +44,20 @@ dependencies:
     version: "*"
     repository: "https://helm.elastic.co"
 
-  # - name: milvus
+  # - name: postgresql
+  #   alias: "usertracking-database"
   #   version: "*"
-  #   repository: "https://zilliztech.github.io/milvus-helm"
+  #   repository: "https://charts.bitnami.com/bitnami"
 
-  - name: postgresql
-    alias: "usertracking-database"
-    version: "*"
-    repository: "https://charts.bitnami.com/bitnami"
+  # - name: postgresql
+  #   alias: "emergencyops-database"
+  #   version: "*"
+  #   repository: "https://charts.bitnami.com/bitnami"
 
-  - name: postgresql
-    alias: "emergencyops-database"
-    version: "*"
-    repository: "https://charts.bitnami.com/bitnami"
-
-  - name: postgresql
-    alias: "criminalreports-database"
-    version: "*"
-    repository: "https://charts.bitnami.com/bitnami"
+  # - name: postgresql
+  #   alias: "criminalreports-database"
+  #   version: "*"
+  #   repository: "https://charts.bitnami.com/bitnami"
 
   - name: postgresql
     alias: "iam-database"
