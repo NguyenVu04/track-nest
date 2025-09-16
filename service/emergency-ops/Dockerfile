@@ -6,7 +6,7 @@ COPY . .
 
 RUN gradle build --no-daemon
 
-FROM eclipse-temurin:21
+FROM eclipse-temurin:21-jre-jammy
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \

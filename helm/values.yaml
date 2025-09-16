@@ -33,6 +33,12 @@ kafka:
       protocol: PLAINTEXT
     interbroker:
       protocol: PLAINTEXT
+    auto:
+      create:
+        topics:
+          enable: true
+  controller:
+    replicaCount: 1
   metrics:
     kafka:
       enabled: true
@@ -46,6 +52,13 @@ apisix:
       role_traditional:
         config_provider: yaml
 
+    admin:
+      enabled: true
+      enable_admin_ui: true
+      credentials:
+        admin: edd1c9f034335f136f87ad84b625c8f1
+        viewer: 4054f7cf07e344346cd3f287985e76a2
+
   etcd:
     enabled: false
 
@@ -54,12 +67,22 @@ apisix:
     config:
       provider:
         type: apisix-standalone
+      # kubernetes:
+      #   ingressClass: apisix
+      #   defaultIngressClass: true
     apisix:
       adminService:
         name: track-nest-apisix-admin
         namespace: dev
     gatewayProxy:
       createDefault: true
+      provider:
+        type: ControlPlane
+        controlPlane:
+          auth:
+            type: AdminKey
+            adminKey:
+              value: edd1c9f034335f136f87ad84b625c8f1    
 
 elasticsearch:
   enabled: true
@@ -98,23 +121,23 @@ vault:
     dataStorage:
       enabled: false
 
-# usertracking-database:
-#   auth:
-#     username: "database-admin"
-#     password: "database-admin"
-#     database: "tracknest"
+usertracking-database:
+  auth:
+    username: "database-admin"
+    password: "database-admin"
+    database: "tracknest"
 
-# emergencyops-database:
-#   auth:
-#     username: "database-admin"
-#     password: "database-admin"
-#     database: "tracknest"
+emergencyops-database:
+  auth:
+    username: "database-admin"
+    password: "database-admin"
+    database: "tracknest"
 
-# criminalreports-database:
-#   auth:
-#     username: "database-admin"
-#     password: "database-admin"
-#     database: "tracknest"
+criminalreports-database:
+  auth:
+    username: "database-admin"
+    password: "database-admin"
+    database: "tracknest"
 
 iam-database:
   auth:
