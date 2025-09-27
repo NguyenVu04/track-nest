@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements-container.txt
 
-COPY src/ .
+COPY app/ app/
 
 EXPOSE 8000
 
-CMD ["python", "main.py"]
+CMD ["python", "app/main.py"]

@@ -1,3 +1,4 @@
+{{- if .Values.emergencyops.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,7 +15,7 @@ spec:
     spec:
       containers:
       - name: emergency-ops
-        image: {{ .Values.EmergencyOps.Image }}
+        image: {{ .Values.emergency-ops.image }}
         ports:
         - containerPort: 8080
         resources:
@@ -29,3 +30,4 @@ spec:
     rollingUpdate:
       maxUnavailable: 1
       maxSurge: 1
+{{- end }}

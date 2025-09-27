@@ -67,9 +67,6 @@ apisix:
     config:
       provider:
         type: apisix-standalone
-      # kubernetes:
-      #   ingressClass: apisix
-      #   defaultIngressClass: true
     apisix:
       adminService:
         name: track-nest-apisix-admin
@@ -84,25 +81,8 @@ apisix:
             adminKey:
               value: edd1c9f034335f136f87ad84b625c8f1    
 
-elasticsearch:
-  enabled: true
-  replicas: 1
-  minimumMasterNodes: 1
-  resources:
-    requests:
-      cpu: 250m
-      memory: 64Mi
-    limits:
-      cpu: 500m
-      memory: 128Mi
-  volumeClaimTemplate:
-    accessModes: [ "ReadWriteOnce" ]
-    resources:
-      requests:
-        storage: 1Gi
-
 minio:
-  enabled: true
+  enabled: false
   mode: standalone
   rootUser: "minioadmin"
   rootPassword: "minioadmin"
@@ -114,7 +94,7 @@ minio:
       memory: 64Mi
 
 vault:
-  enabled: true
+  enabled: false
   server:
     dev:
       enabled: true
@@ -122,41 +102,49 @@ vault:
       enabled: false
 
 usertracking-database:
+  enabled: false
   auth:
     username: "database-admin"
     password: "database-admin"
     database: "tracknest"
 
 emergencyops-database:
+  enabled: false
   auth:
     username: "database-admin"
     password: "database-admin"
     database: "tracknest"
 
 criminalreports-database:
+  enabled: false
   auth:
     username: "database-admin"
     password: "database-admin"
     database: "tracknest"
 
 iam-database:
+  enabled: false
   auth:
     username: "database-admin"
     password: "database-admin"
     database: "tracknest"
 
-IAM:
-  Image: "nguyenvu04/track-nest.iam:dev"
-  DBVendor: "postgres"
-  DBUsername: "database-admin"
-  DBPassword: "database-admin"
-  DBUrl: "jdbc:postgresql://iam-database.dev:5432/tracknest"
+iam:
+  enable: false
+  image: "nguyenvu04/track-nest.iam:dev"
+  dbVendor: "postgres"
+  dbUsername: "database-admin"
+  dbPassword: "database-admin"
+  dbUrl: "jdbc:postgresql://iam-database.dev:5432/tracknest"
 
-UserTracking:
-  Image: "nguyenvu04/track-nest.user-tracking:dev"
+usertracking:
+  enable: false
+  image: "nguyenvu04/track-nest.user-tracking:dev"
 
-CriminalReports:
-  Image: "nguyenvu04/track-nest.criminal-reports:dev"
+criminalreports:
+  enable: false
+  image: "nguyenvu04/track-nest.criminal-reports:dev"
 
-EmergencyOps:
-  Image: "nguyenvu04/track-nest.emergency-ops:dev"
+emergencyops:
+  enable: false
+  image: "nguyenvu04/track-nest.emergency-ops:dev"

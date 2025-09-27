@@ -1,3 +1,4 @@
+{{- if .Values.iam.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,18 +15,18 @@ spec:
     spec:
       containers:
       - name: iam
-        image: {{ .Values.IAM.Image }}
+        image: {{ .Values.iam.image }}
         ports:
         - containerPort: 8080
         env:
         - name: KC_DB_VENDOR
-          value: {{ .Values.IAM.DBVendor }}
+          value: {{ .Values.iam.db-vendor }}
         - name: KC_DB_USERNAME
-          value: {{ .Values.IAM.DBUsername }}
+          value: {{ .Values.iam.db-username }}
         - name: KC_DB_PASSWORD
-          value: {{ .Values.IAM.DBPassword }}
+          value: {{ .Values.iam.db-password }}
         - name: KC_DB_URL
-          value: {{ .Values.IAM.DBUrl }}
+          value: {{ .Values.iam.db-url }}
         resources:
           requests:
             memory: "64Mi"
@@ -38,3 +39,4 @@ spec:
     rollingUpdate:
       maxUnavailable: 1
       maxSurge: 1
+{{- end }}

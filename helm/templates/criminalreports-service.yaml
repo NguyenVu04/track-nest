@@ -1,3 +1,4 @@
+{{- if .Values.criminalreports.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -8,3 +9,4 @@ spec:
   ports:
   - port: 8080
     targetPort: 8080
+{{- end }}
