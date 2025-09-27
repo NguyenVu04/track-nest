@@ -40,10 +40,6 @@ dependencies:
     version: "*"
     repository: "https://charts.min.io/"
 
-  - name: elasticsearch
-    version: "*"
-    repository: "https://helm.elastic.co"
-
   - name: postgresql
     alias: "usertracking-database"
     version: "*"
