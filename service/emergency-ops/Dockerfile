@@ -1,4 +1,4 @@
-FROM gradle:jdk21 AS builder
+FROM gradle:jdk25 AS builder
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ COPY . .
 
 RUN gradle build --no-daemon
 
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
