@@ -5,3 +5,5 @@ pydantic
 numpy
 pandas
 scikit-learn
+sqlalchemy
+asyncpg

@@ -1,4 +1,4 @@
 from abc import ABC, abstractmethod
 
-class LocationCommand(ABC):
+class LocationCommandService(ABC):
     pass
