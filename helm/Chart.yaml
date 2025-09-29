@@ -32,9 +32,9 @@ dependencies:
     version: "*"
     repository: "oci://registry-1.docker.io/bitnamicharts"
 
-  - name: vault
+  - name: elasticsearch
     version: "*"
-    repository: "https://helm.releases.hashicorp.com"
+    repository: "https://helm.elastic.co"
 
   - name: minio
     version: "*"

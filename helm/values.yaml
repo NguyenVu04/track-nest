@@ -93,13 +93,22 @@ minio:
       cpu: 10m
       memory: 64Mi
 
-vault:
-  enabled: false
-  server:
-    dev:
-      enabled: true
-    dataStorage:
-      enabled: false
+elasticsearch:
+  enabled: true
+  replicas: 1
+  minimumMasterNodes: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 128Mi
+  volumeClaimTemplate:
+    accessModes: [ "ReadWriteOnce" ]
+    resources:
+      requests:
+        storage: 1Gi
 
 usertracking-database:
   enabled: false
