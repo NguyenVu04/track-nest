@@ -13,3 +13,4 @@ dotenv
 sqlalchemy
 asyncpg
 websockets
+aiokafka

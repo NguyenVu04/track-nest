@@ -20,13 +20,13 @@ spec:
         - containerPort: 8080
         env:
         - name: KC_DB_VENDOR
-          value: {{ .Values.iam.db-vendor }}
+          value: {{ .Values.iam.dbVendor }}
         - name: KC_DB_USERNAME
-          value: {{ .Values.iam.db-username }}
+          value: {{ .Values.iam.dbUsername }}
         - name: KC_DB_PASSWORD
-          value: {{ .Values.iam.db-password }}
+          value: {{ .Values.iam.dbPassword }}
         - name: KC_DB_URL
-          value: {{ .Values.iam.db-url }}
+          value: {{ .Values.iam.dbUrl }}
         resources:
           requests:
             memory: "64Mi"

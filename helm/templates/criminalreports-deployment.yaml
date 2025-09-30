@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: criminal-reports
-        image: {{ .Values.criminal-reports.image }}
+        image: {{ .Values.criminalreports.image }}
         ports:
         - containerPort: 8080
         resources:

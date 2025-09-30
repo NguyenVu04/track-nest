@@ -1,16 +1,8 @@
-redis:
-  enabled: true
-  architecture: replication
-  auth:
-    enabled: true
-    password: "redis-admin"
-  master:
-    count: 1
-  replica:
-    replicaCount: 1
-    kind: StatefulSet
-
 kafka:
+  image:
+    repository: bitnamilegacy/kafka
+    # repository: bitnamisecure/kafka
+    # tag: latest
   replicaCount: 1
   zookeeper:
     enabled: true
@@ -55,9 +47,12 @@ apisix:
     admin:
       enabled: true
       enable_admin_ui: true
-      credentials:
-        admin: edd1c9f034335f136f87ad84b625c8f1
-        viewer: 4054f7cf07e344346cd3f287985e76a2
+      allow_admin:
+        - 127.0.0.0/24
+      admin_key:
+        - name: admin
+          role: admin
+          key: edd1c9f034335f136f87ad84b625c8f1
 
   etcd:
     enabled: false
@@ -79,67 +74,69 @@ apisix:
           auth:
             type: AdminKey
             adminKey:
-              value: edd1c9f034335f136f87ad84b625c8f1    
+              value: edd1c9f034335f136f87ad84b625c8f1
 
-minio:
-  enabled: false
-  mode: standalone
-  rootUser: "minioadmin"
-  rootPassword: "minioadmin"
-  persistence:
-    enabled: false
-  resources:
-    requests:
-      cpu: 10m
-      memory: 64Mi
-
-elasticsearch:
-  enabled: true
-  replicas: 1
-  minimumMasterNodes: 1
-  resources:
-    requests:
-      cpu: 250m
-      memory: 64Mi
-    limits:
-      cpu: 500m
-      memory: 128Mi
-  volumeClaimTemplate:
-    accessModes: [ "ReadWriteOnce" ]
-    resources:
-      requests:
-        storage: 1Gi
+# minio:
+#   enabled: true
+#   mode: standalone
+#   rootUser: "minioadmin"
+#   rootPassword: "minioadmin"
+#   persistence:
+#     enabled: false
+#   resources:
+#     requests:
+#       cpu: 10m
+#       memory: 64Mi
 
 usertracking-database:
-  enabled: false
-  auth:
-    username: "database-admin"
-    password: "database-admin"
-    database: "tracknest"
+  enabled: true
+  image:
+    repository: bitnamilegacy/postgresql
+    # repository: bitnamisecure/postgresql
+    # tag: latest
+  global:
+    postgresql:
+      auth:
+        enablePostgresUser: true
+        postgresPassword: "postgres"
+        username: "database-admin"
+        password: "database-admin"
+        database: "USER-TRACKING"
 
-emergencyops-database:
-  enabled: false
-  auth:
-    username: "database-admin"
-    password: "database-admin"
-    database: "tracknest"
+  primary:
+    persistence:
+      enabled: false
 
-criminalreports-database:
-  enabled: false
-  auth:
-    username: "database-admin"
-    password: "database-admin"
-    database: "tracknest"
+# emergencyops-database:
+#   enabled: true
+#   auth:
+#     username: "database-admin"
+#     password: "database-admin"
+#     database: "EMERGENCY-OPS"
+#   primary:
+#     initdb:
+#       scriptsConfigMap: emergencyops-init-db
 
-iam-database:
-  enabled: false
-  auth:
-    username: "database-admin"
-    password: "database-admin"
-    database: "tracknest"
+# criminalreports-database:
+#   enabled: true
+#   auth:
+#     username: "database-admin"
+#     password: "database-admin"
+#     database: "CRIMINAL-REPORTS"
+#   primary:
+#     initdb:
+#       scriptsConfigMap: criminalreports-init-db
+  
+
+# iam-database:
+#   enabled: true
+#   auth:
+#     username: "database-admin"
+#     password: "database-admin"
+#     database: "IAM"
 
 iam:
-  enable: false
+  enabled: false
   image: "nguyenvu04/track-nest.iam:dev"
   dbVendor: "postgres"
   dbUsername: "database-admin"
@@ -147,13 +144,13 @@ iam:
   dbUrl: "jdbc:postgresql://iam-database.dev:5432/tracknest"
 
 usertracking:
-  enable: false
+  enabled: true
   image: "nguyenvu04/track-nest.user-tracking:dev"
 
 criminalreports:
-  enable: false
+  enabled: false
   image: "nguyenvu04/track-nest.criminal-reports:dev"
 
 emergencyops:
-  enable: false
+  enabled: false
   image: "nguyenvu04/track-nest.emergency-ops:dev"

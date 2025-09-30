@@ -1,6 +1,7 @@
 import os
 
 from fastapi import FastAPI
+from aiokafka import AIOKafkaProducer
 import uvicorn
 
 from dotenv import load_dotenv
@@ -24,9 +25,14 @@ load_dotenv('.env')
 # db_url = os.getenv('DATABASE_URL')
 # engine = create_async_engine(db_url, echo=True)
 # async_session = async_sessionmaker(engine, expire_on_commit=False)
+KAFKA_SERVER = os.getenv('KAFKA_SERVER')
+KAFKA_TOPIC = os.getenv('KAFKA_TOPIC')
 
-def main():
+async def main():
     app = FastAPI()
+
+    producer = AIOKafkaProducer(bootstrap_servers=KAFKA_SERVER)
+    await producer.start()
 
     app.include_router(voice_risk_detector_controller.router)
     app.include_router(notifier_controller.router)

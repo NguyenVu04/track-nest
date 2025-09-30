@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: user-tracking
-        image: {{ .Values.user-tracking.image }}
+        image: {{ .Values.usertracking.image }}
         ports:
         - containerPort: 8000
         resources:

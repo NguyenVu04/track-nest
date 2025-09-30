@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: usertracking-initdb
+data:
+  init-schema.sql: |
+    CREATE EXTENSION postgis SCHEMA public;
