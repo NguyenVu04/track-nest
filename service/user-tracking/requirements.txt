@@ -14,3 +14,4 @@ sqlalchemy
 asyncpg
 websockets
 aiokafka
+kafka-python

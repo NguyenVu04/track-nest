@@ -25,4 +25,4 @@ class LocationQueryWebSocketManager:
         async with self._lock:
             websocket = self._connections.get(user_id)
             if websocket:
-                await websocket.send_json(data.model_dump_json())
+                await websocket.send_text(data.model_dump())

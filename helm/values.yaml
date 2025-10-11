@@ -1,41 +1,57 @@
 kafka:
   image:
     repository: bitnamilegacy/kafka
-    # repository: bitnamisecure/kafka
     # tag: latest
-  replicaCount: 1
-  zookeeper:
-    enabled: true
+
+  controller:
     replicaCount: 1
-  auth:
-    enabled: false
-  service:
-    type: ClusterIP
-    port: 9092
-  persistence:
-    enabled: true
-    size: 1Gi
-  config:
-    log.retention.hours: 168
-    log.retention.bytes: 1073741824
-    log.segment.bytes: 1073741824
-    auto.create.topics.enable: true
+
   listeners:
     client:
       protocol: PLAINTEXT
     interbroker:
       protocol: PLAINTEXT
-    auto:
-      create:
-        topics:
-          enable: true
-  controller:
-    replicaCount: 1
-  metrics:
-    kafka:
+    external:
+      protocol: PLAINTEXT
+
+  advertisedListeners:
+    client:
+      protocol: PLAINTEXT
+      name: EXTERNAL
+      port: 9092
+      external:
+        enabled: true
+
+  auth:
+    enabled: false
+
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: "standard"
+
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1024Mi
+      cpu: 1
+
+  externalAccess:
+    enabled: true
+    autoDiscovery:
       enabled: true
-    jmx:
-      enabled: false
+    controller:
+      service:
+        type: LoadBalancer
+        loadBalancerNames:
+          - kafka-lb
+
+  service:
+    type: LoadBalancer
+    ports:
+      client: 9092
 
 apisix:
   apisix:

@@ -1,7 +1,10 @@
-from pydantic import BaseModel, Field
-from datetime import datetime
+from pydantic import BaseModel
 
-class LocationQueryWebSocketDto(BaseModel):
+from datetime import datetime
+from uuid import UUID
+
+class LocationMessage(BaseModel):
+    user_id: UUID
     latitude: float
     longitude: float
     timestamp: datetime
