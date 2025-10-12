@@ -1,8 +1,0 @@
-from pydantic import BaseModel, Field
-from datetime import datetime
-
-class LocationQueryWebSocketDto(BaseModel):
-    latitude: float
-    longitude: float
-    timestamp: datetime
-    accuracy: float = 0.0
