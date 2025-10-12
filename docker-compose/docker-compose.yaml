@@ -14,7 +14,7 @@ services:
       - "9443:9443/tcp"
       - "9092:9092/tcp"
     networks:
-      apisix:
+      - track_nest
 
   controller-1:
     image: apache/kafka:latest
@@ -27,6 +27,8 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    networks:
+      - track_nest
 
   controller-2:
     image: apache/kafka:latest
@@ -39,6 +41,8 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    networks:
+      - track_nest
 
   controller-3:
     image: apache/kafka:latest
@@ -51,6 +55,8 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    networks:
+      - track_nest
 
   broker-1:
     image: apache/kafka:latest
@@ -71,6 +77,8 @@ services:
       - controller-1
       - controller-2
       - controller-3
+    networks:
+      - track_nest
 
   broker-2:
     image: apache/kafka:latest
@@ -91,6 +99,8 @@ services:
       - controller-1
       - controller-2
       - controller-3
+    networks:
+      - track_nest
 
   broker-3:
     image: apache/kafka:latest
@@ -111,7 +121,23 @@ services:
       - controller-1
       - controller-2
       - controller-3
+    networks:
+      - track_nest
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - track_nest
 
 networks:
-  apisix:
+  track_nest:
     driver: bridge

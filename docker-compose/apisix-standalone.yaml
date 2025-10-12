@@ -1,0 +1,6 @@
+routes:
+  - uri: /get
+    upstream:
+        nodes:
+            "web1:80": 1
+        type: roundrobin
