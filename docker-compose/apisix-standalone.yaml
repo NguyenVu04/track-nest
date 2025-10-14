@@ -1,6 +1,16 @@
 routes:
-  - uri: /get
+  - uri: /*
+    plugins:
+      openid-connect:
+        client_id: "apisix-client"
+        client_secret: "b6b0x6mSibBpYdtqq5i5XPfnYYMgZToC"
+        discovery: "http://keycloak:8080/realms/tracknest/.well-known/openid-configuration"
+        scope: "openid profile"
+        realm: "tracknest"
+        set_userinfo_header: true
+        bearer_only: true
     upstream:
-        nodes:
-            "web1:80": 1
-        type: roundrobin
+      type: roundrobin
+      nodes:
+        "host.docker.internal:8000": 1
+#END

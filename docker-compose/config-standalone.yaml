@@ -6,3 +6,11 @@ deployment:
   role: data_plane
   role_data_plane:
     config_provider: yaml
+  admin:
+    admin_key:
+      - name: "admin"
+        key: "edd1c9f034335f136f87ad84b609b1f5"
+        role: admin
+
+plugins:
+  - openid-connect

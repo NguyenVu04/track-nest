@@ -1,10 +1,9 @@
 services:
   apisix:
     image: apache/apisix:latest
-    restart: always
     volumes:
-      - ./apisix_conf/apisix-standalone.yaml:/usr/local/apisix/conf/apisix.yaml:ro
-      - ./apisix_conf/config-standalone.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./apisix-standalone.yaml:/usr/local/apisix/conf/apisix.yaml:ro
+      - ./config-standalone.yaml:/usr/local/apisix/conf/config.yaml:ro
     environment:
       - APISIX_STAND_ALONE=true
     ports:
@@ -15,6 +14,8 @@ services:
       - "9092:9092/tcp"
     networks:
       - track_nest
+    depends_on:
+      - keycloak
 
   controller-1:
     image: apache/kafka:latest
@@ -124,20 +125,135 @@ services:
     networks:
       - track_nest
 
-  postgres:
-    image: postgres:latest
-    container_name: postgres_db
+  # redis:
+  #   image: redis:latest
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+
+  # minio:
+  #   image: minio/minio:latest
+  #   container_name: minio
+  #   ports:
+  #     - "9000:9000"
+  #     - "9001:9001"
+  #   environment:
+  #     MINIO_ROOT_USER: tracknestadmin
+  #     MINIO_ROOT_PASSWORD: tracknestadmin
+  #   volumes:
+  #     - minio-data:/data
+  #   command: server /data --console-address ":9001"
+
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+  #   container_name: elasticsearch
+  #   environment:
+  #     - discovery.type=single-node
+  #     - ES_JAVA_OPTS=-Xms512m -Xmx512m
+  #     - xpack.security.enabled=false
+  #   ports:
+  #     - 9200:9200
+  #     - 9300:9300
+  #   volumes:
+  #     - esdata:/usr/share/elasticsearch/data
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+
+  user_tracking_postgres:
+    image: timescale/timescaledb-ha:pg17
+    container_name: user_tracking_postgres
     environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: mydatabase
+      POSTGRES_USER: tracknestadmin
+      POSTGRES_PASSWORD: tracknestadmin
+      POSTGRES_DB: tracknest
+    ports:
+      - "15432:5432"
+    volumes:
+      - user_tracking_postgres_data:/var/lib/postgresql/data
+      - ../database/01-user-tracking-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ../database/02-user-tracking-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    networks:
+      - track_nest
+
+  # criminal_ops_postgres:
+  #   image: timescale/timescaledb-ha:pg17
+  #   container_name: criminal_ops_postgres
+  #   environment:
+  #     POSTGRES_USER: tracknestadmin
+  #     POSTGRES_PASSWORD: tracknestadmin
+  #     POSTGRES_DB: tracknest
+  #   ports:
+  #     - "25432:5432"
+  #   volumes:
+  #     - ../criminal-ops/database/01-criminal-ops-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+  #     - ../criminal-ops/database/02-criminal-ops-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+  #   networks:
+  #     - track_nest
+
+  # criminal_reports_postgres:
+  #   image: timescale/timescaledb-ha:pg17
+  #   container_name: criminal_reports_postgres
+  #   environment:
+  #     POSTGRES_USER: tracknestadmin
+  #     POSTGRES_PASSWORD: tracknestadmin
+  #     POSTGRES_DB: tracknest
+  #   ports:
+  #     - "35432:5432"
+  #   volumes:
+  #     - ../criminal-reports/database/01-criminal-reports-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+  #     - ../criminal-reports/database/02-criminal-reports-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+  #   networks:
+  #     - track_nest
+  
+  keycloak_postgres:
+    image: postgres:latest
+    container_name: keycloak_postgres
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+      POSTGRES_DB: keycloak
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - keycloak_postgres_data:/var/lib/postgresql/data
     networks:
       - track_nest
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak_postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_STRICT: 'true'
+      KC_HOSTNAME_STRICT_HTTPS: 'false'
+    command: start-dev
+    volumes:
+    - ../keycloak-themes:/opt/keycloak/themes
+    networks:
+      - track_nest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - keycloak_postgres
 
 networks:
   track_nest:
     driver: bridge
+
+volumes:
+  user_tracking_postgres_data:
+  emergency_ops_postgres_data:
+  criminal_reports_postgres_data:
+  keycloak_postgres_data:
+  redis-data:
+  minio-data:
+  esdata:

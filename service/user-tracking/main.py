@@ -1,6 +1,8 @@
 import uvicorn
-from fastapi import FastAPI,Request
+from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
+import json
+import base64
 
 from connection.user_websocket_manager import UserWebSocketManager
 from connection.user_websocket_controller import UserWebSocketController
@@ -18,8 +20,23 @@ async def lifespan(app: FastAPI):
     app.add_api_route("/hello/{name}", say_hello)
     yield
 
-async def root():
-    return {"message": "Hello World"}
+async def root(request: Request):
+    # Get the x-userinfo header
+    userinfo_header = request.headers.get("x-userinfo")
+    if not userinfo_header:
+        return {"message": "Hello World", "userinfo": None}
+
+    try:
+        # Decode base64 (add padding if needed)
+        missing_padding = len(userinfo_header) % 4
+        if missing_padding:
+            userinfo_header += '=' * (4 - missing_padding)
+        decoded = base64.b64decode(userinfo_header)
+        # Parse JSON
+        userinfo = json.loads(decoded)
+        return {"message": "Hello World", "userinfo": userinfo}
+    except Exception as e:
+        return {"message": "Hello World", "error": str(e)}
 
 async def say_hello(name: str):
     return {"message": f"Hello {name}"}
