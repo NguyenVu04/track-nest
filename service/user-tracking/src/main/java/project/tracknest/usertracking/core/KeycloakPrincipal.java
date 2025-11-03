@@ -1,20 +1,17 @@
 package project.tracknest.usertracking.core;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-
 import java.security.Principal;
 import java.util.UUID;
 
-public class KeycloakPrincipal implements Principal {
-    private UUID userId;
-    @Getter
-    private String username;
-    @Getter
-    private String email;
+public record KeycloakPrincipal(UUID userId) implements Principal {
 
     @Override
     public String getName() {
+        return userId.toString();
+    }
+
+    @Override
+    public String toString() {
         return userId.toString();
     }
 }
