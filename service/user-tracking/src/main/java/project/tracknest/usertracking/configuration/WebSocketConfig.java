@@ -1,23 +1,18 @@
 package project.tracknest.usertracking.configuration;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.*;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 @Configuration
-@EnableWebSocketMessageBroker
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-    public static final String DESTINATION_PREFIX = "/topic/";
+@EnableWebSocket
+public class WebSocketConfig implements WebSocketConfigurer {
+    public static final String USER_WEBSOCKET_PATH = "/user";
 
     @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws/user").withSockJS();
-    }
-
-    @Override
-    public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker(DESTINATION_PREFIX);
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(new TextWebSocketHandler(), USER_WEBSOCKET_PATH)
+                .setAllowedOriginPatterns("*")
+                .setHandshakeHandler(new PrincipalHandshakeHandler());
     }
 }

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/tracker/location-command")
+@RequestMapping("")
 public class LocationCommandController {
 
     @GetMapping("/ping")
@@ -19,4 +19,5 @@ public class LocationCommandController {
             log.info("Principal is null");
         return "Hello World!";
     }
+
 }
