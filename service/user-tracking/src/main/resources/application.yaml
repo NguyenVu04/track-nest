@@ -6,8 +6,28 @@ spring:
       name: admin
       password: admin
       roles: ADMIN
+  kafka:
+    bootstrap-servers: 127.0.0.1:29092
+    consumer:
+      group-id: user-tracking
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      missing-topics-fatal: false
 
 server:
   port: 18080
   servlet:
     context-path: /api/v1
+
+app:
+  kafka:
+    topics:
+      - "user-location"
+    topic:
+      partitions: 3
+      replication-factor: 1

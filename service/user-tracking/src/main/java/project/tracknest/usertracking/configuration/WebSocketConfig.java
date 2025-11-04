@@ -7,11 +7,16 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 @Configuration
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
-    public static final String USER_WEBSOCKET_PATH = "/user";
+    private final UserWebSocketHandler userWebSocketHandler;
+
+    public WebSocketConfig(UserWebSocketHandler userWebSocketHandler) {
+        this.userWebSocketHandler = userWebSocketHandler;
+    }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(new TextWebSocketHandler(), USER_WEBSOCKET_PATH)
+        String USER_WEBSOCKET_PATH = "/user";
+        registry.addHandler(userWebSocketHandler, USER_WEBSOCKET_PATH)
                 .setAllowedOriginPatterns("*")
                 .setHandshakeHandler(new PrincipalHandshakeHandler());
     }
