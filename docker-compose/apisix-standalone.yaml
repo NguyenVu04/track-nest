@@ -1,5 +1,6 @@
 routes:
   - uri: /*
+    enable_websocket: true
     plugins:
       openid-connect:
         client_id: "apisix-client"

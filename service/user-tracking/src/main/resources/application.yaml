@@ -9,7 +9,7 @@ spring:
   kafka:
     bootstrap-servers: 127.0.0.1:29092
     consumer:
-      group-id: user-tracking
+      group-id: user_tracking
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -18,6 +18,10 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
     listener:
       missing-topics-fatal: false
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
 
 server:
   port: 18080
@@ -27,7 +31,8 @@ server:
 app:
   kafka:
     topics:
-      - "user-location"
-    topic:
-      partitions: 3
-      replication-factor: 1
+    - user_location
+    partitions: 3
+    replication-factor: 1
+  server-name: ${POD_NAME:user-tracking}
+  server-uid: ${$POD_UID:0}

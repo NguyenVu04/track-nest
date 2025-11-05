@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
 import project.tracknest.usertracking.configuration.UserSessionRegistry;
-import project.tracknest.usertracking.core.WebSocketTextMessage;
+import project.tracknest.usertracking.configuration.datatype.WebSocketMessageType;
+import project.tracknest.usertracking.configuration.datatype.WebSocketSessionContainer;
+import project.tracknest.usertracking.configuration.datatype.WebSocketTextMessage;
 
 import java.util.Set;
 import java.util.UUID;
@@ -25,21 +26,22 @@ public class UserWebSocketManagerImpl implements UserConnectionManager {
     public void sendMessage(UUID userId, String topic, Object message) {
         String id = userId.toString();
 
-        Set<WebSocketSession> sessions = userSessionRegistry.getSessions(id);
+        Set<WebSocketSessionContainer> sessions = userSessionRegistry.getSessions(id);
 
         for (var session : sessions) {
-            if (session == null || !session.isOpen()) {
-                log.warn("WebSocket session is closed or null for user {}", userId);
+            if (session.isClose()) {
+                log.warn("WebSocket session is closed for user {}", userId);
                 continue;
             }
 
             try {
-                String content = MAPPER.writeValueAsString(message);
-
                 String messagePayload = MAPPER.writeValueAsString(
-                        new WebSocketTextMessage(topic, content));
+                        new WebSocketTextMessage(
+                                topic,
+                                WebSocketMessageType.MESSAGE,
+                                message));
 
-                session.sendMessage(new TextMessage(messagePayload));
+                session.sendMessage(topic, new TextMessage(messagePayload));
             } catch (Exception e) {
                 log.error("Failed to send message to user {}: {}", userId, e.getMessage());
             }
