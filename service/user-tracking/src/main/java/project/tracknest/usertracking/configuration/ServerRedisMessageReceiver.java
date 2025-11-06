@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ServerRedisMessageReceiver {
     public void receiveMessage(String message) {
+        //TODO: Implement message handling logic
         log.info("Received message: {}", message);
     }
 }
