@@ -134,6 +134,15 @@ services:
     networks:
       - track_nest
 
+  apache-ozone:
+    image: apache/ozone:latest
+    container_name: ozone
+    ports:
+      - "9878:9878"
+      - "9876:9876"
+    networks:
+      - track_nest
+
   # elasticsearch:
   #   image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
   #   container_name: elasticsearch
