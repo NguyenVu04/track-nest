@@ -167,35 +167,50 @@ services:
     networks:
       - track_nest
 
-  # criminal_ops_postgres:
-  #   image: timescale/timescaledb-ha:pg17
-  #   container_name: criminal_ops_postgres
-  #   environment:
-  #     POSTGRES_USER: tracknestadmin
-  #     POSTGRES_PASSWORD: tracknestadmin
-  #     POSTGRES_DB: tracknest
-  #   ports:
-  #     - "25432:5432"
-  #   volumes:
-  #     - ../criminal-ops/database/01-criminal-ops-init.sql:/docker-entrypoint-initdb.d/01-init.sql
-  #     - ../criminal-ops/database/02-criminal-ops-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
-  #   networks:
-  #     - track_nest
+  emergency_ops_postgres:
+    image: timescale/timescaledb-ha:pg17
+    container_name: emergency_ops_postgres
+    environment:
+      POSTGRES_USER: tracknestadmin
+      POSTGRES_PASSWORD: tracknestadmin
+      POSTGRES_DB: tracknest
+    ports:
+      - "25432:5432"
+    volumes:
+      - ../database/01-emergency-ops-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ../database/02-emergency-ops-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    networks:
+      - track_nest
 
-  # criminal_reports_postgres:
-  #   image: timescale/timescaledb-ha:pg17
-  #   container_name: criminal_reports_postgres
-  #   environment:
-  #     POSTGRES_USER: tracknestadmin
-  #     POSTGRES_PASSWORD: tracknestadmin
-  #     POSTGRES_DB: tracknest
-  #   ports:
-  #     - "35432:5432"
-  #   volumes:
-  #     - ../criminal-reports/database/01-criminal-reports-init.sql:/docker-entrypoint-initdb.d/01-init.sql
-  #     - ../criminal-reports/database/02-criminal-reports-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
-  #   networks:
-  #     - track_nest
+  criminal_reports_postgres:
+    image: timescale/timescaledb-ha:pg17
+    container_name: criminal_reports_postgres
+    environment:
+      POSTGRES_USER: tracknestadmin
+      POSTGRES_PASSWORD: tracknestadmin
+      POSTGRES_DB: tracknest
+    ports:
+      - "35432:5432"
+    volumes:
+      - ../database/01-criminal-reports-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ../database/02-criminal-reports-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    networks:
+      - track_nest
+
+  emergency_detection_postgres:
+    image: timescale/timescaledb-ha:pg17
+    container_name: emergency_detection_postgres
+    environment:
+      POSTGRES_USER: tracknestadmin
+      POSTGRES_PASSWORD: tracknestadmin
+      POSTGRES_DB: tracknest
+    ports:
+      - "45432:5432"
+    volumes:
+      - ../database/01-emergency-detection-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ../database/02-emergency-detection-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    networks:
+      - track_nest
   
   keycloak_postgres:
     image: postgres:latest
