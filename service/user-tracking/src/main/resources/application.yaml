@@ -23,6 +23,13 @@ spring:
       host: 127.0.0.1
       port: 6379
 
+grpc:
+  server:
+    port: ${GRPC_PORT:19090}
+    address: 0.0.0.0
+    security:
+      enabled: false
+
 server:
   port: 18080
   servlet:
