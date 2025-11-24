@@ -3,6 +3,7 @@ syntax = "proto3";
 package project.tracknest.usertracking.proto;
 
 import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
 
 option java_multiple_files = true;
 option java_package = "project.tracknest.usertracking.proto.lib";
@@ -10,6 +11,8 @@ option java_outer_classname = "TrackerProto";
 
 service TrackerController {
   rpc postLocation (stream LocationRequest) returns (google.protobuf.Empty);
+  rpc getTargetsLastLocation (google.protobuf.Empty) returns (stream LocationResponse);
+  rpc getTargetLocationHistory (google.protobuf.StringValue) returns (stream LocationResponse);
 }
 
 message LocationRequest {
@@ -22,26 +25,12 @@ message LocationRequest {
 
 message LocationResponse {
   string id = 1;
-  double latitude = 2;
-  double longitude = 3;
-  int64 timestamp = 4;
-  double accuracy = 5;
-  double velocity = 6;
+  string userId = 2;
+  string username = 3;
+  double latitude = 4;
+  double longitude = 5;
+  int64 timestamp = 6;
+  double accuracy = 7;
+  double velocity = 8;
+  bool connected = 9;
 }
-
-// The greeting service definition.
-//service MyService {
-//  // Sends a greeting
-//  rpc SayHello (HelloRequest) returns (HelloReply) {
-//  }
-//}
-//
-//// The request message containing the user's name.
-//message HelloRequest {
-//  string name = 1;
-//}
-//
-//// The response message containing the greetings
-//message HelloReply {
-//  string message = 1;
-//}

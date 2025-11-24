@@ -35,7 +35,6 @@ CREATE TABLE poi_type_translation (
 
 CREATE TABLE voice_record (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    embedding VECTOR(1536) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     user_id UUID NOT NULL
 );
