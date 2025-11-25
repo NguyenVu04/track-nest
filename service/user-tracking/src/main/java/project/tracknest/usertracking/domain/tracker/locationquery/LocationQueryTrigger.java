@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
-import project.tracknest.usertracking.core.LocationMessage;
+import project.tracknest.usertracking.core.datatype.LocationMessage;
 
 @Service
 public class LocationQueryTrigger {

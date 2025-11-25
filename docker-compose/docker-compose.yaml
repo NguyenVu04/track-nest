@@ -234,6 +234,11 @@ services:
       - ../database/02-user-tracking-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     networks:
       - track_nest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   emergency_ops_postgres:
     image: timescale/timescaledb-ha:pg17
@@ -249,6 +254,11 @@ services:
       - ../database/02-emergency-ops-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     networks:
       - track_nest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   criminal_reports_postgres:
     image: timescale/timescaledb-ha:pg17
@@ -264,6 +274,11 @@ services:
       - ../database/02-criminal-reports-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     networks:
       - track_nest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   emergency_detection_postgres:
     image: timescale/timescaledb-ha:pg17
@@ -279,6 +294,11 @@ services:
       - ../database/02-emergency-detection-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     networks:
       - track_nest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   
   keycloak_postgres:
     image: postgres:latest
@@ -293,13 +313,18 @@ services:
       - keycloak_postgres_data:/var/lib/postgresql
     networks:
       - track_nest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak_postgres:5432/keycloak
       KC_DB_USERNAME: keycloak
@@ -307,15 +332,25 @@ services:
       KC_HOSTNAME: localhost
       KC_HOSTNAME_STRICT: 'true'
       KC_HOSTNAME_STRICT_HTTPS: 'false'
-    command: start-dev
+      KC_HEALTH_ENABLED: true
+    command: start-dev --import-realm 
     volumes:
     - ../keycloak/keycloak-themes:/opt/keycloak/themes
+    - ../keycloak/tracknest-user-realm.json:/opt/keycloak/data/import/tracknest-user-realm.json
+    - ../keycloak/tracknest-emergency-service-realm.json:/opt/keycloak/data/import/tracknest-emergency-service-realm.json
+    - ../keycloak/tracknest-reporter-realm.json:/opt/keycloak/data/import/tracknest-reporter-realm.json
     networks:
       - track_nest
     ports:
       - "8080:8080"
     depends_on:
-      - keycloak_postgres
+      keycloak_postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 networks:
   track_nest:
