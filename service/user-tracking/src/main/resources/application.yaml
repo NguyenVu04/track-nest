@@ -27,20 +27,19 @@ spring:
     username: ${DB_USERNAME:tracknestadmin}
     password: ${DB_PASSWORD:tracknestadmin}
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
-
-grpc:
-  server:
-    port: ${GRPC_PORT:19090}
-    address: 0.0.0.0
-    security:
-      enabled: false
+  grpc:
+    server:
+      port: ${GRPC_PORT:19090}
+      ssl:
+        secure: false
+      host: 0.0.0.0
 
 server:
   port: 18080

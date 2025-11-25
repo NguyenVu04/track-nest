@@ -4,6 +4,7 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.StringValue;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
 import project.tracknest.usertracking.domain.tracker.locationcommand.LocationCommandService;
 import project.tracknest.usertracking.domain.tracker.locationquery.LocationQueryService;
@@ -11,8 +12,12 @@ import project.tracknest.usertracking.proto.lib.LocationRequest;
 import project.tracknest.usertracking.proto.lib.LocationResponse;
 import project.tracknest.usertracking.proto.lib.TrackerControllerGrpc;
 
+import java.util.List;
+import java.util.UUID;
+
 @GrpcService
 @RequiredArgsConstructor
+@Slf4j
 public class TrackerController extends TrackerControllerGrpc.TrackerControllerImplBase {
     private final LocationQueryService queryService;
     private final LocationCommandService commandService;
@@ -22,15 +27,13 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
         return new StreamObserver<>() {
             @Override
             public void onNext(LocationRequest request) {
-                // handle each location received
-                double lat = request.getLatitude();
-                double lon = request.getLongitude();
-                // process/persist the location...
+                commandService.updateLocation(request);
             }
 
             @Override
             public void onError(Throwable t) {
-                // client sent error; log/cleanup
+                //!TODO: handle error by sending notification to guardians
+                log.error("Error receiving location data", t);
             }
 
             @Override
@@ -47,7 +50,17 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
     }
 
     @Override
-    public void getTargetLocationHistory(StringValue request, StreamObserver<LocationResponse> responseObserver) {
-
+    public void getTargetLocationHistory(StringValue targetId, StreamObserver<LocationResponse> responseObserver) {
+        try {
+            UUID targetUuid = UUID.fromString(targetId.getValue());
+            List<LocationResponse> responses = queryService.retrieveTargetLocationHistory(targetUuid);
+            for (LocationResponse response : responses) {
+                responseObserver.onNext(response);
+            }
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid UUID format: {}", targetId.getValue(), e);
+        } finally {
+            responseObserver.onCompleted();
+        }
     }
 }
