@@ -2,10 +2,17 @@ CREATE EXTENSION IF NOT EXISTS timescaledb;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
 
+CREATE TABLE emergency_service (
+    id UUID PRIMARY KEY,
+    longitude FLOAT NOT NULL,
+    latitude FLOAT NOT NULL,
+    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED
+);
+
 CREATE TABLE emergency_request (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     open_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    close_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    close_at TIMESTAMP WITH TIME ZONE,
     sender_id UUID NOT NULL,
     target_id UUID NOT NULL,
     emergency_service_id UUID NOT NULL,
@@ -27,8 +34,8 @@ CREATE TABLE safe_zone (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     longitude FLOAT NOT NULL,
-    latitude FLOAT NOT NULL,
-    radius FLOAT NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
+    radius DOUBLE PRECISION NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     emergency_service_id UUID NOT NULL,
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED
@@ -37,5 +44,15 @@ CREATE TABLE safe_zone (
 ALTER TABLE emergency_request
     ADD FOREIGN KEY (status_name) REFERENCES emergency_request_status(name);
 
+ALTER TABLE emergency_request
+    ADD FOREIGN KEY (emergency_service_id) REFERENCES emergency_service(id);
+
 ALTER TABLE emergency_request_status_translation
     ADD FOREIGN KEY (status_name) REFERENCES emergency_request_status(name);
+
+ALTER TABLE safe_zone
+    ADD FOREIGN KEY (emergency_service_id) REFERENCES emergency_service(id);
+
+CREATE INDEX idx_safe_zone_geom_spgist ON safe_zone USING SPGIST (geom);
+
+CREATE INDEX idx_emergency_request_user_time_desc ON emergency_request (emergency_service_id, open_at DESC);

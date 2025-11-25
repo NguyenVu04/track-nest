@@ -250,6 +250,7 @@ services:
     ports:
       - "25432:5432"
     volumes:
+      - emergency_ops_postgres_data:/var/lib/postgresql/data
       - ../database/01-emergency-ops-init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ../database/02-emergency-ops-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     networks:
@@ -270,6 +271,7 @@ services:
     ports:
       - "35432:5432"
     volumes:
+      - criminal_reports_postgres_data:/var/lib/postgresql/data
       - ../database/01-criminal-reports-init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ../database/02-criminal-reports-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     networks:
@@ -290,6 +292,7 @@ services:
     ports:
       - "45432:5432"
     volumes:
+      - emergency_detection_postgres_data:/var/lib/postgresql/data
       - ../database/01-emergency-detection-init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ../database/02-emergency-detection-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     networks:
@@ -360,8 +363,9 @@ volumes:
   user_tracking_postgres_data:
   emergency_ops_postgres_data:
   criminal_reports_postgres_data:
+  emergency_detection_postgres_data:
   keycloak_postgres_data:
   redis-data:
-  esdata:
+  # esdata:
   ozone-om:
   ozone-dn:

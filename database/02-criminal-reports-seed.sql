@@ -1,65 +1,52 @@
-CREATE EXTENSION IF NOT EXISTS timescaledb;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "postgis";
+BEGIN;
 
-CREATE TABLE missing_person_report (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(255) NOT NULL,
-    full_name VARCHAR(255) NOT NULL,
-    personal_id VARCHAR(50) NOT NULL,
-    photo VARCHAR(255),
-    contact_email VARCHAR(255),
-    contact_phone VARCHAR(255) NOT NULL,
-    date DATE NOT NULL DEFAULT CURRENT_DATE,
-    content VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    user_id UUID NOT NULL,
-    reporter_id UUID NOT NULL,
-    status_name VARCHAR(15) NOT NULL
-);
+INSERT INTO missing_person_report_status (name) VALUES
+                                                    ('PENDING'),
+                                                    ('REJECTED'),
+                                                    ('PUBLISHED');
 
-CREATE TABLE missing_person_report_status (
-    name VARCHAR(15) PRIMARY KEY
-);
+INSERT INTO missing_person_report_status_translation (status_name, language_code, value) VALUES
+                                                                                             ('PENDING', 'en', 'Pending'),
+                                                                                             ('PENDING', 'vi', 'Đang chờ'),
+                                                                                             ('REJECTED', 'en', 'Rejected'),
+                                                                                             ('REJECTED', 'vi', 'Bị từ chối'),
+                                                                                             ('PUBLISHED', 'en', 'Published'),
+                                                                                             ('PUBLISHED', 'vi', 'Đã đăng');
 
-CREATE TABLE missing_person_report_status_translation (
-    status_name VARCHAR(15) NOT NULL,
-    language_code VARCHAR(2) NOT NULL,
-    value VARCHAR(100) NOT NULL,
-    PRIMARY KEY (status_name, language_code)
-);
+INSERT INTO missing_person_report (id, title, full_name, personal_id, photo, contact_email, contact_phone, date, content, created_at, user_id, reporter_id, status_name) VALUES
+                                                                                                                                                                             ('10000000-0000-4000-8000-000000000001', 'Missing: John Doe 01', 'John Doe', 'ID-001', 'https://example.com/mockups/missing_person_photo_01.jpg', 'j.doe01@example.com', '+841234560001', CURRENT_DATE, 'https://example.com/mockups/missing_person_report_01.pdf', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'a1919fe8-f705-4422-898b-c76229868c21', 'PENDING'),
+                                                                                                                                                                             ('10000000-0000-4000-8000-000000000002', 'Missing: Jane Smith 02', 'Jane Smith', 'ID-002', 'https://example.com/mockups/missing_person_photo_02.jpg', 'j.smith02@example.com', '+841234560002', CURRENT_DATE, 'https://example.com/mockups/missing_person_report_02.pdf', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'a1919fe8-f705-4422-898b-c76229868c21', 'PENDING'),
+                                                                                                                                                                             ('10000000-0000-4000-8000-000000000003', 'Missing: Tran Van A 03', 'Tran Van A', 'ID-003', 'https://example.com/mockups/missing_person_photo_03.jpg', 'tran.a03@example.com', '+841234560003', CURRENT_DATE, 'https://example.com/mockups/missing_person_report_03.pdf', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'a1919fe8-f705-4422-898b-c76229868c21', 'PUBLISHED'),
+                                                                                                                                                                             ('10000000-0000-4000-8000-000000000004', 'Missing: Nguyen Thi B 04', 'Nguyen Thi B', 'ID-004', 'https://example.com/mockups/missing_person_photo_04.jpg', 'nguyen.b04@example.com', '+841234560004', CURRENT_DATE, 'https://example.com/mockups/missing_person_report_04.pdf', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'a1919fe8-f705-4422-898b-c76229868c21', 'REJECTED'),
+                                                                                                                                                                             ('10000000-0000-4000-8000-000000000005', 'Missing: Alex Johnson 05', 'Alex Johnson', 'ID-005', 'https://example.com/mockups/missing_person_photo_05.jpg', 'a.johnson05@example.com', '+841234560005', CURRENT_DATE, 'https://example.com/mockups/missing_person_report_05.pdf', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'a1919fe8-f705-4422-898b-c76229868c21', 'PENDING'),
+                                                                                                                                                                             ('10000000-0000-4000-8000-000000000006', 'Missing: Maria Lopez 06', 'Maria Lopez', 'ID-006', 'https://example.com/mockups/missing_person_photo_06.jpg', 'm.lopez06@example.com', '+841234560006', CURRENT_DATE, 'https://example.com/mockups/missing_person_report_06.pdf', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'a1919fe8-f705-4422-898b-c76229868c21', 'PUBLISHED'),
+                                                                                                                                                                             ('10000000-0000-4000-8000-000000000007', 'Missing: Lê Văn C 07', 'Lê Văn C', 'ID-007', 'https://example.com/mockups/missing_person_photo_07.jpg', 'le.c07@example.com', '+841234560007', CURRENT_DATE, 'https://example.com/mockups/missing_person_report_07.pdf', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'a1919fe8-f705-4422-898b-c76229868c21', 'PENDING'),
+                                                                                                                                                                             ('10000000-0000-4000-8000-000000000008', 'Missing: Kim Young 08', 'Kim Young', 'ID-008', 'https://example.com/mockups/missing_person_photo_08.jpg', 'kim.y08@example.com', '+841234560008', CURRENT_DATE, 'https://example.com/mockups/missing_person_report_08.pdf', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'a1919fe8-f705-4422-898b-c76229868c21', 'PENDING'),
+                                                                                                                                                                             ('10000000-0000-4000-8000-000000000009', 'Missing: Oumar Diallo 09', 'Oumar Diallo', 'ID-009', 'https://example.com/mockups/missing_person_photo_09.jpg', 'o.diallo09@example.com', '+841234560009', CURRENT_DATE, 'https://example.com/mockups/missing_person_report_09.pdf', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'a1919fe8-f705-4422-898b-c76229868c21', 'REJECTED'),
+                                                                                                                                                                             ('10000000-0000-4000-8000-00000000000a', 'Missing: Sara Connor 10', 'Sara Connor', 'ID-010', 'https://example.com/mockups/missing_person_photo_10.jpg', 's.connor10@example.com', '+841234560010', CURRENT_DATE, 'https://example.com/mockups/missing_person_report_10.pdf', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'a1919fe8-f705-4422-898b-c76229868c21', 'PUBLISHED');
 
-CREATE TABLE guidelines_document (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(255) NOT NULL,
-    abstract VARCHAR(500) NOT NULL,
-    content VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    reporter_id UUID NOT NULL,
-    public BOOLEAN NOT NULL DEFAULT FALSE
-);
+INSERT INTO guidelines_document (id, title, abstract, content, created_at, reporter_id, public) VALUES
+                                                                                                    ('20000000-0000-4000-8000-000000000001', 'Guideline: How to report a missing person 1', 'https://example.com/mockups/guideline_abstract_01.txt', 'https://example.com/mockups/guideline_full_01.pdf', NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE),
+                                                                                                    ('20000000-0000-4000-8000-000000000002', 'Guideline: Evidence collection 2', 'https://example.com/mockups/guideline_abstract_02.txt', 'https://example.com/mockups/guideline_full_02.pdf', NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE),
+                                                                                                    ('20000000-0000-4000-8000-000000000003', 'Guideline: Community tips 3', 'https://example.com/mockups/guideline_abstract_03.txt', 'https://example.com/mockups/guideline_full_03.pdf', NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', FALSE),
+                                                                                                    ('20000000-0000-4000-8000-000000000004', 'Guideline: Safety best practices 4', 'https://example.com/mockups/guideline_abstract_04.txt', 'https://example.com/mockups/guideline_full_04.pdf', NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE),
+                                                                                                    ('20000000-0000-4000-8000-000000000005', 'Guideline: Reporting checklist 5', 'https://example.com/mockups/guideline_abstract_05.txt', 'https://example.com/mockups/guideline_full_05.pdf', NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', FALSE),
+                                                                                                    ('20000000-0000-4000-8000-000000000006', 'Guideline: Working with authorities 6', 'https://example.com/mockups/guideline_abstract_06.txt', 'https://example.com/mockups/guideline_full_06.pdf', NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE),
+                                                                                                    ('20000000-0000-4000-8000-000000000007', 'Guideline: Digital evidence tips 7', 'https://example.com/mockups/guideline_abstract_07.txt', 'https://example.com/mockups/guideline_full_07.pdf', NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE),
+                                                                                                    ('20000000-0000-4000-8000-000000000008', 'Guideline: Search strategies 8', 'https://example.com/mockups/guideline_abstract_08.txt', 'https://example.com/mockups/guideline_full_08.pdf', NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', FALSE),
+                                                                                                    ('20000000-0000-4000-8000-000000000009', 'Guideline: Working with volunteers 9', 'https://example.com/mockups/guideline_abstract_09.txt', 'https://example.com/mockups/guideline_full_09.pdf', NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE),
+                                                                                                    ('20000000-0000-4000-8000-00000000000a', 'Guideline: Media handling 10', 'https://example.com/mockups/guideline_abstract_10.txt', 'https://example.com/mockups/guideline_full_10.pdf', NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE);
 
-CREATE TABLE crime_report (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(255) NOT NULL,
-    content VARCHAR(255) NOT NULL,
-    date DATE NOT NULL DEFAULT CURRENT_DATE,
-    severity INTEGER NOT NULL,
-    number_of_victims INTEGER NOT NULL,
-    number_of_offenders INTEGER NOT NULL,
-    arrested BOOLEAN NOT NULL,
-    longitude FLOAT NOT NULL,
-    latitude FLOAT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    reporter_id UUID NOT NULL,
-    public BOOLEAN NOT NULL DEFAULT FALSE,
-    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
-    CONSTRAINT chk_severity CHECK (severity >= 1 AND severity <= 5)
-);
+INSERT INTO crime_report (id, title, content, date, severity, number_of_victims, number_of_offenders, arrested, longitude, latitude, created_at, updated_at, reporter_id, public) VALUES
+                                                                                                                                                                                      ('30000000-0000-4000-8000-000000000001', 'Robbery at Market 1', 'https://example.com/mockups/crime_report_01.pdf', CURRENT_DATE, 4, 1, 2, TRUE, 106.7000, 10.7700, NOW(), NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE),
+                                                                                                                                                                                      ('30000000-0000-4000-8000-000000000002', 'Assault on Main St 2', 'https://example.com/mockups/crime_report_02.pdf', CURRENT_DATE, 3, 1, 1, FALSE, 106.6800, 10.7600, NOW(), NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', FALSE),
+                                                                                                                                                                                      ('30000000-0000-4000-8000-000000000003', 'Burglary at Office 3', 'https://example.com/mockups/crime_report_03.pdf', CURRENT_DATE, 2, 0, 1, TRUE, 106.7100, 10.7650, NOW(), NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE),
+                                                                                                                                                                                      ('30000000-0000-4000-8000-000000000004', 'Traffic incident 4', 'https://example.com/mockups/crime_report_04.pdf', CURRENT_DATE, 1, 2, 1, FALSE, 106.7050, 10.7720, NOW(), NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', FALSE),
+                                                                                                                                                                                      ('30000000-0000-4000-8000-000000000005', 'Fraud report 5', 'https://example.com/mockups/crime_report_05.pdf', CURRENT_DATE, 3, 5, 3, TRUE, 106.6950, 10.7690, NOW(), NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE),
+                                                                                                                                                                                      ('30000000-0000-4000-8000-000000000006', 'Vandalism 6', 'https://example.com/mockups/crime_report_06.pdf', CURRENT_DATE, 2, 0, 1, FALSE, 106.7200, 10.7750, NOW(), NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', FALSE),
+                                                                                                                                                                                      ('30000000-0000-4000-8000-000000000007', 'Armed robbery 7', 'https://example.com/mockups/crime_report_07.pdf', CURRENT_DATE, 5, 1, 3, TRUE, 106.6900, 10.7580, NOW(), NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE),
+                                                                                                                                                                                      ('30000000-0000-4000-8000-000000000008', 'Public disturbance 8', 'https://example.com/mockups/crime_report_08.pdf', CURRENT_DATE, 2, 4, 2, FALSE, 106.6980, 10.7660, NOW(), NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', FALSE),
+                                                                                                                                                                                      ('30000000-0000-4000-8000-000000000009', 'Shoplifting 9', 'https://example.com/mockups/crime_report_09.pdf', CURRENT_DATE, 1, 1, 1, FALSE, 106.7010, 10.7710, NOW(), NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE),
+                                                                                                                                                                                      ('30000000-0000-4000-8000-00000000000a', 'Drug possession 10', 'https://example.com/mockups/crime_report_10.pdf', CURRENT_DATE, 4, 1, 1, TRUE, 106.7070, 10.7680, NOW(), NOW(), 'a1919fe8-f705-4422-898b-c76229868c21', TRUE);
 
-ALTER TABLE missing_person_report
-    ADD FOREIGN KEY (status_name) REFERENCES missing_person_report_status(name);
-
-ALTER TABLE missing_person_report_status_translation
-    ADD FOREIGN KEY (status_name) REFERENCES missing_person_report_status(name);
+COMMIT;
