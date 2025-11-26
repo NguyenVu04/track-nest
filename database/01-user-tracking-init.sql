@@ -31,7 +31,7 @@ CREATE TABLE mobile_device (
     user_id UUID NOT NULL
 );
 
-CREATE TABLE tracking_notification(
+CREATE TABLE tracking_notification (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type VARCHAR(50) NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE tracking_notification(
     user_id UUID NOT NULL
 );
 
-CREATE TABLE risk_notification(
+CREATE TABLE risk_notification (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     type VARCHAR(50) NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -49,10 +49,10 @@ CREATE TABLE risk_notification(
     user_id UUID NOT NULL
 );
 
-CREATE TABLE tracking_notification_alerts_user(
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE tracking_notification_alerts_user (
     tracking_notification_id UUID NOT NULL,
-    user_id UUID NOT NULL
+    user_id UUID NOT NULL,
+    PRIMARY KEY (tracking_notification_id, user_id)
 );
 
 CREATE TABLE tracking_permission (
@@ -63,14 +63,39 @@ CREATE TABLE tracking_permission (
 );
 
 CREATE TABLE tracker_tracks_target (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tracker_id UUID NOT NULL,
     target_id UUID NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (tracker_id, target_id),
+    CHECK ( tracker_id <> target_id )
 );
 
+ALTER TABLE location
+    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+
+ALTER TABLE mobile_device
+    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+
+ALTER TABLE tracking_notification
+    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+
+ALTER TABLE risk_notification
+    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+
 ALTER TABLE tracking_notification_alerts_user
-    ADD FOREIGN KEY (tracking_notification_id) REFERENCES tracking_notification(id);
+    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+
+ALTER TABLE tracking_permission
+    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+
+ALTER TABLE tracker_tracks_target
+    ADD FOREIGN KEY (tracker_id) references "user" (id) ON DELETE CASCADE;
+
+ALTER TABLE tracker_tracks_target
+    ADD FOREIGN KEY (target_id) references "user" (id) ON DELETE CASCADE;
+
+ALTER TABLE tracking_notification_alerts_user
+    ADD FOREIGN KEY (tracking_notification_id) REFERENCES tracking_notification (id) ON DELETE CASCADE;
 
 ALTER TABLE location SET (
     timescaledb.compress,

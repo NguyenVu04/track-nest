@@ -82,7 +82,7 @@ INSERT INTO tracking_permission (id, otp, create_at, user_id) VALUES
                                                                   ('0004000a-0000-4000-8000-00000000000a', '100010', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b');
 
 -- tracker_tracks_target (fixed UUIDs)
-INSERT INTO tracker_tracks_target (id, tracker_id, target_id, created_at) VALUES
+INSERT INTO tracker_tracks_target (tracker_id, target_id, created_at) VALUES
                                                                               ('00050001-0000-4000-8000-000000000001', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', NOW()),
                                                                               ('00050002-0000-4000-8000-000000000002', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', NOW()),
                                                                               ('00050003-0000-4000-8000-000000000003', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', NOW()),

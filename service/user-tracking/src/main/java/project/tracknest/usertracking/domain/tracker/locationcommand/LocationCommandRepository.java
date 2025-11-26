@@ -5,5 +5,5 @@ import project.tracknest.usertracking.core.entity.Location;
 
 import java.util.UUID;
 
-interface LocationCommandRepository extends JpaRepository<Location, UUID> {
+interface LocationCommandRepository extends JpaRepository<Location, Location.LocationId> {
 }

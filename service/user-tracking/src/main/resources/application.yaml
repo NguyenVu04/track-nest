@@ -34,6 +34,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
+    open-in-view: false
   grpc:
     server:
       port: ${GRPC_PORT:19090}

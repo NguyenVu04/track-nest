@@ -45,4 +45,7 @@ INSERT INTO emergency_request (id, open_at, close_at, sender_id, target_id, emer
                                                                                                                    ('10000000-0000-4000-8000-000000000009', NOW(), NULL, 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', '0e745cb3-5f38-419b-b446-d204c2e15ba9', 'PENDING'),
                                                                                                                    ('10000000-0000-4000-8000-00000000000a', NOW(), NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', '0e745cb3-5f38-419b-b446-d204c2e15ba9', 'ACCEPTED');
 
+INSERT INTO emergency_service_tracks_user (emergency_service_id, user_id) VALUES
+    ('0e745cb3-5f38-419b-b446-d204c2e15ba9', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b');
+
 COMMIT;

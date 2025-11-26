@@ -62,6 +62,6 @@ ALTER TABLE missing_person_report
     ADD FOREIGN KEY (status_name) REFERENCES missing_person_report_status(name);
 
 ALTER TABLE missing_person_report_status_translation
-    ADD FOREIGN KEY (status_name) REFERENCES missing_person_report_status(name);
+    ADD FOREIGN KEY (status_name) REFERENCES missing_person_report_status(name) ON DELETE CASCADE;
 
 CREATE INDEX idx_crime_report_geom_spgist ON crime_report USING SPGIST (geom);

@@ -1,5 +1,6 @@
 package project.tracknest.usertracking.domain.tracker.locationcommand;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
@@ -17,6 +18,7 @@ public class LocationCommandServiceImpl implements LocationCommandService {
     private final LocationMessageProducer messageProducer;
 
     @Override
+    @Transactional
     public void updateLocation(LocationRequest request) {
         UUID userId = getCurrentUserId();
         //!TODO: Add update user connected status
@@ -25,7 +27,10 @@ public class LocationCommandServiceImpl implements LocationCommandService {
                 .longitude(request.getLongitude())
                 .accuracy(request.getAccuracy())
                 .velocity(request.getVelocity())
-                .userId(userId)
+                .id(Location.LocationId
+                        .builder()
+                        .userId(userId)
+                        .build())
                 .build();
 
         locationRepository.save(location);
