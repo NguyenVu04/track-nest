@@ -1,9 +1,9 @@
 package project.tracknest.usertracking.core.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
 import lombok.*;
 import org.locationtech.jts.geom.Point;
-//import org.locationtech.jts.geom.Point;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -30,6 +30,7 @@ public class Location {
     @Column(name = "velocity", nullable = false, updatable = false)
     private float velocity;
 
+    @Generated
     @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", updatable = false)
     private Point geom;
 
@@ -43,7 +44,7 @@ public class Location {
         @Column(name = "user_id", nullable = false, updatable = false)
         private UUID userId;
 
-        @Column(name = "timestamp", updatable = false)
+        @Column(name = "timestamp", nullable = false, updatable = false)
         private OffsetDateTime timestamp;
     }
 }

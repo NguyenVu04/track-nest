@@ -1,18 +1,18 @@
 routes:
   - uri: /*
-    enable_websocket: true
     plugins:
       openid-connect:
-        client_id: "apisix-client"
-        client_secret: "b6b0x6mSibBpYdtqq5i5XPfnYYMgZToC"
-        discovery: "http://keycloak:8080/realms/tracknest/.well-known/openid-configuration"
-        introspection_endpoint: "http://keycloak:8080/realms/tracknest/protocol/openid-connect/token/introspect"
+        client_id: "tracknest"
+        client_secret: "5YgzCDGJLO0uXBhkGMyeJjHE1CKUt4fJ"
+        discovery: "http://keycloak:8080/realms/tracknest-user/.well-known/openid-configuration"
+        introspection_endpoint: "http://keycloak:8080/realms/tracknest-user/protocol/openid-connect/token/introspect"
         scope: "openid profile"
-        realm: "tracknest"
+        realm: "tracknest-user"
         set_userinfo_header: true
         bearer_only: true
     upstream:
+      scheme: "grpc"
       type: roundrobin
       nodes:
-        "host.docker.internal:18080": 1
+        "host.docker.internal:19090": 1
 #END

@@ -8,7 +8,6 @@ import java.util.UUID;
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record LocationMessage (
-        UUID id,
         UUID userId,
         float latitude,
         float longitude,

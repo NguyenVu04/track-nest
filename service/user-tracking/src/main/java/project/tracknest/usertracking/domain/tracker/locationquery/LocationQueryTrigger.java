@@ -19,12 +19,7 @@ public class LocationQueryTrigger {
     }
 
     @KafkaListener(topics = "${app.kafka.topics[0]}")
-    private void consumeLocationMessage(String message) {
-        try {
-            JsonNode node = MAPPER.readTree(message);
-            service.trackTaget(MAPPER.treeToValue(node, LocationMessage.class));
-        } catch (JsonProcessingException e) {
-            log.error("Failed to process location message: {}", message, e);
-        }
+    private void consumeLocationMessage(LocationMessage message) {
+        service.trackTaget(message);
     }
 }

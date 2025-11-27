@@ -20,21 +20,21 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
 
     @Override
     public void trackTaget(LocationMessage message) {
-        UUID userId = getCurrentUserId();
-        observer.sendTargetLocation(userId, message);
+        //TODO: validate if the current user has permission to track the target user!!!
+        observer.sendTargetLocation(message.userId(), message);
 
-        log.info("Tracked location for userId {}: {}", userId, message);
-
-//        observer.sendTargetLocation(userId, message);
+        log.info("Tracked location for userId {}: {}", message.userId(), message);
     }
 
     @Override
     public List<LocationResponse> retrieveTargetsLastLocation() {
+        //TODO: implement retrieval of last known locations for all targets the current user is allowed to track
         return List.of();
     }
 
     @Override
     public List<LocationResponse> retrieveTargetLocationHistory(UUID targetId) {
+        //TODO: implement retrieval of location history for the specified targetId if the current user is allowed to track it
         return List.of();
     }
 }
