@@ -47,7 +47,8 @@ CREATE TABLE tracking_notification (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    user_id UUID NOT NULL
+    tracker_id UUID NOT NULL,
+    target_id UUID NOT NULL
 );
 
 CREATE TABLE risk_notification (
