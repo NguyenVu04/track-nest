@@ -18,6 +18,16 @@ CREATE TABLE location (
     PRIMARY KEY (user_id, "timestamp")
 );
 
+CREATE TABLE emergency_alert (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    verified BOOLEAN NOT NULL DEFAULT FALSE,
+    user_id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    longitude DOUBLE PRECISION NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
+    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED
+);
+
 SELECT create_hypertable('location', 'timestamp',
                          chunk_time_interval => INTERVAL '1 days',
                          partitioning_column => 'user_id',
@@ -96,6 +106,9 @@ ALTER TABLE tracker_tracks_target
 
 ALTER TABLE tracking_notification_alerts_user
     ADD FOREIGN KEY (tracking_notification_id) REFERENCES tracking_notification (id) ON DELETE CASCADE;
+
+ALTER TABLE emergency_alert
+    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
 
 ALTER TABLE location SET (
     timescaledb.compress,
