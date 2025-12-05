@@ -1,6 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
+CREATE EXTENSION IF NOT EXISTS "vector";
 
 CREATE TABLE location (
     longitude DOUBLE PRECISION NOT NULL,
@@ -29,14 +30,6 @@ CREATE TABLE poi (
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED
 );
 
-CREATE TABLE poi_duration (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    poi_id UUID NOT NULL,
-    day_of_week SMALLINT NOT NULL,
-    start_at TIME WITH TIME ZONE NOT NULL,
-    end_at TIME WITH TIME ZONE NOT NULL
-);
-
 CREATE TABLE poi_type (
     name VARCHAR(15) PRIMARY KEY
 );
@@ -56,9 +49,6 @@ CREATE TABLE voice_record (
 
 ALTER TABLE poi
     ADD FOREIGN KEY (type_name) REFERENCES poi_type(name);
-
-ALTER TABLE poi_duration
-    ADD FOREIGN KEY (poi_id) REFERENCES poi(id);
 
 ALTER TABLE poi_type_translation
     ADD FOREIGN KEY (type_name) REFERENCES poi_type(name);

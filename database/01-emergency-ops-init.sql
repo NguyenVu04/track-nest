@@ -10,9 +10,8 @@ CREATE TABLE emergency_service (
 );
 
 CREATE TABLE emergency_service_tracks_user (
-    user_id UUID NOT NULL,
-    emergency_service_id UUID NOT NULL,
-    PRIMARY KEY (user_id, emergency_service_id)
+    user_id UUID PRIMARY KEY,
+    emergency_service_id UUID NOT NULL
 );
 
 CREATE TABLE emergency_request (

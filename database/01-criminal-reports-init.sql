@@ -2,6 +2,10 @@ CREATE EXTENSION IF NOT EXISTS timescaledb;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
 
+CREATE TABLE reporter (
+    id UUID PRIMARY KEY
+);
+
 CREATE TABLE missing_person_report (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(255) NOT NULL,
@@ -63,5 +67,14 @@ ALTER TABLE missing_person_report
 
 ALTER TABLE missing_person_report_status_translation
     ADD FOREIGN KEY (status_name) REFERENCES missing_person_report_status(name) ON DELETE CASCADE;
+
+ALTER TABLE crime_report
+    ADD FOREIGN KEY (reporter_id) REFERENCES reporter(id);
+
+ALTER TABLE missing_person_report
+    ADD FOREIGN KEY (reporter_id) REFERENCES reporter(id);
+
+ALTER TABLE guidelines_document
+    ADD FOREIGN KEY (reporter_id) REFERENCES reporter(id);
 
 CREATE INDEX idx_crime_report_geom_spgist ON crime_report USING SPGIST (geom);
