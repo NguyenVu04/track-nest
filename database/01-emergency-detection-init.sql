@@ -8,8 +8,12 @@ CREATE TABLE location (
     "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     user_id UUID NOT NULL,
     anomaly BOOLEAN NOT NULL DEFAULT FALSE,
+    anomaly_score FLOAT NOT NULL DEFAULT 0,
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
-    PRIMARY KEY (user_id, "timestamp")
+    PRIMARY KEY (user_id, "timestamp"),
+    CHECK ( longitude >= -180 AND longitude <= 180 ),
+    CHECK ( latitude >= -90 AND latitude <= 90 ),
+    CHECK ( anomaly_score >= 0 AND anomaly_score <= 1 )
 );
 
 SELECT create_hypertable('location', 'timestamp',
@@ -26,7 +30,10 @@ CREATE TABLE poi (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     user_id UUID NOT NULL,
     type_name VARCHAR(15) NOT NULL,
-    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED
+    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
+    CHECK ( longitude >= -180 AND longitude <= 180 ),
+    CHECK ( latitude >= -90 AND latitude <= 90 ),
+    CHECK ( radius >= 0 )
 );
 
 CREATE TABLE poi_type (
@@ -53,8 +60,6 @@ ALTER TABLE poi_type_translation
     ADD FOREIGN KEY (type_name) REFERENCES poi_type(name);
 
 CREATE INDEX idx_poi_geom_gist ON poi USING GIST (geom);
-
-CREATE INDEX idx_location_user_time_desc ON location (user_id, "timestamp" DESC);
 
 CREATE INDEX idx_poi_user ON poi (user_id);
 

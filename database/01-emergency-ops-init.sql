@@ -6,7 +6,9 @@ CREATE TABLE emergency_service (
     id UUID PRIMARY KEY,
     longitude FLOAT NOT NULL,
     latitude FLOAT NOT NULL,
-    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED
+    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
+    CHECK ( longitude >= -180 AND longitude <= 180 ),
+    CHECK ( latitude >= -90 AND latitude <= 90 )
 );
 
 CREATE TABLE emergency_service_tracks_user (
@@ -21,7 +23,12 @@ CREATE TABLE emergency_request (
     sender_id UUID NOT NULL,
     target_id UUID NOT NULL,
     emergency_service_id UUID NOT NULL,
-    status_name VARCHAR(15) NOT NULL
+    status_name VARCHAR(15) NOT NULL,
+    longitude FLOAT NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
+    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
+    CHECK ( longitude >= -180 AND longitude <= 180 ),
+    CHECK ( latitude >= -90 AND latitude <= 90 )
 );
 
 CREATE TABLE emergency_request_status (
@@ -43,7 +50,8 @@ CREATE TABLE safe_zone (
     radius DOUBLE PRECISION NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     emergency_service_id UUID NOT NULL,
-    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED
+    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
+    CHECK ( longitude >= -180 AND longitude <= 180 AND latitude >= -90 AND latitude <= 90 )
 );
 
 ALTER TABLE emergency_service_tracks_user
@@ -61,6 +69,10 @@ ALTER TABLE emergency_request_status_translation
 ALTER TABLE safe_zone
     ADD FOREIGN KEY (emergency_service_id) REFERENCES emergency_service (id) ON DELETE CASCADE;
 
+CREATE INDEX idx_emergency_service_spglist ON emergency_service USING GIST (geom);
+
 CREATE INDEX idx_safe_zone_geom_spgist ON safe_zone USING SPGIST (geom);
+
+CREATE INDEX idx_emergency_request_geom_spgist ON emergency_request USING SPGIST (geom);
 
 CREATE INDEX idx_emergency_request_user_time_desc ON emergency_request (emergency_service_id, open_at DESC);

@@ -15,20 +15,31 @@ CREATE TABLE location (
     velocity FLOAT NOT NULL DEFAULT 0,
     user_id UUID NOT NULL,
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
-    PRIMARY KEY (user_id, "timestamp")
+    PRIMARY KEY (user_id, "timestamp"),
+    CHECK ( longitude >= -180 AND longitude <= 180 ),
+    CHECK ( latitude >= -90 AND latitude <= 90 ),
+    CHECK ( accuracy >= 0 ),
+    CHECK ( velocity >= 0 )
 );
 
+SELECT create_hypertable('location', 'timestamp',
+                         chunk_time_interval => INTERVAL '1 days',
+                         partitioning_column => 'user_id',
+                         number_partitions => 64);
+
 CREATE TABLE emergency_alert (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     verified BOOLEAN NOT NULL DEFAULT FALSE,
     user_id UUID NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     longitude DOUBLE PRECISION NOT NULL,
     latitude DOUBLE PRECISION NOT NULL,
-    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED
+    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
+    CHECK ( longitude >= -180 AND longitude <= 180 ),
+    CHECK ( latitude >= -90 AND latitude <= 90 ),
+    PRIMARY KEY (user_id, created_at)
 );
 
-SELECT create_hypertable('location', 'timestamp',
+SELECT create_hypertable('emergency_alert', 'created_at',
                          chunk_time_interval => INTERVAL '1 days',
                          partitioning_column => 'user_id',
                          number_partitions => 64);
@@ -112,13 +123,22 @@ ALTER TABLE emergency_alert
     ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
 
 ALTER TABLE location SET (
-    timescaledb.compress,
+    timescaledb.compress = true,
+    timescaledb.compress_segmentby = 'user_id',
+    timescaledb.compress_orderby = '"timestamp" DESC');
+
+ALTER TABLE emergency_alert SET (
+    timescaledb.compress = true,
     timescaledb.compress_segmentby = 'user_id',
     timescaledb.compress_orderby = '"timestamp" DESC');
 
 SELECT add_compression_policy('location', INTERVAL '7 days');
 
 SELECT add_retention_policy('location', INTERVAL '28 days');
+
+SELECT add_compression_policy('emergency_alert', INTERVAL '1 days');
+
+SELECT add_retention_policy('emergency_alert', INTERVAL '7 days');
 
 CREATE INDEX idx_location_user_time_desc ON location (user_id, "timestamp" DESC);
 

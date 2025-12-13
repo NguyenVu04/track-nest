@@ -59,7 +59,11 @@ CREATE TABLE crime_report (
     reporter_id UUID NOT NULL,
     public BOOLEAN NOT NULL DEFAULT FALSE,
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
-    CONSTRAINT chk_severity CHECK (severity >= 1 AND severity <= 5)
+    CHECK (severity >= 1 AND severity <= 5),
+    CHECK ( longitude >= -180 AND longitude <= 180 ),
+    CHECK ( latitude >= -90 AND latitude <= 90),
+    CHECK ( number_of_victims >= 0),
+    CHECK ( number_of_offenders >= 0)
 );
 
 ALTER TABLE missing_person_report
