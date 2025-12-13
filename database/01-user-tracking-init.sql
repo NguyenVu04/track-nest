@@ -81,7 +81,9 @@ CREATE TABLE tracking_permission (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     otp VARCHAR(15) NOT NULL,
     create_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    user_id UUID NOT NULL
+    user_id UUID NOT NULL,
+    number_of_attempts INTEGER NOT NULL DEFAULT 0,
+    CHECK ( number_of_attempts >= 0 )
 );
 
 CREATE TABLE tracker_tracks_target (
