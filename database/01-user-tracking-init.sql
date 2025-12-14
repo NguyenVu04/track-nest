@@ -148,6 +148,8 @@ CREATE INDEX idx_location_geom_spgist ON location USING SPGIST (geom);
 
 CREATE INDEX idx_mobile_device_user ON mobile_device (user_id);
 
-CREATE INDEX idx_tracking_notification_user ON tracking_notification (user_id);
+CREATE INDEX idx_tracking_notification_tracker ON tracking_notification (tracker_id);
+
+CREATE INDEX idx_tracking_notification_target ON tracking_notification (target_id);
 
 CREATE INDEX idx_risk_notification_user ON risk_notification (user_id);
