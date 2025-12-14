@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package project.tracknest.usertracking.proto;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+option java_package = "project.tracknest.usertracking.proto.lib";
+option java_outer_classname = "NotifierProto";
+
+service NotifierController {
+  rpc postMobileDevice (google.protobuf.StringValue) returns (google.protobuf.StringValue);
+  rpc deleteMobileDevice (google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc getTrackingNotifications (google.protobuf.Empty) returns (stream TrackingNotificationResponse);
+  rpc getRiskNotifications (google.protobuf.Empty) returns (stream RiskNotificationResponse);
+  rpc deleteTrackingNotification (google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc deleteRiskNotification (google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc deleteTrackingNotifications (stream google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc deleteRiskNotifications (stream google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc deleteAllTrackingNotifications (google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc deleteAllRiskNotifications (google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message TrackingNotificationResponse {
+  string id = 1;
+  string trackerId = 2;
+  string trackerUsername = 3;
+  string targetId = 4;
+  string targetUsername = 5;
+  uint64 createdAt = 6;
+  string title = 7;
+  string content = 8;
+  bool seen = 9;
+}
+
+message RiskNotificationResponse {
+  string id = 1;
+  string targetId = 2;
+  string targetUsername = 3;
+  uint64 createdAt = 4;
+  string title = 5;
+  string content = 6;
+  bool seen = 7;
+}

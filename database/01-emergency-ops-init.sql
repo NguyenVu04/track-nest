@@ -24,7 +24,7 @@ CREATE TABLE emergency_request (
     target_id UUID NOT NULL,
     emergency_service_id UUID NOT NULL,
     status_name VARCHAR(15) NOT NULL,
-    longitude FLOAT NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
     latitude DOUBLE PRECISION NOT NULL,
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
     CHECK ( longitude >= -180 AND longitude <= 180 ),

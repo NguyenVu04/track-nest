@@ -1,4 +1,11 @@
 BEGIN;
+INSERT INTO reporter (id) VALUES
+    ('2b16c1e4-c132-43f2-8875-ac877aef51ce'),
+    ('f6c0abe9-b995-420f-926c-78febdec0d5d'),
+    ('ead82f3a-d5e3-4845-905a-0ae5823f65a2'),
+    ('a1919fe8-f705-4422-898b-c76229868c21')
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO missing_person_report_status (name) VALUES
     ('PENDING'),('REJECTED'),('PUBLISHED')
 ON CONFLICT (name) DO NOTHING;

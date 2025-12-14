@@ -42,7 +42,7 @@ INSERT INTO mobile_device (id, language_code, device_token, created_at, user_id)
     ('aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', 'vi', 'token-user5-2', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO tracking_notification (id, type, title, content, created_at, user_id) VALUES
+INSERT INTO tracking_notification (id, type, title, content, created_at, target_id) VALUES
     ('bbbbbbbb-0000-4000-8000-bbbbbbbbbbbb', 'info', 'Track A', 'Content A', NOW(), 'dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
     ('bbbbbbbb-0001-4000-8000-bbbbbbbbbbbb', 'alert', 'Track B', 'Content B', NOW(), 'dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
     ('bbbbbbbb-0002-4000-8000-bbbbbbbbbbbb', 'info', 'Track C', 'Content C', NOW(), '8c52c01e-42a7-45cc-9254-db8a7601c764'),
@@ -68,7 +68,7 @@ INSERT INTO risk_notification (id, type, title, content, created_at, user_id) VA
     ('cccccccc-1009-4000-8000-cccccccccccc', 'risk', 'Risk J', 'Risk content J', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO tracking_notification_alerts_user (tracking_notification_id, user_id) VALUES
+INSERT INTO tracking_notification_alerts_user (notification_id, tracker_id) VALUES
     ('bbbbbbbb-0000-4000-8000-bbbbbbbbbbbb','8c52c01e-42a7-45cc-9254-db8a7601c764'),
     ('bbbbbbbb-0001-4000-8000-bbbbbbbbbbbb','4405a37d-bc86-403e-b605-bedd7db88d37'),
     ('bbbbbbbb-0002-4000-8000-bbbbbbbbbbbb','dd382dcf-3652-499c-acdb-5d9ce99a67b8'),

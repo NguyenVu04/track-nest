@@ -58,7 +58,6 @@ CREATE TABLE tracking_notification (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    tracker_id UUID NOT NULL,
     target_id UUID NOT NULL
 );
 
@@ -68,13 +67,15 @@ CREATE TABLE risk_notification (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    user_id UUID NOT NULL
+    user_id UUID NOT NULL,
+    seen BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE tracking_notification_alerts_user (
-    tracking_notification_id UUID NOT NULL,
-    user_id UUID NOT NULL,
-    PRIMARY KEY (tracking_notification_id, user_id)
+    notification_id UUID NOT NULL,
+    tracker_id UUID NOT NULL,
+    seen BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (notification_id, tracker_id)
 );
 
 CREATE TABLE tracking_permission (
@@ -101,13 +102,16 @@ ALTER TABLE mobile_device
     ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
 
 ALTER TABLE tracking_notification
-    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+    ADD FOREIGN KEY (target_id) REFERENCES "user" (id) ON DELETE CASCADE;
 
 ALTER TABLE risk_notification
     ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
 
 ALTER TABLE tracking_notification_alerts_user
-    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+    ADD FOREIGN KEY (tracker_id) REFERENCES "user" (id) ON DELETE CASCADE;
+
+ALTER TABLE tracking_notification_alerts_user
+    ADD FOREIGN KEY (notification_id) REFERENCES tracking_notification (id) ON DELETE CASCADE;
 
 ALTER TABLE tracking_permission
     ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
@@ -117,9 +121,6 @@ ALTER TABLE tracker_tracks_target
 
 ALTER TABLE tracker_tracks_target
     ADD FOREIGN KEY (target_id) references "user" (id) ON DELETE CASCADE;
-
-ALTER TABLE tracking_notification_alerts_user
-    ADD FOREIGN KEY (tracking_notification_id) REFERENCES tracking_notification (id) ON DELETE CASCADE;
 
 ALTER TABLE emergency_alert
     ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
@@ -132,7 +133,7 @@ ALTER TABLE location SET (
 ALTER TABLE emergency_alert SET (
     timescaledb.compress = true,
     timescaledb.compress_segmentby = 'user_id',
-    timescaledb.compress_orderby = '"timestamp" DESC');
+    timescaledb.compress_orderby = '"created_at" DESC');
 
 SELECT add_compression_policy('location', INTERVAL '7 days');
 
@@ -147,8 +148,6 @@ CREATE INDEX idx_location_user_time_desc ON location (user_id, "timestamp" DESC)
 CREATE INDEX idx_location_geom_spgist ON location USING SPGIST (geom);
 
 CREATE INDEX idx_mobile_device_user ON mobile_device (user_id);
-
-CREATE INDEX idx_tracking_notification_tracker ON tracking_notification (tracker_id);
 
 CREATE INDEX idx_tracking_notification_target ON tracking_notification (target_id);
 

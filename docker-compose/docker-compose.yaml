@@ -21,8 +21,8 @@ services:
   apisix:
     image: apache/apisix:latest
     volumes:
-      - ./apisix-standalone.yaml:/usr/local/apisix/conf/apisix.yaml:ro
-      - ./config-standalone.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./apisix/apisix-standalone.yaml:/usr/local/apisix/conf/apisix.yaml:ro
+      - ./apisix/config-standalone.yaml:/usr/local/apisix/conf/config.yaml:ro
     environment:
       - APISIX_STAND_ALONE=true
     ports:
@@ -220,7 +220,7 @@ services:
   #       hard: -1
 
   user_tracking_postgres:
-    image: timescale/timescaledb:latest-pg18
+    image: timescale/timescaledb-ha:pg17
     container_name: user_tracking_postgres
     environment:
       POSTGRES_USER: tracknestadmin
@@ -241,7 +241,7 @@ services:
       retries: 5
 
   emergency_ops_postgres:
-    image: timescale/timescaledb:latest-pg18
+    image: timescale/timescaledb-ha:pg17
     container_name: emergency_ops_postgres
     environment:
       POSTGRES_USER: tracknestadmin
@@ -262,7 +262,7 @@ services:
       retries: 5
 
   criminal_reports_postgres:
-    image: timescale/timescaledb:latest-pg18
+    image: timescale/timescaledb-ha:pg17
     container_name: criminal_reports_postgres
     environment:
       POSTGRES_USER: tracknestadmin
@@ -283,7 +283,7 @@ services:
       retries: 5
 
   emergency_detection_postgres:
-    image: timescale/timescaledb:latest-pg18
+    image: timescale/timescaledb-ha:pg17
     container_name: emergency_detection_postgres
     environment:
       POSTGRES_USER: tracknestadmin
