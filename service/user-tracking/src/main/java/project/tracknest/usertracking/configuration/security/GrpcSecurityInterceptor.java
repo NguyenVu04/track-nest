@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import project.tracknest.usertracking.configuration.security.datatype.KeycloakUserInfoHeader;
 import project.tracknest.usertracking.core.datatype.KeycloakPrincipal;
 import project.tracknest.usertracking.core.datatype.KeycloakUserDetails;
 
@@ -64,7 +65,6 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception ex) {
                 log.warn("Failed to set gRPC security context from x-userinfo: {}", ex.getMessage());
-                // proceed without authentication
             }
         }
 

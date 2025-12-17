@@ -51,7 +51,7 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
     }
 
     @Override
-    public void getTargetsLastLocation(Empty request, StreamObserver<LocationResponse> responseObserver) {
+    public void getTargetsLastLocations(Empty request, StreamObserver<LocationResponse> responseObserver) {
         List<LocationResponse> responses = queryService.retrieveTargetsLastLocation();
 
         for (LocationResponse response : responses) {

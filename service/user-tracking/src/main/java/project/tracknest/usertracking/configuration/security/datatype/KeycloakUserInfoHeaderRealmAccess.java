@@ -1,4 +1,4 @@
-package project.tracknest.usertracking.configuration.security;
+package project.tracknest.usertracking.configuration.security.datatype;
 
 import lombok.Data;
 

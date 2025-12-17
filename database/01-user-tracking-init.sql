@@ -81,7 +81,8 @@ CREATE TABLE tracking_notification_alerts_user (
 CREATE TABLE tracking_permission (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     otp VARCHAR(15) NOT NULL,
-    create_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    expired_at TIMESTAMP WITH TIME ZONE NOT NULL,
     user_id UUID NOT NULL,
     number_of_attempts INTEGER NOT NULL DEFAULT 0,
     CHECK ( number_of_attempts >= 0 )
