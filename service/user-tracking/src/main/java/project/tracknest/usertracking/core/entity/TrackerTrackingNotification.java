@@ -18,6 +18,10 @@ public class TrackerTrackingNotification {
     @Column(name = "seen", nullable = false)
     private boolean seen;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "notification_id", insertable = false, updatable = false)
+    private TrackingNotification notification;
+
     @Data
     @Embeddable
     @Builder

@@ -34,6 +34,10 @@ public class Location {
     @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", updatable = false)
     private Point geom;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private User user;
+
     @Data
     @Embeddable
     @Builder

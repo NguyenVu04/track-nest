@@ -30,4 +30,17 @@ interface LocationQueryRepository extends JpaRepository<Location, Location.Locat
             @Param("longitude") float longitude,
             @Param("latitude") float latitude,
             @Param("radius") double radius);
+
+    @Query(
+            value = "SELECT DISTINCT ON (l.user_id) l.* " +
+                    "FROM location l " +
+                    "WHERE l.user_id IN (:userIds) " +
+                    "ORDER BY l.user_id, l.timestamp DESC",
+            nativeQuery = true
+    )
+    @QueryHints(value = {
+            @QueryHint(name = "org.hibernate.fetchSize", value = "256"),
+            @QueryHint(name = "org.hibernate.readOnly", value = "true")
+    })
+    List<Location> findLatestByUserIdIn(@Param("userIds") Set<UUID> userIds);
 }

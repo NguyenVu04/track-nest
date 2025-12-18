@@ -27,7 +27,7 @@ class LocationObserverImpl implements LocationObserver, LocationStreamObserverRe
             observers.forEach(observer -> {
                 LocationResponse response = LocationResponse.newBuilder()
                         .setUserId(message.userId().toString())
-                        .setUsername("") //TODO: Username can be set if available
+                        .setUsername(message.username())
                         .setTimestamp(message.timestamp())
                         .setLatitude(message.latitude())
                         .setLongitude(message.longitude())

@@ -6,6 +6,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface LocationQueryService {
-    List<LocationResponse> retrieveTargetsLastLocation();
+    List<LocationResponse> retrieveTargetsLastLocations(UUID trackerId);
     List<LocationResponse> retrieveTargetLocationHistory(UUID targetId);
 }

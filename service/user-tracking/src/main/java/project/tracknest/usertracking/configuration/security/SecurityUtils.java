@@ -5,6 +5,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import project.tracknest.usertracking.core.datatype.KeycloakPrincipal;
+import project.tracknest.usertracking.core.datatype.KeycloakUserDetails;
 
 import java.util.UUID;
 
@@ -16,7 +17,7 @@ public class SecurityUtils {
                 .getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
-            log.error("No authenticated user found in security context");
+            log.error("No authenticated user found in security context when trying to get user ID");
             throw new AuthenticationException("User is not authenticated") {};
         }
 
@@ -31,5 +32,23 @@ public class SecurityUtils {
             log.error("Failed to parse user ID from principal name: {}", principal.getName(), e);
             throw new AuthenticationException("Invalid user ID format") {};
         }
+    }
+
+    public static KeycloakUserDetails getCurrentUserDetails() throws AuthenticationException {
+        Authentication authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            log.error("No authenticated user found in security context when trying to get user details");
+            throw new AuthenticationException("User is not authenticated") {};
+        }
+
+        if (!(authentication.getPrincipal() instanceof KeycloakUserDetails userDetails)) {
+            log.error("Authenticated principal is not of type KeycloakUserDetails");
+            throw new AuthenticationException("Invalid user principal type") {};
+        }
+
+        return userDetails;
     }
 }

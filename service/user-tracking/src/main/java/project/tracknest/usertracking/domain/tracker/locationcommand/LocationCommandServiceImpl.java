@@ -22,7 +22,7 @@ public class LocationCommandServiceImpl implements LocationCommandService {
 
     @Override
     @Transactional
-    public void updateLocation(UUID userId, LocationRequest request) {
+    public void updateLocation(UUID userId, String username, LocationRequest request) {
         //!TODO: Add update user connected status
         Location location = Location.builder()
                 .latitude(request.getLatitude())
@@ -44,6 +44,7 @@ public class LocationCommandServiceImpl implements LocationCommandService {
 
         LocationMessage message = LocationMessage.builder()
                 .userId(userId)
+                .username(username)
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
                 .accuracy(request.getAccuracy())

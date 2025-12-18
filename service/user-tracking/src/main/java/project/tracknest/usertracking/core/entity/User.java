@@ -20,6 +20,9 @@ public class User {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
+    @Column(name = "online", nullable = false)
+    private boolean online;
+
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinTable(
             name = "tracker_tracks_target",

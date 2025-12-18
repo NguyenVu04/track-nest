@@ -7,6 +7,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
+import project.tracknest.usertracking.core.datatype.KeycloakUserDetails;
 import project.tracknest.usertracking.domain.tracker.locationcommand.LocationCommandService;
 import project.tracknest.usertracking.domain.tracker.locationquery.LocationQueryService;
 import project.tracknest.usertracking.domain.tracker.locationquery.LocationStreamObserverRegistry;
@@ -17,7 +18,7 @@ import project.tracknest.usertracking.proto.lib.TrackerControllerGrpc;
 import java.util.List;
 import java.util.UUID;
 
-import static project.tracknest.usertracking.configuration.security.SecurityUtils.getCurrentUserId;
+import static project.tracknest.usertracking.configuration.security.SecurityUtils.getCurrentUserDetails;
 
 @GrpcService
 @RequiredArgsConstructor
@@ -29,11 +30,11 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
 
     @Override
     public StreamObserver<LocationRequest> postLocation(StreamObserver<Empty> responseObserver) {
-        final UUID userId = getCurrentUserId();
+        final KeycloakUserDetails userDetails = getCurrentUserDetails();
         return new StreamObserver<>() {
             @Override
             public void onNext(LocationRequest request) {
-                commandService.updateLocation(userId, request);
+                commandService.updateLocation(userDetails.getUserId(), userDetails.getUsername(), request);
             }
 
             @Override
@@ -52,7 +53,9 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
 
     @Override
     public void getTargetsLastLocations(Empty request, StreamObserver<LocationResponse> responseObserver) {
-        List<LocationResponse> responses = queryService.retrieveTargetsLastLocation();
+        final UUID trackerId = getCurrentUserDetails().getUserId();
+
+        List<LocationResponse> responses = queryService.retrieveTargetsLastLocations(trackerId);
 
         for (LocationResponse response : responses) {
             responseObserver.onNext(response);

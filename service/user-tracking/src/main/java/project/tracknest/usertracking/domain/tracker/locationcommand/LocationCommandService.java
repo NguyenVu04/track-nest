@@ -5,5 +5,5 @@ import project.tracknest.usertracking.proto.lib.LocationRequest;
 import java.util.UUID;
 
 public interface LocationCommandService {
-    void updateLocation(UUID userId, LocationRequest request);
+    void updateLocation(UUID userId, String username, LocationRequest request);
 }
