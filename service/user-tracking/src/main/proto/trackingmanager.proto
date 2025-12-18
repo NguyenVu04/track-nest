@@ -27,7 +27,8 @@ message PostConnectionRequest {
 message PermissionResponse {
   string id = 1;
   string otp = 2;
-  uint64 createdAt = 3;
+  uint64 createdAt = 3;//seconds since epoch
+  uint64 expiredAt = 4;//seconds since epoch
 }
 
 message TargetResponse {

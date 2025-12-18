@@ -20,8 +20,11 @@ public class User {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "online", nullable = false)
-    private boolean online;
+    @Column(name = "connected", nullable = false)
+    private boolean connected;
+
+    @Column(name = "username", nullable = false, unique = true)
+    private String username;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinTable(

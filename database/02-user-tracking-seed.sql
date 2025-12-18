@@ -1,10 +1,10 @@
 BEGIN;
-INSERT INTO "user" (id, connected) VALUES
-    ('dd382dcf-3652-499c-acdb-5d9ce99a67b8', TRUE),
-    ('8c52c01e-42a7-45cc-9254-db8a7601c764', TRUE),
-    ('4405a37d-bc86-403e-b605-bedd7db88d37', FALSE),
-    ('2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', TRUE),
-    ('f8f735b4-549c-4d8c-9e10-15f8c198b71b', FALSE)
+INSERT INTO "user" (id, username, connected) VALUES
+    ('dd382dcf-3652-499c-acdb-5d9ce99a67b8', 'user1', TRUE),
+    ('8c52c01e-42a7-45cc-9254-db8a7601c764', 'user2', TRUE),
+    ('4405a37d-bc86-403e-b605-bedd7db88d37', 'user3', FALSE),
+    ('2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'user4', TRUE),
+    ('f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'admin', FALSE)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO location (longitude, latitude, "timestamp", accuracy, velocity, user_id) VALUES

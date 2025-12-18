@@ -24,13 +24,13 @@ public class RiskNotification {
     @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
 
-    @Column(name = "title", nullable = false)
+    @Column(name = "title", nullable = false, length = 255)
     private String title;
 
-    @Column(name = "content", nullable = false)
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "type", nullable = false)
+    @Column(name = "type", nullable = false, length = 50)
     private String type;
 
     @Column(name = "created_at", updatable = false, insertable = false)

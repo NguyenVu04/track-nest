@@ -28,7 +28,7 @@ message TrackingNotificationResponse {
   string trackerUsername = 3;
   string targetId = 4;
   string targetUsername = 5;
-  uint64 createdAt = 6;
+  uint64 createdAt = 6;//seconds since epoch
   string title = 7;
   string content = 8;
   bool seen = 9;
@@ -38,7 +38,7 @@ message RiskNotificationResponse {
   string id = 1;
   string targetId = 2;
   string targetUsername = 3;
-  uint64 createdAt = 4;
+  uint64 createdAt = 4;//seconds since epoch
   string title = 5;
   string content = 6;
   bool seen = 7;

@@ -21,7 +21,7 @@ public class MobileDevice {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "device_token", nullable = false, updatable = false)
+    @Column(name = "device_token", nullable = false, updatable = false, columnDefinition = "TEXT")
     private String deviceToken;
 
     @Column(name = "created_at", updatable = false, insertable = false)

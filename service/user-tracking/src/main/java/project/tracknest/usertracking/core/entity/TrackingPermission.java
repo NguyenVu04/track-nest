@@ -30,7 +30,7 @@ public class TrackingPermission {
     @Column(name = "expired_at", nullable = false, updatable = false)
     private OffsetDateTime expiredAt;
 
-    @Column(name = "otp", nullable = false, updatable = false)
+    @Column(name = "otp", nullable = false, updatable = false, length = 15)
     private String otp;
 
     @Column(name = "number_of_attempts", nullable = false)

@@ -50,14 +50,15 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
         }
 
         Set<User> targets = trackerOpt.get().getTargets();
-        //TODO: how to get username here?
+
         return locationRepository.findLatestByUserIdIn(
                 targets.stream().map(User::getId)
                         .collect(Collectors.toSet())
         ).stream().map(location -> LocationResponse.newBuilder()
                 .setUserId(location.getId().getUserId().toString())
                 .setAccuracy(location.getAccuracy())
-                .setConnected(location.getUser().isOnline())
+                .setConnected(location.getUser().isConnected())
+                .setUsername(location.getUser().getUsername())
                 .setVelocity(location.getVelocity())
                 .setLatitude(location.getLatitude())
                 .setLongitude(location.getLongitude())
