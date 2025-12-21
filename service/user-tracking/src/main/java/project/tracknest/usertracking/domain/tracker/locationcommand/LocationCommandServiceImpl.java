@@ -45,7 +45,7 @@ public class LocationCommandServiceImpl implements LocationCommandService {
                         .userId(userId)
                         .timestamp(
                                 OffsetDateTime.ofInstant(
-                                        Instant.ofEpochMilli(
+                                        Instant.ofEpochSecond(
                                                 request.getTimestamp()),
                                         ZoneOffset.UTC))
                         .build())
