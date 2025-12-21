@@ -6,11 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.entity.Location;
+import project.tracknest.usertracking.core.entity.User;
 import project.tracknest.usertracking.proto.lib.LocationRequest;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -19,11 +21,20 @@ import java.util.UUID;
 public class LocationCommandServiceImpl implements LocationCommandService {
     private final LocationCommandRepository locationRepository;
     private final LocationMessageProducer messageProducer;
+    private final LocationCommandUserRepository userRepository;
 
     @Override
     @Transactional
     public void updateLocation(UUID userId, String username, LocationRequest request) {
-        //!TODO: Add update user connected status
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            log.warn("User with id {} not found. Cannot update location.", userId);
+            return;
+        }
+        User user = userOpt.get();
+        user.setConnected(true);
+        userRepository.save(user);
+
         Location location = Location.builder()
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())

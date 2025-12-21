@@ -19,10 +19,10 @@ public class Location {
     private LocationId id;
 
     @Column(name = "latitude", nullable = false, updatable = false)
-    private float latitude;
+    private double latitude;
 
     @Column(name = "longitude", nullable = false, updatable = false)
-    private float longitude;
+    private double longitude;
 
     @Column(name = "accuracy", nullable = false, updatable = false)
     private float accuracy;

@@ -8,7 +8,6 @@ routes:
         introspection_endpoint: "http://keycloak:8080/realms/tracknest-user/protocol/openid-connect/token/introspect"
         scope: "openid profile"
         realm: "tracknest-user"
-        set_userinfo_header: true
         bearer_only: true
     upstream:
       scheme: "grpc"

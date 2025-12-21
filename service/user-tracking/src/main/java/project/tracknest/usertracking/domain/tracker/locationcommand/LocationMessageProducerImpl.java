@@ -22,11 +22,11 @@ class LocationMessageProducerImpl implements LocationMessageProducer {
     @Override
     public void produce(LocationMessage message) {
         CompletableFuture<?> future = kafkaTemplate.send(TOPIC, message);
-        future.whenComplete((result, ex) -> {
+        future.whenComplete((_, ex) -> {
             if (ex != null) {
                 log.error("Failed to send location message: {}", ex.getMessage());
             } else {
-                log.info("Location message sent successfully with result: {}", result);
+                log.info("Location message of user {} sent successfully", message.userId());
             }
         });
     }

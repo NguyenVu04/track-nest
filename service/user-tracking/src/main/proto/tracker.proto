@@ -16,8 +16,8 @@ service TrackerController {
 }
 
 message LocationRequest {
-  float latitude = 1;
-  float longitude = 2;
+  double latitude = 1;
+  double longitude = 2;
   uint64 timestamp = 3;//seconds since epoch
   float accuracy = 4;
   float velocity = 5;
@@ -27,8 +27,8 @@ message LocationResponse {
   string id = 1;
   string userId = 2;
   string username = 3;
-  float latitude = 4;
-  float longitude = 5;
+  double latitude = 4;
+  double longitude = 5;
   uint64 timestamp = 6;//seconds since epoch
   float accuracy = 7;
   float velocity = 8;

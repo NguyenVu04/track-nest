@@ -6,12 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "user")
+@Table(name = "\"user\"")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,7 +32,7 @@ public class User {
             joinColumns = @JoinColumn(name = "tracker_id"),
             inverseJoinColumns = @JoinColumn(name = "target_id")
     )
-    private Set<User> targets;
+    private List<User> targets;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinTable(
@@ -40,5 +40,5 @@ public class User {
             joinColumns = @JoinColumn(name = "target_id"),
             inverseJoinColumns = @JoinColumn(name = "tracker_id")
     )
-    private Set<User> trackers;
+    private List<User> trackers;
 }

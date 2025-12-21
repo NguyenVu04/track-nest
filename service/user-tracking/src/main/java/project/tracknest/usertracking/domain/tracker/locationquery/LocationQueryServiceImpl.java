@@ -10,7 +10,6 @@ import project.tracknest.usertracking.proto.lib.LocationResponse;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,7 +31,7 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
             return;
         }
 
-        Set<User> trackers = userOpt.get().getTrackers();
+        List<User> trackers = userOpt.get().getTrackers();
 
         trackers.forEach((tracker) -> observer.sendTargetLocation(tracker.getId(), message));
 
@@ -49,7 +48,7 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
             return List.of();
         }
 
-        Set<User> targets = trackerOpt.get().getTargets();
+        List<User> targets = trackerOpt.get().getTargets();
 
         return locationRepository.findLatestByUserIdIn(
                 targets.stream().map(User::getId)

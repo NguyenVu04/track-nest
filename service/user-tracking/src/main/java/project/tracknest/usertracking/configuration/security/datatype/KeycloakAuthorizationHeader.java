@@ -2,17 +2,23 @@ package project.tracknest.usertracking.configuration.security.datatype;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Data;
 
 import java.util.UUID;
 
+@Builder
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class KeycloakUserInfoHeader {
+public class KeycloakAuthorizationHeader {
     @JsonProperty("sub")
     private UUID userId;
+    @JsonProperty("preferred_username")
     private String username;
+    private String name;
     private String email;
+    @JsonProperty("exp")
+    private Long expiration;
     @JsonProperty("realm_access")
-    private KeycloakUserInfoHeaderRealmAccess realmAccess;
+    private KeycloakAuthorizationHeaderRealmAccess realmAccess;
 }

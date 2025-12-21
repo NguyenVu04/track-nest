@@ -44,9 +44,9 @@ public class SecurityUtils {
             throw new AuthenticationException("User is not authenticated") {};
         }
 
-        if (!(authentication.getPrincipal() instanceof KeycloakUserDetails userDetails)) {
-            log.error("Authenticated principal is not of type KeycloakUserDetails");
-            throw new AuthenticationException("Invalid user principal type") {};
+        if (!(authentication.getDetails() instanceof KeycloakUserDetails userDetails)) {
+            log.error("UserDetails is not of type KeycloakUserDetails");
+            throw new AuthenticationException("Invalid user UserDetails type") {};
         }
 
         return userDetails;

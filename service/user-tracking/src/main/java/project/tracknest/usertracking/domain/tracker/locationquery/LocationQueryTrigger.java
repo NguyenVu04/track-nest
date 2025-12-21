@@ -10,7 +10,6 @@ import project.tracknest.usertracking.core.datatype.LocationMessage;
 @Slf4j
 public class LocationQueryTrigger {
     private final LocationMessageConsumer service;
-    private final ObjectMapper MAPPER = new ObjectMapper();
 
     public LocationQueryTrigger(LocationMessageConsumer service) {
         this.service = service;

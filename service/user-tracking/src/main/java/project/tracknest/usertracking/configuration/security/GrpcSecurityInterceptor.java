@@ -1,6 +1,5 @@
 package project.tracknest.usertracking.configuration.security;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.*;
 import io.grpc.ForwardingServerCallListener.SimpleForwardingServerCallListener;
@@ -8,12 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import project.tracknest.usertracking.configuration.security.datatype.KeycloakUserInfoHeader;
+import project.tracknest.usertracking.configuration.security.datatype.KeycloakAuthorizationHeader;
 import project.tracknest.usertracking.core.datatype.KeycloakPrincipal;
 import project.tracknest.usertracking.core.datatype.KeycloakUserDetails;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -22,10 +20,9 @@ import java.util.regex.Pattern;
 public class GrpcSecurityInterceptor implements ServerInterceptor {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final int MAX_HEADER_LENGTH = 4096;
-    private static final Pattern BASE64_URL_SAFE_PATTERN = Pattern
-            .compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$");
-    private static final Metadata.Key<String> USERINFO_KEY =
-            Metadata.Key.of("X-Userinfo", Metadata.ASCII_STRING_MARSHALLER);
+    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer [A-Za-z0-9\\-_=]+\\.[A-Za-z0-9\\-_=]+\\.?[A-Za-z0-9\\-_.+/=]*$");
+    private static final Metadata.Key<String> AUTHORIZATION_KEY =
+            Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
 
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
@@ -33,10 +30,8 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
             Metadata headers,
             ServerCallHandler<ReqT, RespT> next) {
 
-        String userInfoHeader = headers.get(USERINFO_KEY);
-        log.info("Received x-userinfo header: {}", userInfoHeader);
-        KeycloakUserInfoHeader decoded = decodeKeycloakUserInfoHeader(userInfoHeader);
-        log.info("Decoded x-userinfo header: {}", decoded);
+        String authorizationHeader = headers.get(AUTHORIZATION_KEY);
+        KeycloakAuthorizationHeader decoded = decodeKeycloakauthorizationHeader(authorizationHeader);
 
         if (decoded != null) {
             try {
@@ -59,13 +54,15 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
                         .build();
 
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(principal, null, roles);
+                        new UsernamePasswordAuthenticationToken(principal, authorizationHeader, roles);
                 authentication.setDetails(userDetails);
                 log.info("Setting gRPC security context with user: {}", principal.getName());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception ex) {
-                log.warn("Failed to set gRPC security context from x-userinfo: {}", ex.getMessage());
+                log.warn("Failed to set gRPC security context from authorization header: {}", ex.getMessage());
             }
+        } else {
+            log.warn("No valid Authorization header found in gRPC metadata");
         }
 
         ServerCall.Listener<ReqT> delegate = next.startCall(call, headers);
@@ -91,25 +88,29 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
         };
     }
 
-    private KeycloakUserInfoHeader decodeKeycloakUserInfoHeader(String userInfoHeader) {
-        if (userInfoHeader == null || userInfoHeader.trim().isEmpty())
+    private KeycloakAuthorizationHeader decodeKeycloakauthorizationHeader(String authorizationHeader) {
+        if (authorizationHeader == null || authorizationHeader.trim().isEmpty())
             return null;
 
-        if (userInfoHeader.length() > MAX_HEADER_LENGTH)
+        if (authorizationHeader.length() > MAX_HEADER_LENGTH)
             return null;
 
-        if (!BASE64_URL_SAFE_PATTERN.matcher(userInfoHeader).matches())
+        if (!BEARER_TOKEN_PATTERN.matcher(authorizationHeader).matches())
             return null;
 
         try {
-            Base64.Decoder decoder = userInfoHeader.contains("-") || userInfoHeader.contains("_")
-                    ? Base64.getUrlDecoder()
-                    : Base64.getDecoder();
+            String jwt = authorizationHeader.substring(7); // Remove "Bearer " prefix
 
-            String json = new String(decoder.decode(userInfoHeader), StandardCharsets.UTF_8);
+            String[] parts = jwt.split("\\."); // JWT has three parts: header, payload, signature
 
-            JsonNode node = MAPPER.readTree(json);
-            return MAPPER.treeToValue(node, KeycloakUserInfoHeader.class);
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+
+            KeycloakAuthorizationHeader header = MAPPER.readValue(payload, KeycloakAuthorizationHeader.class);
+            if (header.getExpiration() * 1000 < System.currentTimeMillis()) {
+                log.warn("Authorization header token is expired");
+                return null;
+            }
+            return header;
         } catch (IllegalArgumentException | IOException ex) {
             return null;
         }
