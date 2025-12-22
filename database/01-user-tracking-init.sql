@@ -1,10 +1,12 @@
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
+CREATE EXTENSION IF NOT EXISTS "pg_cron";
 
 CREATE TABLE "user" (
     id UUID PRIMARY KEY,
     connected BOOLEAN NOT NULL DEFAULT TRUE,
+    last_active TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     username VARCHAR(255) NOT NULL UNIQUE
 );
 
@@ -154,3 +156,12 @@ CREATE INDEX idx_mobile_device_user ON mobile_device (user_id);
 CREATE INDEX idx_tracking_notification_target ON tracking_notification (target_id);
 
 CREATE INDEX idx_risk_notification_user ON risk_notification (user_id);
+
+SELECT cron.schedule(
+    'clear_expired_tracking_permissions',
+    '*/30 * * * *',
+    $$
+    DELETE FROM tracking_permission
+    WHERE expired_at < NOW();
+    $$
+);

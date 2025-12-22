@@ -11,6 +11,7 @@ import project.tracknest.usertracking.core.datatype.KeycloakUserDetails;
 import project.tracknest.usertracking.domain.tracker.locationcommand.LocationCommandService;
 import project.tracknest.usertracking.domain.tracker.locationquery.LocationQueryService;
 import project.tracknest.usertracking.domain.tracker.locationquery.LocationStreamObserverRegistry;
+import project.tracknest.usertracking.proto.lib.LocationHistoryRequest;
 import project.tracknest.usertracking.proto.lib.LocationRequest;
 import project.tracknest.usertracking.proto.lib.LocationResponse;
 import project.tracknest.usertracking.proto.lib.TrackerControllerGrpc;
@@ -34,17 +35,20 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
         return new StreamObserver<>() {
             @Override
             public void onNext(LocationRequest request) {
-                commandService.updateLocation(userDetails.getUserId(), userDetails.getUsername(), request);
+                commandService.updateLocation(
+                        userDetails.getUserId(),
+                        userDetails.getUsername(),
+                        request);
             }
 
             @Override
             public void onError(Throwable t) {
-                //!TODO: handle error by sending notification to guardians
-                log.error("Error receiving location data", t);
+                log.warn("Error receiving location stream from user {}", userDetails.getUserId());
             }
 
             @Override
             public void onCompleted() {
+                log.info("Location stream from user {} completed", userDetails.getUserId());
                 responseObserver.onNext(Empty.getDefaultInstance());
                 responseObserver.onCompleted();
             }
@@ -76,9 +80,10 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
     }
 
     @Override
-    public void getTargetLocationHistory(StringValue targetId, StreamObserver<LocationResponse> responseObserver) {
-        UUID targetUuid = UUID.fromString(targetId.getValue());
-        List<LocationResponse> responses = queryService.retrieveTargetLocationHistory(targetUuid);
+    public void getTargetLocationHistory(LocationHistoryRequest request, StreamObserver<LocationResponse> responseObserver) {
+        final UUID trackerId = getCurrentUserDetails().getUserId();
+
+        List<LocationResponse> responses = queryService.retrieveTargetLocationHistory(trackerId, request);
         for (LocationResponse response : responses) {
             responseObserver.onNext(response);
         }

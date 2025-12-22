@@ -12,7 +12,14 @@ option java_outer_classname = "TrackerProto";
 service TrackerController {
   rpc postLocation (stream LocationRequest) returns (google.protobuf.Empty);
   rpc getTargetsLastLocations (google.protobuf.Empty) returns (stream LocationResponse);
-  rpc getTargetLocationHistory (google.protobuf.StringValue) returns (stream LocationResponse);
+  rpc getTargetLocationHistory (LocationHistoryRequest) returns (stream LocationResponse);
+}
+
+message LocationHistoryRequest {
+  string targetUserId = 1;
+  double longitude = 2;
+  double latitude = 3;
+  float radius = 4;
 }
 
 message LocationRequest {
@@ -33,4 +40,5 @@ message LocationResponse {
   float accuracy = 7;
   float velocity = 8;
   bool connected = 9;
+  uint64 lastActive = 10;//seconds since epoch
 }

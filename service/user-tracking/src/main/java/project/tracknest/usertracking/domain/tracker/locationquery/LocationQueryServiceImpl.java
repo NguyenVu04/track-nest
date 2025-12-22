@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.entity.User;
+import project.tracknest.usertracking.proto.lib.LocationHistoryRequest;
 import project.tracknest.usertracking.proto.lib.LocationResponse;
 
 import java.util.List;
@@ -57,17 +58,57 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
                 .setUserId(location.getId().getUserId().toString())
                 .setAccuracy(location.getAccuracy())
                 .setConnected(location.getUser().isConnected())
+                .setLastActive(location.getUser()
+                        .getLastActive()
+                        .toEpochSecond())
                 .setUsername(location.getUser().getUsername())
                 .setVelocity(location.getVelocity())
                 .setLatitude(location.getLatitude())
                 .setLongitude(location.getLongitude())
-                .setTimestamp(location.getId().getTimestamp().toEpochSecond())
+                .setTimestamp(location.getId()
+                        .getTimestamp()
+                        .toEpochSecond())
                 .build()).toList();
     }
 
     @Override
-    public List<LocationResponse> retrieveTargetLocationHistory(UUID targetId) {
-        //TODO: implement retrieval of location history for the specified targetId if the current user is allowed to track it
-        return List.of();
+    public List<LocationResponse> retrieveTargetLocationHistory(UUID trackerId, LocationHistoryRequest request) {
+        UUID targetId = UUID.fromString(request.getTargetUserId());
+
+        if (!userRepository.existsTrackingConnection(trackerId, targetId)) {
+            log.warn("No tracking connection between tracker {} and target {}. Cannot retrieve location history.",
+                    trackerId, targetId);
+            return List.of();
+        }
+
+        Optional<User> targetOpt = userRepository.findById(targetId);
+        if (targetOpt.isEmpty()) {
+            log.warn("Target user with id {} not found. Cannot retrieve location history.", targetId);
+            return List.of();
+        }
+        User target = targetOpt.get();
+
+        return locationRepository.findByUserIdAndWithinRadius(
+                targetId,
+                request.getLongitude(),
+                request.getLatitude(),
+                request.getRadius()
+        ).stream().map(location -> LocationResponse
+                .newBuilder()
+                        .setUserId(target.getId().toString())
+                        .setUsername(target.getUsername())
+                        .setAccuracy(location.getAccuracy())
+                        .setConnected(location.getUser()
+                                .isConnected())
+                        .setUsername(location.getUser()
+                                .getUsername())
+                        .setVelocity(location.getVelocity())
+                        .setLatitude(location.getLatitude())
+                        .setLongitude(location.getLongitude())
+                        .setTimestamp(location.getId()
+                                .getTimestamp()
+                                .toEpochSecond())
+                        .build())
+                .toList();
     }
 }

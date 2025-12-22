@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +23,9 @@ public class User {
 
     @Column(name = "connected", nullable = false)
     private boolean connected;
+
+    @Column(name = "last_active", nullable = false)
+    private OffsetDateTime lastActive;
 
     @Column(name = "username", nullable = false, unique = true)
     private String username;

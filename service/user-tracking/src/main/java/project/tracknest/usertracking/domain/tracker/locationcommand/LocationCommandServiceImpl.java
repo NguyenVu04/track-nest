@@ -3,6 +3,7 @@ package project.tracknest.usertracking.domain.tracker.locationcommand;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.entity.Location;
@@ -14,6 +15,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +25,11 @@ public class LocationCommandServiceImpl implements LocationCommandService {
     private final LocationMessageProducer messageProducer;
     private final LocationCommandUserRepository userRepository;
 
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    public void disconnectInactiveUsers() {
+        //TODO: Disconnect users who have not sent location updates in the last 3 minutes
+    }
+
     @Override
     @Transactional
     public void updateLocation(UUID userId, String username, LocationRequest request) {
@@ -31,8 +38,15 @@ public class LocationCommandServiceImpl implements LocationCommandService {
             log.warn("User with id {} not found. Cannot update location.", userId);
             return;
         }
+
+        OffsetDateTime timestamp = OffsetDateTime.ofInstant(
+                Instant.ofEpochSecond(
+                        request.getTimestamp()),
+                ZoneOffset.UTC);
+
         User user = userOpt.get();
         user.setConnected(true);
+        user.setLastActive(timestamp);
         userRepository.save(user);
 
         Location location = Location.builder()
@@ -43,11 +57,7 @@ public class LocationCommandServiceImpl implements LocationCommandService {
                 .id(Location.LocationId
                         .builder()
                         .userId(userId)
-                        .timestamp(
-                                OffsetDateTime.ofInstant(
-                                        Instant.ofEpochSecond(
-                                                request.getTimestamp()),
-                                        ZoneOffset.UTC))
+                        .timestamp(timestamp)
                         .build())
                 .build();
 
@@ -66,5 +76,10 @@ public class LocationCommandServiceImpl implements LocationCommandService {
         messageProducer.produce(message);
 
         log.info("Received request to update location command");
+    }
+
+    @Override
+    public void disconnectInactiveUsers(UUID userId) {
+
     }
 }
