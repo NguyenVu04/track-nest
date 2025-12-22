@@ -87,5 +87,7 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
         for (LocationResponse response : responses) {
             responseObserver.onNext(response);
         }
+
+        responseObserver.onCompleted();
     }
 }

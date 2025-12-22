@@ -36,6 +36,7 @@ message TargetResponse {
   string userId = 2;
   string username = 3;
   bool online = 4;
+  uint64 lastActive = 5;//seconds since epoch
 }
 
 message TrackerResponse {
@@ -43,4 +44,5 @@ message TrackerResponse {
   string userId = 2;
   string username = 3;
   bool online = 4;
+  uint64 lastActive = 5;//seconds since epoch
 }
