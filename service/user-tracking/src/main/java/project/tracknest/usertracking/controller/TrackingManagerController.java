@@ -22,7 +22,7 @@ public class TrackingManagerController extends TrackingManagerControllerGrpc.Tra
     private final TrackingManagerService service;
 
     @Override
-    public void postConnection(PostConnectionRequest request, StreamObserver<Empty> responseObserver) {
+    public void postConnection(ConnectionRequest request, StreamObserver<Empty> responseObserver) {
         UUID trackerId = getCurrentUserId();
 
         service.createConnection(trackerId, request);
@@ -62,7 +62,7 @@ public class TrackingManagerController extends TrackingManagerControllerGrpc.Tra
         UUID userId = getCurrentUserId();
         UUID permissionId = UUID.fromString(request.getValue());
 
-        service.deleteTrackingPermission(permissionId);
+        service.deleteTrackingPermission(userId, permissionId);
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
     }

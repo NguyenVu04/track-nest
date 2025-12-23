@@ -10,7 +10,7 @@ option java_package = "project.tracknest.usertracking.proto.lib";
 option java_outer_classname = "TrackingManagerProto";
 
 service TrackingManagerController {
-  rpc postConnection (PostConnectionRequest) returns (google.protobuf.Empty);
+  rpc postConnection (ConnectionRequest) returns (google.protobuf.Empty);
   rpc deleteTracker (google.protobuf.StringValue) returns (google.protobuf.Empty);
   rpc deleteTarget (google.protobuf.StringValue) returns (google.protobuf.Empty);
   rpc postTrackingPermission (google.protobuf.Empty) returns (PermissionResponse);
@@ -20,7 +20,7 @@ service TrackingManagerController {
   rpc putTrackingStatus (google.protobuf.BoolValue) returns (google.protobuf.Empty);
 }
 
-message PostConnectionRequest {
+message ConnectionRequest {
   string permissionId = 1;
   string otp = 2;
 }

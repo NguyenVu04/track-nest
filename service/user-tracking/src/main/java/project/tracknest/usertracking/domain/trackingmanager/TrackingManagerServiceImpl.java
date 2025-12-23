@@ -1,6 +1,5 @@
 package project.tracknest.usertracking.domain.trackingmanager;
 
-import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
@@ -10,8 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.entity.TrackingPermission;
 import project.tracknest.usertracking.core.entity.User;
+import project.tracknest.usertracking.proto.lib.ConnectionRequest;
 import project.tracknest.usertracking.proto.lib.PermissionResponse;
-import project.tracknest.usertracking.proto.lib.PostConnectionRequest;
 import project.tracknest.usertracking.proto.lib.TargetResponse;
 import project.tracknest.usertracking.proto.lib.TrackerResponse;
 
@@ -32,7 +31,7 @@ public class TrackingManagerServiceImpl implements TrackingManagerService {
 
     @Override
     @Transactional
-    public void createConnection(UUID trackerId, PostConnectionRequest request) {
+    public void createConnection(UUID trackerId, ConnectionRequest request) {
         Optional<TrackingPermission> permissionOpt = permissionRepository
                 .findById(UUID.fromString(request.getPermissionId()));
 
@@ -142,7 +141,7 @@ public class TrackingManagerServiceImpl implements TrackingManagerService {
     }
 
     @Override
-    public void deleteTrackingPermission(UUID permissionId) {
+    public void deleteTrackingPermission(UUID userId, UUID permissionId) {
         Optional<TrackingPermission> permissionOpt = permissionRepository.findById(permissionId);
         if (permissionOpt.isEmpty()) {
             log.warn("Tracking permission with id {} not found when deleting", permissionId);
@@ -151,7 +150,7 @@ public class TrackingManagerServiceImpl implements TrackingManagerService {
 
         TrackingPermission permission = permissionOpt.get();
 
-        if (!permissionId.equals(permission.getUserId())) {
+        if (!userId.equals(permission.getUserId())) {
             log.warn("Tracking permission with id {} does not belong to user {}", permissionId, permission.getUserId());
             throw new StatusRuntimeException(Status.PERMISSION_DENIED.withDescription("Permission does not belong to user"));
         }

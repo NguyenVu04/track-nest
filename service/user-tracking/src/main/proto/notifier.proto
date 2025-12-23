@@ -12,14 +12,18 @@ option java_outer_classname = "NotifierProto";
 service NotifierController {
   rpc postMobileDevice (MobileDeviceRequest) returns (google.protobuf.StringValue);
   rpc deleteMobileDevice (google.protobuf.StringValue) returns (google.protobuf.Empty);
-  rpc getTrackingNotifications (google.protobuf.Empty) returns (stream TrackingNotificationResponse);
-  rpc getRiskNotifications (google.protobuf.Empty) returns (stream RiskNotificationResponse);
+  rpc getTrackingNotifications (google.protobuf.Empty) returns (TrackingNotificationResponse);
+  rpc getRiskNotifications (google.protobuf.Empty) returns (RiskNotificationResponse);
   rpc deleteTrackingNotification (google.protobuf.StringValue) returns (google.protobuf.Empty);
   rpc deleteRiskNotification (google.protobuf.StringValue) returns (google.protobuf.Empty);
-  rpc deleteTrackingNotifications (stream google.protobuf.StringValue) returns (google.protobuf.Empty);
-  rpc deleteRiskNotifications (stream google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc deleteTrackingNotifications (NotificationIds) returns (google.protobuf.Empty);
+  rpc deleteRiskNotifications (NotificationIds) returns (google.protobuf.Empty);
   rpc deleteAllTrackingNotifications (google.protobuf.Empty) returns (google.protobuf.Empty);
   rpc deleteAllRiskNotifications (google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message NotificationIds {
+  repeated string ids = 1;
 }
 
 message MobileDeviceRequest {
