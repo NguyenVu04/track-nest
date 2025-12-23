@@ -9,9 +9,10 @@ import java.util.List;
 import java.util.UUID;
 
 public interface TrackingManagerService {
-    void createConnection(PostConnectionRequest request);
-    void deleteConnection(UUID connectionId);
-    PermissionResponse createTrackingPermission(UUID trackerId);
+    void createConnection(UUID trackerId, PostConnectionRequest request);
+    void deleteTracker(UUID userId, UUID trackerId);
+    void deleteTarget(UUID userId, UUID targetId);
+    PermissionResponse createTrackingPermission(UUID userId);
     void deleteTrackingPermission(UUID permissionId);
     List<TargetResponse> retrieveUserTargets(UUID userId);
     List<TrackerResponse> retrieveUserTrackers(UUID userId);

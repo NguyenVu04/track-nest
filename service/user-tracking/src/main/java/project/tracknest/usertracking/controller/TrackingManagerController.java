@@ -7,7 +7,6 @@ import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
-import project.tracknest.usertracking.configuration.security.SecurityUtils;
 import project.tracknest.usertracking.domain.trackingmanager.TrackingManagerService;
 import project.tracknest.usertracking.proto.lib.*;
 
@@ -24,22 +23,48 @@ public class TrackingManagerController extends TrackingManagerControllerGrpc.Tra
 
     @Override
     public void postConnection(PostConnectionRequest request, StreamObserver<Empty> responseObserver) {
+        UUID trackerId = getCurrentUserId();
 
+        service.createConnection(trackerId, request);
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
     }
 
     @Override
-    public void deleteConnection(StringValue request, StreamObserver<Empty> responseObserver) {
+    public void deleteTracker(StringValue request, StreamObserver<Empty> responseObserver) {
+        UUID userId = getCurrentUserId();
 
+        service.deleteTracker(userId, UUID.fromString(request.getValue()));
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void deleteTarget(StringValue request, StreamObserver<Empty> responseObserver) {
+        UUID userId = getCurrentUserId();
+
+        service.deleteTarget(userId, UUID.fromString(request.getValue()));
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
     }
 
     @Override
     public void postTrackingPermission(Empty request, StreamObserver<PermissionResponse> responseObserver) {
+        UUID userId = getCurrentUserId();
 
+        PermissionResponse permission = service.createTrackingPermission(userId);
+        responseObserver.onNext(permission);
+        responseObserver.onCompleted();
     }
 
     @Override
     public void deleteTrackingPermission(StringValue request, StreamObserver<Empty> responseObserver) {
+        UUID userId = getCurrentUserId();
+        UUID permissionId = UUID.fromString(request.getValue());
 
+        service.deleteTrackingPermission(permissionId);
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
     }
 
     @Override

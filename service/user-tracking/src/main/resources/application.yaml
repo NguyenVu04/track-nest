@@ -59,3 +59,5 @@ app:
     replication-factor: 1
   server-name: ${POD_NAME:user-tracking}
   server-uid: ${$POD_UID:0}
+  tracking-permission:
+    ttl-seconds: 300

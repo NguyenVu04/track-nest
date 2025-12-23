@@ -11,7 +11,8 @@ option java_outer_classname = "TrackingManagerProto";
 
 service TrackingManagerController {
   rpc postConnection (PostConnectionRequest) returns (google.protobuf.Empty);
-  rpc deleteConnection (google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc deleteTracker (google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc deleteTarget (google.protobuf.StringValue) returns (google.protobuf.Empty);
   rpc postTrackingPermission (google.protobuf.Empty) returns (PermissionResponse);
   rpc deleteTrackingPermission (google.protobuf.StringValue) returns (google.protobuf.Empty);
   rpc getUserTargets (google.protobuf.Empty) returns (stream TargetResponse);
