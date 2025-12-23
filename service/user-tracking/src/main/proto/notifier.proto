@@ -10,7 +10,7 @@ option java_package = "project.tracknest.usertracking.proto.lib";
 option java_outer_classname = "NotifierProto";
 
 service NotifierController {
-  rpc postMobileDevice (google.protobuf.StringValue) returns (google.protobuf.StringValue);
+  rpc postMobileDevice (MobileDeviceRequest) returns (google.protobuf.StringValue);
   rpc deleteMobileDevice (google.protobuf.StringValue) returns (google.protobuf.Empty);
   rpc getTrackingNotifications (google.protobuf.Empty) returns (stream TrackingNotificationResponse);
   rpc getRiskNotifications (google.protobuf.Empty) returns (stream RiskNotificationResponse);
@@ -20,6 +20,11 @@ service NotifierController {
   rpc deleteRiskNotifications (stream google.protobuf.StringValue) returns (google.protobuf.Empty);
   rpc deleteAllTrackingNotifications (google.protobuf.Empty) returns (google.protobuf.Empty);
   rpc deleteAllRiskNotifications (google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message MobileDeviceRequest {
+  string deviceToken = 1;
+  string languageCode = 2;
 }
 
 message TrackingNotificationResponse {
