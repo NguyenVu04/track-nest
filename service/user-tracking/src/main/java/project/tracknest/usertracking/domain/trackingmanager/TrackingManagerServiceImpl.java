@@ -5,6 +5,7 @@ import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.entity.TrackingPermission;
@@ -18,6 +19,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +30,14 @@ public class TrackingManagerServiceImpl implements TrackingManagerService {
 
     private final TrackingManagerUserRepository userRepository;
     private final TrackingManagerPermissionRepository permissionRepository;
+
+    @Scheduled(fixedDelay = 900, timeUnit = TimeUnit.SECONDS)
+    @Transactional
+    public void cleanupExpiredPermissions() {
+        permissionRepository.deleteExpiredPermissions();
+        log.info("Expired tracking permissions cleaned up");
+        //!TODO: optimize distributed cleanup using redis if needed
+    }
 
     @Override
     @Transactional

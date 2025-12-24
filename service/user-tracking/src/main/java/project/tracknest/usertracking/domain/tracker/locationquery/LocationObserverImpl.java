@@ -23,6 +23,7 @@ class LocationObserverImpl implements LocationObserver, LocationStreamObserverRe
 
     @Override
     public void sendTargetLocation(UUID userId, LocationMessage message) {
+        //TODO: save connection to redis to support multiple instances
         observers.computeIfPresent(userId, (_, observers) -> {
             observers.forEach(observer -> {
                 LocationResponse response = LocationResponse.newBuilder()

@@ -1,7 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
-CREATE EXTENSION IF NOT EXISTS "pg_cron";
 
 CREATE TABLE "user" (
     id UUID PRIMARY KEY,
@@ -157,11 +156,4 @@ CREATE INDEX idx_tracking_notification_target ON tracking_notification (target_i
 
 CREATE INDEX idx_risk_notification_user ON risk_notification (user_id);
 
-SELECT cron.schedule(
-    'clear_expired_tracking_permissions',
-    '*/30 * * * *',
-    $$
-    DELETE FROM tracking_permission
-    WHERE expired_at < NOW();
-    $$
-);
+CREATE INDEX idx_tracking_permission_expired_at ON tracking_permission (expired_at);

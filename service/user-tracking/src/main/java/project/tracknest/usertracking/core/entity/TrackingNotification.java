@@ -21,8 +21,9 @@ public class TrackingNotification {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "target_id", nullable = false, updatable = false)
-    private UUID targetId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_id", nullable = false, updatable = false)
+    private User target;
 
     @Column(name = "title", nullable = false, length = 255)
     private String title;

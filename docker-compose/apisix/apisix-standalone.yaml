@@ -13,5 +13,5 @@ routes:
       scheme: "grpc"
       type: roundrobin
       nodes:
-        "host.docker.internal:19090": 1
+        "user_tracking:19090": 1
 #END

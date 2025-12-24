@@ -21,8 +21,9 @@ public class RiskNotification {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "user_id", nullable = false, updatable = false)
-    private UUID userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", updatable = false, nullable = false)
+    private User user;
 
     @Column(name = "title", nullable = false, length = 255)
     private String title;

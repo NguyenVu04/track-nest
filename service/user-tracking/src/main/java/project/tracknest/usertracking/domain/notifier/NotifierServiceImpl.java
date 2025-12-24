@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.entity.MobileDevice;
+import project.tracknest.usertracking.core.entity.RiskNotification;
+import project.tracknest.usertracking.core.entity.TrackerTrackingNotification;
 import project.tracknest.usertracking.core.entity.User;
 import project.tracknest.usertracking.proto.lib.MobileDeviceRequest;
 import project.tracknest.usertracking.proto.lib.RiskNotificationResponse;
@@ -51,13 +53,62 @@ public class NotifierServiceImpl implements NotifierService {
 
     @Override
     @Transactional(readOnly = true)
-    public TrackingNotificationResponse retrieveTrackingNotifications(UUID userId) {
-        return null;
+    public List<TrackingNotificationResponse> retrieveTrackingNotifications(UUID userId) {
+        List<TrackerTrackingNotification> notifications = trackingNotificationRepository.findById_TrackerId(userId);
+
+        return notifications.stream().map(notification ->
+            TrackingNotificationResponse.newBuilder()
+                    .setId(notification
+                            .getId()
+                            .getNotificationId()
+                            .toString())
+                    .setTargetId(notification
+                            .getNotification()
+                            .getTarget()
+                            .getId()
+                            .toString())
+                    .setTargetUsername(notification
+                            .getNotification()
+                            .getTarget()
+                            .getUsername())
+                    .setSeen(notification.isSeen())
+                    .setTrackerUsername(notification
+                            .getTracker()
+                            .getUsername())
+                    .setCreatedAt(notification
+                            .getNotification()
+                            .getCreatedAt()
+                            .toEpochSecond())
+                    .setContent(notification
+                            .getNotification()
+                            .getContent())
+                    .setTitle(notification
+                            .getNotification()
+                            .getTitle())
+                .build()
+        ).toList();
     }
 
     @Override
-    public RiskNotificationResponse retrieveRiskNotifications(UUID userId) {
-        return null;
+    public List<RiskNotificationResponse> retrieveRiskNotifications(UUID userId) {
+        List<RiskNotification> notifications = riskNotificationRepository.findByUserId(userId);
+
+        return notifications.stream().map(notification ->
+                RiskNotificationResponse.newBuilder()
+                        .setId(notification.getId()
+                                .toString())
+                        .setTargetId(notification.getUser()
+                                .getId()
+                                .toString())
+                        .setTargetUsername(notification.getUser()
+                                .getUsername())
+                        .setSeen(notification.isSeen())
+                        .setContent(notification.getContent())
+                        .setTitle(notification.getTitle())
+                        .setCreatedAt(notification.getCreatedAt()
+                                .toEpochSecond())
+                        .build()
+                ).toList();
     }
 
     @Override

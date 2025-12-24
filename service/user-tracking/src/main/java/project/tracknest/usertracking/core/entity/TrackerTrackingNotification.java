@@ -22,6 +22,10 @@ public class TrackerTrackingNotification {
     @JoinColumn(name = "notification_id", insertable = false, updatable = false)
     private TrackingNotification notification;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tracker_id", insertable = false, updatable = false)
+    private User tracker;
+
     @Data
     @Embeddable
     @Builder

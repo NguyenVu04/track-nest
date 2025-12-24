@@ -6,5 +6,4 @@ import java.util.UUID;
 
 public interface LocationCommandService {
     void updateLocation(UUID userId, String username, LocationRequest request);
-    void disconnectInactiveUsers(UUID userId);
 }

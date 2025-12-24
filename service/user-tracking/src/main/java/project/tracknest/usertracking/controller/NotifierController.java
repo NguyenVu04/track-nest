@@ -2,7 +2,6 @@ package project.tracknest.usertracking.controller;
 
 import com.google.protobuf.Empty;
 import com.google.protobuf.StringValue;
-import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +9,7 @@ import org.springframework.grpc.server.service.GrpcService;
 import project.tracknest.usertracking.domain.notifier.NotifierService;
 import project.tracknest.usertracking.proto.lib.*;
 
+import java.util.List;
 import java.util.UUID;
 
 import static project.tracknest.usertracking.configuration.security.SecurityUtils.getCurrentUserId;
@@ -43,15 +43,19 @@ public class NotifierController extends NotifierControllerGrpc.NotifierControlle
 
     @Override
     public void getTrackingNotifications(Empty request, StreamObserver<TrackingNotificationResponse> responseObserver) {
-        log.info("getTrackingNotifications called");
-        // TODO: stream notifications using responseObserver.onNext(...)
+        UUID userId = getCurrentUserId();
+
+        List<TrackingNotificationResponse> responses = service.retrieveTrackingNotifications(userId);
+        responses.forEach(responseObserver::onNext);
         responseObserver.onCompleted();
     }
 
     @Override
     public void getRiskNotifications(Empty request, StreamObserver<RiskNotificationResponse> responseObserver) {
-        log.info("getRiskNotifications called");
-        // TODO: stream notifications using responseObserver.onNext(...)
+        UUID userId = getCurrentUserId();
+
+        List<RiskNotificationResponse> responses = service.retrieveRiskNotifications(userId);
+        responses.forEach(responseObserver::onNext);
         responseObserver.onCompleted();
     }
 

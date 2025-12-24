@@ -1,10 +1,13 @@
 package project.tracknest.usertracking.domain.tracker.locationcommand;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.entity.Location;
 import project.tracknest.usertracking.core.entity.User;
@@ -21,13 +24,26 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class LocationCommandServiceImpl implements LocationCommandService {
+    @Value("${app.user-location.inactive-seconds:180}")
+    private int inactiveSeconds;
+
     private final LocationCommandRepository locationRepository;
     private final LocationMessageProducer messageProducer;
     private final LocationCommandUserRepository userRepository;
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
+    @Transactional
     public void disconnectInactiveUsers() {
-        //TODO: Disconnect users who have not sent location updates in the last 3 minutes
+                Pageable pageable = PageRequest.of(0, 256);
+        OffsetDateTime threshold = OffsetDateTime.now()
+                .minusSeconds(inactiveSeconds);
+        var inactiveUsers = userRepository.findInactiveUsersSince(threshold, pageable);
+        for (User user : inactiveUsers) {
+            user.setConnected(false);
+            log.info("Disconnected inactive user with id {}", user.getId());
+        }
+        userRepository.saveAll(inactiveUsers);
+        //!TODO: notify trackers about user disconnection
     }
 
     @Override
@@ -76,10 +92,5 @@ public class LocationCommandServiceImpl implements LocationCommandService {
         messageProducer.produce(message);
 
         log.info("Received request to update location command");
-    }
-
-    @Override
-    public void disconnectInactiveUsers(UUID userId) {
-
     }
 }
