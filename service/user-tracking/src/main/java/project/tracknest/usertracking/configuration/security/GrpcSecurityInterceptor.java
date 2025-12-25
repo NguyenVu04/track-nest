@@ -61,8 +61,6 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
             } catch (Exception ex) {
                 log.warn("Failed to set gRPC security context from authorization header: {}", ex.getMessage());
             }
-        } else {
-            log.warn("No valid Authorization header found in gRPC metadata");
         }
 
         ServerCall.Listener<ReqT> delegate = next.startCall(call, headers);
@@ -89,14 +87,20 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
     }
 
     private KeycloakAuthorizationHeader decodeKeycloakauthorizationHeader(String authorizationHeader) {
-        if (authorizationHeader == null || authorizationHeader.trim().isEmpty())
+        if (authorizationHeader == null || authorizationHeader.trim().isEmpty()) {
+            log.warn("Authorization header is missing or empty");
             return null;
+        }
 
-        if (authorizationHeader.length() > MAX_HEADER_LENGTH)
+        if (authorizationHeader.length() > MAX_HEADER_LENGTH) {
+            log.warn("Authorization header exceeds maximum length");
             return null;
+        }
 
-        if (!BEARER_TOKEN_PATTERN.matcher(authorizationHeader).matches())
+        if (!BEARER_TOKEN_PATTERN.matcher(authorizationHeader).matches()) {
+            log.warn("Authorization header does not match Bearer token pattern");
             return null;
+        }
 
         try {
             String jwt = authorizationHeader.substring(7); // Remove "Bearer " prefix
@@ -112,6 +116,7 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
             }
             return header;
         } catch (IllegalArgumentException | IOException ex) {
+            log.warn("Failed to decode Authorization header: {}", ex.getMessage());
             return null;
         }
     }
