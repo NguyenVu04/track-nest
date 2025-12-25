@@ -24,8 +24,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class LocationCommandServiceImpl implements LocationCommandService {
-    @Value("${app.user-location.inactive-seconds:180}")
-    private int inactiveSeconds;
+    private static final int INACTIVE_SECONDS = 180; // 3 minutes
 
     private final LocationCommandRepository locationRepository;
     private final LocationMessageProducer messageProducer;
@@ -36,7 +35,7 @@ public class LocationCommandServiceImpl implements LocationCommandService {
     public void disconnectInactiveUsers() {
                 Pageable pageable = PageRequest.of(0, 256);
         OffsetDateTime threshold = OffsetDateTime.now()
-                .minusSeconds(inactiveSeconds);
+                .minusSeconds(INACTIVE_SECONDS);
         var inactiveUsers = userRepository.findInactiveUsersSince(threshold, pageable);
         for (User user : inactiveUsers) {
             user.setConnected(false);

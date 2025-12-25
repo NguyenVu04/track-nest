@@ -58,32 +58,28 @@ public class NotifierServiceImpl implements NotifierService {
 
         return notifications.stream().map(notification ->
             TrackingNotificationResponse.newBuilder()
-                    .setId(notification
-                            .getId()
+                    .setId(notification.getId()
                             .getNotificationId()
                             .toString())
-                    .setTargetId(notification
-                            .getNotification()
+                    .setTargetId(notification.getNotification()
                             .getTarget()
                             .getId()
                             .toString())
-                    .setTargetUsername(notification
-                            .getNotification()
+                    .setTargetUsername(notification.getNotification()
                             .getTarget()
                             .getUsername())
                     .setSeen(notification.isSeen())
-                    .setTrackerUsername(notification
-                            .getTracker()
+                    .setTrackerId(notification.getTracker()
+                            .getId()
+                            .toString())
+                    .setTrackerUsername(notification.getTracker()
                             .getUsername())
-                    .setCreatedAt(notification
-                            .getNotification()
+                    .setCreatedAt(notification.getNotification()
                             .getCreatedAt()
                             .toEpochSecond())
-                    .setContent(notification
-                            .getNotification()
+                    .setContent(notification.getNotification()
                             .getContent())
-                    .setTitle(notification
-                            .getNotification()
+                    .setTitle(notification.getNotification()
                             .getTitle())
                 .build()
         ).toList();

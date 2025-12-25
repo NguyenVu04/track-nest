@@ -84,9 +84,7 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
         final UUID trackerId = getCurrentUserDetails().getUserId();
 
         List<LocationResponse> responses = queryService.retrieveTargetLocationHistory(trackerId, request);
-        for (LocationResponse response : responses) {
-            responseObserver.onNext(response);
-        }
+        responses.forEach(responseObserver::onNext);
 
         responseObserver.onCompleted();
     }
