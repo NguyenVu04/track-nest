@@ -219,32 +219,32 @@ services:
   #       soft: -1
   #       hard: -1
 
-  # user_tracking:
-  #   build:
-  #     context: ../services/user-tracking
-  #     dockerfile: Dockerfile
-  #   container_name: user_tracking
-  #   ports:
-  #     - "19090:19090"
-  #   environment:
-  #     KAFKA_SERVER: "broker-1:9092"
-  #     REDIS_HOST: "redis"
-  #     REDIS_PORT: 6379
-  #     DB_HOST: "user_tracking_postgres"
-  #     DB_PORT: 5432
-  #     DB_NAME: "tracknest"
-  #     DB_USER: "tracknestadmin"
-  #     DB_PASSWORD: "tracknestadmin"
-  #   networks:
-  #     - track_nest
-  #   depends_on:
-  #     - user_tracking_postgres
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-  #     interval: 1m30s
-  #     timeout: 30s
-  #     retries: 5
-  #     start_period: 30s
+  user_tracking:
+    build:
+      context: ../service/user-tracking
+      dockerfile: Dockerfile
+    container_name: user_tracking
+    ports:
+      - "19090:19090"
+    environment:
+      KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
+      REDIS_HOST: "redis"
+      REDIS_PORT: 6379
+      DB_HOST: "user_tracking_postgres"
+      DB_PORT: 5432
+      DB_NAME: "tracknest"
+      DB_USER: "tracknestadmin"
+      DB_PASSWORD: "tracknestadmin"
+    networks:
+      - track_nest
+    depends_on:
+      - user_tracking_postgres
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   user_tracking_postgres:
     image: timescale/timescaledb-ha:pg17
@@ -263,9 +263,10 @@ services:
       - track_nest
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   emergency_ops_postgres:
     image: timescale/timescaledb-ha:pg17
@@ -284,9 +285,10 @@ services:
       - track_nest
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   criminal_reports_postgres:
     image: timescale/timescaledb-ha:pg17
@@ -305,9 +307,10 @@ services:
       - track_nest
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   emergency_detection_postgres:
     image: timescale/timescaledb-ha:pg17
@@ -326,9 +329,10 @@ services:
       - track_nest
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
   
   keycloak_postgres:
     image: postgres:latest
@@ -345,9 +349,10 @@ services:
       - track_nest
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
@@ -378,9 +383,10 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9000/health"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 networks:
   track_nest:

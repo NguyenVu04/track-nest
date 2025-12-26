@@ -14,7 +14,7 @@ import java.util.UUID;
 interface LocationQueryRepository extends JpaRepository<Location, Location.LocationId> {
     @Query(value =
             "SELECT * FROM location l " +
-                    "WHERE l.user_id = :userId" +
+                    "WHERE l.user_id = :userId " +
                     "AND ST_DWithin(l.geom, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography, :radius) " +
                     "ORDER BY l.timestamp DESC",
             nativeQuery = true

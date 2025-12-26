@@ -1,5 +1,5 @@
 routes:
-  - uri: /*
+  - uri: /user-tracking/*
     plugins:
       openid-connect:
         client_id: "tracknest"
@@ -9,6 +9,10 @@ routes:
         scope: "openid profile"
         realm: "tracknest-user"
         bearer_only: true
+        set_access_token_header: true
+        access_token_in_authorization_header: true
+      proxy-rewrite:
+        regex_uri: ["^/user-tracking/(.*)", "/$1"]
     upstream:
       scheme: "grpc"
       type: roundrobin

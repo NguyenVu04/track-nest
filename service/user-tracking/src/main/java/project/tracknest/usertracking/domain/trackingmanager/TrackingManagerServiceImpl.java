@@ -15,6 +15,7 @@ import project.tracknest.usertracking.proto.lib.PermissionResponse;
 import project.tracknest.usertracking.proto.lib.TargetResponse;
 import project.tracknest.usertracking.proto.lib.TrackerResponse;
 
+import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,8 +26,10 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class TrackingManagerServiceImpl implements TrackingManagerService {
-    @Value("${app.tracking-permission.ttl-seconds:300}")
-    private long EXPIRATION_SECONDS;
+    private static final long EXPIRATION_SECONDS = 300; //default 5 minutes
+
+    private static final String OTP_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz234679";
+    private static final int OTP_LENGTH = 15;
 
     private final TrackingManagerUserRepository userRepository;
     private final TrackingManagerPermissionRepository permissionRepository;
@@ -37,6 +40,18 @@ public class TrackingManagerServiceImpl implements TrackingManagerService {
         permissionRepository.deleteExpiredPermissions();
         log.info("Expired tracking permissions cleaned up");
         //!TODO: optimize distributed cleanup using redis if needed
+    }
+
+    private static String generateOtp() {
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < OTP_LENGTH; i++) {
+            int index = random.nextInt(OTP_CHARACTERS.length());
+            sb.append(OTP_CHARACTERS.charAt(index));
+        }
+
+        return sb.toString();
     }
 
     @Override
@@ -83,6 +98,8 @@ public class TrackingManagerServiceImpl implements TrackingManagerService {
 
         tracker.getTargets().add(targetOpt.get());
         userRepository.save(tracker);
+
+        permissionRepository.delete(permission);
 
         //TODO: notify target user of new tracker
     }
@@ -137,14 +154,18 @@ public class TrackingManagerServiceImpl implements TrackingManagerService {
         OffsetDateTime currentTime = OffsetDateTime.now();
         OffsetDateTime expiryTime = currentTime.plusSeconds(EXPIRATION_SECONDS);
 
+        String otp = generateOtp();
+
         TrackingPermission permission = TrackingPermission.builder()
                 .userId(userId)
+                .otp(otp)
                 .createdAt(currentTime)
                 .expiredAt(expiryTime)
                 .build();
         TrackingPermission savedPermission = permissionRepository.save(permission);
         return PermissionResponse.newBuilder()
                 .setId(savedPermission.getId().toString())
+                .setOtp(savedPermission.getOtp())
                 .setCreatedAt(savedPermission.getCreatedAt().toEpochSecond())
                 .setExpiredAt(savedPermission.getExpiredAt().toEpochSecond())
                 .build();

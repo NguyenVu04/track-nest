@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN gradle build --no-daemon
+RUN gradle build --no-daemon -x test
 
 FROM eclipse-temurin:25-jre-jammy
 
@@ -16,6 +16,6 @@ WORKDIR /app
 
 COPY --from=builder /app/build/libs/user-tracking-1.0.0.jar app.jar
 
-EXPOSE 8080
+EXPOSE 19090
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

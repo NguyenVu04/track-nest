@@ -12,11 +12,15 @@ import java.util.List;
 import java.util.UUID;
 
 public class SecuritySetup {
+    public static final UUID ADMIN_USER_ID = UUID.fromString("f8f735b4-549c-4d8c-9e10-15f8c198b71b");
+    public static final String ADMIN_USERNAME = "admin";
+    public static final String ADMIN_EMAIL = "admin@gmail.com";
+
     public static void setUpSecurityContext() {
         KeycloakAuthorizationHeader decoded = KeycloakAuthorizationHeader.builder()
-                .userId(UUID.fromString("f8f735b4-549c-4d8c-9e10-15f8c198b71b"))
-                .username("admin")
-                .email("admin@gmail.com")
+                .userId(ADMIN_USER_ID)
+                .username(ADMIN_USERNAME)
+                .email(ADMIN_EMAIL)
                 .realmAccess(KeycloakAuthorizationHeaderRealmAccess.builder().roles(List.of("ROLE_USER", "ROLE_ADMIN")).build())
                 .build();
 
