@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,16 +15,16 @@ import project.tracknest.emergencyops.core.datatype.KeycloakPrincipal;
 import project.tracknest.emergencyops.core.datatype.KeycloakUserDetails;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.regex.Pattern;
 
+@Slf4j
 public class KeycloakFilter extends OncePerRequestFilter {
-    private final ObjectMapper MAPPER = new ObjectMapper();
-    private static final int MAX_HEADER_LENGTH = 1024;
-    private static final Pattern BASE64_URL_SAFE_PATTERN = Pattern
-            .compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$");
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final int MAX_HEADER_LENGTH = 4096;
+    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer [A-Za-z0-9\\-_=]+\\.[A-Za-z0-9\\-_=]+\\.?[A-Za-z0-9\\-_.+/=]*$");
+    private static final String AUTHORIZATION_KEY = "Authorization";
 
     @Override
     protected void doFilterInternal(
@@ -31,66 +32,85 @@ public class KeycloakFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain)
             throws ServletException, IOException {
-        String userInfoHeader = request.getHeader("X-Userinfo");
+        String authorizationHeader = request.getHeader(AUTHORIZATION_KEY);
+        KeycloakAuthorizationHeader decoded = decodeKeycloakauthorizationHeader(authorizationHeader);
 
-        if (userInfoHeader == null || userInfoHeader.isEmpty()) {
-            filterChain.doFilter(request, response);
-            return;
+        if (decoded != null) {
+            try {
+                // build principal and user details (same mapping as KeycloakFilter)
+                KeycloakPrincipal principal = new KeycloakPrincipal(decoded.getUserId());
+
+                List<SimpleGrantedAuthority> roles = decoded
+                        .getRealmAccess()
+                        .getRoles()
+                        .stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                        .toList();
+
+                KeycloakUserDetails userDetails = KeycloakUserDetails
+                        .builder()
+                        .userId(decoded.getUserId())
+                        .username(decoded.getUsername())
+                        .email(decoded.getEmail())
+                        .roles(roles)
+                        .build();
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(principal, authorizationHeader, roles);
+                authentication.setDetails(userDetails);
+                log.info("Setting security context with user: {}", principal.getName());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (Exception ex) {
+                log.warn("Failed to set security context from authorization header: {}", ex.getMessage());
+            }
         }
-
-        KeycloakUserInfoHeader decodedHeader = decodeKeycloakUserInfoHeader(userInfoHeader);
-
-        if (decodedHeader == null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        KeycloakPrincipal principal = new KeycloakPrincipal(decodedHeader.getUserId());
-
-        List<SimpleGrantedAuthority> roles = decodedHeader
-                .getRealmAccess()
-                .getRoles()
-                .stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .toList();
-
-        KeycloakUserDetails userDetails = KeycloakUserDetails
-                .builder()
-                .userId(decodedHeader.getUserId())
-                .username(decodedHeader.getUsername())
-                .email(decodedHeader.getEmail())
-                .roles(roles)
-                .build();
-
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(principal, null, roles);
-        authentication.setDetails(userDetails);
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }
 
-    private KeycloakUserInfoHeader decodeKeycloakUserInfoHeader(String userInfoHeader) {
-        if (userInfoHeader == null || userInfoHeader.trim().isEmpty())
+    private KeycloakAuthorizationHeader decodeKeycloakauthorizationHeader(String authorizationHeader) {
+        if (authorizationHeader == null || authorizationHeader.trim().isEmpty()) {
+            log.warn("Authorization header is missing or empty");
             return null;
+        }
 
-        if (userInfoHeader.length() > MAX_HEADER_LENGTH)
+        if (authorizationHeader.length() > MAX_HEADER_LENGTH) {
+            log.warn("Authorization header exceeds maximum length");
             return null;
+        }
 
-        if (!BASE64_URL_SAFE_PATTERN.matcher(userInfoHeader).matches())
+        if (!BEARER_TOKEN_PATTERN.matcher(authorizationHeader).matches()) {
+            log.warn("Authorization header does not match Bearer token pattern");
             return null;
+        }
 
         try {
-            Base64.Decoder decoder = userInfoHeader.contains("-") || userInfoHeader.contains("_")
-                    ? Base64.getUrlDecoder()
-                    : Base64.getDecoder();
+            String jwt = authorizationHeader.substring(7); // Remove "Bearer " prefix
 
-            String json = new String(decoder.decode(userInfoHeader), StandardCharsets.UTF_8);
+            String[] parts = jwt.split("\\."); // JWT has three parts: header, payload, signature
 
-            JsonNode node = MAPPER.readTree(json);
-            return MAPPER.treeToValue(node, KeycloakUserInfoHeader.class);
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+
+            JsonNode node = MAPPER.readTree(payload);
+
+            if (node.get("exp") == null) {
+                log.warn("Authorization header token is missing expiration");
+                return null;
+            }
+
+            if (node.get("sub") == null) {
+                log.warn("Authorization header token is missing subject");
+                return null;
+            }
+
+            KeycloakAuthorizationHeader header = MAPPER.treeToValue(node, KeycloakAuthorizationHeader.class);
+            if (header.getExpiration() * 1000 < System.currentTimeMillis()) {
+                log.warn("Authorization header token is expired");
+                return null;
+            }
+            return header;
         } catch (IllegalArgumentException | IOException ex) {
+            log.warn("Failed to decode Authorization header: {}", ex.getMessage());
             return null;
         }
     }
