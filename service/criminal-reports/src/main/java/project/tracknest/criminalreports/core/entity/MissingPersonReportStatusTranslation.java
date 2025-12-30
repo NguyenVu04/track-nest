@@ -1,4 +1,4 @@
-package project.tracknest.emergencyops.core.entity;
+package project.tracknest.criminalreports.core.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,13 +8,13 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Entity
-@Table(name = "emergency_request_status_translation")
+@Table(name = "missing_person_report_status_translation")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class EmergencyRequestStatusTranslation {
+public class MissingPersonReportStatusTranslation {
     @EmbeddedId
-    private EmergencyRequestStatusTranslationId id;
+    private MissingPersonReportStatusTranslationId id;
 
     @Column(name = "value", nullable = false)
     private String value;
@@ -24,9 +24,9 @@ public class EmergencyRequestStatusTranslation {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class EmergencyRequestStatusTranslationId {
+    public static class MissingPersonReportStatusTranslationId {
         @Column(name = "status_name", nullable = false, updatable = false, length = 15)
-        private String name;
+        private String statusName;
 
         @Column(name = "language_code", nullable = false, updatable = false, length = 2)
         private String languageCode;

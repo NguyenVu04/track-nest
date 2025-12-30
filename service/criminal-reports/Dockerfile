@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY --from=builder /app/build/libs/emergency-ops-1.0.0.jar app.jar
+COPY --from=builder /app/build/libs/criminal-reports-1.0.0.jar app.jar
 
 EXPOSE 38080
 
