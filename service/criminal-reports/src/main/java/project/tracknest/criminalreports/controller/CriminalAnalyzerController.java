@@ -3,11 +3,11 @@ package project.tracknest.criminalreports.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import project.tracknest.criminalreports.domain.crimelocator.CrimeLocatorService;
+import project.tracknest.criminalreports.domain.criminalanalyzer.CriminalAnalyzerService;
 
 @RestController
-@RequestMapping("/crime-locator")
+@RequestMapping("/criminal-analyzer")
 @RequiredArgsConstructor
-public class CrimeLocatorController {
-    private final CrimeLocatorService service;
+public class CriminalAnalyzerController {
+    private final CriminalAnalyzerService service;
 }
