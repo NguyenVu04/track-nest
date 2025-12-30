@@ -1,6 +1,7 @@
 import Fab from "@/components/Fab";
 // import { useRouter } from "expo-router";
 import CurrentLocationMarker from "@/components/CurrentLocationMarker";
+import FollowerMarker from "@/components/FollowerMarker";
 import MapControls from "@/components/MapControls";
 import MapHeader from "@/components/MapHeader";
 import useDeviceLocation from "@/hooks/useDeviceLocation";
@@ -8,9 +9,23 @@ import React, { useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import MapView, { MapType, PROVIDER_GOOGLE } from "react-native-maps";
 
+type Follower = {
+  id: string;
+  latitude: number;
+  longitude: number;
+  avata?: string;
+  avatar?: string;
+  name: string;
+  lastActive?: string | number | Date;
+  sharingActive?: boolean;
+  shareTracking?: boolean;
+};
+
 export default function MapScreen() {
   const [tracking, setTracking] = useState(true);
   const [sharingEnabled, setSharingEnabled] = useState(false);
+
+  const followers: Follower[] = []; // Replace with actual follower data
 
   //   const router = useRouter();
   const mapRef = useRef<any>(null);
@@ -28,6 +43,42 @@ export default function MapScreen() {
   React.useEffect(() => {
     if (tracking) hasCenteredRef.current = false;
   }, [tracking]);
+
+  // Mock followers around current device location for quick local testing
+  const mockFollowers = React.useMemo(() => {
+    if (!location) return [] as any[];
+    const names = [
+      "Alex Chen",
+      // "Maya Nguyen",
+      // "Samir Patel",
+      // "Linh Tran",
+      // "Diego Martinez",
+      // "Omar Aziz",
+    ];
+
+    return names.map((name, i) => {
+      // small random offset (~±200m)
+      const offsetLat = (Math.random() - 0.5) * 0.01;
+      const offsetLon = (Math.random() - 0.5) * 0.01;
+      const sharingActive = Math.random() > 0.4;
+      const minutesAgo = Math.floor(
+        Math.random() * (sharingActive ? 5 : 60 * 24 * 3)
+      );
+      const lastActive = new Date(
+        Date.now() - minutesAgo * 60 * 1000
+      ).toISOString();
+
+      return {
+        id: `mock-${i}`,
+        latitude: 10.089319801395211,
+        longitude: 106.19048610762617,
+        avatar: `https://i.pravatar.cc/150?u=mock-${i}`,
+        name,
+        lastActive,
+        sharingActive: false,
+      };
+    });
+  }, [location]);
 
   // Center the map to the current device location (triggered by compass button)
   const centerMap = () => {
@@ -90,6 +141,10 @@ export default function MapScreen() {
     );
   };
 
+  // show passed-in followers if provided, otherwise use mock data around device
+  const followersToRender =
+    followers && followers.length > 0 ? followers : mockFollowers;
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -135,6 +190,20 @@ export default function MapScreen() {
             disabled={!tracking}
           />
         ) : null}
+
+        {followersToRender && followersToRender.length > 0
+          ? followersToRender.map((f) => (
+              <FollowerMarker
+                key={f.id ?? `${f.latitude}-${f.longitude}`}
+                latitude={f.latitude}
+                longitude={f.longitude}
+                avatar={f.avata ?? f.avatar}
+                name={f.name}
+                sharingActive={f.sharingActive ?? f.shareTracking}
+                lastActive={f.lastActive}
+              />
+            ))
+          : null}
       </MapView>
 
       {/* Floating controls */}
@@ -174,7 +243,6 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 12,
     overflow: "hidden",
-    // backgroundColor: "rgba(255,255,255,0.4)",
     shadowColor: "#000",
     shadowOpacity: 0.06,
     shadowRadius: 8,
