@@ -1,13 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
-import { MapType } from "react-native-maps";
 
 type Props = {
   tracking: boolean;
   setTracking: (v: boolean) => void;
   onSearchPress?: () => void;
-  maptype?: MapType;
   sharingEnabled?: boolean;
   setSharingEnabled?: (v: boolean) => void;
 };
@@ -16,7 +14,6 @@ export default function MapHeader({
   tracking,
   setTracking,
   onSearchPress,
-  maptype = "standard",
   sharingEnabled,
   setSharingEnabled,
 }: Props) {

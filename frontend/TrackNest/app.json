@@ -20,7 +20,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.TrackNest"
+      "package": "com.anonymous.TrackNest",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBWDUqgc_60KfsNEfc1ucXs05VAqzFi_zU"
+        }
+      }
     },
     "web": {
       "output": "static",
@@ -44,6 +49,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "022bd731-35a6-41a3-be33-e8c36a617a2d"
+      }
     }
   }
 }

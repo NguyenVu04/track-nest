@@ -47,6 +47,7 @@ export default function CurrentLocationMarker({
     animRef.current.start();
     return () => animRef.current?.stop?.();
   }, [scale, opacity, disabled]);
+  
   const pulseScale = scale.interpolate({
     inputRange: [0, 1],
     outputRange: [0.6, 2.2],
@@ -57,7 +58,11 @@ export default function CurrentLocationMarker({
   const pulseColor = disabled ? "rgba(0,0,0,0)" : "rgba(43,159,255,0.25)";
 
   return (
-    <Marker coordinate={{ latitude, longitude }} anchor={{ x: 0.5, y: 0.5 }}>
+    <Marker
+      coordinate={{ latitude, longitude }}
+      anchor={{ x: 0.5, y: 0.5 }}
+      tracksViewChanges={true}
+    >
       <View style={localStyles.wrapper}>
         <Animated.View
           style={[

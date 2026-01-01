@@ -35,8 +35,8 @@ export default function useDeviceLocation(tracking: boolean) {
           subscriberRef.current = await Location.watchPositionAsync(
             {
               accuracy: Location.Accuracy.BestForNavigation,
-              timeInterval: 1000,
-              distanceInterval: 1,
+              timeInterval: 3000,
+              distanceInterval: 100,
             },
             (loc) => {
               if (cancelled) return;

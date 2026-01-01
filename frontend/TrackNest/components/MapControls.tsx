@@ -4,9 +4,10 @@ import { StyleSheet, Text, View } from "react-native";
 import { MapType } from "react-native-maps";
 
 type Props = {
-  onCenter: () => void;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
+  onCenter?: (() => void) | null;
+  onZoomIn?: (() => void) | null;
+  onZoomOut?: (() => void) | null;
+  onGeneralModalPress?: (() => void) | null;
   style?: object;
   mapType?: MapType;
   setMapType?: (t: MapType) => void;
@@ -16,6 +17,7 @@ export default function MapControls({
   onCenter,
   onZoomIn,
   onZoomOut,
+  onGeneralModalPress,
   style,
   mapType = "standard",
   setMapType,
@@ -32,18 +34,21 @@ export default function MapControls({
 
   return (
     <View style={[styles.fabColumn, style]}>
-      <Fab onPress={cycleMapType}>
-        <Text style={styles.mapTypeLabel}>{label}</Text>
-      </Fab>
-      <Fab icon="navigate-outline" onPress={onCenter} />
-      <Fab icon="add" onPress={onZoomIn} />
-      <Fab icon="remove" onPress={onZoomOut} />
+      {onGeneralModalPress && <Fab icon="menu" onPress={onGeneralModalPress} />}
+      {onCenter && <Fab icon="navigate-outline" onPress={onCenter} />}
+      {cycleMapType && (
+        <Fab onPress={cycleMapType}>
+          <Text style={styles.mapTypeLabel}>{label}</Text>
+        </Fab>
+      )}
+      {onZoomIn && <Fab icon="add" onPress={onZoomIn} />}
+      {onZoomOut && <Fab icon="remove" onPress={onZoomOut} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fabColumn: { position: "absolute", right: 12, bottom: 50, gap: 12 },
+  fabColumn: { position: "absolute", right: 12, bottom: 70, gap: 12 },
   mapTypeButton: {
     width: 36,
     height: 36,

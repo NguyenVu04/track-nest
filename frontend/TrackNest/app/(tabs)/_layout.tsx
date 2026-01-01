@@ -4,21 +4,40 @@ import { Tabs } from "expo-router";
 export default function RootLayout() {
   return (
     <Tabs
-      screenOptions={({ route }) => ({
+      screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
         tabBarActiveTintColor: "#0b62ff",
-        tabBarIcon: ({ color, size }) => {
-          const name = route.name;
-          if (name.includes("map"))
-            return <Ionicons name="map" size={size} color={color} />;
-          if (name.includes("reports"))
-            return <Ionicons name="list" size={size} color={color} />;
-          if (name.includes("settings"))
-            return <Ionicons name="settings" size={size} color={color} />;
-          return <Ionicons name="ellipse" size={size} color={color} />;
-        },
-      })}
-    />
+      }}
+      initialRouteName="map"
+    >
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: "map",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="map" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="reports"
+        options={{
+          title: "reports",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="list" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "settings",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }

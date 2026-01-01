@@ -1,48 +1,46 @@
-import React from "react";
+import { getInitials } from "@/utils";
+import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { Marker } from "react-native-maps";
 
 type Props = {
   latitude: number;
   longitude: number;
+  id?: string;
   avatar?: string;
   name: string;
   sharingActive?: boolean; // true = actively sharing location
   lastActive?: string | number | Date;
+  selectedFollowerId?: string | null;
+  setSelectedFollowerId?: (id: string | null) => void;
+  handlePresentModalPress?: () => void;
 };
-
-function formatRelativeTime(lastActive?: string | number | Date) {
-  if (!lastActive) return "";
-  const d = new Date(lastActive);
-  if (isNaN(d.getTime())) return String(lastActive);
-  const diff = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (diff < 10) return "just now";
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 7 * 86400) return `${Math.floor(diff / 86400)}d ago`;
-  return d.toLocaleDateString();
-}
-
-function getInitials(name = "") {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 0) return "";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
 
 export default function FollowerMarker({
   latitude,
   longitude,
+  id,
   avatar,
   name,
   sharingActive = false,
-  lastActive,
+  setSelectedFollowerId,
+  handlePresentModalPress,
 }: Props) {
-  const borderColor = sharingActive ? "#2b9fff" : "#bdbdbd";
+  // Only let the native Marker track view changes while the avatar image is loading.
+  // Leaving `tracksViewChanges` enabled continuously can cause heavy re-rendering
+  // on the native side and lead to crashes when the marker is pressed repeatedly.
+  const [tracksViewChanges, setTracksViewChanges] = useState<boolean>(!!avatar);
 
   const avatarContent = avatar ? (
-    <Image source={{ uri: avatar }} style={styles.avatar} />
+    <Image
+      source={require("@/assets/images/150-0.jpeg")}
+      style={styles.avatar}
+      onLoadEnd={() => {
+        setTimeout(() => setTracksViewChanges(false), 500);
+      }}
+      onError={() => setTracksViewChanges(false)}
+      resizeMode="cover"
+    />
   ) : (
     <View
       style={[
@@ -54,24 +52,36 @@ export default function FollowerMarker({
     </View>
   );
 
+  useEffect(() => {
+    const timer = setTimeout(() => setTracksViewChanges(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <Marker
       coordinate={{ latitude, longitude }}
-      tracksViewChanges={false}
-      style={{ position: "relative" }}
+      anchor={{ x: 0.5, y: 0.5 }}
+      tracksViewChanges={tracksViewChanges}
+      onPress={() => {
+        if (setSelectedFollowerId) {
+          setSelectedFollowerId(id || null);
+        }
+        if (handlePresentModalPress) {
+          handlePresentModalPress();
+        }
+      }}
     >
-      <View style={styles.container}>
-        <View style={[styles.avatarWrapper, { borderColor }]}>
-          {avatarContent}
+      <View style={[styles.container]}>
+        <View style={styles.avatarWrapper}>
+          <View
+            style={[
+              styles.initialsBg,
+              { backgroundColor: sharingActive ? "#2b9fff" : "#999" },
+            ]}
+          >
+            <Text style={styles.initials}>{getInitials(name)}</Text>
+          </View>
         </View>
-        {/* <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-          {name}
-        </Text> */}
-        {!sharingActive && lastActive ? (
-          <Text style={styles.lastActive}>
-            {formatRelativeTime(lastActive)}
-          </Text>
-        ) : null}
       </View>
     </Marker>
   );
@@ -85,11 +95,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    borderWidth: 3,
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
     elevation: 2,
   },
   avatar: {
@@ -107,26 +115,5 @@ const styles = StyleSheet.create({
   initials: {
     color: "#fff",
     fontWeight: "600",
-  },
-  name: {
-    position: "absolute",
-    top: 20,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    fontSize: 12,
-    color: "#fff",
-    maxWidth: 88,
-    textAlign: "center",
-  },
-  lastActive: {
-    position: "absolute",
-    top: 50,
-    left: 0,
-    right: 0,
-    marginTop: 2,
-    fontSize: 11,
-    color: "#fff",
-    textAlign: "center",
   },
 });
