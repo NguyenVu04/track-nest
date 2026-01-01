@@ -1,4 +1,4 @@
-package project.tracknest.emergencyops.configuration.kafka;
+package project.tracknest.criminalreports.configuration.messagequeue;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

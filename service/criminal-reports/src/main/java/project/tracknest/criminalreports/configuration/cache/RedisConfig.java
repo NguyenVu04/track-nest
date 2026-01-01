@@ -1,4 +1,4 @@
-package project.tracknest.emergencyops.configuration.redis;
+package project.tracknest.criminalreports.configuration.cache;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -6,7 +6,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
-import project.tracknest.emergencyops.configuration.common.ServerIdProvider;
+import project.tracknest.criminalreports.configuration.common.ServerIdProvider;
 
 @Configuration
 public class RedisConfig {

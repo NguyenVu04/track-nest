@@ -1,4 +1,4 @@
-package project.tracknest.criminalreports.configuration.kafka;
+package project.tracknest.emergencyops.configuration.messagequeue;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.NewTopic;

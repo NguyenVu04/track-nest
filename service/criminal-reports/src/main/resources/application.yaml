@@ -36,6 +36,7 @@ spring:
       ddl-auto: validate
     open-in-view: false
 
+
 server:
   port: 38080
   servlet:
@@ -47,5 +48,17 @@ app:
       - user_location
     partitions: 3
     replication-factor: 1
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
+    credentials:
+      access-key: ${MINIO_ACCESS_KEY:minioadmin}
+      secret-key: ${MINIO_SECRET_KEY:minioadmin}
   server-name: ${POD_NAME:user-tracking}
   server-uid: ${$POD_UID:0}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    display-request-duration: true
+    path: /swagger-ui.html
