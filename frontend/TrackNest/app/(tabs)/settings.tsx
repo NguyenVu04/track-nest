@@ -1,35 +1,50 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-const items = [
-  { key: "language", title: "Language", subtitle: "English", icon: "language" },
-  {
-    key: "followers",
-    title: "Manage Followers",
-    subtitle: "12 followers",
-    icon: "people",
-  },
-  {
-    key: "notifications",
-    title: "Notifications",
-    subtitle: "On",
-    icon: "notifications",
-  },
-  {
-    key: "privacy",
-    title: "Privacy & Security",
-    subtitle: "",
-    icon: "shield-checkmark",
-  },
-  { key: "help", title: "Help & Support", subtitle: "", icon: "help-circle" },
-];
-
 export default function SettingsScreen() {
+  const router = useRouter();
+
+  const items = [
+    {
+      key: "language",
+      title: "Language",
+      subtitle: "English",
+      icon: "language",
+    },
+    {
+      key: "manageTrackers",
+      title: "Manage Trackers",
+      subtitle: "3 active trackers",
+      icon: "navigate",
+      onPress: () => router.push("/manage-trackers"),
+    },
+    {
+      key: "followers",
+      title: "Manage Followers",
+      subtitle: "12 followers",
+      icon: "people",
+    },
+    {
+      key: "notifications",
+      title: "Notifications",
+      subtitle: "On",
+      icon: "notifications",
+    },
+    {
+      key: "privacy",
+      title: "Privacy & Security",
+      subtitle: "",
+      icon: "shield-checkmark",
+    },
+    { key: "help", title: "Help & Support", subtitle: "", icon: "help-circle" },
+  ];
+
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Pressable onPress={() => {}}>
+        <Pressable onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </Pressable>
         <Text style={styles.headerTitle}>Settings</Text>
@@ -38,7 +53,12 @@ export default function SettingsScreen() {
 
       <View style={{ padding: 12 }}>
         {items.map((it) => (
-          <Pressable key={it.key} style={styles.row}>
+          <Pressable
+            key={it.key}
+            style={styles.row}
+            onPress={it.onPress}
+            android_ripple={{ color: "#e5e7eb" }}
+          >
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
             >

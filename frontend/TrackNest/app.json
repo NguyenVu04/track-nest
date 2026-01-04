@@ -23,7 +23,7 @@
       "package": "com.anonymous.TrackNest",
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyBWDUqgc_60KfsNEfc1ucXs05VAqzFi_zU"
+          "apiKey": "process.env.GOOGLE_MAPS_API_KEY"
         }
       }
     },

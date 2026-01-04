@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package project.tracknest.usertracking.proto;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+option java_package = "project.tracknest.usertracking.proto.lib";
+option java_outer_classname = "TrackerProto";
+
+service TrackerController {
+  rpc postLocation (stream LocationRequest) returns (google.protobuf.Empty);
+  rpc getTargetsLastLocations (google.protobuf.Empty) returns (stream LocationResponse);
+  rpc getTargetLocationHistory (LocationHistoryRequest) returns (stream LocationResponse);
+}
+
+message LocationHistoryRequest {
+  string targetUserId = 1;
+  double longitude = 2;//degrees
+  double latitude = 3;//degrees
+  float radius = 4;//meters
+}
+
+message LocationRequest {
+  double latitude = 1;
+  double longitude = 2;
+  uint64 timestamp = 3;//seconds since epoch
+  float accuracy = 4;//meters
+  float velocity = 5;//meters per second
+}
+
+message LocationResponse {
+  string id = 1;
+  string userId = 2;
+  string username = 3;
+  double latitude = 4;//degrees
+  double longitude = 5;//degrees
+  uint64 timestamp = 6;//seconds since epoch
+  float accuracy = 7;//meters
+  float velocity = 8;//meters per second
+  bool connected = 9;
+}

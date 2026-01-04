@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package project.tracknest.usertracking.proto;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+option java_package = "project.tracknest.usertracking.proto.lib";
+option java_outer_classname = "NotifierProto";
+
+service NotifierController {
+  rpc postMobileDevice (MobileDeviceRequest) returns (google.protobuf.StringValue);
+  rpc deleteMobileDevice (google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc getTrackingNotifications (google.protobuf.Empty) returns (TrackingNotificationResponse);
+  rpc getRiskNotifications (google.protobuf.Empty) returns (RiskNotificationResponse);
+  rpc deleteTrackingNotification (google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc deleteRiskNotification (google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc deleteTrackingNotifications (NotificationIds) returns (google.protobuf.Empty);
+  rpc deleteRiskNotifications (NotificationIds) returns (google.protobuf.Empty);
+  rpc deleteAllTrackingNotifications (google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc deleteAllRiskNotifications (google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message NotificationIds {
+  repeated string ids = 1;
+}
+
+message MobileDeviceRequest {
+  string deviceToken = 1;
+  string languageCode = 2;
+}
+
+message TrackingNotificationResponse {
+  string id = 1;
+  string trackerId = 2;
+  string trackerUsername = 3;
+  string targetId = 4;
+  string targetUsername = 5;
+  uint64 createdAt = 6;//seconds since epoch
+  string title = 7;
+  string content = 8;
+  bool seen = 9;
+}
+
+message RiskNotificationResponse {
+  string id = 1;
+  string targetId = 2;
+  string targetUsername = 3;
+  uint64 createdAt = 4;//seconds since epoch
+  string title = 5;
+  string content = 6;
+  bool seen = 7;
+}

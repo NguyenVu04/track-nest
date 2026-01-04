@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package project.tracknest.usertracking.proto;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+option java_package = "project.tracknest.usertracking.proto.lib";
+option java_outer_classname = "TrackingManagerProto";
+
+service TrackingManagerController {
+  rpc postConnection (ConnectionRequest) returns (google.protobuf.Empty);
+  rpc deleteTracker (google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc deleteTarget (google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc postTrackingPermission (google.protobuf.Empty) returns (PermissionResponse);
+  rpc deleteTrackingPermission (google.protobuf.StringValue) returns (google.protobuf.Empty);
+  rpc getUserTargets (google.protobuf.Empty) returns (stream TargetResponse);
+  rpc getUserTrackers (google.protobuf.Empty) returns (stream TrackerResponse);
+  rpc putTrackingStatus (google.protobuf.BoolValue) returns (google.protobuf.Empty);
+}
+
+message ConnectionRequest {
+  string permissionId = 1;
+  string otp = 2;
+}
+
+message PermissionResponse {
+  string id = 1;
+  string otp = 2;
+  uint64 createdAt = 3;//seconds since epoch
+  uint64 expiredAt = 4;//seconds since epoch
+}
+
+message TargetResponse {
+  string id = 1;
+  string userId = 2;
+  string username = 3;
+  bool online = 4;
+  uint64 lastActive = 5;//seconds since epoch
+}
+
+message TrackerResponse {
+  string id = 1;
+  string userId = 2;
+  string username = 3;
+  bool online = 4;
+  uint64 lastActive = 5;//seconds since epoch
+}
