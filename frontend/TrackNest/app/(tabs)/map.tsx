@@ -28,6 +28,8 @@ import useDeviceLocation from "@/hooks/useDeviceLocation";
 import { useFollowers } from "@/hooks/useFollowers";
 import { useMapController } from "@/hooks/useMapController";
 import { useMockFollowers } from "@/hooks/useMockFollowers";
+import { useLocationStream } from "@/hooks/useTrackerService";
+import { trackerService } from "@/services/trackerService";
 import { formatRelativeTime } from "@/utils";
 import {
   BottomSheetBackdrop,
@@ -48,9 +50,9 @@ export default function MapScreen() {
     resetCenterFlag,
   } = useMapController();
 
-  const [tracking, setTracking] = useState(true);
+  const [tracking, setTracking] = useState(false);
 
-  const [sharingEnabled, setSharingEnabled] = useState(true);
+  const [sharingEnabled, setSharingEnabled] = useState(false);
 
   const [pendingAction, setPendingAction] = useState<
     null | "tracking" | "sharing"
@@ -104,6 +106,20 @@ export default function MapScreen() {
 
   const { location } = useDeviceLocation(tracking);
 
+  // gRPC: stream current location when tracking is enabled & sharing is allowed
+  const {
+    isStreaming,
+    error: streamError,
+    sendLocation,
+  } = useLocationStream(tracking);
+
+  // gRPC: always listen for targets' locations
+  // const {
+  //   locations: targetLocations,
+  //   isConnected: targetsConnected,
+  //   error: targetError,
+  // } = useTargetLocations(true);
+
   const initialRegion = useMemo(
     () => ({
       latitude: location?.latitude || 0,
@@ -124,10 +140,27 @@ export default function MapScreen() {
     location?.longitude
   );
 
-  const followers: Follower[] = []; // Replace with actual follower data
+  // Transform gRPC target locations into follower data shape
+  // const targetFollowers: Follower[] = useMemo(
+  //   () =>
+  //     targetLocations.map((loc) => ({
+  //       id: loc.userid || loc.username || `${loc.latitude}-${loc.longitude}`,
+  //       latitude: loc.latitude,
+  //       longitude: loc.longitude,
+  //       name: loc.username || loc.userid || "Unknown user",
+  //       sharingActive: loc.connected,
+  //       lastActive: loc.timestamp ? loc.timestamp * 1000 : undefined,
+  //     })),
+  //   [targetLocations]
+  // );
+
+  const targetFollowers: Follower[] = [];
+
+  const followersToRender =
+    targetFollowers.length > 0 ? targetFollowers : mockFollowers;
 
   const { selectedFollowerId, setSelectedFollowerId, selectedFollower } =
-    useFollowers(mockFollowers);
+    useFollowers(followersToRender);
 
   const checkBeforeCenterMap = useCallback(() => {
     if (location) {
@@ -149,15 +182,28 @@ export default function MapScreen() {
   }, [generalInfoSheetRef]);
 
   // show passed-in followers if provided, otherwise use mock data around device
-  const followersToRender =
-    followers && followers.length > 0 ? followers : mockFollowers;
-
   useEffect(() => {
     if (tracking) {
       resetCenterFlag();
       checkBeforeCenterMap();
     }
   }, [tracking, checkBeforeCenterMap, resetCenterFlag]);
+
+  // Send latest device location to server whenever it updates and streaming is active
+  useEffect(() => {
+    if (!location || !isStreaming) return;
+    sendLocation(location.latitude, location.longitude, 5, 0);
+  }, [location, isStreaming, sendLocation]);
+
+  // Surface stream/target errors for debugging; replace with UI toast if needed
+  useEffect(() => {
+    if (streamError) {
+      console.warn("Location stream error", streamError);
+    }
+    // if (targetError) {
+    //   console.warn("Target locations error", targetError);
+    // }
+  }, [streamError]);
 
   console.log("Rendering map");
 
