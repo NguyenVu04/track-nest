@@ -34,6 +34,7 @@ class LocationObserverImpl implements LocationObserver, LocationStreamObserverRe
                         .setLongitude(message.longitude())
                         .setAccuracy(message.accuracy())
                         .setVelocity(message.velocity())
+                        .setConnected(true)
                         .build();
                 try {
                     observer.onNext(response);
