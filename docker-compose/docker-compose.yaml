@@ -176,6 +176,19 @@ services:
   #       soft: -1
   #       hard: -1
 
+  envoy:
+    image: envoyproxy/envoy:v1.36-latest
+    container_name: envoy-user-tracking
+    ports:
+      - "8800:8800"     # gRPC-Web / RN clients connect here
+      - "9901:9901"     # admin (optional)
+    volumes:
+      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    depends_on:
+      - user_tracking
+    networks:
+      - track_nest
+
   user_tracking:
     build:
       context: ../service/user-tracking
