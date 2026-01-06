@@ -8,6 +8,7 @@ import {
   ReactNode,
 } from "react";
 import type { User } from "@/types";
+import { authService } from "@/services/authService";
 
 interface AuthContextType {
   user: User | null;
@@ -21,9 +22,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  const login = useCallback((userData: User) => {
+  const login = useCallback(async (userData: User) => {
     setUser(userData);
     // In production, you would also store the session/token
+
+    try {
+      const res = await authService.login({
+        username: userData.username,
+        password: userData.password,
+      });
+
+      console.log("Login successful", res);
+    } catch (error) {
+      // console.error("Login failed", error);
+      // ignore error in this mock
+    }
   }, []);
 
   const logout = useCallback(() => {

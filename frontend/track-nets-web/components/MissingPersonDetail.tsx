@@ -62,7 +62,7 @@ export function MissingPersonDetail({
   return (
     <>
       <div>
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-6 text-black">
           <button
             onClick={onBack}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"

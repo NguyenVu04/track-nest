@@ -79,7 +79,7 @@ export function CrimeReportForm({
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             />
           </div>
@@ -94,7 +94,7 @@ export function CrimeReportForm({
               onChange={(e) =>
                 setFormData({ ...formData, type: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             >
               <option value="Theft">Theft</option>
@@ -115,7 +115,7 @@ export function CrimeReportForm({
               onChange={(e) =>
                 setFormData({ ...formData, severity: e.target.value as any })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             >
               <option value="Low">Low</option>
@@ -134,7 +134,7 @@ export function CrimeReportForm({
               onChange={(e) =>
                 setFormData({ ...formData, status: e.target.value as any })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             >
               <option value="Active">Active</option>
@@ -154,7 +154,7 @@ export function CrimeReportForm({
               onChange={(e) =>
                 setFormData({ ...formData, incidentDate: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             />
           </div>
@@ -170,7 +170,7 @@ export function CrimeReportForm({
               onChange={(e) =>
                 setFormData({ ...formData, location: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               placeholder="e.g., Parking Garage, 5th Avenue"
               required
             />
@@ -194,7 +194,7 @@ export function CrimeReportForm({
                   ],
                 })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             />
           </div>
@@ -217,7 +217,7 @@ export function CrimeReportForm({
                   ],
                 })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             />
           </div>
@@ -235,7 +235,7 @@ export function CrimeReportForm({
                   zoneType: e.target.value as "circle" | "rectangle",
                 })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             >
               <option value="circle">Circular Zone</option>
@@ -258,7 +258,7 @@ export function CrimeReportForm({
                     zoneRadius: parseInt(e.target.value),
                   })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                 required
               />
             </div>
@@ -287,7 +287,7 @@ export function CrimeReportForm({
                       zoneBounds: [...bounds] as any,
                     });
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                   required
                 />
               </div>
@@ -314,7 +314,7 @@ export function CrimeReportForm({
                       zoneBounds: [...bounds] as any,
                     });
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                   required
                 />
               </div>
@@ -341,7 +341,7 @@ export function CrimeReportForm({
                       zoneBounds: [...bounds] as any,
                     });
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                   required
                 />
               </div>
@@ -368,7 +368,7 @@ export function CrimeReportForm({
                       zoneBounds: [...bounds] as any,
                     });
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                   required
                 />
               </div>
@@ -385,7 +385,7 @@ export function CrimeReportForm({
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               rows={4}
               placeholder="Detailed description of the incident..."
               required
@@ -403,7 +403,7 @@ export function CrimeReportForm({
               onChange={(e) =>
                 setFormData({ ...formData, reportedBy: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             />
           </div>

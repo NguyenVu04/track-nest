@@ -1,0 +1,33 @@
+export const Vietnamese = {
+  tracking: "Theo dõi",
+  sharingLocation: "Chia sẻ vị trí",
+  notifications: "Thông báo",
+  noNotifications: "Không có thông báo",
+  markAllRead: "Đánh dấu tất cả đã đọc",
+  ago: "trước",
+  minutesAgo: "phút trước",
+  hoursAgo: "giờ trước",
+  daysAgo: "ngày trước",
+  trackerAlert: "Cảnh báo thiết bị theo dõi",
+  locationUpdate: "Cập nhật vị trí",
+  batteryWarning: "Cảnh báo pin",
+  newFollower: "Người theo dõi mới",
+  systemUpdate: "Cập nhật hệ thống",
+};
+
+export const English = {
+  tracking: "Tracking",
+  sharingLocation: "Sharing Location",
+  notifications: "Notifications",
+  noNotifications: "No notifications",
+  markAllRead: "Mark all as read",
+  ago: "ago",
+  minutesAgo: "m ago",
+  hoursAgo: "h ago",
+  daysAgo: "d ago",
+  trackerAlert: "Tracker Alert",
+  locationUpdate: "Location Update",
+  batteryWarning: "Battery Warning",
+  newFollower: "New Follower",
+  systemUpdate: "System Update",
+};

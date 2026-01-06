@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { NotificationButton } from "@/components/NotificationButton";
 
 const navigation = [
   { href: "/dashboard/missing-persons", name: "Missing Persons", icon: Users },
@@ -68,6 +69,7 @@ export default function DashboardLayout({
             </div>
           </div>
           <div className="flex items-center gap-3 text-black">
+            <NotificationButton />
             <Link
               href="/dashboard/profile"
               className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors"

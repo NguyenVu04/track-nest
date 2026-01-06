@@ -8,3 +8,11 @@ export type Follower = {
   sharingActive?: boolean;
   shareTracking?: boolean;
 };
+
+export type ProtoTrackerResponse = {
+  id: string;
+  userId: string;
+  username: string;
+  online: boolean;
+  lastActive: number;//seconds since epoch
+}

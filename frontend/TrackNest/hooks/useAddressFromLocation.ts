@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
 import * as Location from "expo-location";
+import { useEffect, useState } from "react";
 
 export function useAddressFromLocation(lat?: number, lng?: number) {
+  console.log("useAddressFromLocation called with:", { lat, lng });
+
   const [address, setAddress] = useState<string | null>(null);
 
   useEffect(() => {

@@ -1,9 +1,12 @@
+import { login as loginLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -15,6 +18,8 @@ const CREDENTIALS_KEY = "@TrackNest:credentials";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const t = useTranslation(loginLang);
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [saveCredentials, setSaveCredentials] = useState(false);
@@ -38,11 +43,9 @@ export default function LoginScreen() {
       // Navigate to the map screen
       router.replace("/(tabs)/map");
     } else {
-      Alert.alert(
-        "Login Failed",
-        "Invalid credentials. Use admin/admin to login.",
-        [{ text: "OK" }]
-      );
+      Alert.alert(t.loginFailedTitle, t.loginFailedMessage, [
+        { text: t.okButton },
+      ]);
     }
   };
 
@@ -51,20 +54,23 @@ export default function LoginScreen() {
       <View style={styles.content}>
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
-            <Ionicons name="navigate" size={48} color="#0b62ff" />
+            <Image
+              source={require("@/assets/images/android-icon-foreground.png")}
+              style={{ width: 132, height: 132 }}
+            />
           </View>
-          <Text style={styles.appTitle}>TrackNest</Text>
-          <Text style={styles.subtitle}>Track your world with ease</Text>
+          <Text style={styles.appTitle}>{t.appTitle}</Text>
+          <Text style={styles.subtitle}>{t.subtitle}</Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Username</Text>
+            <Text style={styles.label}>{t.usernameLabel}</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="person-outline" size={20} color="#6b7280" />
               <TextInput
                 style={styles.input}
-                placeholder="Enter username"
+                placeholder={t.usernamePlaceholder}
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
@@ -74,12 +80,12 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>{t.passwordLabel}</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="lock-closed-outline" size={20} color="#6b7280" />
               <TextInput
                 style={styles.input}
-                placeholder="Enter password"
+                placeholder={t.passwordPlaceholder}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -110,9 +116,7 @@ export default function LoginScreen() {
                 <Ionicons name="checkmark" size={16} color="#fff" />
               )}
             </View>
-            <Text style={styles.checkboxLabel}>
-              Save credentials on this device
-            </Text>
+            <Text style={styles.checkboxLabel}>{t.saveCredentials}</Text>
           </Pressable>
 
           <Pressable
@@ -120,13 +124,13 @@ export default function LoginScreen() {
             onPress={handleLogin}
             android_ripple={{ color: "#0052cc" }}
           >
-            <Text style={styles.loginButtonText}>Login</Text>
+            <Text style={styles.loginButtonText}>{t.loginButton}</Text>
           </Pressable>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Safety Tracker App v1.0.0</Text>
-          <Text style={styles.hintText}>Hint: Use admin/admin to login</Text>
+          <Text style={styles.footerText}>TrackNest v1.0.0</Text>
+          <Text style={styles.hintText}>Use admin/admin to login</Text>
         </View>
       </View>
     </View>
@@ -155,6 +159,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
+    overflow: "hidden",
   },
   appTitle: {
     fontSize: 32,

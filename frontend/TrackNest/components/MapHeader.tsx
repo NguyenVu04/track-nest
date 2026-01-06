@@ -60,6 +60,38 @@ const mockNotifications: Notification[] = [
     type: "info",
     read: true,
   },
+  {
+    id: "6",
+    title: "Location Update",
+    message: "Bike Tracker location updated successfully",
+    time: "1h ago",
+    type: "info",
+    read: false,
+  },
+  {
+    id: "7",
+    title: "Battery Warning",
+    message: "Backpack Tracker battery below 20%",
+    time: "2h ago",
+    type: "warning",
+    read: true,
+  },
+  {
+    id: "8",
+    title: "New Follower",
+    message: "John Doe started following your location",
+    time: "3h ago",
+    type: "info",
+    read: true,
+  },
+  {
+    id: "9",
+    title: "System Update",
+    message: "TrackNest app updated to version 1.0.1",
+    time: "1d ago",
+    type: "info",
+    read: true,
+  },
 ];
 
 type Props = {
@@ -280,7 +312,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "90%",
-    maxHeight: "80%",
+    maxHeight: "50%",
     backgroundColor: "#fff",
     borderRadius: 16,
     overflow: "hidden",
