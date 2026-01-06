@@ -23,11 +23,12 @@ export default function LoginPage() {
     setError("");
 
     // Mock authentication - in production, this would validate against a backend
-    if (username === "reporter" && password === "demo123") {
+    if (username === "admin" && password === "admin") {
       login({
         id: "1",
-        username: "reporter",
-        email: "reporter@track.com",
+        username: "admin",
+        password: "admin",
+        email: "admin@track.com",
         role: "Reporter",
         fullName: "John Reporter",
       });
@@ -36,6 +37,7 @@ export default function LoginPage() {
       login({
         id: "2",
         username: "emergency",
+        password: "demo123",
         email: "emergency@track.com",
         role: "Emergency Services",
         fullName: "Jane Emergency",
@@ -116,10 +118,7 @@ export default function LoginPage() {
           <p className="text-gray-600 text-sm">Demo Credentials:</p>
           <div className="mt-2 space-y-1 text-sm">
             <p className="text-gray-500">
-              Reporter: <span className="font-mono">reporter / demo123</span>
-            </p>
-            <p className="text-gray-500">
-              Emergency: <span className="font-mono">emergency / demo123</span>
+              Reporter: <span className="font-mono">admin / admin</span>
             </p>
           </div>
         </div>

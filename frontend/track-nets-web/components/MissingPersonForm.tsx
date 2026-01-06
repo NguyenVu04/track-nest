@@ -78,7 +78,7 @@ export function MissingPersonForm({
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             />
           </div>
@@ -94,7 +94,7 @@ export function MissingPersonForm({
               onChange={(e) =>
                 setFormData({ ...formData, age: parseInt(e.target.value) })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             />
           </div>
@@ -109,7 +109,7 @@ export function MissingPersonForm({
               onChange={(e) =>
                 setFormData({ ...formData, gender: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             >
               <option value="Male">Male</option>
@@ -129,7 +129,7 @@ export function MissingPersonForm({
               onChange={(e) =>
                 setFormData({ ...formData, lastSeenDate: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             />
           </div>
@@ -148,7 +148,7 @@ export function MissingPersonForm({
               onChange={(e) =>
                 setFormData({ ...formData, lastSeenLocation: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               placeholder="e.g., Central Park, New York"
               required
             />
@@ -172,7 +172,7 @@ export function MissingPersonForm({
                   ],
                 })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             />
           </div>
@@ -195,7 +195,7 @@ export function MissingPersonForm({
                   ],
                 })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             />
           </div>
@@ -210,7 +210,7 @@ export function MissingPersonForm({
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               rows={4}
               placeholder="Physical description, clothing, distinguishing features..."
               required
@@ -228,7 +228,7 @@ export function MissingPersonForm({
               onChange={(e) =>
                 setFormData({ ...formData, reportedBy: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             />
           </div>
@@ -244,7 +244,7 @@ export function MissingPersonForm({
               onChange={(e) =>
                 setFormData({ ...formData, contactInfo: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               placeholder="Phone number or email"
               required
             />

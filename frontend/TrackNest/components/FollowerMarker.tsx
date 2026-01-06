@@ -1,3 +1,4 @@
+import { fetchHistoryForTarget } from "@/services/tracker";
 import { getInitials } from "@/utils";
 import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
@@ -57,6 +58,14 @@ export default function FollowerMarker({
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (id) {
+      setTracksViewChanges(true);
+    }
+
+    setTimeout(() => setTracksViewChanges(false), 1000);
+  }, [id]);
+
   return (
     <Marker
       coordinate={{ latitude, longitude }}
@@ -69,6 +78,8 @@ export default function FollowerMarker({
         if (handlePresentModalPress) {
           handlePresentModalPress();
         }
+
+        fetchHistoryForTarget(id || "");
       }}
     >
       <View style={[styles.container]}>

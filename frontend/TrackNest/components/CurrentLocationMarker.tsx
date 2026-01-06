@@ -47,7 +47,7 @@ export default function CurrentLocationMarker({
     animRef.current.start();
     return () => animRef.current?.stop?.();
   }, [scale, opacity, disabled]);
-  
+
   const pulseScale = scale.interpolate({
     inputRange: [0, 1],
     outputRange: [0.6, 2.2],

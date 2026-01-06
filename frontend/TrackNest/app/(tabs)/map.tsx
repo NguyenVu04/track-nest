@@ -6,31 +6,26 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {
-  Alert,
-  Image,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 import CurrentLocationMarker from "@/components/CurrentLocationMarker";
 import Fab from "@/components/Fab";
 import { FollowerBottomSheet } from "@/components/FollowerBottomSheet";
+import { FollowerInfo } from "@/components/FollowerInfo";
 import FollowerMarker from "@/components/FollowerMarker";
 import MapControls from "@/components/MapControls";
 import MapHeader from "@/components/MapHeader";
+import { map as mapLang } from "@/constant/languages";
 import { Follower } from "@/constant/types";
 import { useAddressFromLocation } from "@/hooks/useAddressFromLocation";
 import useDeviceLocation from "@/hooks/useDeviceLocation";
 import { useFollowers } from "@/hooks/useFollowers";
 import { useMapController } from "@/hooks/useMapController";
 import { useMockFollowers } from "@/hooks/useMockFollowers";
-import { useLocationStream } from "@/hooks/useTrackerService";
-import { trackerService } from "@/services/trackerService";
-import { formatRelativeTime } from "@/utils";
+import { useTranslation } from "@/hooks/useTranslation";
+// import { ElizaService } from "@/proto/generated/connectrpc/eliza/v1/eliza_pb";
+// import { TrackerServiceClient } from "@/services/tracker";
+import { startLastLocationsStream } from "@/services/tracker";
 import {
   BottomSheetBackdrop,
   BottomSheetFlatList,
@@ -39,6 +34,35 @@ import {
 } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
+
+// const getBaseUrl = () => {
+//   const hostUri = Constants.expoConfig?.hostUri; // Lấy IP dev server
+//   if (!hostUri) return "http://localhost:8081"; // Fallback cho production/simulator
+
+//   const ip = hostUri.split(":")[0];
+//   return `http://${ip}:8081`;
+// };
+
+// console.log("gRPC Base URL:", getBaseUrl());
+
+// const transport = createConnectTransport({
+//   baseUrl: "https://demo.connectrpc.com",
+// });
+
+// const client = createClient(ElizaService, transport);
+
+const parseToFollower = (data: any): Follower => {
+  return {
+    id: data.userid || data.id,
+    latitude: data.latitude,
+    longitude: data.longitude,
+    name: data.username || "Unknown",
+    avatar: undefined,
+    lastActive: data.timestamp ? data.timestamp * 1000 : Date.now(), // Convert Unix timestamp to milliseconds
+    sharingActive: data.connected ?? true,
+    shareTracking: data.connected ?? true,
+  };
+};
 
 export default function MapScreen() {
   const {
@@ -52,6 +76,8 @@ export default function MapScreen() {
 
   const [tracking, setTracking] = useState(false);
 
+  const [targetR, setTargetR] = useState<any[]>([]);
+
   const [sharingEnabled, setSharingEnabled] = useState(false);
 
   const [pendingAction, setPendingAction] = useState<
@@ -59,6 +85,8 @@ export default function MapScreen() {
   >(null);
 
   const [showPinModal, setShowPinModal] = useState(false);
+
+  const t = useTranslation(mapLang);
 
   const handleToggleTracking = (value: boolean) => {
     if (value === false) {
@@ -82,7 +110,7 @@ export default function MapScreen() {
 
   const handlePinSubmit = (pin: string) => {
     if (pin !== CORRECT_PIN) {
-      Alert.alert("PIN incorrect");
+      Alert.alert(t.pinIncorrect);
       handleCancelPin();
       return;
     }
@@ -106,20 +134,6 @@ export default function MapScreen() {
 
   const { location } = useDeviceLocation(tracking);
 
-  // gRPC: stream current location when tracking is enabled & sharing is allowed
-  const {
-    isStreaming,
-    error: streamError,
-    sendLocation,
-  } = useLocationStream(tracking);
-
-  // gRPC: always listen for targets' locations
-  // const {
-  //   locations: targetLocations,
-  //   isConnected: targetsConnected,
-  //   error: targetError,
-  // } = useTargetLocations(true);
-
   const initialRegion = useMemo(
     () => ({
       latitude: location?.latitude || 0,
@@ -140,24 +154,29 @@ export default function MapScreen() {
     location?.longitude
   );
 
-  // Transform gRPC target locations into follower data shape
-  // const targetFollowers: Follower[] = useMemo(
-  //   () =>
-  //     targetLocations.map((loc) => ({
-  //       id: loc.userid || loc.username || `${loc.latitude}-${loc.longitude}`,
-  //       latitude: loc.latitude,
-  //       longitude: loc.longitude,
-  //       name: loc.username || loc.userid || "Unknown user",
-  //       sharingActive: loc.connected,
-  //       lastActive: loc.timestamp ? loc.timestamp * 1000 : undefined,
-  //     })),
-  //   [targetLocations]
-  // );
+  const targetFollowers: Follower[] = useMemo(
+    () => targetR.map(parseToFollower),
+    [targetR]
+  );
 
-  const targetFollowers: Follower[] = [];
+  const followersToRender = useMemo(() => {
+    const baseFollowers =
+      targetFollowers && targetFollowers.length > 0
+        ? targetFollowers
+        : [];
 
-  const followersToRender =
-    targetFollowers.length > 0 ? targetFollowers : mockFollowers;
+    return [...baseFollowers].sort((a, b) => {
+      // First, sort by active status (active first)
+      if (a.sharingActive !== b.sharingActive) {
+        return a.sharingActive ? -1 : 1;
+      }
+
+      // Then, sort by lastActive time (most recent first)
+      const timeA = a.lastActive ? new Date(a.lastActive).getTime() : 0;
+      const timeB = b.lastActive ? new Date(b.lastActive).getTime() : 0;
+      return timeB - timeA;
+    });
+  }, [targetFollowers]);
 
   const { selectedFollowerId, setSelectedFollowerId, selectedFollower } =
     useFollowers(followersToRender);
@@ -189,47 +208,38 @@ export default function MapScreen() {
     }
   }, [tracking, checkBeforeCenterMap, resetCenterFlag]);
 
-  // Send latest device location to server whenever it updates and streaming is active
-  useEffect(() => {
-    if (!location || !isStreaming) return;
-    sendLocation(location.latitude, location.longitude, 5, 0);
-  }, [location, isStreaming, sendLocation]);
-
-  // Surface stream/target errors for debugging; replace with UI toast if needed
-  useEffect(() => {
-    if (streamError) {
-      console.warn("Location stream error", streamError);
-    }
-    // if (targetError) {
-    //   console.warn("Target locations error", targetError);
-    // }
-  }, [streamError]);
-
   console.log("Rendering map");
+
+  useEffect(() => {
+    if (tracking) {
+      startLastLocationsStream(setTargetR);
+    }
+  }, [tracking]);
+
+  console.log("Followers to render:", followersToRender.length);
+
+  console.log("TargetR:", targetR.length);
 
   const renderItem = useCallback(
     ({ item }: { item: Follower }) => (
-      <View style={{ paddingTop: 12, paddingBottom: 12, gap: 12 }}>
-        <Text style={{ fontSize: 18, fontWeight: "bold", textAlign: "center" }}>
-          {item.name}
-        </Text>
-        <Image
-          source={require("@/assets/images/150-0.jpeg")}
-          style={[
-            styles.generalInfoImages,
-            {
-              borderColor: item.sharingActive ? "#2b9fff" : "#ccc",
-            },
-          ]}
-          resizeMode="cover"
+      <Pressable
+        onPress={() => {
+          setSelectedFollowerId(item.id);
+
+          handleFollowerInfoModalPress();
+
+          centerMap(item.latitude, item.longitude);
+        }}
+      >
+        <FollowerInfo
+          follower={item}
+          width={100}
+          height={100}
+          standMode="compact"
         />
-        <Text style={styles.generalInfoText}>
-          Last Active:{" "}
-          {item.sharingActive ? "now" : formatRelativeTime(item?.lastActive)}
-        </Text>
-      </View>
+      </Pressable>
     ),
-    []
+    [setSelectedFollowerId, handleFollowerInfoModalPress, centerMap]
   );
 
   const handleSheetChanges = useCallback((index: number) => {
@@ -268,9 +278,9 @@ export default function MapScreen() {
         >
           <Pressable style={styles.overlay} onPress={handleCancelPin}>
             <Pressable style={styles.card} onPress={() => {}}>
-              <Text style={styles.title}>PIN Required</Text>
+              <Text style={styles.title}>{t.pinTitle}</Text>
               <Text style={styles.subtitle}>
-                Enter PIN to turn off {pendingAction}
+                {t.pinSubTitle} {pendingAction}
               </Text>
 
               <PinInput length={4} autoFocus onFillEnded={handlePinSubmit} />
@@ -339,8 +349,22 @@ export default function MapScreen() {
           size="large"
           icon="warning"
           style={styles.sosFab}
-          onPress={() => {
-            Alert.alert("SOS Alert", "You are in danger?");
+          onPress={async () => {
+            console.log("SOS Pressed");
+
+            // try {
+            // const stream = TrackerServiceClient.getTargetsLastLocations({});
+
+            // for await (const res of stream) {
+            //   console.log("Received parsed object:", res);
+            // }
+
+            // console.log("Stream completed");
+            // } catch (err) {
+            //   if (err instanceof ConnectError) {
+            //     console.error("Message:", err);
+            //   }
+            // }
           }}
         />
       </View>
