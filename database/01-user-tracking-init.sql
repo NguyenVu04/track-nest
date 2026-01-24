@@ -80,23 +80,38 @@ CREATE TABLE tracking_notification_alerts_user (
     PRIMARY KEY (notification_id, tracker_id)
 );
 
-CREATE TABLE tracking_permission (
+CREATE TABLE family_circle (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    otp VARCHAR(15) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    expired_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    user_id UUID NOT NULL,
-    number_of_attempts INTEGER NOT NULL DEFAULT 0,
-    CHECK ( number_of_attempts >= 0 )
+    name VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE tracker_tracks_target (
-    tracker_id UUID NOT NULL,
-    target_id UUID NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (tracker_id, target_id),
-    CHECK ( tracker_id <> target_id )
+CREATE TABLE user_in_family_circle (
+    family_circle_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    admin BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (family_circle_id, user_id)
 );
+
+CREATE TABLE participation_permission (
+    family_circle_id UUID PRIMARY KEY,
+    otp VARCHAR(16) UNIQUE NOT NULL,
+    number_of_attempts SMALLINT NOT NULL DEFAULT 0,
+    expired_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CHECK ( number_of_attempts >= 0 ),
+    CHECK ( expired_at > created_at )
+);
+
+ALTER TABLE user_in_family_circle
+    ADD FOREIGN KEY (family_circle_id) REFERENCES family_circle (id) ON DELETE CASCADE;
+
+ALTER TABLE user_in_family_circle
+    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+
+ALTER TABLE participation_permission
+    ADD FOREIGN KEY (family_circle_id) REFERENCES family_circle (id) ON DELETE CASCADE;
 
 ALTER TABLE location
     ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
@@ -115,15 +130,6 @@ ALTER TABLE tracking_notification_alerts_user
 
 ALTER TABLE tracking_notification_alerts_user
     ADD FOREIGN KEY (notification_id) REFERENCES tracking_notification (id) ON DELETE CASCADE;
-
-ALTER TABLE tracking_permission
-    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
-
-ALTER TABLE tracker_tracks_target
-    ADD FOREIGN KEY (tracker_id) references "user" (id) ON DELETE CASCADE;
-
-ALTER TABLE tracker_tracks_target
-    ADD FOREIGN KEY (target_id) references "user" (id) ON DELETE CASCADE;
 
 ALTER TABLE emergency_alert
     ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
@@ -155,5 +161,3 @@ CREATE INDEX idx_mobile_device_user ON mobile_device (user_id);
 CREATE INDEX idx_tracking_notification_target ON tracking_notification (target_id);
 
 CREATE INDEX idx_risk_notification_user ON risk_notification (user_id);
-
-CREATE INDEX idx_tracking_permission_expired_at ON tracking_permission (expired_at);

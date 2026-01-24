@@ -81,30 +81,34 @@ INSERT INTO tracking_notification_alerts_user (notification_id, tracker_id) VALU
     ('bbbbbbbb-0009-4000-8000-bbbbbbbbbbbb','f8f735b4-549c-4d8c-9e10-15f8c198b71b')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO tracking_permission (id, otp, created_at, expired_at, user_id) VALUES
-    ('dddddddd-2000-4000-8000-dddddddddddd','OTP0001', NOW(), NOW() + INTERVAL '1 hour', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
-    ('dddddddd-2001-4000-8000-dddddddddddd','OTP0002', NOW(), NOW() + INTERVAL '1 hour', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
-    ('dddddddd-2002-4000-8000-dddddddddddd','OTP0003', NOW(), NOW() + INTERVAL '1 hour', '8c52c01e-42a7-45cc-9254-db8a7601c764'),
-    ('dddddddd-2003-4000-8000-dddddddddddd','OTP0004', NOW(), NOW() + INTERVAL '1 hour', '8c52c01e-42a7-45cc-9254-db8a7601c764'),
-    ('dddddddd-2004-4000-8000-dddddddddddd','OTP0005', NOW(), NOW() + INTERVAL '1 hour', '4405a37d-bc86-403e-b605-bedd7db88d37'),
-    ('dddddddd-2005-4000-8000-dddddddddddd','OTP0006', NOW(), NOW() + INTERVAL '1 hour', '4405a37d-bc86-403e-b605-bedd7db88d37'),
-    ('dddddddd-2006-4000-8000-dddddddddddd','OTP0007', NOW(), NOW() + INTERVAL '1 hour', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
-    ('dddddddd-2007-4000-8000-dddddddddddd','OTP0008', NOW(), NOW() + INTERVAL '1 hour', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
-    ('dddddddd-2008-4000-8000-dddddddddddd','OTP0009', NOW(), NOW() + INTERVAL '1 hour', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
-    ('dddddddd-2009-4000-8000-dddddddddddd','OTP0010', NOW(), NOW() + INTERVAL '1 hour', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b')
+INSERT INTO family_circle (id, name, created_at) VALUES
+    ('cccccccc-1000-4000-8000-cccccccccccc', 'Family Circle 1', NOW()),
+    ('cccccccc-1001-4000-8000-cccccccccccc', 'Family Circle 2', NOW()),
+    ('cccccccc-1002-4000-8000-cccccccccccc', 'Family Circle 3', NOW()),
+    ('cccccccc-1003-4000-8000-cccccccccccc', 'Family Circle 4', NOW()),
+    ('cccccccc-1004-4000-8000-cccccccccccc', 'Admin Circle', NOW())
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO tracker_tracks_target (tracker_id, target_id, created_at) VALUES
-    ('dd382dcf-3652-499c-acdb-5d9ce99a67b8','8c52c01e-42a7-45cc-9254-db8a7601c764', NOW()),
-    ('dd382dcf-3652-499c-acdb-5d9ce99a67b8','4405a37d-bc86-403e-b605-bedd7db88d37', NOW()),
-    ('8c52c01e-42a7-45cc-9254-db8a7601c764','dd382dcf-3652-499c-acdb-5d9ce99a67b8', NOW()),
-    ('8c52c01e-42a7-45cc-9254-db8a7601c764','f8f735b4-549c-4d8c-9e10-15f8c198b71b', NOW()),
-    ('4405a37d-bc86-403e-b605-bedd7db88d37','2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', NOW()),
-    ('2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5','4405a37d-bc86-403e-b605-bedd7db88d37', NOW()),
-    ('f8f735b4-549c-4d8c-9e10-15f8c198b71b','dd382dcf-3652-499c-acdb-5d9ce99a67b8', NOW()),
-    ('f8f735b4-549c-4d8c-9e10-15f8c198b71b','8c52c01e-42a7-45cc-9254-db8a7601c764', NOW()),
-    ('2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5','f8f735b4-549c-4d8c-9e10-15f8c198b71b', NOW()),
-    ('4405a37d-bc86-403e-b605-bedd7db88d37','dd382dcf-3652-499c-acdb-5d9ce99a67b8', NOW())
+INSERT INTO participation_permission (otp, created_at, expired_at, family_circle_id) VALUES
+    ('OTP0000000000001', NOW(), NOW() + INTERVAL '1 hour', 'cccccccc-1000-4000-8000-cccccccccccc'),
+    ('OTP0000000000002', NOW(), NOW() + INTERVAL '1 hour', 'cccccccc-1001-4000-8000-cccccccccccc'),
+    ('OTP0000000000003', NOW(), NOW() + INTERVAL '1 hour', 'cccccccc-1002-4000-8000-cccccccccccc'),
+    ('OTP0000000000004', NOW(), NOW() + INTERVAL '1 hour', 'cccccccc-1003-4000-8000-cccccccccccc'),
+    ('OTP0000000000005', NOW(), NOW() + INTERVAL '1 hour', 'cccccccc-1004-4000-8000-cccccccccccc')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO user_in_family_circle (family_circle_id, user_id, role, admin) VALUES
+    ('cccccccc-1000-4000-8000-cccccccccccc', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', 'Child', FALSE),
+    ('cccccccc-1000-4000-8000-cccccccccccc', '4405a37d-bc86-403e-b605-bedd7db88d37', 'Child', FALSE),
+    ('cccccccc-1000-4000-8000-cccccccccccc', '8c52c01e-42a7-45cc-9254-db8a7601c764', 'Mother', TRUE),
+    ('cccccccc-1001-4000-8000-cccccccccccc', '4405a37d-bc86-403e-b605-bedd7db88d37', 'Child', FALSE),
+    ('cccccccc-1001-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'Father', TRUE),
+    ('cccccccc-1002-4000-8000-cccccccccccc', '4405a37d-bc86-403e-b605-bedd7db88d37', 'Child', FALSE),
+    ('cccccccc-1002-4000-8000-cccccccccccc', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'Father', TRUE),
+    ('cccccccc-1003-4000-8000-cccccccccccc', '4405a37d-bc86-403e-b605-bedd7db88d37', 'Child', FALSE),
+    ('cccccccc-1003-4000-8000-cccccccccccc', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', 'Mother', TRUE),
+    ('cccccccc-1004-4000-8000-cccccccccccc', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'Child', FALSE),
+    ('cccccccc-1004-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'Mother', TRUE)
 ON CONFLICT DO NOTHING;
 
 COMMIT;
