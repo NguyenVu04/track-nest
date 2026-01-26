@@ -2,52 +2,30 @@ package project.tracknest.usertracking.domain.tracker.locationcommand;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.entity.Location;
 import project.tracknest.usertracking.core.entity.User;
-import project.tracknest.usertracking.proto.lib.LocationRequest;
+import project.tracknest.usertracking.proto.lib.UpdateUserLocationRequest;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class LocationCommandServiceImpl implements LocationCommandService {
-    private static final int INACTIVE_SECONDS = 180; // 3 minutes
-
     private final LocationCommandRepository locationRepository;
     private final LocationMessageProducer messageProducer;
     private final LocationCommandUserRepository userRepository;
 
-    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
-    @Transactional
-    public void disconnectInactiveUsers() {
-                Pageable pageable = PageRequest.of(0, 256);
-        OffsetDateTime threshold = OffsetDateTime.now()
-                .minusSeconds(INACTIVE_SECONDS);
-        var inactiveUsers = userRepository.findInactiveUsersSince(threshold, pageable);
-        for (User user : inactiveUsers) {
-            user.setConnected(false);
-            log.info("Disconnected inactive user with id {}", user.getId());
-        }
-        userRepository.saveAll(inactiveUsers);
-        //!TODO: notify trackers about user disconnection
-    }
-
     @Override
     @Transactional
-    public void updateLocation(UUID userId, String username, LocationRequest request) {
+    public void updateUserLocation(UUID userId, String username, UpdateUserLocationRequest request) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             log.warn("User with id {} not found. Cannot update location.", userId);
@@ -55,8 +33,8 @@ public class LocationCommandServiceImpl implements LocationCommandService {
         }
 
         OffsetDateTime timestamp = OffsetDateTime.ofInstant(
-                Instant.ofEpochSecond(
-                        request.getTimestamp()),
+                Instant.ofEpochMilli(
+                        request.getTimestampMs()),
                 ZoneOffset.UTC);
 
         User user = userOpt.get();
@@ -65,10 +43,10 @@ public class LocationCommandServiceImpl implements LocationCommandService {
         userRepository.save(user);
 
         Location location = Location.builder()
-                .latitude(request.getLatitude())
-                .longitude(request.getLongitude())
-                .accuracy(request.getAccuracy())
-                .velocity(request.getVelocity())
+                .latitude(request.getLatitudeDeg())
+                .longitude(request.getLongitudeDeg())
+                .accuracy(request.getAccuracyMeter())
+                .velocity(request.getVelocityMps())
                 .id(Location.LocationId
                         .builder()
                         .userId(userId)
@@ -81,11 +59,11 @@ public class LocationCommandServiceImpl implements LocationCommandService {
         LocationMessage message = LocationMessage.builder()
                 .userId(userId)
                 .username(username)
-                .latitude(request.getLatitude())
-                .longitude(request.getLongitude())
-                .accuracy(request.getAccuracy())
-                .velocity(request.getVelocity())
-                .timestamp(request.getTimestamp())
+                .latitudeDeg(request.getLatitudeDeg())
+                .longitudeDeg(request.getLongitudeDeg())
+                .accuracyMeter(request.getAccuracyMeter())
+                .velocityMps(request.getVelocityMps())
+                .timestampMs(request.getTimestampMs())
                 .build();
 
         messageProducer.produce(message);

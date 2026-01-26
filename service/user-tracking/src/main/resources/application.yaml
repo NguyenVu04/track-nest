@@ -44,6 +44,20 @@ spring:
       ssl:
         secure: false
       host: 0.0.0.0
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceId: AUTO
+          jobStore:
+            isClustered: true
+          threadPool:
+            threadCount: 10
+
 
 server:
   port: 18080

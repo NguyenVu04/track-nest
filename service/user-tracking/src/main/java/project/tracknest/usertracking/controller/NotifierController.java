@@ -1,18 +1,11 @@
 package project.tracknest.usertracking.controller;
 
-import com.google.protobuf.Empty;
-import com.google.protobuf.StringValue;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
 import project.tracknest.usertracking.domain.notifier.NotifierService;
 import project.tracknest.usertracking.proto.lib.*;
-
-import java.util.List;
-import java.util.UUID;
-
-import static project.tracknest.usertracking.configuration.security.SecurityUtils.getCurrentUserId;
 
 @GrpcService
 @Slf4j
@@ -21,111 +14,62 @@ public class NotifierController extends NotifierControllerGrpc.NotifierControlle
     private final NotifierService service;
 
     @Override
-    public void postMobileDevice(MobileDeviceRequest request, StreamObserver<StringValue> responseObserver) {
-        UUID userId = getCurrentUserId();
-
-        String id = service.registerMobileDevice(userId, request);
-
-        responseObserver.onNext(StringValue.of(id));
-        responseObserver.onCompleted();
+    public void registerMobileDevice(RegisterMobileDeviceRequest request, StreamObserver<RegisterMobileDeviceResponse> responseObserver) {
+        super.registerMobileDevice(request, responseObserver);
     }
 
     @Override
-    public void deleteMobileDevice(StringValue request, StreamObserver<Empty> responseObserver) {
-        UUID userId = getCurrentUserId();
-        UUID id = UUID.fromString(request.getValue());
-
-        service.deleteMobileDevice(userId, id);
-
-        responseObserver.onNext(Empty.getDefaultInstance());
-        responseObserver.onCompleted();
+    public void unregisterMobileDevice(UnregisterMobileDeviceRequest request, StreamObserver<UnregisterMobileDeviceResponse> responseObserver) {
+        super.unregisterMobileDevice(request, responseObserver);
     }
 
     @Override
-    public void getTrackingNotifications(Empty request, StreamObserver<TrackingNotificationResponse> responseObserver) {
-        UUID userId = getCurrentUserId();
-
-        List<TrackingNotificationResponse> responses = service.retrieveTrackingNotifications(userId);
-        responses.forEach(responseObserver::onNext);
-        responseObserver.onCompleted();
+    public void listTrackingNotifications(ListTrackingNotificationsRequest request, StreamObserver<ListTrackingNotificationsResponse> responseObserver) {
+        super.listTrackingNotifications(request, responseObserver);
     }
 
     @Override
-    public void getRiskNotifications(Empty request, StreamObserver<RiskNotificationResponse> responseObserver) {
-        UUID userId = getCurrentUserId();
-
-        List<RiskNotificationResponse> responses = service.retrieveRiskNotifications(userId);
-        responses.forEach(responseObserver::onNext);
-        responseObserver.onCompleted();
+    public void listRiskNotifications(ListRiskNotificationsRequest request, StreamObserver<ListRiskNotificationsResponse> responseObserver) {
+        super.listRiskNotifications(request, responseObserver);
     }
 
     @Override
-    public void deleteTrackingNotification(StringValue request, StreamObserver<Empty> responseObserver) {
-        UUID userId = getCurrentUserId();
-        UUID id = UUID.fromString(request.getValue());
-
-        service.deleteTrackingNotification(userId, id);
-
-        responseObserver.onNext(Empty.getDefaultInstance());
-        responseObserver.onCompleted();
+    public void markTrackingNotificationAsSeen(MarkTrackingNotificationAsSeenRequest request, StreamObserver<MarkTrackingNotificationAsSeenResponse> responseObserver) {
+        super.markTrackingNotificationAsSeen(request, responseObserver);
     }
 
     @Override
-    public void deleteRiskNotification(StringValue request, StreamObserver<Empty> responseObserver) {
-        UUID userId = getCurrentUserId();
-        UUID id = UUID.fromString(request.getValue());
-
-        service.deleteRiskNotification(userId, id);
-
-        responseObserver.onNext(Empty.getDefaultInstance());
-        responseObserver.onCompleted();
+    public void markRiskNotificationAsSeen(MarkRiskNotificationAsSeenRequest request, StreamObserver<MarkRiskNotificationAsSeenResponse> responseObserver) {
+        super.markRiskNotificationAsSeen(request, responseObserver);
     }
 
     @Override
-    public void deleteTrackingNotifications(NotificationIds ids, StreamObserver<Empty> responseObserver) {
-        UUID userId = getCurrentUserId();
-
-        service.deleteTrackingNotifications(
-                userId,
-                ids.getIdsList()
-                        .stream()
-                        .map(UUID::fromString)
-                        .toList());
-
-        responseObserver.onNext(Empty.getDefaultInstance());
-        responseObserver.onCompleted();
+    public void deleteTrackingNotification(DeleteTrackingNotificationRequest request, StreamObserver<DeleteTrackingNotificationResponse> responseObserver) {
+        super.deleteTrackingNotification(request, responseObserver);
     }
 
     @Override
-    public void deleteRiskNotifications(NotificationIds ids, StreamObserver<Empty> responseObserver) {
-        UUID userId = getCurrentUserId();
-
-        service.deleteRiskNotifications(
-                userId,
-                ids.getIdsList()
-                        .stream()
-                        .map(UUID::fromString)
-                        .toList());
-
-        responseObserver.onNext(Empty.getDefaultInstance());
-        responseObserver.onCompleted();
+    public void deleteRiskNotification(DeleteRiskNotificationRequest request, StreamObserver<DeleteRiskNotificationResponse> responseObserver) {
+        super.deleteRiskNotification(request, responseObserver);
     }
 
     @Override
-    public void deleteAllTrackingNotifications(Empty request, StreamObserver<Empty> responseObserver) {
-        UUID userId = getCurrentUserId();
-
-        service.deleteAllTrackingNotifications(userId);
-        responseObserver.onNext(Empty.getDefaultInstance());
-        responseObserver.onCompleted();
+    public void deleteTrackingNotifications(DeleteTrackingNotificationsRequest request, StreamObserver<DeleteTrackingNotificationsResponse> responseObserver) {
+        super.deleteTrackingNotifications(request, responseObserver);
     }
 
     @Override
-    public void deleteAllRiskNotifications(Empty request, StreamObserver<Empty> responseObserver) {
-        UUID userId = getCurrentUserId();
+    public void deleteRiskNotifications(DeleteRiskNotificationsRequest request, StreamObserver<DeleteRiskNotificationsResponse> responseObserver) {
+        super.deleteRiskNotifications(request, responseObserver);
+    }
 
-        service.deleteAllRiskNotifications(userId);
-        responseObserver.onNext(Empty.getDefaultInstance());
-        responseObserver.onCompleted();
+    @Override
+    public void clearTrackingNotifications(ClearTrackingNotificationsRequest request, StreamObserver<ClearTrackingNotificationsResponse> responseObserver) {
+        super.clearTrackingNotifications(request, responseObserver);
+    }
+
+    @Override
+    public void clearRiskNotifications(ClearRiskNotificationsRequest request, StreamObserver<ClearRiskNotificationsResponse> responseObserver) {
+        super.clearRiskNotifications(request, responseObserver);
     }
 }

@@ -1,49 +1,176 @@
 syntax = "proto3";
 
-package project.tracknest.usertracking.proto;
+package project.tracknest.usertracking.proto.v1;
 
-import "google/protobuf/empty.proto";
-import "google/protobuf/wrappers.proto";
+import "google/rpc/status.proto";
 
 option java_multiple_files = true;
 option java_package = "project.tracknest.usertracking.proto.lib";
 option java_outer_classname = "TrackingManagerProto";
 
+// Service: TrackingManagerController
+// Manages family circles and membership operations including creation,
+// listing, updates, role changes, participation permissions (OTP), joining,
+// leaving, and admin assignment. All RPCs return a response that contains
+// a `google.rpc.Status` field for rich error reporting.
+//
+// Notes:
+// - Timestamps in responses use milliseconds since epoch (UTC).
+// - `google.rpc.Status` is used to convey success/failure and error details.
+// - Pagination uses `page_size` and `page_token` on listing requests/responses.
 service TrackingManagerController {
-  rpc postConnection (ConnectionRequest) returns (google.protobuf.Empty);
-  rpc deleteTracker (google.protobuf.StringValue) returns (google.protobuf.Empty);
-  rpc deleteTarget (google.protobuf.StringValue) returns (google.protobuf.Empty);
-  rpc postTrackingPermission (google.protobuf.Empty) returns (PermissionResponse);
-  rpc deleteTrackingPermission (google.protobuf.StringValue) returns (google.protobuf.Empty);
-  rpc getUserTargets (google.protobuf.Empty) returns (stream TargetResponse);
-  rpc getUserTrackers (google.protobuf.Empty) returns (stream TrackerResponse);
-  rpc putTrackingStatus (google.protobuf.BoolValue) returns (google.protobuf.Empty);
+  // CreateFamilyCircle
+  // Creates a new family circle with the provided `name` and initial `family_role`.
+  // On success returns the created `family_circle_id` and `created_at_ms`.
+  // Errors are reported in `CreateFamilyCircleResponse.status`.
+  rpc CreateFamilyCircle(CreateFamilyCircleRequest)
+      returns (CreateFamilyCircleResponse);
+
+  // ListFamilyCircles
+  // Returns a paginated list of family circles visible to the caller.
+  // Use `page_size` and `page_token` to page through results. `next_page_token`
+  // in the response is empty when no more results are available.
+  rpc ListFamilyCircles(ListFamilyCirclesRequest)
+      returns (ListFamilyCircleResponse);
+
+  // DeleteFamilyCircle
+  // Deletes the specified family circle. Only authorized members (e.g., admins)
+  // may delete a circle. On success returns the `deleted_at_ms` timestamp.
+  // Errors and permission failures are reported in the response `status`.
+  rpc DeleteFamilyCircle(DeleteFamilyCircleRequest)
+      returns (DeleteFamilyCircleResponse);
+
+  // UpdateFamilyCircle
+  // Updates mutable fields of a family circle.
+  // Returns `updated_at_ms` on success and reports failures in `status`.
+  rpc UpdateFamilyCircle(UpdateFamilyCircleRequest)
+      returns (UpdateFamilyCircleResponse);
+
+  // UpdateFamilyRole
+  // Updates the caller's role within the specified family circle or updates a
+  // member's role depending on authorization. Returns `updated_at_ms` on success.
+  rpc UpdateFamilyRole(UpdateFamilyRoleRequest)
+      returns (UpdateFamilyRoleResponse);
+
+  // CreateParticipationPermission
+  // Issues a time-limited one-time-passcode (OTP) that can be used by a user
+  // to join the specified family circle. Response includes the `otp`,
+  // `created_at_ms`, and `expired_at_ms`.
+  rpc CreateParticipationPermission(CreateParticipationPermissionRequest)
+      returns (CreateParticipationPermissionResponse);
+
+  // ParticipateInFamilyCircle
+  // Consumes a valid OTP to add the caller as a participant in the referenced
+  // family circle. Returns the joined `family_circle_id` and `participated_at_ms`.
+  rpc ParticipateInFamilyCircle(ParticipateInFamilyCircleRequest)
+      returns (ParticipateInFamilyCircleResponse);
+
+  // LeaveFamilyCircle
+  // Removes the caller from the specified family circle. Returns `left_at_ms`
+  // on success. Errors such as "not a member" will be reflected in `status`.
+  rpc LeaveFamilyCircle(LeaveFamilyCircleRequest)
+      returns (LeaveFamilyCircleResponse);
+
+  // AssignFamilyCircleAdmin
+  // Grants admin privileges to the specified `member_id` within the given
+  // family circle. Returns the `member_id` and `assigned_at_ms` on success.
+  rpc AssignFamilyCircleAdmin(AssignFamilyCircleAdminRequest)
+      returns (AssignFamilyCircleAdminResponse);
 }
 
-message ConnectionRequest {
-  string permissionId = 1;
+message CreateFamilyCircleRequest {
+  string name = 1;
+  string family_role = 2;
+}
+
+message CreateFamilyCircleResponse {
+  google.rpc.Status status = 1;
+  string family_circle_id = 2;
+  int64 created_at_ms = 3;
+}
+
+message ListFamilyCirclesRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message FamilyCircle {
+  string family_circle_id = 1;
+  string name = 2;
+  int64 created_at_ms = 3;
+}
+
+message ListFamilyCircleResponse {
+  repeated FamilyCircle family_circles = 1;
+  string next_page_token = 2;
+}
+
+message DeleteFamilyCircleRequest {
+  string family_circle_id = 1;
+}
+
+message DeleteFamilyCircleResponse {
+  google.rpc.Status status = 1;
+  int64 deleted_at_ms = 2;
+}
+
+message UpdateFamilyCircleRequest {
+  string family_circle_id = 1;
+  string name = 2;
+}
+
+message UpdateFamilyCircleResponse {
+  google.rpc.Status status = 1;
+  int64 updated_at_ms = 2;
+}
+
+message UpdateFamilyRoleRequest {
+  string family_circle_id = 1;
+  string family_role = 3;
+}
+
+message UpdateFamilyRoleResponse {
+  google.rpc.Status status = 1;
+  int64 updated_at_ms = 2;
+}
+
+message CreateParticipationPermissionRequest {
+  string family_circle_id = 1;
+}
+
+message CreateParticipationPermissionResponse {
+  google.rpc.Status status = 1;
   string otp = 2;
+  int64 created_at_ms = 3;
+  int64 expired_at_ms = 4;
 }
 
-message PermissionResponse {
-  string id = 1;
-  string otp = 2;
-  uint64 createdAt = 3;//seconds since epoch
-  uint64 expiredAt = 4;//seconds since epoch
+message ParticipateInFamilyCircleRequest {
+  string otp = 1;
 }
 
-message TargetResponse {
-  string id = 1;
-  string userId = 2;
-  string username = 3;
-  bool online = 4;
-  uint64 lastActive = 5;//seconds since epoch
+message ParticipateInFamilyCircleResponse {
+  google.rpc.Status status = 1;
+  string family_circle_id = 2;
+  int64 participated_at_ms = 3;
 }
 
-message TrackerResponse {
-  string id = 1;
-  string userId = 2;
-  string username = 3;
-  bool online = 4;
-  uint64 lastActive = 5;//seconds since epoch
+message LeaveFamilyCircleRequest {
+  string family_circle_id = 1;
+}
+
+message LeaveFamilyCircleResponse {
+  google.rpc.Status status = 1;
+  int64 left_at_ms = 2;
+}
+
+message AssignFamilyCircleAdminRequest {
+  string family_circle_id = 1;
+  string member_id = 2;
+}
+
+message AssignFamilyCircleAdminResponse {
+  google.rpc.Status status = 1;
+  string member_id = 2;
+  int64 assigned_at_ms = 3;
 }

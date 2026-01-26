@@ -1,21 +1,63 @@
 package project.tracknest.usertracking.domain.notifier;
 
-import project.tracknest.usertracking.proto.lib.MobileDeviceRequest;
-import project.tracknest.usertracking.proto.lib.RiskNotificationResponse;
-import project.tracknest.usertracking.proto.lib.TrackingNotificationResponse;
-
-import java.util.List;
-import java.util.UUID;
+import io.grpc.stub.StreamObserver;
+import project.tracknest.usertracking.proto.lib.*;
 
 public interface NotifierService {
-    String registerMobileDevice(UUID userId, MobileDeviceRequest request);
-    void deleteMobileDevice(UUID userId, UUID deviceId);
-    List<TrackingNotificationResponse> retrieveTrackingNotifications(UUID userId);
-    List<RiskNotificationResponse> retrieveRiskNotifications(UUID userId);
-    void deleteTrackingNotification(UUID userId, UUID notificationId);
-    void deleteRiskNotification(UUID userId, UUID notificationId);
-    void deleteTrackingNotifications(UUID userId, List<UUID> notificationIds);
-    void deleteRiskNotifications(UUID userId, List<UUID> notificationIds);
-    void deleteAllTrackingNotifications(UUID userId);
-    void deleteAllRiskNotifications(UUID userId);
+    void registerMobileDevice(
+            RegisterMobileDeviceRequest request,
+            StreamObserver<RegisterMobileDeviceResponse> responseObserver
+    );
+
+    void unregisterMobileDevice(
+            UnregisterMobileDeviceRequest request,
+            StreamObserver<UnregisterMobileDeviceResponse> responseObserver
+    );
+
+    void listTrackingNotifications(
+            ListTrackingNotificationsRequest request,
+            StreamObserver<ListTrackingNotificationsResponse> responseObserver);
+
+    void listRiskNotifications(
+            ListRiskNotificationsRequest request,
+            StreamObserver<ListRiskNotificationsResponse> responseObserver);
+
+    void markTrackingNotificationAsSeen(
+            MarkTrackingNotificationAsSeenRequest request,
+            StreamObserver<MarkTrackingNotificationAsSeenResponse> responseObserver
+    );
+
+    void markRiskNotificationAsSeen(
+            MarkRiskNotificationAsSeenRequest request,
+            StreamObserver<MarkRiskNotificationAsSeenResponse> responseObserver
+    );
+
+    void deleteTrackingNotification(
+            DeleteTrackingNotificationRequest request,
+            StreamObserver<DeleteTrackingNotificationResponse> responseObserver
+    );
+
+    public void deleteRiskNotification(
+            DeleteRiskNotificationRequest request,
+            StreamObserver<DeleteRiskNotificationResponse> responseObserver);
+
+    void deleteTrackingNotifications(
+            DeleteTrackingNotificationsRequest request,
+            StreamObserver<DeleteTrackingNotificationsResponse> responseObserver
+    );
+
+    void deleteRiskNotifications(
+            DeleteRiskNotificationsRequest request,
+            StreamObserver<DeleteRiskNotificationsResponse> responseObserver
+    );
+
+    void clearTrackingNotifications(
+            ClearTrackingNotificationsRequest request,
+            StreamObserver<ClearTrackingNotificationsResponse> responseObserver
+    );
+
+    void clearRiskNotifications(
+            ClearRiskNotificationsRequest request,
+            StreamObserver<ClearRiskNotificationsResponse> responseObserver
+    );
 }

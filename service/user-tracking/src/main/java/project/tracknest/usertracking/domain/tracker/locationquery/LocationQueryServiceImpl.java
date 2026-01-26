@@ -1,13 +1,18 @@
 package project.tracknest.usertracking.domain.tracker.locationquery;
 
+import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.entity.User;
+import project.tracknest.usertracking.proto.lib.FamilyMemberLocation;
+import project.tracknest.usertracking.proto.lib.ListFamilyMemberLocationHistoryRequest;
+import project.tracknest.usertracking.proto.lib.ListFamilyMemberLocationHistoryResponse;
 import project.tracknest.usertracking.proto.lib.LocationHistoryRequest;
 import project.tracknest.usertracking.proto.lib.LocationResponse;
+import project.tracknest.usertracking.proto.lib.StreamFamilyMemberLocationsRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -69,8 +74,11 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
     }
 
     @Override
-    public List<LocationResponse> retrieveTargetLocationHistory(UUID trackerId, LocationHistoryRequest request) {
-        UUID targetId = UUID.fromString(request.getTargetUserId());
+    public ListFamilyMemberLocationHistoryResponse listFamilyMemberLocationHistory(
+            UUID userId,
+            ListFamilyMemberLocationHistoryRequest request
+    ) {
+        UUID targetId = UUID.fromString(request.getMemberId());
 
         if (!userRepository.existsTrackingConnection(trackerId, targetId)) {
             log.warn("No tracking connection between tracker {} and target {}. Cannot retrieve location history.",
@@ -107,5 +115,15 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
                                 .toEpochSecond())
                         .build())
                 .toList();
+    }
+
+    @Override
+    public void streamFamilyMemberLocations(StreamFamilyMemberLocationsRequest request, StreamObserver<FamilyMemberLocation> responseObserver) {
+
+    }
+
+    @Override
+    public void listFamilyMemberLocationHistory(ListFamilyMemberLocationHistoryRequest request, StreamObserver<ListFamilyMemberLocationHistoryResponse> responseObserver) {
+
     }
 }

@@ -10,9 +10,9 @@ import java.util.UUID;
 public record LocationMessage (
         UUID userId,
         String username,
-        double latitude,
-        double longitude,
-        long timestamp,
-        float accuracy,
-        float velocity) {
+        double latitudeDeg,
+        double longitudeDeg,
+        long timestampMs,
+        float accuracyMeter,
+        float velocityMps) {
 }

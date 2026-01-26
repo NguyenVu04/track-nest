@@ -4,11 +4,9 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import project.tracknest.usertracking.core.entity.TrackingPermission;
 import project.tracknest.usertracking.core.entity.User;
 import project.tracknest.usertracking.proto.lib.ConnectionRequest;
 import project.tracknest.usertracking.proto.lib.PermissionResponse;
@@ -56,7 +54,7 @@ public class TrackingManagerServiceImpl implements TrackingManagerService {
 
     @Override
     @Transactional
-    public void createConnection(UUID trackerId, ConnectionRequest request) {
+    public void createConnection(UUID trackerId, Status request) {
         Optional<TrackingPermission> permissionOpt = permissionRepository
                 .findById(UUID.fromString(request.getPermissionId()));
 

@@ -4,7 +4,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
-import project.tracknest.usertracking.proto.lib.LocationResponse;
+import project.tracknest.usertracking.proto.lib.FamilyMemberLocation;
 
 import java.util.Set;
 import java.util.UUID;
@@ -15,7 +15,7 @@ import static project.tracknest.usertracking.configuration.security.SecurityUtil
 @Service
 @Slf4j
 class LocationObserverImpl implements LocationObserver, LocationStreamObserverRegistry {
-    private final ConcurrentHashMap<UUID, Set<StreamObserver<LocationResponse>>> observers;
+    private final ConcurrentHashMap<UUID, Set<StreamObserver<FamilyMemberLocation>>> observers;
 
     public LocationObserverImpl() {
         this.observers = new ConcurrentHashMap<>();
@@ -26,15 +26,16 @@ class LocationObserverImpl implements LocationObserver, LocationStreamObserverRe
         //TODO: save connection to redis to support multiple instances
         observers.computeIfPresent(userId, (_, observers) -> {
             observers.forEach(observer -> {
-                LocationResponse response = LocationResponse.newBuilder()
-                        .setUserId(message.userId().toString())
-                        .setUsername(message.username())
-                        .setTimestamp(message.timestamp())
-                        .setLatitude(message.latitude())
-                        .setLongitude(message.longitude())
-                        .setAccuracy(message.accuracy())
-                        .setVelocity(message.velocity())
-                        .setConnected(true)
+                FamilyMemberLocation response = FamilyMemberLocation.newBuilder()
+                        .setMemberId(message.userId().toString())
+                        .setMemberUsername(message.username())
+                        .setTimestampMs(message.timestampMs())
+                        .setLatitudeDeg(message.latitudeDeg())
+                        .setLongitudeDeg(message.longitudeDeg())
+                        .setAccuracyMeter(message.accuracyMeter())
+                        .setVelocityMps(message.velocityMps())
+                        .setOnline(true)
+                        .setLastActiveMs(message.timestampMs())
                         .build();
                 try {
                     observer.onNext(response);
@@ -49,7 +50,7 @@ class LocationObserverImpl implements LocationObserver, LocationStreamObserverRe
     }
 
     @Override
-    public UUID register(StreamObserver<LocationResponse> observer) {
+    public UUID register(StreamObserver<FamilyMemberLocation> observer) {
         UUID userId = getCurrentUserId();
         observers.computeIfAbsent(userId, _ -> ConcurrentHashMap.newKeySet())
                 .add(observer);
@@ -59,7 +60,7 @@ class LocationObserverImpl implements LocationObserver, LocationStreamObserverRe
     }
 
     @Override
-    public void unregister(UUID id, StreamObserver<LocationResponse> observer) {
+    public void unregister(UUID id, StreamObserver<FamilyMemberLocation> observer) {
         observers.computeIfPresent(id, (_, v) -> {
             v.remove(observer);
             return v.isEmpty() ? null : v;

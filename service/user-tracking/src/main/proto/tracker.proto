@@ -1,43 +1,95 @@
 syntax = "proto3";
 
-package project.tracknest.usertracking.proto;
+package project.tracknest.usertracking.proto.v1;
 
-import "google/protobuf/empty.proto";
-import "google/protobuf/wrappers.proto";
+import "google/rpc/status.proto";
 
 option java_multiple_files = true;
 option java_package = "project.tracknest.usertracking.proto.lib";
 option java_outer_classname = "TrackerProto";
 
+// Service for tracking family member locations.
+//
+// This service exposes streaming and unary RPCs to:
+//  - stream live location updates for members of a family circle,
+//  - query historical location points for a specific member, and
+//  - accept location updates from authenticated users.
+//
+// All RPCs assume authenticated callers and appropriate authorization for
+// the targeted `family_circle_id` / `member_id`. Errors are reported using
+// `google.rpc.Status` where applicable.
 service TrackerController {
-  rpc postLocation (stream LocationRequest) returns (google.protobuf.Empty);
-  rpc getTargetsLastLocations (google.protobuf.Empty) returns (stream LocationResponse);
-  rpc getTargetLocationHistory (LocationHistoryRequest) returns (stream LocationResponse);
+  // Streams live location updates for members of the specified family circle.
+  //
+  // Client:
+  //  - sends a single StreamFamilyMemberLocationsRequest containing
+  //    `family_circle_id`.
+  // Server:
+  //  - returns a server-side stream of FamilyMemberLocation messages as
+  //    members update their positions or status (online/offline).
+  // The stream may be closed by the server on authorization failure, or
+  // when the family circle no longer exists. Clients should handle
+  // reconnection and backoff.
+  rpc StreamFamilyMemberLocations(StreamFamilyMemberLocationsRequest)
+      returns (stream FamilyMemberLocation);
+
+  // Returns a history of location points for a given family member.
+  //
+  // Request contains `family_circle_id`, `member_id` and optional spatial
+  // query parameters (center and radius). Response includes a `google.rpc.Status`
+  // and a repeated list of FamilyMemberLocation messages. Location results are
+  // best-effort and may be bounded by retention or access policies.
+  rpc ListFamilyMemberLocationHistory(ListFamilyMemberLocationHistoryRequest)
+      returns (ListFamilyMemberLocationHistoryResponse);
+
+  // Updates the caller's current location.
+  //
+  // Request carries the location fields (latitude, longitude, accuracy, velocity).
+  // Server validates and persists the new location, and returns an UpdateUserLocationResponse
+  // with a `google.rpc.Status` indicating success or the reason for failure
+  // (e.g., invalid payload, rate-limited, or unauthorized).
+  rpc UpdateUserLocation(UpdateUserLocationRequest)
+      returns (UpdateUserLocationResponse);
 }
 
-message LocationHistoryRequest {
-  string targetUserId = 1;
-  double longitude = 2;//degrees
-  double latitude = 3;//degrees
-  float radius = 4;//meters
+message StreamFamilyMemberLocationsRequest {
+   string family_circle_id = 1;
 }
 
-message LocationRequest {
-  double latitude = 1;
-  double longitude = 2;
-  uint64 timestamp = 3;//seconds since epoch
-  float accuracy = 4;//meters
-  float velocity = 5;//meters per second
+message FamilyMemberLocation {
+   string member_id = 1;
+   string member_username = 2;
+   double latitude_deg = 3;
+   double longitude_deg = 4;
+   float accuracy_meter = 5;
+   float velocity_mps = 6;
+   int64 timestamp_ms = 7;
+   bool online = 8;
+   int64 last_active_ms = 9;
 }
 
-message LocationResponse {
-  string id = 1;
-  string userId = 2;
-  string username = 3;
-  double latitude = 4;//degrees
-  double longitude = 5;//degrees
-  uint64 timestamp = 6;//seconds since epoch
-  float accuracy = 7;//meters
-  float velocity = 8;//meters per second
-  bool connected = 9;
+message ListFamilyMemberLocationHistoryRequest {
+   string family_circle_id = 1;
+   string member_id = 2;
+   string member_username = 3;
+   double center_latitude_deg = 4;
+   double center_longitude_deg = 5;
+   float radius_meter = 6;
+}
+
+message ListFamilyMemberLocationHistoryResponse {
+   google.rpc.Status status = 1;
+   repeated FamilyMemberLocation locations = 2;
+}
+
+message UpdateUserLocationRequest {
+   double latitude_deg = 1;
+   double longitude_deg = 2;
+   float accuracy_meter = 3;
+   float velocity_mps = 4;
+   int64 timestamp_ms = 5;
+}
+
+message UpdateUserLocationResponse {
+   google.rpc.Status status = 1;
 }
