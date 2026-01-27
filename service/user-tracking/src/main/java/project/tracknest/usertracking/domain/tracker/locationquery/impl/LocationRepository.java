@@ -1,4 +1,4 @@
-package project.tracknest.usertracking.domain.tracker.locationquery;
+package project.tracknest.usertracking.domain.tracker.locationquery.impl;
 
 import jakarta.persistence.QueryHint;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-interface LocationQueryRepository extends JpaRepository<Location, Location.LocationId> {
+interface LocationRepository extends JpaRepository<Location, Location.LocationId> {
     @Query(value =
             "SELECT * FROM location l " +
                     "WHERE l.user_id = :userId " +

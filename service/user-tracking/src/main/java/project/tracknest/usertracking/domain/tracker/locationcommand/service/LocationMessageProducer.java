@@ -1,4 +1,4 @@
-package project.tracknest.usertracking.domain.tracker.locationcommand;
+package project.tracknest.usertracking.domain.tracker.locationcommand.service;
 
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 

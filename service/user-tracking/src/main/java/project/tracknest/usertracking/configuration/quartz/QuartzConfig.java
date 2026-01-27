@@ -4,7 +4,7 @@ import org.quartz.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import project.tracknest.usertracking.domain.tracker.locationcommand.DisconnectInactiveUsersJob;
+import project.tracknest.usertracking.domain.tracker.locationcommand.impl.DisconnectInactiveUsersJob;
 
 @Configuration
 public class QuartzConfig {
@@ -27,7 +27,7 @@ public class QuartzConfig {
                 .withDescription("Trigger for disconnecting inactive users")
                 .startNow()
                 .withSchedule(
-                        CronScheduleBuilder.cronSchedule("0 */5 * * * ?") // Every 5 minutes
+                        CronScheduleBuilder.cronSchedule("0 */4 * * * ?") // Every 5 minutes
                 )
                 .build();
     }

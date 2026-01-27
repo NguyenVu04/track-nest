@@ -1,14 +1,14 @@
-package project.tracknest.usertracking.domain.tracker.locationquery;
+package project.tracknest.usertracking.domain.tracker.locationquery.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
+import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationMessageConsumer;
 
 @Service
 @Slf4j
-public class LocationQueryTrigger {
+class LocationQueryTrigger {
     private final LocationMessageConsumer service;
 
     public LocationQueryTrigger(LocationMessageConsumer service) {

@@ -4,7 +4,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
-import project.tracknest.usertracking.domain.trackingmanager.TrackingManagerService;
+import project.tracknest.usertracking.domain.trackingmanager.service.TrackingManagerService;
 import project.tracknest.usertracking.proto.lib.*;
 
 @GrpcService

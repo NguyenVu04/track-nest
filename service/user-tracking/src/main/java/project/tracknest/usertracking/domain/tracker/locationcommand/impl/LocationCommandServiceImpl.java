@@ -1,5 +1,7 @@
-package project.tracknest.usertracking.domain.tracker.locationcommand;
+package project.tracknest.usertracking.domain.tracker.locationcommand.impl;
 
+import com.google.rpc.Code;
+import com.google.rpc.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -7,7 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.entity.Location;
 import project.tracknest.usertracking.core.entity.User;
+import project.tracknest.usertracking.domain.tracker.locationcommand.service.LocationCommandService;
+import project.tracknest.usertracking.domain.tracker.locationcommand.service.LocationMessageProducer;
 import project.tracknest.usertracking.proto.lib.UpdateUserLocationRequest;
+import project.tracknest.usertracking.proto.lib.UpdateUserLocationResponse;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -19,17 +24,24 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class LocationCommandServiceImpl implements LocationCommandService {
-    private final LocationCommandRepository locationRepository;
+    private final LocationRepository locationRepository;
     private final LocationMessageProducer messageProducer;
-    private final LocationCommandUserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
-    public void updateUserLocation(UUID userId, String username, UpdateUserLocationRequest request) {
+    public UpdateUserLocationResponse updateUserLocation(UUID userId, String username, UpdateUserLocationRequest request) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             log.warn("User with id {} not found. Cannot update location.", userId);
-            return;
+            return UpdateUserLocationResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.INTERNAL_VALUE)
+                            .setMessage("User not found")
+                            .build())
+                    .build();
         }
 
         OffsetDateTime timestamp = OffsetDateTime.ofInstant(
@@ -69,5 +81,14 @@ public class LocationCommandServiceImpl implements LocationCommandService {
         messageProducer.produce(message);
 
         log.info("Received request to update location command");
+
+        return UpdateUserLocationResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK.getNumber())
+                        .setMessage("Location updated successfully")
+                        .build())
+                .build();
     }
 }

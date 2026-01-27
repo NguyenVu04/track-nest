@@ -1,4 +1,4 @@
-package project.tracknest.usertracking.domain.trackingmanager;
+package project.tracknest.usertracking.domain.trackingmanager.impl;
 
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -8,6 +8,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.entity.User;
+import project.tracknest.usertracking.domain.trackingmanager.TrackingManagerUserRepository;
+import project.tracknest.usertracking.domain.trackingmanager.service.TrackingManagerService;
 import project.tracknest.usertracking.proto.lib.ConnectionRequest;
 import project.tracknest.usertracking.proto.lib.PermissionResponse;
 import project.tracknest.usertracking.proto.lib.TargetResponse;
@@ -23,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class TrackingManagerServiceImpl implements TrackingManagerService {
+class TrackingManagerServiceImpl implements TrackingManagerService {
     private static final long EXPIRATION_SECONDS = 300; //default 5 minutes
 
     private static final String OTP_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz234679";

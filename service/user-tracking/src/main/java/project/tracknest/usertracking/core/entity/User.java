@@ -30,19 +30,12 @@ public class User {
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
-    @JoinTable(
-            name = "tracker_tracks_target",
-            joinColumns = @JoinColumn(name = "tracker_id"),
-            inverseJoinColumns = @JoinColumn(name = "target_id")
+    @OneToMany(
+            mappedBy = "member",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
     )
-    private List<User> targets;
+    private List<FamilyCircleMember> familyCircles;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
-    @JoinTable(
-            name = "tracker_tracks_target",
-            joinColumns = @JoinColumn(name = "target_id"),
-            inverseJoinColumns = @JoinColumn(name = "tracker_id")
-    )
-    private List<User> trackers;
 }

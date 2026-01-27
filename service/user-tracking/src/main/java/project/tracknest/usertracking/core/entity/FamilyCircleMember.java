@@ -27,7 +27,7 @@ public class FamilyCircleMember {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
-    private User user;
+    private User member;
 
     @Data
     @Embeddable
@@ -41,7 +41,7 @@ public class FamilyCircleMember {
         private UUID familyCircleId;
 
         @Column(name = "user_id", nullable = false, updatable = false)
-        private UUID userId;
+        private UUID memberId;
 
     }
 

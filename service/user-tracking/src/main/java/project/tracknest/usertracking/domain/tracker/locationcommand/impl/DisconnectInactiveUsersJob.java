@@ -1,10 +1,9 @@
-package project.tracknest.usertracking.domain.tracker.locationcommand;
+package project.tracknest.usertracking.domain.tracker.locationcommand.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,10 +17,10 @@ import java.time.OffsetDateTime;
 @Component
 @RequiredArgsConstructor
 public class DisconnectInactiveUsersJob implements Job {
-    private static final int INACTIVE_SECONDS = 180; // 3 minutes
+    private static final int INACTIVE_SECONDS = 480; // 8 minutes
     private static final int PAGE_SIZE = 256;
 
-    private final LocationCommandUserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional

@@ -1,4 +1,4 @@
-package project.tracknest.usertracking.domain.trackingmanager;
+package project.tracknest.usertracking.domain.trackingmanager.service;
 
 import io.grpc.stub.StreamObserver;
 import project.tracknest.usertracking.proto.lib.*;
