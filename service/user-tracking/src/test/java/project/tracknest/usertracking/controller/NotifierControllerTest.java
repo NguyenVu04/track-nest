@@ -12,8 +12,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import project.tracknest.usertracking.proto.lib.MobileDeviceRequest;
-import project.tracknest.usertracking.proto.lib.NotificationIds;
 import project.tracknest.usertracking.proto.lib.RiskNotificationResponse;
 import project.tracknest.usertracking.proto.lib.TrackingNotificationResponse;
 

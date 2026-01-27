@@ -36,7 +36,4 @@ public class RiskNotification {
 
     @Column(name = "created_at", updatable = false, insertable = false)
     private OffsetDateTime createdAt;
-
-    @Column(name = "seen", nullable = false)
-    private boolean seen;
 }

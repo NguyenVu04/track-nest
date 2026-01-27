@@ -6,7 +6,8 @@ CREATE TABLE "user" (
     id UUID PRIMARY KEY,
     connected BOOLEAN NOT NULL DEFAULT TRUE,
     last_active TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    username VARCHAR(255) NOT NULL UNIQUE
+    username VARCHAR(255) NOT NULL UNIQUE,
+    avatar_url TEXT,
 );
 
 CREATE TABLE location (
@@ -70,13 +71,11 @@ CREATE TABLE risk_notification (
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     user_id UUID NOT NULL,
-    seen BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE tracking_notification_alerts_user (
     notification_id UUID NOT NULL,
     tracker_id UUID NOT NULL,
-    seen BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (notification_id, tracker_id)
 );
 
@@ -89,19 +88,9 @@ CREATE TABLE family_circle (
 CREATE TABLE user_in_family_circle (
     family_circle_id UUID NOT NULL,
     user_id UUID NOT NULL,
-    role VARCHAR(50) NOT NULL,
+    role VARCHAR(50),
     admin BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (family_circle_id, user_id)
-);
-
-CREATE TABLE participation_permission (
-    family_circle_id UUID PRIMARY KEY,
-    otp VARCHAR(16) UNIQUE NOT NULL,
-    number_of_attempts SMALLINT NOT NULL DEFAULT 0,
-    expired_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CHECK ( number_of_attempts >= 0 ),
-    CHECK ( expired_at > created_at )
 );
 
 ALTER TABLE user_in_family_circle

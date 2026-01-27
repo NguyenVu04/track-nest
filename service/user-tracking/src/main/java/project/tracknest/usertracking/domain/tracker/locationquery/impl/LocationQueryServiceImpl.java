@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
+import project.tracknest.usertracking.core.entity.Location;
 import project.tracknest.usertracking.core.entity.User;
 import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationMessageConsumer;
 import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationQueryService;
@@ -75,6 +76,9 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
                                         .setMemberUsername(location
                                                 .getUser()
                                                 .getUsername())
+                                        .setMemberAvatarUrl(location
+                                                .getUser()
+                                                .getAvatarUrl())
                                         .setVelocityMps(location
                                                 .getVelocity())
                                         .setLatitudeDeg(location
@@ -113,29 +117,30 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
                     .build();
         }
 
-        Optional<User> memberOpt = userRepository.findById(memberId);
-        if (memberOpt.isEmpty()) {
-            log.warn("Target user with id {} not found. Cannot retrieve location history.", memberId);
-            return ListFamilyMemberLocationHistoryResponse
-                    .newBuilder()
-                    .setStatus(
-                            Status
-                                    .newBuilder()
-                                    .setCode(Code.INTERNAL_VALUE)
-                                    .setMessage("Target user not found")
-                                    .build()
-                    )
-                    .addAllLocations(List.of())
-                    .build();
-        }
-        User member = memberOpt.get();
+        User member = userRepository.findById(memberId)
+                .orElseThrow(() -> {
+                    log.error("Family member with ID {} not found", memberId);
+                    return new RuntimeException("Family member not found");
+                });
 
-        List<FamilyMemberLocation> locations = locationRepository.findByUserIdAndWithinRadius(
-                        memberId,
-                        request.getCenterLongitudeDeg(),
-                        request.getCenterLatitudeDeg(),
-                        request.getRadiusMeter())
-                .stream()
+        List<Location> locations;
+
+        if (
+                !request.hasCenterLatitudeDeg()
+                || !request.hasCenterLongitudeDeg()
+                || !request.hasRadiusMeter()
+        ) {
+            locations = locationRepository.findByUserId(memberId);
+        } else {
+            locations = locationRepository.findByUserIdAndWithinRadius(
+                    memberId,
+                    request.getCenterLongitudeDeg(),
+                    request.getCenterLatitudeDeg(),
+                    request.getRadiusMeter());
+        }
+
+         List<FamilyMemberLocation> memberLocations = locations
+                 .stream()
                 .map(
                         location ->
                                 FamilyMemberLocation
@@ -144,6 +149,8 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
                                                 .toString())
                                         .setMemberUsername(member
                                                 .getUsername())
+                                        .setMemberAvatarUrl(member
+                                                .getAvatarUrl())
                                         .setAccuracyMeter(location.getAccuracy())
                                         .setOnline(location.getUser()
                                                 .isConnected())
@@ -166,7 +173,7 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
                                 .setMessage("Location history retrieved successfully")
                                 .build()
                 )
-                .addAllLocations(locations)
+                .addAllLocations(memberLocations)
                 .build();
     }
 

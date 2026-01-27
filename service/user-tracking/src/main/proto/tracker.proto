@@ -59,22 +59,24 @@ message StreamFamilyMemberLocationsRequest {
 message FamilyMemberLocation {
    string member_id = 1;
    string member_username = 2;
-   double latitude_deg = 3;
-   double longitude_deg = 4;
-   float accuracy_meter = 5;
-   float velocity_mps = 6;
-   int64 timestamp_ms = 7;
-   bool online = 8;
-   int64 last_active_ms = 9;
+   optional string member_avatar_url = 3;
+   double latitude_deg = 4;
+   double longitude_deg = 5;
+   float accuracy_meter = 6;
+   float velocity_mps = 7;
+   int64 timestamp_ms = 8;
+   bool online = 9;
+   int64 last_active_ms = 10;
 }
 
 message ListFamilyMemberLocationHistoryRequest {
    string family_circle_id = 1;
    string member_id = 2;
    string member_username = 3;
-   double center_latitude_deg = 4;
-   double center_longitude_deg = 5;
-   float radius_meter = 6;
+   optional string member_avatar_url = 4;
+   optional double center_latitude_deg = 5;
+   optional double center_longitude_deg = 6;
+   optional float radius_meter = 7;
 }
 
 message ListFamilyMemberLocationHistoryResponse {

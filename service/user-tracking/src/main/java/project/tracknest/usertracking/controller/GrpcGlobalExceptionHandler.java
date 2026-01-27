@@ -49,7 +49,7 @@ public class GrpcGlobalExceptionHandler implements ServerInterceptor {
 
         call.close(status.withDescription(description).withCause(t), trailers);
     }
-    //TODO: Add localization support!!!
+
     private Status mapToStatus(Throwable t) {
         if (t instanceof StatusRuntimeException) {
             return ((StatusRuntimeException) t).getStatus();

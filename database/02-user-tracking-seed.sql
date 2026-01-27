@@ -89,14 +89,6 @@ INSERT INTO family_circle (id, name, created_at) VALUES
     ('cccccccc-1004-4000-8000-cccccccccccc', 'Admin Circle', NOW())
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO participation_permission (otp, created_at, expired_at, family_circle_id) VALUES
-    ('OTP0000000000001', NOW(), NOW() + INTERVAL '1 hour', 'cccccccc-1000-4000-8000-cccccccccccc'),
-    ('OTP0000000000002', NOW(), NOW() + INTERVAL '1 hour', 'cccccccc-1001-4000-8000-cccccccccccc'),
-    ('OTP0000000000003', NOW(), NOW() + INTERVAL '1 hour', 'cccccccc-1002-4000-8000-cccccccccccc'),
-    ('OTP0000000000004', NOW(), NOW() + INTERVAL '1 hour', 'cccccccc-1003-4000-8000-cccccccccccc'),
-    ('OTP0000000000005', NOW(), NOW() + INTERVAL '1 hour', 'cccccccc-1004-4000-8000-cccccccccccc')
-ON CONFLICT DO NOTHING;
-
 INSERT INTO user_in_family_circle (family_circle_id, user_id, role, admin) VALUES
     ('cccccccc-1000-4000-8000-cccccccccccc', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', 'Child', FALSE),
     ('cccccccc-1000-4000-8000-cccccccccccc', '4405a37d-bc86-403e-b605-bedd7db88d37', 'Child', FALSE),

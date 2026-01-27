@@ -21,7 +21,6 @@ interface LocationRepository extends JpaRepository<Location, Location.LocationId
     )
     @QueryHints(
             value = {
-                    @QueryHint(name = "org.hibernate.fetchSize", value = "256"),
                     @QueryHint(name = "org.hibernate.readOnly", value = "true")
             }
     )
@@ -31,6 +30,8 @@ interface LocationRepository extends JpaRepository<Location, Location.LocationId
             @Param("latitude") double latitude,
             @Param("radius") float radius);
 
+    List<Location> findByUserId(UUID userId);
+
     @Query(
             value = "SELECT DISTINCT ON (l.user_id) l.* " +
                     "FROM location l " +
@@ -39,7 +40,6 @@ interface LocationRepository extends JpaRepository<Location, Location.LocationId
             nativeQuery = true
     )
     @QueryHints(value = {
-            @QueryHint(name = "org.hibernate.fetchSize", value = "256"),
             @QueryHint(name = "org.hibernate.readOnly", value = "true")
     })
     List<Location> findLatestByUserIdIn(@Param("userIds") Set<UUID> userIds);

@@ -1,50 +1,25 @@
 package project.tracknest.usertracking.domain.trackingmanager.service;
 
-import io.grpc.stub.StreamObserver;
 import project.tracknest.usertracking.proto.lib.*;
 
+import java.util.UUID;
+
 public interface TrackingManagerService {
-   void createFamilyCircle(
-           CreateFamilyCircleRequest request,
-           StreamObserver<CreateFamilyCircleResponse> responseObserver
-   );
+   CreateFamilyCircleResponse createFamilyCircle(UUID userId, CreateFamilyCircleRequest request);
 
-   void listFamilyCircles(
-           ListFamilyCirclesRequest request,
-           StreamObserver<ListFamilyCircleResponse> responseObserver
-   );
+   ListFamilyCircleResponse listFamilyCircles(UUID userId, ListFamilyCirclesRequest request);
 
-   void deleteFamilyCircle(
-           DeleteFamilyCircleRequest request,
-           StreamObserver<DeleteFamilyCircleResponse> responseObserver
-   );
+   DeleteFamilyCircleResponse deleteFamilyCircle(UUID userId, DeleteFamilyCircleRequest request);
 
-   void updateFamilyCircle(
-           UpdateFamilyCircleRequest request,
-           StreamObserver<UpdateFamilyCircleResponse> responseObserver
-   );
+   UpdateFamilyCircleResponse updateFamilyCircle(UUID userId, UpdateFamilyCircleRequest request);
 
-   void updateFamilyRole(
-           UpdateFamilyRoleRequest request, StreamObserver<UpdateFamilyRoleResponse> responseObserver
-   );
+   UpdateFamilyRoleResponse updateFamilyRole(UUID userId, UpdateFamilyRoleRequest request);
 
-   void createParticipationPermission(
-           CreateParticipationPermissionRequest request,
-           StreamObserver<CreateParticipationPermissionResponse> responseObserver
-   );
+   CreateParticipationPermissionResponse createParticipationPermission(UUID userId, CreateParticipationPermissionRequest request);
 
-   void participateInFamilyCircle(
-           ParticipateInFamilyCircleRequest request,
-           StreamObserver<ParticipateInFamilyCircleResponse> responseObserver
-   );
+   ParticipateInFamilyCircleResponse participateInFamilyCircle(UUID userId, ParticipateInFamilyCircleRequest request);
 
-   void leaveFamilyCircle(
-           LeaveFamilyCircleRequest request,
-           StreamObserver<LeaveFamilyCircleResponse> responseObserver
-   );
+   LeaveFamilyCircleResponse leaveFamilyCircle(UUID userId, LeaveFamilyCircleRequest request);
 
-   void assignFamilyCircleAdmin(
-           AssignFamilyCircleAdminRequest request,
-           StreamObserver<AssignFamilyCircleAdminResponse> responseObserver
-   );
+   AssignFamilyCircleAdminResponse assignFamilyCircleAdmin(UUID userId, AssignFamilyCircleAdminRequest request);
 }

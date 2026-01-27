@@ -26,7 +26,7 @@ public class FamilyCircle {
     @Column(name = "name", nullable = false, length = 50)
     private String name;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @OneToMany(

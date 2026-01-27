@@ -51,12 +51,32 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
     }
 
     @Override
-    public void listFamilyMemberLocationHistory(ListFamilyMemberLocationHistoryRequest request, StreamObserver<ListFamilyMemberLocationHistoryResponse> responseObserver) {
-        super.listFamilyMemberLocationHistory(request, responseObserver);
+    public void listFamilyMemberLocationHistory(
+            ListFamilyMemberLocationHistoryRequest request,
+            StreamObserver<ListFamilyMemberLocationHistoryResponse> responseObserver
+    ) {
+        UUID userId = getCurrentUserId();
+
+        ListFamilyMemberLocationHistoryResponse response = queryService
+                .listFamilyMemberLocationHistory(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
-    public void updateUserLocation(UpdateUserLocationRequest request, StreamObserver<UpdateUserLocationResponse> responseObserver) {
-        super.updateUserLocation(request, responseObserver);
+    public void updateUserLocation(
+            UpdateUserLocationRequest request,
+            StreamObserver<UpdateUserLocationResponse> responseObserver
+    ) {
+        UUID userId = getCurrentUserId();
+
+        UpdateUserLocationResponse response = commandService
+                .updateUserLocation(
+                        userId,
+                        request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 }

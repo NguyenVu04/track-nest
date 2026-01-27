@@ -91,18 +91,18 @@ message CreateFamilyCircleResponse {
 
 message ListFamilyCirclesRequest {
   int32 page_size = 1;
-  string page_token = 2;
+  optional string page_token = 2;
 }
 
-message FamilyCircle {
+message FamilyCircleInfo {
   string family_circle_id = 1;
   string name = 2;
   int64 created_at_ms = 3;
 }
 
 message ListFamilyCircleResponse {
-  repeated FamilyCircle family_circles = 1;
-  string next_page_token = 2;
+  repeated FamilyCircleInfo family_circles = 1;
+  optional string next_page_token = 2;
 }
 
 message DeleteFamilyCircleRequest {
@@ -136,6 +136,7 @@ message UpdateFamilyRoleResponse {
 
 message CreateParticipationPermissionRequest {
   string family_circle_id = 1;
+  optional string previous_otp = 2;
 }
 
 message CreateParticipationPermissionResponse {

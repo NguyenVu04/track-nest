@@ -17,7 +17,6 @@ import project.tracknest.usertracking.proto.lib.UpdateUserLocationResponse;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -30,26 +29,18 @@ public class LocationCommandServiceImpl implements LocationCommandService {
 
     @Override
     @Transactional
-    public UpdateUserLocationResponse updateUserLocation(UUID userId, String username, UpdateUserLocationRequest request) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            log.warn("User with id {} not found. Cannot update location.", userId);
-            return UpdateUserLocationResponse
-                    .newBuilder()
-                    .setStatus(Status
-                            .newBuilder()
-                            .setCode(Code.INTERNAL_VALUE)
-                            .setMessage("User not found")
-                            .build())
-                    .build();
-        }
+    public UpdateUserLocationResponse updateUserLocation(UUID userId, UpdateUserLocationRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.error("User with ID {} not found", userId);
+                    return new RuntimeException("User not found");
+                });
 
         OffsetDateTime timestamp = OffsetDateTime.ofInstant(
                 Instant.ofEpochMilli(
                         request.getTimestampMs()),
                 ZoneOffset.UTC);
 
-        User user = userOpt.get();
         user.setConnected(true);
         user.setLastActive(timestamp);
         userRepository.save(user);
@@ -70,7 +61,8 @@ public class LocationCommandServiceImpl implements LocationCommandService {
 
         LocationMessage message = LocationMessage.builder()
                 .userId(userId)
-                .username(username)
+                .username(user.getUsername())
+                .avatarUrl(user.getAvatarUrl())
                 .latitudeDeg(request.getLatitudeDeg())
                 .longitudeDeg(request.getLongitudeDeg())
                 .accuracyMeter(request.getAccuracyMeter())
@@ -86,7 +78,7 @@ public class LocationCommandServiceImpl implements LocationCommandService {
                 .newBuilder()
                 .setStatus(Status
                         .newBuilder()
-                        .setCode(Code.OK.getNumber())
+                        .setCode(Code.OK_VALUE)
                         .setMessage("Location updated successfully")
                         .build())
                 .build();

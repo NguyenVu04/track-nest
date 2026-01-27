@@ -1,243 +1,463 @@
 package project.tracknest.usertracking.domain.trackingmanager.impl;
 
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
+import com.google.rpc.Code;
+import com.google.rpc.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.tracknest.usertracking.core.datatype.PageToken;
+import project.tracknest.usertracking.core.utils.OtpGenerator;
+import project.tracknest.usertracking.core.utils.PageTokenCodec;
+import project.tracknest.usertracking.core.entity.FamilyCircle;
+import project.tracknest.usertracking.core.entity.FamilyCircleMember;
 import project.tracknest.usertracking.core.entity.User;
-import project.tracknest.usertracking.domain.trackingmanager.TrackingManagerUserRepository;
 import project.tracknest.usertracking.domain.trackingmanager.service.TrackingManagerService;
-import project.tracknest.usertracking.proto.lib.ConnectionRequest;
-import project.tracknest.usertracking.proto.lib.PermissionResponse;
-import project.tracknest.usertracking.proto.lib.TargetResponse;
-import project.tracknest.usertracking.proto.lib.TrackerResponse;
+import project.tracknest.usertracking.proto.lib.*;
 
-import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import java.time.ZoneOffset;
+import java.util.*;
+
+import static project.tracknest.usertracking.core.utils.OtpGenerator.OTP_TTL_SECONDS;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 class TrackingManagerServiceImpl implements TrackingManagerService {
-    private static final long EXPIRATION_SECONDS = 300; //default 5 minutes
+    public static final String PARTICIPATION_PERMISSION_KEY_PREFIX = "family_circle:participation_permission:";
 
-    private static final String OTP_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz234679";
-    private static final int OTP_LENGTH = 15;
+    private static final int DEFAULT_PAGE_SIZE = 32;
 
-    private final TrackingManagerUserRepository userRepository;
-    private final TrackingManagerPermissionRepository permissionRepository;
+    private final StringRedisTemplate redisTemplate;
 
-    @Scheduled(fixedDelay = 900, timeUnit = TimeUnit.SECONDS)
-    @Transactional
-    public void cleanupExpiredPermissions() {
-        permissionRepository.deleteExpiredPermissions();
-        log.info("Expired tracking permissions cleaned up");
-        //!TODO: optimize distributed cleanup using redis if needed
-    }
-
-    private static String generateOtp() {
-        SecureRandom random = new SecureRandom();
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < OTP_LENGTH; i++) {
-            int index = random.nextInt(OTP_CHARACTERS.length());
-            sb.append(OTP_CHARACTERS.charAt(index));
-        }
-
-        return sb.toString();
-    }
+    private final FamilyCircleRepository familyCircleRepository;
+    private final FamilyCircleMemberRepository familyCircleMemberRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
-    public void createConnection(UUID trackerId, Status request) {
-        Optional<TrackingPermission> permissionOpt = permissionRepository
-                .findById(UUID.fromString(request.getPermissionId()));
-
-        if (permissionOpt.isEmpty()) {
-            log.warn("Tracking permission with id {} not found when creating connection", request.getPermissionId());
-            throw new StatusRuntimeException(Status.PERMISSION_DENIED.withDescription("Invalid tracking permission"));
-        }
-
-        TrackingPermission permission = permissionOpt.get();
-        if (permission.getExpiredAt().isBefore(OffsetDateTime.now())) {
-            log.warn("Tracking permission with id {} has expired when creating connection", request.getPermissionId());
-            throw new StatusRuntimeException(Status.PERMISSION_DENIED.withDescription("Tracking permission has expired"));
-        }
-
-        UUID targetId = permission.getUserId();
-        if (trackerId.equals(targetId)) {
-            log.warn("User with id {} attempted to track themselves", trackerId);
-            throw new StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription("Cannot track oneself"));
-        }
-
-        Optional<User> trackerOpt = userRepository.findById(trackerId);
-        Optional<User> targetOpt = userRepository.findById(targetId);
-        if (trackerOpt.isEmpty()) {
-            log.warn("Tracker user with id {} not found when creating connection", trackerId);
-            throw new StatusRuntimeException(Status.INTERNAL.withDescription("Tracker user not found"));
-        }
-        if (targetOpt.isEmpty()) {
-            log.warn("Target user with id {} not found when creating connection", targetId);
-            throw new StatusRuntimeException(Status.INTERNAL.withDescription("Target user not found"));
-        }
-
-        User tracker = trackerOpt.get();
-
-        List<User> targets = tracker.getTargets();
-        if (targets.stream().anyMatch(t -> t.getId().equals(targetId))) {
-            log.warn("Tracker user with id {} is already tracking target with id {}", trackerId, targetId);
-            throw new StatusRuntimeException(Status.ALREADY_EXISTS.withDescription("Connection already exists"));
-        }
-
-        tracker.getTargets().add(targetOpt.get());
-        userRepository.save(tracker);
-
-        permissionRepository.delete(permission);
-
-        //TODO: notify target user of new tracker
-    }
-
-    @Override
-    @Transactional
-    public void deleteTracker(UUID userId, UUID trackerId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            log.warn("User with id {} not found when deleting tracker", userId);
-            return;
-        }
-
-        User user = userOpt.get();
-        List<User> trackers = user.getTrackers();
-        boolean removed = trackers.removeIf(tracker -> tracker.getId().equals(trackerId));
-        if (!removed) {
-            log.warn("Tracker with id {} not found for user {}", trackerId, userId);
-            return;
-        }
-        userRepository.save(user);
-
-        //TODO: notify tracker user of removal
-    }
-
-    @Override
-    @Transactional
-    public void deleteTarget(UUID userId, UUID targetId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            log.warn("User with id {} not found when deleting target", userId);
-            return;
-        }
-
-        User user = userOpt.get();
-        List<User> targets = user.getTargets();
-        boolean removed = targets.removeIf(target -> target.getId().equals(targetId));
-        if (!removed) {
-            log.warn("Target with id {} not found for user {}", targetId, userId);
-            return;
-        }
-        userRepository.save(user);
-    }
-
-    @Override
-    public PermissionResponse createTrackingPermission(UUID userId) {
-        if (!userRepository.existsById(userId)) {
-            log.warn("User with id {} not found when creating tracking permission", userId);
-            throw new StatusRuntimeException(Status.INTERNAL.withDescription("User not found"));
-        }
-
-        OffsetDateTime currentTime = OffsetDateTime.now();
-        OffsetDateTime expiryTime = currentTime.plusSeconds(EXPIRATION_SECONDS);
-
-        String otp = generateOtp();
-
-        TrackingPermission permission = TrackingPermission.builder()
-                .userId(userId)
-                .otp(otp)
-                .createdAt(currentTime)
-                .expiredAt(expiryTime)
+    public CreateFamilyCircleResponse createFamilyCircle(UUID userId, CreateFamilyCircleRequest request) {
+        FamilyCircle circle = FamilyCircle
+                .builder()
+                .name(request.getName())
                 .build();
-        TrackingPermission savedPermission = permissionRepository.save(permission);
-        return PermissionResponse.newBuilder()
-                .setId(savedPermission.getId().toString())
-                .setOtp(savedPermission.getOtp())
-                .setCreatedAt(savedPermission.getCreatedAt().toEpochSecond())
-                .setExpiredAt(savedPermission.getExpiredAt().toEpochSecond())
+        FamilyCircle savedCircle = familyCircleRepository.save(circle);
+
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> {
+                    log.error("User with ID {} not found", userId);
+                    return new RuntimeException("User not found");
+                });
+
+        FamilyCircleMember member = FamilyCircleMember
+                .builder()
+                .id(FamilyCircleMember.FamilyCircleMemberId
+                        .builder()
+                        .familyCircleId(savedCircle.getId())
+                        .memberId(user.getId())
+                        .build())
+                .isAdmin(true)
+                .role(request.getFamilyRole())
+                .build();
+
+        Set<FamilyCircleMember> members = new HashSet<>();
+        members.add(member);
+        savedCircle.setMembers(members);
+
+        return CreateFamilyCircleResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Family circle created successfully")
+                        .build())
+                .setFamilyCircleId(savedCircle.getId().toString())
+                .setCreatedAtMs(Instant.now().toEpochMilli())
                 .build();
     }
 
-    @Override
-    public void deleteTrackingPermission(UUID userId, UUID permissionId) {
-        Optional<TrackingPermission> permissionOpt = permissionRepository.findById(permissionId);
-        if (permissionOpt.isEmpty()) {
-            log.warn("Tracking permission with id {} not found when deleting", permissionId);
-            return;
-        }
-
-        TrackingPermission permission = permissionOpt.get();
-
-        if (!userId.equals(permission.getUserId())) {
-            log.warn("Tracking permission with id {} does not belong to user {}", permissionId, permission.getUserId());
-            throw new StatusRuntimeException(Status.PERMISSION_DENIED.withDescription("Permission does not belong to user"));
-        }
-
-        permissionRepository.delete(permission);
+    private FamilyCircleInfo toProto(FamilyCircle fc) {
+        return FamilyCircleInfo.newBuilder()
+                .setFamilyCircleId(fc.getId().toString())
+                .setName(fc.getName())
+                .setCreatedAtMs(fc.getCreatedAt().toInstant().toEpochMilli())
+                .build();
     }
+
+    private PageToken buildNextToken(Slice<FamilyCircle> slice) {
+        FamilyCircle last = slice.getContent()
+                .get(slice.getNumberOfElements() - 1);
+
+        return new PageToken(
+                last.getCreatedAt().toInstant().toEpochMilli(),
+                last.getId().toString()
+        );
+    }
+
 
     @Override
     @Transactional(readOnly = true)
-    public List<TargetResponse> retrieveUserTargets(UUID userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            log.warn("User with id {} not found when retrieving targets", userId);
-            return List.of();
+    public ListFamilyCircleResponse listFamilyCircles(
+            UUID userId,
+            ListFamilyCirclesRequest request
+    ) {
+        PageToken cursor= PageTokenCodec.decode(request.getPageToken());
+
+        int pageSize = request.getPageSize() > 0
+                ? request.getPageSize()
+                : DEFAULT_PAGE_SIZE;
+
+        Pageable pageable = PageRequest.ofSize(pageSize);
+
+        // 2. Query
+        Slice<FamilyCircle> slice = familyCircleRepository.findNextByUserId(
+                userId,
+                cursor == null
+                        ? null
+                        : Instant.ofEpochMilli(cursor.lastCreatedAtMs())
+                        .atOffset(ZoneOffset.UTC),
+                cursor == null
+                        ? null
+                        : UUID.fromString(cursor.lastId()),
+                pageable
+        );
+
+        List<FamilyCircleInfo> infos = slice.getContent().stream()
+                .map(this::toProto)
+                .toList();
+
+        // 4. Build response
+        ListFamilyCircleResponse.Builder response =
+                ListFamilyCircleResponse.newBuilder()
+                        .addAllFamilyCircles(infos);
+
+        if (slice.hasNext()) {
+            response.setNextPageToken(
+                    PageTokenCodec.encode(buildNextToken(slice))
+            );
         }
 
-        List<User> targets = userOpt.get().getTargets();
-        return targets.stream()
-                .map(target -> TargetResponse.newBuilder()
-                        .setUserId(target.getId().toString())
-                        .setUsername(target.getUsername())
-                        .setOnline(target.isConnected())
-                        .setLastActive(target.getLastActive()
-                                .toEpochSecond())
-                        .build())
-                .toList();
+        return response.build();
     }
 
     @Override
-    public List<TrackerResponse> retrieveUserTrackers(UUID userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            log.warn("User with id {} not found when retrieving trackers", userId);
-            return List.of();
+    @Transactional
+    public DeleteFamilyCircleResponse deleteFamilyCircle(UUID userId, DeleteFamilyCircleRequest request) {
+        Optional<FamilyCircle> circleOpt = familyCircleRepository
+                .findCircleIfAdmin(
+                        userId,
+                        UUID.fromString(request.getFamilyCircleId()));
+
+        if (circleOpt.isEmpty()) {
+            log.warn("User {} is not an admin of the family circle {}",
+                    userId, request.getFamilyCircleId());
+
+            return DeleteFamilyCircleResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.PERMISSION_DENIED_VALUE)
+                            .setMessage("User is not an admin of the family circle or circle does not exist")
+                            .build())
+                    .build();
         }
-        List<User> trackers = userOpt.get().getTrackers();
-        return trackers.stream()
-                .map(tracker -> TrackerResponse.newBuilder()
-                        .setUserId(tracker.getId().toString())
-                        .setUsername(tracker.getUsername())
-                        .setOnline(tracker.isConnected())
-                        .setLastActive(tracker.getLastActive()
-                                .toEpochSecond())
+
+        familyCircleRepository.delete(circleOpt.get());
+        return DeleteFamilyCircleResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Family circle deleted successfully")
                         .build())
-                .toList();
+                .build();
     }
 
     @Override
-    public void updateTrackingStatus(UUID userId, boolean isTrackingEnabled) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
-            log.warn("User with id {} not found when updating tracking status", userId);
-            return;
+    @Transactional
+    public UpdateFamilyCircleResponse updateFamilyCircle(UUID userId, UpdateFamilyCircleRequest request) {
+        Optional<FamilyCircle> circleOpt = familyCircleRepository
+                .findCircleIfAdmin(
+                        userId,
+                        UUID.fromString(request.getFamilyCircleId()));
+
+        if (circleOpt.isEmpty()) {
+            log.warn("User {} is not an admin of the family circle {} or circle does not exist",
+                    userId, request.getFamilyCircleId());
+
+            return UpdateFamilyCircleResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.PERMISSION_DENIED_VALUE)
+                            .setMessage("User is not an admin of the family circle or circle does not exist")
+                            .build())
+                    .build();
         }
-        User user = userOpt.get();
-        user.setConnected(isTrackingEnabled);
-        userRepository.save(user);
+
+        FamilyCircle circle = circleOpt.get();
+        circle.setName(request.getName());
+        familyCircleRepository.save(circle);
+        return UpdateFamilyCircleResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Family circle updated successfully")
+                        .build())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public UpdateFamilyRoleResponse updateFamilyRole(UUID userId, UpdateFamilyRoleRequest request) {
+        Optional<FamilyCircleMember> memberOpt = familyCircleMemberRepository
+                .findById_FamilyCircleIdAndId_MemberId(
+                        UUID.fromString(request.getFamilyCircleId()),
+                        userId);
+
+        if (memberOpt.isEmpty()) {
+            return UpdateFamilyRoleResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.NOT_FOUND_VALUE)
+                            .setMessage("User is not a member of the family circle")
+                            .build())
+                    .build();
+        }
+
+        FamilyCircleMember member = memberOpt.get();
+        member.setRole(request.getFamilyRole());
+        familyCircleMemberRepository.save(member);
+
+        return UpdateFamilyRoleResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Family role updated successfully")
+                        .build())
+                .build();
+    }
+
+    private String getRedisKeyForParticipationPermission(String otp) {
+        return PARTICIPATION_PERMISSION_KEY_PREFIX + otp;
+    }
+
+    @Override
+    public CreateParticipationPermissionResponse createParticipationPermission(
+            UUID userId,
+            CreateParticipationPermissionRequest request
+    ) {
+        Optional<FamilyCircleMember> adminOpt = familyCircleMemberRepository
+                .findById_FamilyCircleIdAndId_MemberId(
+                        UUID.fromString(request.getFamilyCircleId()),
+                        userId);
+
+        if (adminOpt.isEmpty() || !adminOpt.get().isAdmin()) {
+            log.warn("User {} is not authorized to create participation permission for family circle {}",
+                    userId, request.getFamilyCircleId());
+            return CreateParticipationPermissionResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.PERMISSION_DENIED_VALUE)
+                            .setMessage("User is not an admin of the family circle")
+                            .build())
+                    .build();
+        }
+
+        if (request.hasPreviousOtp()) {
+            String previousRedisKey = getRedisKeyForParticipationPermission(request.getPreviousOtp());
+            redisTemplate.delete(previousRedisKey);
+        }
+
+        String otp = OtpGenerator.generateOtp();
+        String redisKey = getRedisKeyForParticipationPermission(otp);
+
+        OffsetDateTime createdAt = OffsetDateTime.now();
+        OffsetDateTime expiredAt = createdAt.plusSeconds(OTP_TTL_SECONDS);
+
+        redisTemplate.opsForValue().set(
+                redisKey,
+                request.getFamilyCircleId(),
+                Duration.ofSeconds(OTP_TTL_SECONDS));
+
+        return CreateParticipationPermissionResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Participation permission created successfully")
+                        .build())
+                .setOtp(otp)
+                .setCreatedAtMs(createdAt.toInstant().toEpochMilli())
+                .setExpiredAtMs(expiredAt.toInstant().toEpochMilli())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ParticipateInFamilyCircleResponse participateInFamilyCircle(UUID userId, ParticipateInFamilyCircleRequest request) {
+        String redisKey = getRedisKeyForParticipationPermission(request.getOtp());
+        // OTP value is family circle ID
+        String otpValue = redisTemplate.opsForValue().get(redisKey);
+
+        if (otpValue == null) {
+            log.warn("Invalid or expired OTP {} used by user {}", request.getOtp(), userId);
+            return ParticipateInFamilyCircleResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.NOT_FOUND_VALUE)
+                            .setMessage("Invalid or expired OTP")
+                            .build())
+                    .build();
+        }
+
+        UUID circleId = UUID.fromString(otpValue);
+
+        Optional<FamilyCircleMember> memberOpt = familyCircleMemberRepository
+                .findById_FamilyCircleIdAndId_MemberId(
+                        circleId,
+                        userId);
+
+        if (memberOpt.isPresent()) {
+            log.warn("User {} is already a member of the family circle {}",
+                    userId, circleId);
+            return ParticipateInFamilyCircleResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.ALREADY_EXISTS_VALUE)
+                            .setMessage("User is already a member of the family circle")
+                            .build())
+                    .build();
+        }
+
+        FamilyCircleMember member = FamilyCircleMember
+                .builder()
+                .id(FamilyCircleMember.FamilyCircleMemberId
+                        .builder()
+                        .familyCircleId(circleId)
+                        .memberId(userId)
+                        .build())
+                .isAdmin(false)
+                .build();
+
+        familyCircleMemberRepository.save(member);
+        return ParticipateInFamilyCircleResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Joined family circle successfully")
+                        .build())
+                .setParticipatedAtMs(Instant.now().toEpochMilli())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public LeaveFamilyCircleResponse leaveFamilyCircle(UUID userId, LeaveFamilyCircleRequest request) {
+        Optional<FamilyCircleMember> memberOpt = familyCircleMemberRepository
+                .findById_FamilyCircleIdAndId_MemberId(
+                        UUID.fromString(request.getFamilyCircleId()),
+                        userId);
+
+        if (memberOpt.isEmpty()) {
+            log.warn("User {} is not a member of the family circle {}",
+                    userId, request.getFamilyCircleId());
+            return LeaveFamilyCircleResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.NOT_FOUND_VALUE)
+                            .setMessage("User is not a member of the family circle")
+                            .build())
+                    .setLeftAtMs(Instant.now().toEpochMilli())
+                    .build();
+        }
+
+        familyCircleMemberRepository.delete(memberOpt.get());
+        return LeaveFamilyCircleResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Left family circle successfully")
+                        .build())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public AssignFamilyCircleAdminResponse assignFamilyCircleAdmin(UUID userId, AssignFamilyCircleAdminRequest request) {
+
+        UUID circleId = UUID.fromString(request.getFamilyCircleId());
+
+        Optional<FamilyCircleMember> adminOpt = familyCircleMemberRepository
+                .findById_FamilyCircleIdAndId_MemberId(
+                        circleId,
+                        userId);
+
+        Optional<FamilyCircleMember> memberOpt = familyCircleMemberRepository
+                .findById_FamilyCircleIdAndId_MemberId(
+                        circleId,
+                        UUID.fromString(request.getMemberId()));
+
+        if (adminOpt.isEmpty() || memberOpt.isEmpty()) {
+            log.warn("Either admin user {} or member user {} is not a member of the family circle {}",
+                    userId, request.getMemberId(), request.getFamilyCircleId());
+            return AssignFamilyCircleAdminResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.NOT_FOUND_VALUE)
+                            .setMessage("Either admin or member is not a member of the family circle")
+                            .build())
+                    .build();
+        }
+
+        FamilyCircleMember admin = adminOpt.get();
+        FamilyCircleMember member = memberOpt.get();
+
+        if (!admin.isAdmin()) {
+            log.warn("User {} is not authorized to assign admin role in family circle {}",
+                    userId, request.getFamilyCircleId());
+            return AssignFamilyCircleAdminResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.PERMISSION_DENIED_VALUE)
+                            .setMessage("User is not an admin of the family circle")
+                            .build())
+                    .build();
+        }
+
+        admin.setAdmin(false);
+        member.setAdmin(true);
+
+        familyCircleMemberRepository.save(admin);
+        familyCircleMemberRepository.save(member);
+
+        return AssignFamilyCircleAdminResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Admin role assigned successfully")
+                        .build())
+                .setAssignedAtMs(Instant.now().toEpochMilli())
+                .build();
     }
 }

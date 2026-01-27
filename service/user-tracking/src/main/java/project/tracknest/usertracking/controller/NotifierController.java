@@ -4,8 +4,13 @@ import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
-import project.tracknest.usertracking.domain.notifier.NotifierService;
+import project.tracknest.usertracking.configuration.security.SecurityUtils;
+import project.tracknest.usertracking.domain.notifier.service.NotifierService;
 import project.tracknest.usertracking.proto.lib.*;
+
+import java.util.UUID;
+
+import static project.tracknest.usertracking.configuration.security.SecurityUtils.getCurrentUserId;
 
 @GrpcService
 @Slf4j
@@ -15,61 +20,101 @@ public class NotifierController extends NotifierControllerGrpc.NotifierControlle
 
     @Override
     public void registerMobileDevice(RegisterMobileDeviceRequest request, StreamObserver<RegisterMobileDeviceResponse> responseObserver) {
-        super.registerMobileDevice(request, responseObserver);
+        UUID userId = getCurrentUserId();
+
+        RegisterMobileDeviceResponse response = service.registerMobileDevice(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
     public void unregisterMobileDevice(UnregisterMobileDeviceRequest request, StreamObserver<UnregisterMobileDeviceResponse> responseObserver) {
-        super.unregisterMobileDevice(request, responseObserver);
+        UUID userId = getCurrentUserId();
+
+        UnregisterMobileDeviceResponse response = service.unregisterMobileDevice(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
     public void listTrackingNotifications(ListTrackingNotificationsRequest request, StreamObserver<ListTrackingNotificationsResponse> responseObserver) {
-        super.listTrackingNotifications(request, responseObserver);
+        UUID userId = getCurrentUserId();
+
+        ListTrackingNotificationsResponse response = service.listTrackingNotifications(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
     public void listRiskNotifications(ListRiskNotificationsRequest request, StreamObserver<ListRiskNotificationsResponse> responseObserver) {
-        super.listRiskNotifications(request, responseObserver);
-    }
+        UUID userId = getCurrentUserId();
 
-    @Override
-    public void markTrackingNotificationAsSeen(MarkTrackingNotificationAsSeenRequest request, StreamObserver<MarkTrackingNotificationAsSeenResponse> responseObserver) {
-        super.markTrackingNotificationAsSeen(request, responseObserver);
-    }
+        ListRiskNotificationsResponse response = service.listRiskNotifications(userId, request);
 
-    @Override
-    public void markRiskNotificationAsSeen(MarkRiskNotificationAsSeenRequest request, StreamObserver<MarkRiskNotificationAsSeenResponse> responseObserver) {
-        super.markRiskNotificationAsSeen(request, responseObserver);
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
     public void deleteTrackingNotification(DeleteTrackingNotificationRequest request, StreamObserver<DeleteTrackingNotificationResponse> responseObserver) {
-        super.deleteTrackingNotification(request, responseObserver);
+        UUID userId = getCurrentUserId();
+
+        DeleteTrackingNotificationResponse response = service.deleteTrackingNotification(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
     public void deleteRiskNotification(DeleteRiskNotificationRequest request, StreamObserver<DeleteRiskNotificationResponse> responseObserver) {
-        super.deleteRiskNotification(request, responseObserver);
+        UUID userId = getCurrentUserId();
+
+        DeleteRiskNotificationResponse response = service.deleteRiskNotification(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
     public void deleteTrackingNotifications(DeleteTrackingNotificationsRequest request, StreamObserver<DeleteTrackingNotificationsResponse> responseObserver) {
-        super.deleteTrackingNotifications(request, responseObserver);
+        UUID userId = getCurrentUserId();
+
+        DeleteTrackingNotificationsResponse response = service.deleteTrackingNotifications(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
     public void deleteRiskNotifications(DeleteRiskNotificationsRequest request, StreamObserver<DeleteRiskNotificationsResponse> responseObserver) {
-        super.deleteRiskNotifications(request, responseObserver);
+        UUID userId = getCurrentUserId();
+
+        DeleteRiskNotificationsResponse response = service.deleteRiskNotifications(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
     public void clearTrackingNotifications(ClearTrackingNotificationsRequest request, StreamObserver<ClearTrackingNotificationsResponse> responseObserver) {
-        super.clearTrackingNotifications(request, responseObserver);
+        UUID userId = getCurrentUserId();
+
+        ClearTrackingNotificationsResponse response = service.clearTrackingNotifications(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
     public void clearRiskNotifications(ClearRiskNotificationsRequest request, StreamObserver<ClearRiskNotificationsResponse> responseObserver) {
-        super.clearRiskNotifications(request, responseObserver);
+        UUID userId = getCurrentUserId();
+
+        ClearRiskNotificationsResponse response = service.clearRiskNotifications(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 }

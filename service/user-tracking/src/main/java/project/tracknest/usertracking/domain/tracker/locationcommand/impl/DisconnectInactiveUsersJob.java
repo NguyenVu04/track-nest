@@ -41,6 +41,7 @@ public class DisconnectInactiveUsersJob implements Job {
             }
 
             for (User user : page.getContent()) {
+                //TODO: send disconnect notification to user via firebase
                 user.setConnected(false);
                 log.info("Disconnected inactive user with id {}", user.getId());
             }

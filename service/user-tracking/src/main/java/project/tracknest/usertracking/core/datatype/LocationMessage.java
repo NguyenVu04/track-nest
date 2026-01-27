@@ -10,6 +10,7 @@ import java.util.UUID;
 public record LocationMessage (
         UUID userId,
         String username,
+        String avatarUrl,
         double latitudeDeg,
         double longitudeDeg,
         long timestampMs,

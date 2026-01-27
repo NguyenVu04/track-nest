@@ -30,6 +30,9 @@ public class User {
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 
+    @Column(name = "avatar_url", nullable = true, columnDefinition = "TEXT")
+    private String avatarUrl;
+
     @OneToMany(
             mappedBy = "member",
             fetch = FetchType.LAZY,
@@ -37,5 +40,4 @@ public class User {
             orphanRemoval = true
     )
     private List<FamilyCircleMember> familyCircles;
-
 }

@@ -31,6 +31,7 @@ class LocationObserverImpl implements LocationObserver, LocationStreamObserverRe
             FamilyMemberLocation response = FamilyMemberLocation.newBuilder()
                     .setMemberId(message.userId().toString())
                     .setMemberUsername(message.username())
+                    .setMemberAvatarUrl(message.avatarUrl())
                     .setTimestampMs(message.timestampMs())
                     .setLatitudeDeg(message.latitudeDeg())
                     .setLongitudeDeg(message.longitudeDeg())

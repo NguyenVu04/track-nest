@@ -15,7 +15,6 @@ service NotifierController {
   // Supported operations:
   // - Register / Unregister mobile device tokens for push notifications.
   // - List notifications with pagination.
-  // - Mark notifications as seen (record seen timestamp).
   // - Delete single or multiple notifications.
   // - Clear all notifications.
   //
@@ -37,14 +36,6 @@ service NotifierController {
   // Lists risk notifications for the current user with pagination.
   rpc ListRiskNotifications (ListRiskNotificationsRequest)
       returns (ListRiskNotificationsResponse);
-
-  // Marks a specific tracking notification as seen and returns the seen timestamp.
-  rpc MarkTrackingNotificationAsSeen (MarkTrackingNotificationAsSeenRequest)
-      returns (MarkTrackingNotificationAsSeenResponse);
-
-  // Marks a specific risk notification as seen and returns the seen timestamp.
-  rpc MarkRiskNotificationAsSeen (MarkRiskNotificationAsSeenRequest)
-      returns (MarkRiskNotificationAsSeenResponse);
 
   // Deletes a single tracking notification by id.
   rpc DeleteTrackingNotification (DeleteTrackingNotificationRequest)
@@ -93,7 +84,7 @@ message UnregisterMobileDeviceResponse {
 
 message ListTrackingNotificationsRequest {
   int32 page_size = 1;
-  string page_token = 2;
+  optional string page_token = 2;
 }
 
 message ListTrackingNotificationsResponse {
@@ -105,10 +96,10 @@ message TrackingNotificationResponse {
   string id = 1;
   string member_id = 4;
   string member_username = 5;
-  uint64 created_at_ms = 6;
-  string title = 7;
-  string content = 8;
-  bool seen = 9;
+  string member_avatar_url = 6;
+  uint64 created_at_ms = 7;
+  string title = 8;
+  string content = 9;
 }
 
 message ListRiskNotificationsRequest {
@@ -125,28 +116,10 @@ message RiskNotificationResponse {
   string id = 1;
   string member_id = 2;
   string member_username = 3;
-  uint64 created_at_ms = 4;
-  string title = 5;
-  string content = 6;
-  bool seen = 7;
-}
-
-message MarkTrackingNotificationAsSeenRequest {
-  string id = 1;
-}
-
-message MarkTrackingNotificationAsSeenResponse {
-  google.rpc.Status status = 1;
-  uint64 seen_at_ms = 2;
-}
-
-message MarkRiskNotificationAsSeenRequest {
-  string id = 1;
-}
-
-message MarkRiskNotificationAsSeenResponse {
-  google.rpc.Status status = 1;
-  uint64 seen_at_ms = 2;
+  string member_avatar_url = 4;
+  uint64 created_at_ms = 5;
+  string title = 6;
+  string content = 7;
 }
 
 message DeleteTrackingNotificationRequest {
