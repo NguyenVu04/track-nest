@@ -55,6 +55,7 @@ class NotifierServiceImpl implements NotifierService {
                 .deviceToken(request.getDeviceToken())
                 .userId(userId)
                 .languageCode(request.getLanguageCode())
+                .platform(request.getPlatform())
                 .build();
 
         MobileDevice savedDevice = mobileRepository.save(device);
