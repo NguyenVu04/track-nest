@@ -60,11 +60,20 @@ service NotifierController {
   // Clears all risk notifications for the current user.
   rpc ClearRiskNotifications (ClearRiskNotificationsRequest)
       returns (ClearRiskNotificationsResponse);
+
+  // Counts the total number of tracking notifications for the current user.
+  rpc CountTrackingNotifications (CountTrackingNotificationsRequest)
+      returns (CountTrackingNotificationsResponse);
+
+  // Counts the total number of risk notifications for the current user.
+  rpc CountRiskNotifications (CountRiskNotificationsRequest)
+      returns (CountRiskNotificationsResponse);
 }
 
 message RegisterMobileDeviceRequest {
   string deviceToken = 1;
-  string languageCode = 2;
+  string platform = 2;
+  string languageCode = 3;
 }
 
 message RegisterMobileDeviceResponse {
@@ -172,4 +181,22 @@ message ClearRiskNotificationsRequest {
 message ClearRiskNotificationsResponse {
   google.rpc.Status status = 1;
   uint64 cleared_at_ms = 2;
+}
+
+message CountTrackingNotificationsRequest {
+}
+
+message CountTrackingNotificationsResponse {
+  int32 total_count = 1;
+  google.rpc.Status status = 2;
+  uint64 counted_at_ms = 3;
+}
+
+message CountRiskNotificationsRequest {
+}
+
+message CountRiskNotificationsResponse {
+  int32 total_count = 1;
+  google.rpc.Status status = 2;
+  uint64 counted_at_ms = 3;
 }

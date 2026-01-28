@@ -117,4 +117,24 @@ public class NotifierController extends NotifierControllerGrpc.NotifierControlle
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
+
+    @Override
+    public void countTrackingNotifications(CountTrackingNotificationsRequest request, StreamObserver<CountTrackingNotificationsResponse> responseObserver) {
+        UUID userId = getCurrentUserId();
+
+        CountTrackingNotificationsResponse response = service.countTrackingNotifications(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void countRiskNotifications(CountRiskNotificationsRequest request, StreamObserver<CountRiskNotificationsResponse> responseObserver) {
+        UUID userId = getCurrentUserId();
+
+        CountRiskNotificationsResponse response = service.countRiskNotifications(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
 }

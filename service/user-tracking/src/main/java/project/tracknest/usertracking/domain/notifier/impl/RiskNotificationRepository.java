@@ -44,4 +44,6 @@ interface RiskNotificationRepository extends JpaRepository<RiskNotification, UUI
             @Param("notificationIds") List<UUID> notificationIds,
             @Param("userId") UUID userId
     );
+
+    int countByUser_Id(UUID userId);
 }

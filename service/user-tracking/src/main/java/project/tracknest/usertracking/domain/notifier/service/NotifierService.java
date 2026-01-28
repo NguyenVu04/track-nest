@@ -44,4 +44,12 @@ public interface NotifierService {
     ClearRiskNotificationsResponse clearRiskNotifications(
             UUID userId,
             ClearRiskNotificationsRequest request);
+
+    CountTrackingNotificationsResponse countTrackingNotifications(
+            UUID userId,
+            CountTrackingNotificationsRequest request);
+
+    CountRiskNotificationsResponse countRiskNotifications(
+            UUID userId,
+            CountRiskNotificationsRequest request);
 }

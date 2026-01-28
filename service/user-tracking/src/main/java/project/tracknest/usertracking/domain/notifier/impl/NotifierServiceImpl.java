@@ -435,4 +435,32 @@ class NotifierServiceImpl implements NotifierService {
                 .setClearedAtMs(Instant.now().toEpochMilli())
                 .build();
     }
+
+    @Override
+    public CountTrackingNotificationsResponse countTrackingNotifications(UUID userId, CountTrackingNotificationsRequest request) {
+        int count = trackerNotificationRepository.countById_TrackerId(userId);
+
+        return CountTrackingNotificationsResponse
+                .newBuilder()
+                .setTotalCount(count)
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Count retrieved successfully"))
+                        .build();
+    }
+
+    @Override
+    public CountRiskNotificationsResponse countRiskNotifications(UUID userId, CountRiskNotificationsRequest request) {
+        int count = riskNotificationRepository.countByUser_Id(userId);
+
+        return CountRiskNotificationsResponse
+                .newBuilder()
+                .setTotalCount(count)
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Count retrieved successfully"))
+                        .build();
+    }
 }

@@ -24,4 +24,5 @@ interface TrackerTrackingNotificationRepository extends JpaRepository<TrackerTra
             @Param("userId") UUID userId
     );
 
+    int countById_TrackerId(UUID trackerId);
 }

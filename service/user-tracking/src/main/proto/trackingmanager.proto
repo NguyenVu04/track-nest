@@ -86,7 +86,7 @@ message CreateFamilyCircleRequest {
 message CreateFamilyCircleResponse {
   google.rpc.Status status = 1;
   string family_circle_id = 2;
-  int64 created_at_ms = 3;
+  uint64 created_at_ms = 3;
 }
 
 message ListFamilyCirclesRequest {
@@ -97,7 +97,7 @@ message ListFamilyCirclesRequest {
 message FamilyCircleInfo {
   string family_circle_id = 1;
   string name = 2;
-  int64 created_at_ms = 3;
+  uint64 created_at_ms = 3;
 }
 
 message ListFamilyCircleResponse {
@@ -111,7 +111,7 @@ message DeleteFamilyCircleRequest {
 
 message DeleteFamilyCircleResponse {
   google.rpc.Status status = 1;
-  int64 deleted_at_ms = 2;
+  uint64 deleted_at_ms = 2;
 }
 
 message UpdateFamilyCircleRequest {
@@ -121,7 +121,7 @@ message UpdateFamilyCircleRequest {
 
 message UpdateFamilyCircleResponse {
   google.rpc.Status status = 1;
-  int64 updated_at_ms = 2;
+  uint64 updated_at_ms = 2;
 }
 
 message UpdateFamilyRoleRequest {
@@ -131,7 +131,7 @@ message UpdateFamilyRoleRequest {
 
 message UpdateFamilyRoleResponse {
   google.rpc.Status status = 1;
-  int64 updated_at_ms = 2;
+  uint64 updated_at_ms = 2;
 }
 
 message CreateParticipationPermissionRequest {
@@ -142,8 +142,8 @@ message CreateParticipationPermissionRequest {
 message CreateParticipationPermissionResponse {
   google.rpc.Status status = 1;
   string otp = 2;
-  int64 created_at_ms = 3;
-  int64 expired_at_ms = 4;
+  uint64 created_at_ms = 3;
+  uint64 expired_at_ms = 4;
 }
 
 message ParticipateInFamilyCircleRequest {
@@ -153,7 +153,7 @@ message ParticipateInFamilyCircleRequest {
 message ParticipateInFamilyCircleResponse {
   google.rpc.Status status = 1;
   string family_circle_id = 2;
-  int64 participated_at_ms = 3;
+  uint64 participated_at_ms = 3;
 }
 
 message LeaveFamilyCircleRequest {
@@ -162,7 +162,7 @@ message LeaveFamilyCircleRequest {
 
 message LeaveFamilyCircleResponse {
   google.rpc.Status status = 1;
-  int64 left_at_ms = 2;
+  uint64 left_at_ms = 2;
 }
 
 message AssignFamilyCircleAdminRequest {
@@ -173,5 +173,5 @@ message AssignFamilyCircleAdminRequest {
 message AssignFamilyCircleAdminResponse {
   google.rpc.Status status = 1;
   string member_id = 2;
-  int64 assigned_at_ms = 3;
+  uint64 assigned_at_ms = 3;
 }

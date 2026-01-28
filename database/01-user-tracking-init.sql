@@ -51,6 +51,7 @@ CREATE TABLE mobile_device (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     language_code VARCHAR(2) NOT NULL,
     device_token TEXT NOT NULL,
+    platform VARCHAR(50) NOT NULL DEFAULT 'ANDROID',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     user_id UUID NOT NULL
 );

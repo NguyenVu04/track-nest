@@ -64,9 +64,9 @@ message FamilyMemberLocation {
    double longitude_deg = 5;
    float accuracy_meter = 6;
    float velocity_mps = 7;
-   int64 timestamp_ms = 8;
+   uint64 timestamp_ms = 8;
    bool online = 9;
-   int64 last_active_ms = 10;
+   uint64 last_active_ms = 10;
 }
 
 message ListFamilyMemberLocationHistoryRequest {
@@ -89,7 +89,7 @@ message UpdateUserLocationRequest {
    double longitude_deg = 2;
    float accuracy_meter = 3;
    float velocity_mps = 4;
-   int64 timestamp_ms = 5;
+   uint64 timestamp_ms = 5;
 }
 
 message UpdateUserLocationResponse {

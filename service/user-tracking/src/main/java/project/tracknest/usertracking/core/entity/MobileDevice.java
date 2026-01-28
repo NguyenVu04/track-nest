@@ -27,6 +27,9 @@ public class MobileDevice {
     @Column(name = "language_code", nullable = false, length = 2)
     private String languageCode;
 
+    @Column(name = "platform", nullable = false, length = 50)
+    private String platform;
+
     @Column(name = "created_at", updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
