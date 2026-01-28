@@ -1,5 +1,5 @@
 /**
- * @fileoverview gRPC-Web generated client stub for project.tracknest.usertracking.proto
+ * @fileoverview gRPC-Web generated client stub for project.tracknest.usertracking.proto.v1
  * @enhanceable
  * @public
  */
@@ -17,8 +17,6 @@
 
 import * as grpcWeb from 'grpc-web';
 
-import * as google_protobuf_empty_pb from 'google-protobuf/google/protobuf/empty_pb'; // proto import: "google/protobuf/empty.proto"
-import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb'; // proto import: "google/protobuf/wrappers.proto"
 import * as notifier_pb from './notifier_pb'; // proto import: "notifier.proto"
 
 
@@ -41,337 +39,337 @@ export class NotifierControllerClient {
     this.options_ = options;
   }
 
-  methodDescriptorpostMobileDevice = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.NotifierController/postMobileDevice',
+  methodDescriptorRegisterMobileDevice = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/RegisterMobileDevice',
     grpcWeb.MethodType.UNARY,
-    notifier_pb.MobileDeviceRequest,
-    google_protobuf_wrappers_pb.StringValue,
-    (request: notifier_pb.MobileDeviceRequest) => {
+    notifier_pb.RegisterMobileDeviceRequest,
+    notifier_pb.RegisterMobileDeviceResponse,
+    (request: notifier_pb.RegisterMobileDeviceRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_wrappers_pb.StringValue.deserializeBinary
+    notifier_pb.RegisterMobileDeviceResponse.deserializeBinary
   );
 
-  postMobileDevice(
-    request: notifier_pb.MobileDeviceRequest,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_wrappers_pb.StringValue>;
+  registerMobileDevice(
+    request: notifier_pb.RegisterMobileDeviceRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.RegisterMobileDeviceResponse>;
 
-  postMobileDevice(
-    request: notifier_pb.MobileDeviceRequest,
+  registerMobileDevice(
+    request: notifier_pb.RegisterMobileDeviceRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_wrappers_pb.StringValue) => void): grpcWeb.ClientReadableStream<google_protobuf_wrappers_pb.StringValue>;
+               response: notifier_pb.RegisterMobileDeviceResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.RegisterMobileDeviceResponse>;
 
-  postMobileDevice(
-    request: notifier_pb.MobileDeviceRequest,
+  registerMobileDevice(
+    request: notifier_pb.RegisterMobileDeviceRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_wrappers_pb.StringValue) => void) {
+               response: notifier_pb.RegisterMobileDeviceResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.NotifierController/postMobileDevice',
+          '/project.tracknest.usertracking.proto.v1.NotifierController/RegisterMobileDevice',
         request,
         metadata || {},
-        this.methodDescriptorpostMobileDevice,
+        this.methodDescriptorRegisterMobileDevice,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.NotifierController/postMobileDevice',
+      '/project.tracknest.usertracking.proto.v1.NotifierController/RegisterMobileDevice',
     request,
     metadata || {},
-    this.methodDescriptorpostMobileDevice);
+    this.methodDescriptorRegisterMobileDevice);
   }
 
-  methodDescriptordeleteMobileDevice = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.NotifierController/deleteMobileDevice',
+  methodDescriptorUnregisterMobileDevice = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/UnregisterMobileDevice',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_wrappers_pb.StringValue,
-    google_protobuf_empty_pb.Empty,
-    (request: google_protobuf_wrappers_pb.StringValue) => {
+    notifier_pb.UnregisterMobileDeviceRequest,
+    notifier_pb.UnregisterMobileDeviceResponse,
+    (request: notifier_pb.UnregisterMobileDeviceRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    notifier_pb.UnregisterMobileDeviceResponse.deserializeBinary
   );
 
-  deleteMobileDevice(
-    request: google_protobuf_wrappers_pb.StringValue,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+  unregisterMobileDevice(
+    request: notifier_pb.UnregisterMobileDeviceRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.UnregisterMobileDeviceResponse>;
 
-  deleteMobileDevice(
-    request: google_protobuf_wrappers_pb.StringValue,
+  unregisterMobileDevice(
+    request: notifier_pb.UnregisterMobileDeviceRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: notifier_pb.UnregisterMobileDeviceResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.UnregisterMobileDeviceResponse>;
 
-  deleteMobileDevice(
-    request: google_protobuf_wrappers_pb.StringValue,
+  unregisterMobileDevice(
+    request: notifier_pb.UnregisterMobileDeviceRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: notifier_pb.UnregisterMobileDeviceResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.NotifierController/deleteMobileDevice',
+          '/project.tracknest.usertracking.proto.v1.NotifierController/UnregisterMobileDevice',
         request,
         metadata || {},
-        this.methodDescriptordeleteMobileDevice,
+        this.methodDescriptorUnregisterMobileDevice,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.NotifierController/deleteMobileDevice',
+      '/project.tracknest.usertracking.proto.v1.NotifierController/UnregisterMobileDevice',
     request,
     metadata || {},
-    this.methodDescriptordeleteMobileDevice);
+    this.methodDescriptorUnregisterMobileDevice);
   }
 
-  methodDescriptorgetTrackingNotifications = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.NotifierController/getTrackingNotifications',
+  methodDescriptorListTrackingNotifications = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/ListTrackingNotifications',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_empty_pb.Empty,
-    notifier_pb.TrackingNotificationResponse,
-    (request: google_protobuf_empty_pb.Empty) => {
+    notifier_pb.ListTrackingNotificationsRequest,
+    notifier_pb.ListTrackingNotificationsResponse,
+    (request: notifier_pb.ListTrackingNotificationsRequest) => {
       return request.serializeBinary();
     },
-    notifier_pb.TrackingNotificationResponse.deserializeBinary
+    notifier_pb.ListTrackingNotificationsResponse.deserializeBinary
   );
 
-  getTrackingNotifications(
-    request: google_protobuf_empty_pb.Empty,
-    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.TrackingNotificationResponse>;
+  listTrackingNotifications(
+    request: notifier_pb.ListTrackingNotificationsRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.ListTrackingNotificationsResponse>;
 
-  getTrackingNotifications(
-    request: google_protobuf_empty_pb.Empty,
+  listTrackingNotifications(
+    request: notifier_pb.ListTrackingNotificationsRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: notifier_pb.TrackingNotificationResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.TrackingNotificationResponse>;
+               response: notifier_pb.ListTrackingNotificationsResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.ListTrackingNotificationsResponse>;
 
-  getTrackingNotifications(
-    request: google_protobuf_empty_pb.Empty,
+  listTrackingNotifications(
+    request: notifier_pb.ListTrackingNotificationsRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: notifier_pb.TrackingNotificationResponse) => void) {
+               response: notifier_pb.ListTrackingNotificationsResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.NotifierController/getTrackingNotifications',
+          '/project.tracknest.usertracking.proto.v1.NotifierController/ListTrackingNotifications',
         request,
         metadata || {},
-        this.methodDescriptorgetTrackingNotifications,
+        this.methodDescriptorListTrackingNotifications,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.NotifierController/getTrackingNotifications',
+      '/project.tracknest.usertracking.proto.v1.NotifierController/ListTrackingNotifications',
     request,
     metadata || {},
-    this.methodDescriptorgetTrackingNotifications);
+    this.methodDescriptorListTrackingNotifications);
   }
 
-  methodDescriptorgetRiskNotifications = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.NotifierController/getRiskNotifications',
+  methodDescriptorListRiskNotifications = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/ListRiskNotifications',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_empty_pb.Empty,
-    notifier_pb.RiskNotificationResponse,
-    (request: google_protobuf_empty_pb.Empty) => {
+    notifier_pb.ListRiskNotificationsRequest,
+    notifier_pb.ListRiskNotificationsResponse,
+    (request: notifier_pb.ListRiskNotificationsRequest) => {
       return request.serializeBinary();
     },
-    notifier_pb.RiskNotificationResponse.deserializeBinary
+    notifier_pb.ListRiskNotificationsResponse.deserializeBinary
   );
 
-  getRiskNotifications(
-    request: google_protobuf_empty_pb.Empty,
-    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.RiskNotificationResponse>;
+  listRiskNotifications(
+    request: notifier_pb.ListRiskNotificationsRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.ListRiskNotificationsResponse>;
 
-  getRiskNotifications(
-    request: google_protobuf_empty_pb.Empty,
+  listRiskNotifications(
+    request: notifier_pb.ListRiskNotificationsRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: notifier_pb.RiskNotificationResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.RiskNotificationResponse>;
+               response: notifier_pb.ListRiskNotificationsResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.ListRiskNotificationsResponse>;
 
-  getRiskNotifications(
-    request: google_protobuf_empty_pb.Empty,
+  listRiskNotifications(
+    request: notifier_pb.ListRiskNotificationsRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: notifier_pb.RiskNotificationResponse) => void) {
+               response: notifier_pb.ListRiskNotificationsResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.NotifierController/getRiskNotifications',
+          '/project.tracknest.usertracking.proto.v1.NotifierController/ListRiskNotifications',
         request,
         metadata || {},
-        this.methodDescriptorgetRiskNotifications,
+        this.methodDescriptorListRiskNotifications,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.NotifierController/getRiskNotifications',
+      '/project.tracknest.usertracking.proto.v1.NotifierController/ListRiskNotifications',
     request,
     metadata || {},
-    this.methodDescriptorgetRiskNotifications);
+    this.methodDescriptorListRiskNotifications);
   }
 
-  methodDescriptordeleteTrackingNotification = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.NotifierController/deleteTrackingNotification',
+  methodDescriptorDeleteTrackingNotification = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/DeleteTrackingNotification',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_wrappers_pb.StringValue,
-    google_protobuf_empty_pb.Empty,
-    (request: google_protobuf_wrappers_pb.StringValue) => {
+    notifier_pb.DeleteTrackingNotificationRequest,
+    notifier_pb.DeleteTrackingNotificationResponse,
+    (request: notifier_pb.DeleteTrackingNotificationRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    notifier_pb.DeleteTrackingNotificationResponse.deserializeBinary
   );
 
   deleteTrackingNotification(
-    request: google_protobuf_wrappers_pb.StringValue,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+    request: notifier_pb.DeleteTrackingNotificationRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.DeleteTrackingNotificationResponse>;
 
   deleteTrackingNotification(
-    request: google_protobuf_wrappers_pb.StringValue,
+    request: notifier_pb.DeleteTrackingNotificationRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: notifier_pb.DeleteTrackingNotificationResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.DeleteTrackingNotificationResponse>;
 
   deleteTrackingNotification(
-    request: google_protobuf_wrappers_pb.StringValue,
+    request: notifier_pb.DeleteTrackingNotificationRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: notifier_pb.DeleteTrackingNotificationResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.NotifierController/deleteTrackingNotification',
+          '/project.tracknest.usertracking.proto.v1.NotifierController/DeleteTrackingNotification',
         request,
         metadata || {},
-        this.methodDescriptordeleteTrackingNotification,
+        this.methodDescriptorDeleteTrackingNotification,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.NotifierController/deleteTrackingNotification',
+      '/project.tracknest.usertracking.proto.v1.NotifierController/DeleteTrackingNotification',
     request,
     metadata || {},
-    this.methodDescriptordeleteTrackingNotification);
+    this.methodDescriptorDeleteTrackingNotification);
   }
 
-  methodDescriptordeleteRiskNotification = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.NotifierController/deleteRiskNotification',
+  methodDescriptorDeleteRiskNotification = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/DeleteRiskNotification',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_wrappers_pb.StringValue,
-    google_protobuf_empty_pb.Empty,
-    (request: google_protobuf_wrappers_pb.StringValue) => {
+    notifier_pb.DeleteRiskNotificationRequest,
+    notifier_pb.DeleteRiskNotificationResponse,
+    (request: notifier_pb.DeleteRiskNotificationRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    notifier_pb.DeleteRiskNotificationResponse.deserializeBinary
   );
 
   deleteRiskNotification(
-    request: google_protobuf_wrappers_pb.StringValue,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+    request: notifier_pb.DeleteRiskNotificationRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.DeleteRiskNotificationResponse>;
 
   deleteRiskNotification(
-    request: google_protobuf_wrappers_pb.StringValue,
+    request: notifier_pb.DeleteRiskNotificationRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: notifier_pb.DeleteRiskNotificationResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.DeleteRiskNotificationResponse>;
 
   deleteRiskNotification(
-    request: google_protobuf_wrappers_pb.StringValue,
+    request: notifier_pb.DeleteRiskNotificationRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: notifier_pb.DeleteRiskNotificationResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.NotifierController/deleteRiskNotification',
+          '/project.tracknest.usertracking.proto.v1.NotifierController/DeleteRiskNotification',
         request,
         metadata || {},
-        this.methodDescriptordeleteRiskNotification,
+        this.methodDescriptorDeleteRiskNotification,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.NotifierController/deleteRiskNotification',
+      '/project.tracknest.usertracking.proto.v1.NotifierController/DeleteRiskNotification',
     request,
     metadata || {},
-    this.methodDescriptordeleteRiskNotification);
+    this.methodDescriptorDeleteRiskNotification);
   }
 
-  methodDescriptordeleteTrackingNotifications = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.NotifierController/deleteTrackingNotifications',
+  methodDescriptorDeleteTrackingNotifications = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/DeleteTrackingNotifications',
     grpcWeb.MethodType.UNARY,
-    notifier_pb.NotificationIds,
-    google_protobuf_empty_pb.Empty,
-    (request: notifier_pb.NotificationIds) => {
+    notifier_pb.DeleteTrackingNotificationsRequest,
+    notifier_pb.DeleteTrackingNotificationsResponse,
+    (request: notifier_pb.DeleteTrackingNotificationsRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    notifier_pb.DeleteTrackingNotificationsResponse.deserializeBinary
   );
 
   deleteTrackingNotifications(
-    request: notifier_pb.NotificationIds,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+    request: notifier_pb.DeleteTrackingNotificationsRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.DeleteTrackingNotificationsResponse>;
 
   deleteTrackingNotifications(
-    request: notifier_pb.NotificationIds,
+    request: notifier_pb.DeleteTrackingNotificationsRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: notifier_pb.DeleteTrackingNotificationsResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.DeleteTrackingNotificationsResponse>;
 
   deleteTrackingNotifications(
-    request: notifier_pb.NotificationIds,
+    request: notifier_pb.DeleteTrackingNotificationsRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: notifier_pb.DeleteTrackingNotificationsResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.NotifierController/deleteTrackingNotifications',
+          '/project.tracknest.usertracking.proto.v1.NotifierController/DeleteTrackingNotifications',
         request,
         metadata || {},
-        this.methodDescriptordeleteTrackingNotifications,
+        this.methodDescriptorDeleteTrackingNotifications,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.NotifierController/deleteTrackingNotifications',
+      '/project.tracknest.usertracking.proto.v1.NotifierController/DeleteTrackingNotifications',
     request,
     metadata || {},
-    this.methodDescriptordeleteTrackingNotifications);
+    this.methodDescriptorDeleteTrackingNotifications);
   }
 
   methodDescriptordeleteRiskNotifications = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.NotifierController/deleteRiskNotifications',
+    '/project.tracknest.usertracking.proto.v1.NotifierController/deleteRiskNotifications',
     grpcWeb.MethodType.UNARY,
-    notifier_pb.NotificationIds,
-    google_protobuf_empty_pb.Empty,
-    (request: notifier_pb.NotificationIds) => {
+    notifier_pb.DeleteRiskNotificationsRequest,
+    notifier_pb.DeleteRiskNotificationsResponse,
+    (request: notifier_pb.DeleteRiskNotificationsRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    notifier_pb.DeleteRiskNotificationsResponse.deserializeBinary
   );
 
   deleteRiskNotifications(
-    request: notifier_pb.NotificationIds,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+    request: notifier_pb.DeleteRiskNotificationsRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.DeleteRiskNotificationsResponse>;
 
   deleteRiskNotifications(
-    request: notifier_pb.NotificationIds,
+    request: notifier_pb.DeleteRiskNotificationsRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: notifier_pb.DeleteRiskNotificationsResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.DeleteRiskNotificationsResponse>;
 
   deleteRiskNotifications(
-    request: notifier_pb.NotificationIds,
+    request: notifier_pb.DeleteRiskNotificationsRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: notifier_pb.DeleteRiskNotificationsResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.NotifierController/deleteRiskNotifications',
+          '/project.tracknest.usertracking.proto.v1.NotifierController/deleteRiskNotifications',
         request,
         metadata || {},
         this.methodDescriptordeleteRiskNotifications,
@@ -379,96 +377,182 @@ export class NotifierControllerClient {
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.NotifierController/deleteRiskNotifications',
+      '/project.tracknest.usertracking.proto.v1.NotifierController/deleteRiskNotifications',
     request,
     metadata || {},
     this.methodDescriptordeleteRiskNotifications);
   }
 
-  methodDescriptordeleteAllTrackingNotifications = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.NotifierController/deleteAllTrackingNotifications',
+  methodDescriptorClearTrackingNotifications = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/ClearTrackingNotifications',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_empty_pb.Empty,
-    google_protobuf_empty_pb.Empty,
-    (request: google_protobuf_empty_pb.Empty) => {
+    notifier_pb.ClearTrackingNotificationsRequest,
+    notifier_pb.ClearTrackingNotificationsResponse,
+    (request: notifier_pb.ClearTrackingNotificationsRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    notifier_pb.ClearTrackingNotificationsResponse.deserializeBinary
   );
 
-  deleteAllTrackingNotifications(
-    request: google_protobuf_empty_pb.Empty,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+  clearTrackingNotifications(
+    request: notifier_pb.ClearTrackingNotificationsRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.ClearTrackingNotificationsResponse>;
 
-  deleteAllTrackingNotifications(
-    request: google_protobuf_empty_pb.Empty,
+  clearTrackingNotifications(
+    request: notifier_pb.ClearTrackingNotificationsRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: notifier_pb.ClearTrackingNotificationsResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.ClearTrackingNotificationsResponse>;
 
-  deleteAllTrackingNotifications(
-    request: google_protobuf_empty_pb.Empty,
+  clearTrackingNotifications(
+    request: notifier_pb.ClearTrackingNotificationsRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: notifier_pb.ClearTrackingNotificationsResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.NotifierController/deleteAllTrackingNotifications',
+          '/project.tracknest.usertracking.proto.v1.NotifierController/ClearTrackingNotifications',
         request,
         metadata || {},
-        this.methodDescriptordeleteAllTrackingNotifications,
+        this.methodDescriptorClearTrackingNotifications,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.NotifierController/deleteAllTrackingNotifications',
+      '/project.tracknest.usertracking.proto.v1.NotifierController/ClearTrackingNotifications',
     request,
     metadata || {},
-    this.methodDescriptordeleteAllTrackingNotifications);
+    this.methodDescriptorClearTrackingNotifications);
   }
 
-  methodDescriptordeleteAllRiskNotifications = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.NotifierController/deleteAllRiskNotifications',
+  methodDescriptorClearRiskNotifications = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/ClearRiskNotifications',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_empty_pb.Empty,
-    google_protobuf_empty_pb.Empty,
-    (request: google_protobuf_empty_pb.Empty) => {
+    notifier_pb.ClearRiskNotificationsRequest,
+    notifier_pb.ClearRiskNotificationsResponse,
+    (request: notifier_pb.ClearRiskNotificationsRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    notifier_pb.ClearRiskNotificationsResponse.deserializeBinary
   );
 
-  deleteAllRiskNotifications(
-    request: google_protobuf_empty_pb.Empty,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+  clearRiskNotifications(
+    request: notifier_pb.ClearRiskNotificationsRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.ClearRiskNotificationsResponse>;
 
-  deleteAllRiskNotifications(
-    request: google_protobuf_empty_pb.Empty,
+  clearRiskNotifications(
+    request: notifier_pb.ClearRiskNotificationsRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: notifier_pb.ClearRiskNotificationsResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.ClearRiskNotificationsResponse>;
 
-  deleteAllRiskNotifications(
-    request: google_protobuf_empty_pb.Empty,
+  clearRiskNotifications(
+    request: notifier_pb.ClearRiskNotificationsRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: notifier_pb.ClearRiskNotificationsResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.NotifierController/deleteAllRiskNotifications',
+          '/project.tracknest.usertracking.proto.v1.NotifierController/ClearRiskNotifications',
         request,
         metadata || {},
-        this.methodDescriptordeleteAllRiskNotifications,
+        this.methodDescriptorClearRiskNotifications,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.NotifierController/deleteAllRiskNotifications',
+      '/project.tracknest.usertracking.proto.v1.NotifierController/ClearRiskNotifications',
     request,
     metadata || {},
-    this.methodDescriptordeleteAllRiskNotifications);
+    this.methodDescriptorClearRiskNotifications);
+  }
+
+  methodDescriptorCountTrackingNotifications = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/CountTrackingNotifications',
+    grpcWeb.MethodType.UNARY,
+    notifier_pb.CountTrackingNotificationsRequest,
+    notifier_pb.CountTrackingNotificationsResponse,
+    (request: notifier_pb.CountTrackingNotificationsRequest) => {
+      return request.serializeBinary();
+    },
+    notifier_pb.CountTrackingNotificationsResponse.deserializeBinary
+  );
+
+  countTrackingNotifications(
+    request: notifier_pb.CountTrackingNotificationsRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.CountTrackingNotificationsResponse>;
+
+  countTrackingNotifications(
+    request: notifier_pb.CountTrackingNotificationsRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: notifier_pb.CountTrackingNotificationsResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.CountTrackingNotificationsResponse>;
+
+  countTrackingNotifications(
+    request: notifier_pb.CountTrackingNotificationsRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: notifier_pb.CountTrackingNotificationsResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/project.tracknest.usertracking.proto.v1.NotifierController/CountTrackingNotifications',
+        request,
+        metadata || {},
+        this.methodDescriptorCountTrackingNotifications,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/project.tracknest.usertracking.proto.v1.NotifierController/CountTrackingNotifications',
+    request,
+    metadata || {},
+    this.methodDescriptorCountTrackingNotifications);
+  }
+
+  methodDescriptorCountRiskNotifications = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/CountRiskNotifications',
+    grpcWeb.MethodType.UNARY,
+    notifier_pb.CountRiskNotificationsRequest,
+    notifier_pb.CountRiskNotificationsResponse,
+    (request: notifier_pb.CountRiskNotificationsRequest) => {
+      return request.serializeBinary();
+    },
+    notifier_pb.CountRiskNotificationsResponse.deserializeBinary
+  );
+
+  countRiskNotifications(
+    request: notifier_pb.CountRiskNotificationsRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.CountRiskNotificationsResponse>;
+
+  countRiskNotifications(
+    request: notifier_pb.CountRiskNotificationsRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: notifier_pb.CountRiskNotificationsResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.CountRiskNotificationsResponse>;
+
+  countRiskNotifications(
+    request: notifier_pb.CountRiskNotificationsRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: notifier_pb.CountRiskNotificationsResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/project.tracknest.usertracking.proto.v1.NotifierController/CountRiskNotifications',
+        request,
+        metadata || {},
+        this.methodDescriptorCountRiskNotifications,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/project.tracknest.usertracking.proto.v1.NotifierController/CountRiskNotifications',
+    request,
+    metadata || {},
+    this.methodDescriptorCountRiskNotifications);
   }
 
 }

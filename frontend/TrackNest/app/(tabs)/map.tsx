@@ -35,22 +35,6 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
 
-// const getBaseUrl = () => {
-//   const hostUri = Constants.expoConfig?.hostUri; // Lấy IP dev server
-//   if (!hostUri) return "http://localhost:8081"; // Fallback cho production/simulator
-
-//   const ip = hostUri.split(":")[0];
-//   return `http://${ip}:8081`;
-// };
-
-// console.log("gRPC Base URL:", getBaseUrl());
-
-// const transport = createConnectTransport({
-//   baseUrl: "https://demo.connectrpc.com",
-// });
-
-// const client = createClient(ElizaService, transport);
-
 const parseToFollower = (data: any): Follower => {
   return {
     id: data.userid || data.id,

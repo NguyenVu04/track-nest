@@ -1,5 +1,5 @@
 /**
- * @fileoverview gRPC-Web generated client stub for project.tracknest.usertracking.proto
+ * @fileoverview gRPC-Web generated client stub for project.tracknest.usertracking.proto.v1
  * @enhanceable
  * @public
  */
@@ -17,8 +17,6 @@
 
 import * as grpcWeb from 'grpc-web';
 
-import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb'; // proto import: "google/protobuf/wrappers.proto"
-import * as google_protobuf_empty_pb from 'google-protobuf/google/protobuf/empty_pb'; // proto import: "google/protobuf/empty.proto"
 import * as trackingmanager_pb from './trackingmanager_pb'; // proto import: "trackingmanager.proto"
 
 
@@ -41,306 +39,434 @@ export class TrackingManagerControllerClient {
     this.options_ = options;
   }
 
-  methodDescriptorpostConnection = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.TrackingManagerController/postConnection',
+  methodDescriptorCreateFamilyCircle = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackingManagerController/CreateFamilyCircle',
     grpcWeb.MethodType.UNARY,
-    trackingmanager_pb.ConnectionRequest,
-    google_protobuf_empty_pb.Empty,
-    (request: trackingmanager_pb.ConnectionRequest) => {
+    trackingmanager_pb.CreateFamilyCircleRequest,
+    trackingmanager_pb.CreateFamilyCircleResponse,
+    (request: trackingmanager_pb.CreateFamilyCircleRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    trackingmanager_pb.CreateFamilyCircleResponse.deserializeBinary
   );
 
-  postConnection(
-    request: trackingmanager_pb.ConnectionRequest,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+  createFamilyCircle(
+    request: trackingmanager_pb.CreateFamilyCircleRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.CreateFamilyCircleResponse>;
 
-  postConnection(
-    request: trackingmanager_pb.ConnectionRequest,
+  createFamilyCircle(
+    request: trackingmanager_pb.CreateFamilyCircleRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: trackingmanager_pb.CreateFamilyCircleResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.CreateFamilyCircleResponse>;
 
-  postConnection(
-    request: trackingmanager_pb.ConnectionRequest,
+  createFamilyCircle(
+    request: trackingmanager_pb.CreateFamilyCircleRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: trackingmanager_pb.CreateFamilyCircleResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.TrackingManagerController/postConnection',
+          '/project.tracknest.usertracking.proto.v1.TrackingManagerController/CreateFamilyCircle',
         request,
         metadata || {},
-        this.methodDescriptorpostConnection,
+        this.methodDescriptorCreateFamilyCircle,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.TrackingManagerController/postConnection',
+      '/project.tracknest.usertracking.proto.v1.TrackingManagerController/CreateFamilyCircle',
     request,
     metadata || {},
-    this.methodDescriptorpostConnection);
+    this.methodDescriptorCreateFamilyCircle);
   }
 
-  methodDescriptordeleteTracker = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.TrackingManagerController/deleteTracker',
+  methodDescriptorListFamilyCircles = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackingManagerController/ListFamilyCircles',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_wrappers_pb.StringValue,
-    google_protobuf_empty_pb.Empty,
-    (request: google_protobuf_wrappers_pb.StringValue) => {
+    trackingmanager_pb.ListFamilyCirclesRequest,
+    trackingmanager_pb.ListFamilyCircleResponse,
+    (request: trackingmanager_pb.ListFamilyCirclesRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    trackingmanager_pb.ListFamilyCircleResponse.deserializeBinary
   );
 
-  deleteTracker(
-    request: google_protobuf_wrappers_pb.StringValue,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+  listFamilyCircles(
+    request: trackingmanager_pb.ListFamilyCirclesRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.ListFamilyCircleResponse>;
 
-  deleteTracker(
-    request: google_protobuf_wrappers_pb.StringValue,
+  listFamilyCircles(
+    request: trackingmanager_pb.ListFamilyCirclesRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: trackingmanager_pb.ListFamilyCircleResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.ListFamilyCircleResponse>;
 
-  deleteTracker(
-    request: google_protobuf_wrappers_pb.StringValue,
+  listFamilyCircles(
+    request: trackingmanager_pb.ListFamilyCirclesRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: trackingmanager_pb.ListFamilyCircleResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.TrackingManagerController/deleteTracker',
+          '/project.tracknest.usertracking.proto.v1.TrackingManagerController/ListFamilyCircles',
         request,
         metadata || {},
-        this.methodDescriptordeleteTracker,
+        this.methodDescriptorListFamilyCircles,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.TrackingManagerController/deleteTracker',
+      '/project.tracknest.usertracking.proto.v1.TrackingManagerController/ListFamilyCircles',
     request,
     metadata || {},
-    this.methodDescriptordeleteTracker);
+    this.methodDescriptorListFamilyCircles);
   }
 
-  methodDescriptordeleteTarget = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.TrackingManagerController/deleteTarget',
+  methodDescriptorDeleteFamilyCircle = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackingManagerController/DeleteFamilyCircle',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_wrappers_pb.StringValue,
-    google_protobuf_empty_pb.Empty,
-    (request: google_protobuf_wrappers_pb.StringValue) => {
+    trackingmanager_pb.DeleteFamilyCircleRequest,
+    trackingmanager_pb.DeleteFamilyCircleResponse,
+    (request: trackingmanager_pb.DeleteFamilyCircleRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    trackingmanager_pb.DeleteFamilyCircleResponse.deserializeBinary
   );
 
-  deleteTarget(
-    request: google_protobuf_wrappers_pb.StringValue,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+  deleteFamilyCircle(
+    request: trackingmanager_pb.DeleteFamilyCircleRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.DeleteFamilyCircleResponse>;
 
-  deleteTarget(
-    request: google_protobuf_wrappers_pb.StringValue,
+  deleteFamilyCircle(
+    request: trackingmanager_pb.DeleteFamilyCircleRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: trackingmanager_pb.DeleteFamilyCircleResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.DeleteFamilyCircleResponse>;
 
-  deleteTarget(
-    request: google_protobuf_wrappers_pb.StringValue,
+  deleteFamilyCircle(
+    request: trackingmanager_pb.DeleteFamilyCircleRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: trackingmanager_pb.DeleteFamilyCircleResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.TrackingManagerController/deleteTarget',
+          '/project.tracknest.usertracking.proto.v1.TrackingManagerController/DeleteFamilyCircle',
         request,
         metadata || {},
-        this.methodDescriptordeleteTarget,
+        this.methodDescriptorDeleteFamilyCircle,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.TrackingManagerController/deleteTarget',
+      '/project.tracknest.usertracking.proto.v1.TrackingManagerController/DeleteFamilyCircle',
     request,
     metadata || {},
-    this.methodDescriptordeleteTarget);
+    this.methodDescriptorDeleteFamilyCircle);
   }
 
-  methodDescriptorpostTrackingPermission = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.TrackingManagerController/postTrackingPermission',
+  methodDescriptorUpdateFamilyCircle = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackingManagerController/UpdateFamilyCircle',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_empty_pb.Empty,
-    trackingmanager_pb.PermissionResponse,
-    (request: google_protobuf_empty_pb.Empty) => {
+    trackingmanager_pb.UpdateFamilyCircleRequest,
+    trackingmanager_pb.UpdateFamilyCircleResponse,
+    (request: trackingmanager_pb.UpdateFamilyCircleRequest) => {
       return request.serializeBinary();
     },
-    trackingmanager_pb.PermissionResponse.deserializeBinary
+    trackingmanager_pb.UpdateFamilyCircleResponse.deserializeBinary
   );
 
-  postTrackingPermission(
-    request: google_protobuf_empty_pb.Empty,
-    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.PermissionResponse>;
+  updateFamilyCircle(
+    request: trackingmanager_pb.UpdateFamilyCircleRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.UpdateFamilyCircleResponse>;
 
-  postTrackingPermission(
-    request: google_protobuf_empty_pb.Empty,
+  updateFamilyCircle(
+    request: trackingmanager_pb.UpdateFamilyCircleRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: trackingmanager_pb.PermissionResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.PermissionResponse>;
+               response: trackingmanager_pb.UpdateFamilyCircleResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.UpdateFamilyCircleResponse>;
 
-  postTrackingPermission(
-    request: google_protobuf_empty_pb.Empty,
+  updateFamilyCircle(
+    request: trackingmanager_pb.UpdateFamilyCircleRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: trackingmanager_pb.PermissionResponse) => void) {
+               response: trackingmanager_pb.UpdateFamilyCircleResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.TrackingManagerController/postTrackingPermission',
+          '/project.tracknest.usertracking.proto.v1.TrackingManagerController/UpdateFamilyCircle',
         request,
         metadata || {},
-        this.methodDescriptorpostTrackingPermission,
+        this.methodDescriptorUpdateFamilyCircle,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.TrackingManagerController/postTrackingPermission',
+      '/project.tracknest.usertracking.proto.v1.TrackingManagerController/UpdateFamilyCircle',
     request,
     metadata || {},
-    this.methodDescriptorpostTrackingPermission);
+    this.methodDescriptorUpdateFamilyCircle);
   }
 
-  methodDescriptordeleteTrackingPermission = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.TrackingManagerController/deleteTrackingPermission',
+  methodDescriptorUpdateFamilyRole = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackingManagerController/UpdateFamilyRole',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_wrappers_pb.StringValue,
-    google_protobuf_empty_pb.Empty,
-    (request: google_protobuf_wrappers_pb.StringValue) => {
+    trackingmanager_pb.UpdateFamilyRoleRequest,
+    trackingmanager_pb.UpdateFamilyRoleResponse,
+    (request: trackingmanager_pb.UpdateFamilyRoleRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    trackingmanager_pb.UpdateFamilyRoleResponse.deserializeBinary
   );
 
-  deleteTrackingPermission(
-    request: google_protobuf_wrappers_pb.StringValue,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+  updateFamilyRole(
+    request: trackingmanager_pb.UpdateFamilyRoleRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.UpdateFamilyRoleResponse>;
 
-  deleteTrackingPermission(
-    request: google_protobuf_wrappers_pb.StringValue,
+  updateFamilyRole(
+    request: trackingmanager_pb.UpdateFamilyRoleRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: trackingmanager_pb.UpdateFamilyRoleResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.UpdateFamilyRoleResponse>;
 
-  deleteTrackingPermission(
-    request: google_protobuf_wrappers_pb.StringValue,
+  updateFamilyRole(
+    request: trackingmanager_pb.UpdateFamilyRoleRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: trackingmanager_pb.UpdateFamilyRoleResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.TrackingManagerController/deleteTrackingPermission',
+          '/project.tracknest.usertracking.proto.v1.TrackingManagerController/UpdateFamilyRole',
         request,
         metadata || {},
-        this.methodDescriptordeleteTrackingPermission,
+        this.methodDescriptorUpdateFamilyRole,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.TrackingManagerController/deleteTrackingPermission',
+      '/project.tracknest.usertracking.proto.v1.TrackingManagerController/UpdateFamilyRole',
     request,
     metadata || {},
-    this.methodDescriptordeleteTrackingPermission);
+    this.methodDescriptorUpdateFamilyRole);
   }
 
-  methodDescriptorgetUserTargets = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.TrackingManagerController/getUserTargets',
-    grpcWeb.MethodType.SERVER_STREAMING,
-    google_protobuf_empty_pb.Empty,
-    trackingmanager_pb.TargetResponse,
-    (request: google_protobuf_empty_pb.Empty) => {
-      return request.serializeBinary();
-    },
-    trackingmanager_pb.TargetResponse.deserializeBinary
-  );
-
-  getUserTargets(
-    request: google_protobuf_empty_pb.Empty,
-    metadata?: grpcWeb.Metadata): grpcWeb.ClientReadableStream<trackingmanager_pb.TargetResponse> {
-    return this.client_.serverStreaming(
-      this.hostname_ +
-        '/project.tracknest.usertracking.proto.TrackingManagerController/getUserTargets',
-      request,
-      metadata || {},
-      this.methodDescriptorgetUserTargets);
-  }
-
-  methodDescriptorgetUserTrackers = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.TrackingManagerController/getUserTrackers',
-    grpcWeb.MethodType.SERVER_STREAMING,
-    google_protobuf_empty_pb.Empty,
-    trackingmanager_pb.TrackerResponse,
-    (request: google_protobuf_empty_pb.Empty) => {
-      return request.serializeBinary();
-    },
-    trackingmanager_pb.TrackerResponse.deserializeBinary
-  );
-
-  getUserTrackers(
-    request: google_protobuf_empty_pb.Empty,
-    metadata?: grpcWeb.Metadata): grpcWeb.ClientReadableStream<trackingmanager_pb.TrackerResponse> {
-    return this.client_.serverStreaming(
-      this.hostname_ +
-        '/project.tracknest.usertracking.proto.TrackingManagerController/getUserTrackers',
-      request,
-      metadata || {},
-      this.methodDescriptorgetUserTrackers);
-  }
-
-  methodDescriptorputTrackingStatus = new grpcWeb.MethodDescriptor(
-    '/project.tracknest.usertracking.proto.TrackingManagerController/putTrackingStatus',
+  methodDescriptorCreateParticipationPermission = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackingManagerController/CreateParticipationPermission',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_wrappers_pb.BoolValue,
-    google_protobuf_empty_pb.Empty,
-    (request: google_protobuf_wrappers_pb.BoolValue) => {
+    trackingmanager_pb.CreateParticipationPermissionRequest,
+    trackingmanager_pb.CreateParticipationPermissionResponse,
+    (request: trackingmanager_pb.CreateParticipationPermissionRequest) => {
       return request.serializeBinary();
     },
-    google_protobuf_empty_pb.Empty.deserializeBinary
+    trackingmanager_pb.CreateParticipationPermissionResponse.deserializeBinary
   );
 
-  putTrackingStatus(
-    request: google_protobuf_wrappers_pb.BoolValue,
-    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+  createParticipationPermission(
+    request: trackingmanager_pb.CreateParticipationPermissionRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.CreateParticipationPermissionResponse>;
 
-  putTrackingStatus(
-    request: google_protobuf_wrappers_pb.BoolValue,
+  createParticipationPermission(
+    request: trackingmanager_pb.CreateParticipationPermissionRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+               response: trackingmanager_pb.CreateParticipationPermissionResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.CreateParticipationPermissionResponse>;
 
-  putTrackingStatus(
-    request: google_protobuf_wrappers_pb.BoolValue,
+  createParticipationPermission(
+    request: trackingmanager_pb.CreateParticipationPermissionRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: google_protobuf_empty_pb.Empty) => void) {
+               response: trackingmanager_pb.CreateParticipationPermissionResponse) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/project.tracknest.usertracking.proto.TrackingManagerController/putTrackingStatus',
+          '/project.tracknest.usertracking.proto.v1.TrackingManagerController/CreateParticipationPermission',
         request,
         metadata || {},
-        this.methodDescriptorputTrackingStatus,
+        this.methodDescriptorCreateParticipationPermission,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/project.tracknest.usertracking.proto.TrackingManagerController/putTrackingStatus',
+      '/project.tracknest.usertracking.proto.v1.TrackingManagerController/CreateParticipationPermission',
     request,
     metadata || {},
-    this.methodDescriptorputTrackingStatus);
+    this.methodDescriptorCreateParticipationPermission);
+  }
+
+  methodDescriptorParticipateInFamilyCircle = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackingManagerController/ParticipateInFamilyCircle',
+    grpcWeb.MethodType.UNARY,
+    trackingmanager_pb.ParticipateInFamilyCircleRequest,
+    trackingmanager_pb.ParticipateInFamilyCircleResponse,
+    (request: trackingmanager_pb.ParticipateInFamilyCircleRequest) => {
+      return request.serializeBinary();
+    },
+    trackingmanager_pb.ParticipateInFamilyCircleResponse.deserializeBinary
+  );
+
+  participateInFamilyCircle(
+    request: trackingmanager_pb.ParticipateInFamilyCircleRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.ParticipateInFamilyCircleResponse>;
+
+  participateInFamilyCircle(
+    request: trackingmanager_pb.ParticipateInFamilyCircleRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: trackingmanager_pb.ParticipateInFamilyCircleResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.ParticipateInFamilyCircleResponse>;
+
+  participateInFamilyCircle(
+    request: trackingmanager_pb.ParticipateInFamilyCircleRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: trackingmanager_pb.ParticipateInFamilyCircleResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/project.tracknest.usertracking.proto.v1.TrackingManagerController/ParticipateInFamilyCircle',
+        request,
+        metadata || {},
+        this.methodDescriptorParticipateInFamilyCircle,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/project.tracknest.usertracking.proto.v1.TrackingManagerController/ParticipateInFamilyCircle',
+    request,
+    metadata || {},
+    this.methodDescriptorParticipateInFamilyCircle);
+  }
+
+  methodDescriptorLeaveFamilyCircle = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackingManagerController/LeaveFamilyCircle',
+    grpcWeb.MethodType.UNARY,
+    trackingmanager_pb.LeaveFamilyCircleRequest,
+    trackingmanager_pb.LeaveFamilyCircleResponse,
+    (request: trackingmanager_pb.LeaveFamilyCircleRequest) => {
+      return request.serializeBinary();
+    },
+    trackingmanager_pb.LeaveFamilyCircleResponse.deserializeBinary
+  );
+
+  leaveFamilyCircle(
+    request: trackingmanager_pb.LeaveFamilyCircleRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.LeaveFamilyCircleResponse>;
+
+  leaveFamilyCircle(
+    request: trackingmanager_pb.LeaveFamilyCircleRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: trackingmanager_pb.LeaveFamilyCircleResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.LeaveFamilyCircleResponse>;
+
+  leaveFamilyCircle(
+    request: trackingmanager_pb.LeaveFamilyCircleRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: trackingmanager_pb.LeaveFamilyCircleResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/project.tracknest.usertracking.proto.v1.TrackingManagerController/LeaveFamilyCircle',
+        request,
+        metadata || {},
+        this.methodDescriptorLeaveFamilyCircle,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/project.tracknest.usertracking.proto.v1.TrackingManagerController/LeaveFamilyCircle',
+    request,
+    metadata || {},
+    this.methodDescriptorLeaveFamilyCircle);
+  }
+
+  methodDescriptorRemoveMemberFromFamilyCircle = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackingManagerController/RemoveMemberFromFamilyCircle',
+    grpcWeb.MethodType.UNARY,
+    trackingmanager_pb.RemoveMemberFromFamilyCircleRequest,
+    trackingmanager_pb.RemoveMemberFromFamilyCircleResponse,
+    (request: trackingmanager_pb.RemoveMemberFromFamilyCircleRequest) => {
+      return request.serializeBinary();
+    },
+    trackingmanager_pb.RemoveMemberFromFamilyCircleResponse.deserializeBinary
+  );
+
+  removeMemberFromFamilyCircle(
+    request: trackingmanager_pb.RemoveMemberFromFamilyCircleRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.RemoveMemberFromFamilyCircleResponse>;
+
+  removeMemberFromFamilyCircle(
+    request: trackingmanager_pb.RemoveMemberFromFamilyCircleRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: trackingmanager_pb.RemoveMemberFromFamilyCircleResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.RemoveMemberFromFamilyCircleResponse>;
+
+  removeMemberFromFamilyCircle(
+    request: trackingmanager_pb.RemoveMemberFromFamilyCircleRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: trackingmanager_pb.RemoveMemberFromFamilyCircleResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/project.tracknest.usertracking.proto.v1.TrackingManagerController/RemoveMemberFromFamilyCircle',
+        request,
+        metadata || {},
+        this.methodDescriptorRemoveMemberFromFamilyCircle,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/project.tracknest.usertracking.proto.v1.TrackingManagerController/RemoveMemberFromFamilyCircle',
+    request,
+    metadata || {},
+    this.methodDescriptorRemoveMemberFromFamilyCircle);
+  }
+
+  methodDescriptorAssignFamilyCircleAdmin = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackingManagerController/AssignFamilyCircleAdmin',
+    grpcWeb.MethodType.UNARY,
+    trackingmanager_pb.AssignFamilyCircleAdminRequest,
+    trackingmanager_pb.AssignFamilyCircleAdminResponse,
+    (request: trackingmanager_pb.AssignFamilyCircleAdminRequest) => {
+      return request.serializeBinary();
+    },
+    trackingmanager_pb.AssignFamilyCircleAdminResponse.deserializeBinary
+  );
+
+  assignFamilyCircleAdmin(
+    request: trackingmanager_pb.AssignFamilyCircleAdminRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.AssignFamilyCircleAdminResponse>;
+
+  assignFamilyCircleAdmin(
+    request: trackingmanager_pb.AssignFamilyCircleAdminRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: trackingmanager_pb.AssignFamilyCircleAdminResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.AssignFamilyCircleAdminResponse>;
+
+  assignFamilyCircleAdmin(
+    request: trackingmanager_pb.AssignFamilyCircleAdminRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: trackingmanager_pb.AssignFamilyCircleAdminResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/project.tracknest.usertracking.proto.v1.TrackingManagerController/AssignFamilyCircleAdmin',
+        request,
+        metadata || {},
+        this.methodDescriptorAssignFamilyCircleAdmin,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/project.tracknest.usertracking.proto.v1.TrackingManagerController/AssignFamilyCircleAdmin',
+    request,
+    metadata || {},
+    this.methodDescriptorAssignFamilyCircleAdmin);
   }
 
 }
