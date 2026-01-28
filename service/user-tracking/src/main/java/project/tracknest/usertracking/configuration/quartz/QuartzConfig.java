@@ -27,7 +27,7 @@ public class QuartzConfig {
                 .withDescription("Trigger for disconnecting inactive users")
                 .startNow()
                 .withSchedule(
-                        CronScheduleBuilder.cronSchedule("0 */4 * * * ?") // Every 5 minutes
+                        CronScheduleBuilder.cronSchedule("0 */4 * * * ?") // Every 4 minutes
                 )
                 .build();
     }

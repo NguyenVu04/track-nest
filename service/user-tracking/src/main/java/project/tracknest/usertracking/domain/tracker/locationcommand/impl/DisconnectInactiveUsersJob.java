@@ -20,7 +20,7 @@ public class DisconnectInactiveUsersJob implements Job {
     private static final int INACTIVE_SECONDS = 480; // 8 minutes
     private static final int PAGE_SIZE = 256;
 
-    private final UserRepository userRepository;
+    private final TrackerUserRepository userRepository;
 
     @Override
     @Transactional

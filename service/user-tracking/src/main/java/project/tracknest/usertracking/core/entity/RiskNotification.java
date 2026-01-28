@@ -1,6 +1,8 @@
 package project.tracknest.usertracking.core.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,12 +27,18 @@ public class RiskNotification {
     @JoinColumn(name = "user_id", updatable = false, nullable = false)
     private User user;
 
+    @NotBlank
+    @Size(min = 8, max = 255)
     @Column(name = "title", nullable = false, length = 255)
     private String title;
 
+    @NotBlank
+    @Size(min = 8)
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @NotBlank
+    @Size(min = 2, max = 50)
     @Column(name = "type", nullable = false, length = 50)
     private String type;
 

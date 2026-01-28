@@ -1,25 +1,28 @@
 package project.tracknest.usertracking.controller;
 
-import com.google.protobuf.BoolValue;
-import com.google.protobuf.Empty;
-import com.google.protobuf.StringValue;
+import com.google.rpc.Code;
 import io.grpc.stub.StreamObserver;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import project.tracknest.usertracking.proto.lib.ConnectionRequest;
-import project.tracknest.usertracking.proto.lib.PermissionResponse;
-import project.tracknest.usertracking.proto.lib.TargetResponse;
-import project.tracknest.usertracking.proto.lib.TrackerResponse;
+import project.tracknest.usertracking.proto.lib.*;
+
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static project.tracknest.usertracking.utils.SecuritySetup.setUpSecurityContext;
+import static org.mockito.Mockito.*;
+import static project.tracknest.usertracking.utils.SecuritySetup.*;
 
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
@@ -33,149 +36,344 @@ class TrackingManagerControllerTest {
         setUpSecurityContext();
     }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    public void postConnection_ShouldCreateConnectionSuccessfully() {
-        // Arrange
-        StreamObserver<Empty> mockResponseObserver = Mockito.mock(StreamObserver.class);
-        ConnectionRequest request = ConnectionRequest.newBuilder()
-                .setPermissionId("dddddddd-2005-4000-8000-dddddddddddd")
-                .setOtp("OTP0006")
-                .build();
-        // Act
-        trackingManagerController.postConnection(request, mockResponseObserver);
-
-        // Assert
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onNext(Empty.getDefaultInstance());
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onCompleted();
+    @Nested
+    @DisplayName("CreateFamilyCircle")
+    class CreateFamilyCircleTests {
+        @Test
+        void createFamilyCircle_success() throws Exception {
+            CreateFamilyCircleRequest request = CreateFamilyCircleRequest.newBuilder()
+                    .setName("Test Circle")
+                    .setFamilyRole("Father")
+                    .build();
+            AtomicReference<CreateFamilyCircleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.createFamilyCircle(request, new StreamObserver<>() {
+                public void onNext(CreateFamilyCircleResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.OK_VALUE, ref.get().getStatus().getCode());
+            assertNotNull(ref.get().getFamilyCircleId());
+        }
+        @Test
+        void createFamilyCircle_missingName_shouldThrowValidationException() {
+            CreateFamilyCircleRequest request = CreateFamilyCircleRequest.newBuilder()
+                    .setFamilyRole("Father").build();
+            assertThrows(ConstraintViolationException.class, () -> {
+                CountDownLatch latch = new CountDownLatch(1);
+                trackingManagerController.createFamilyCircle(request, new StreamObserver<>() {
+                    public void onNext(CreateFamilyCircleResponse value) {}
+                    public void onError(Throwable t) { latch.countDown(); }
+                    public void onCompleted() { latch.countDown(); }
+                });
+                latch.await(5, TimeUnit.SECONDS);
+            });
+        }
     }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    public void deleteTracker_ShouldDeleteTrackerSuccessfully() {
-        // Arrange
-        StreamObserver<Empty> mockResponseObserver = Mockito.mock(StreamObserver.class);
-        StringValue request = StringValue.newBuilder()
-                .setValue("8c52c01e-42a7-45cc-9254-db8a7601c764")
-                .build();
-
-        // Act
-        trackingManagerController.deleteTracker(request, mockResponseObserver);
-
-        // Assert
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onNext(Empty.getDefaultInstance());
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onCompleted();
+    @Nested
+    @DisplayName("ListFamilyCircles")
+    class ListFamilyCirclesTests {
+        @Test
+        void listFamilyCircles_success() throws Exception {
+            ListFamilyCirclesRequest request = ListFamilyCirclesRequest.newBuilder().setPageSize(10).build();
+            AtomicReference<ListFamilyCircleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.listFamilyCircles(request, new StreamObserver<>() {
+                public void onNext(ListFamilyCircleResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertTrue(ref.get().getFamilyCirclesCount() >= 0);
+        }
     }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    public void deleteTarget_ShouldDeleteTargetSuccessfully() {
-        // Arrange
-        StreamObserver<Empty> mockResponseObserver = Mockito.mock(StreamObserver.class);
-        StringValue request = StringValue.newBuilder()
-                .setValue("dd382dcf-3652-499c-acdb-5d9ce99a67b8")
-                .build();
-        // Act
-        trackingManagerController.deleteTarget(request, mockResponseObserver);
-
-        // Assert
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onNext(Empty.getDefaultInstance());
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onCompleted();
+    @Nested
+    @DisplayName("DeleteFamilyCircle")
+    class DeleteFamilyCircleTests {
+        @Test
+        void deleteFamilyCircle_success() throws Exception {
+            // Use a circle where admin is admin (from your test data)
+            DeleteFamilyCircleRequest request = DeleteFamilyCircleRequest.newBuilder().setFamilyCircleId(ADMIN_CIRCLE_ID).build();
+            AtomicReference<DeleteFamilyCircleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.deleteFamilyCircle(request, new StreamObserver<>() {
+                public void onNext(DeleteFamilyCircleResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.OK_VALUE, ref.get().getStatus().getCode());
+        }
+        @Test
+        void deleteFamilyCircle_notFound() throws Exception {
+            DeleteFamilyCircleRequest request = DeleteFamilyCircleRequest.newBuilder().setFamilyCircleId("00000000-0000-0000-0000-000000000000").build();
+            AtomicReference<DeleteFamilyCircleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.deleteFamilyCircle(request, new StreamObserver<>() {
+                public void onNext(DeleteFamilyCircleResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.PERMISSION_DENIED_VALUE, ref.get().getStatus().getCode());
+        }
     }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    public void postTrackingPermission_ShouldCreatePermissionSuccessfully() {
-        // Arrange
-        StreamObserver<PermissionResponse> mockResponseObserver = Mockito.mock(StreamObserver.class);
-        Empty request = Empty.getDefaultInstance();
-
-        // Act
-        trackingManagerController.postTrackingPermission(request, mockResponseObserver);
-
-        // Assert
-        ArgumentCaptor<PermissionResponse> captor = ArgumentCaptor.forClass(PermissionResponse.class);
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onNext(captor.capture());
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onCompleted();
-
-        PermissionResponse captured = captor.getValue();
-        assertNotNull(captured);
-        assertEquals(15, captured.getOtp().length());
+    @Nested
+    @DisplayName("UpdateFamilyCircle")
+    class UpdateFamilyCircleTests {
+        @Test
+        void updateFamilyCircle_success() throws Exception {
+            UpdateFamilyCircleRequest request = UpdateFamilyCircleRequest.newBuilder()
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
+                    .setName("Updated Name").build();
+            AtomicReference<UpdateFamilyCircleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.updateFamilyCircle(request, new StreamObserver<>() {
+                public void onNext(UpdateFamilyCircleResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.OK_VALUE, ref.get().getStatus().getCode());
+        }
+        @Test
+        void updateFamilyCircle_notFound() throws Exception {
+            UpdateFamilyCircleRequest request = UpdateFamilyCircleRequest.newBuilder()
+                    .setFamilyCircleId("00000000-0000-0000-0000-000000000000").setName("Name").build();
+            AtomicReference<UpdateFamilyCircleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.updateFamilyCircle(request, new StreamObserver<>() {
+                public void onNext(UpdateFamilyCircleResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.PERMISSION_DENIED_VALUE, ref.get().getStatus().getCode());
+        }
     }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    public void deleteTrackingPermission_ShouldDeletePermissionSuccessfully() {
-        // Arrange
-        StreamObserver<Empty> mockResponseObserver = Mockito.mock(StreamObserver.class);
-        StringValue request = StringValue.newBuilder()
-                .setValue("dddddddd-2009-4000-8000-dddddddddddd")
-                .build();
-        // Act
-        trackingManagerController.deleteTrackingPermission(request, mockResponseObserver);
-
-        // Assert
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onNext(Empty.getDefaultInstance());
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onCompleted();
+    @Nested
+    @DisplayName("UpdateFamilyRole")
+    class UpdateFamilyRoleTests {
+        @Test
+        void updateFamilyRole_success() throws Exception {
+            UpdateFamilyRoleRequest request = UpdateFamilyRoleRequest.newBuilder()
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
+                    .setFamilyRole("Father").build();
+            AtomicReference<UpdateFamilyRoleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.updateFamilyRole(request, new StreamObserver<>() {
+                public void onNext(UpdateFamilyRoleResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.OK_VALUE, ref.get().getStatus().getCode());
+        }
     }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    public void getUserTargets_ShouldRetrieveTargetsSuccessfully() {
-        // Arrange
-        StreamObserver<TargetResponse> mockResponseObserver = Mockito.mock(StreamObserver.class);
-        Empty request = Empty.getDefaultInstance();
+    @Nested
+    @DisplayName("CreateParticipationPermission")
+    class CreateParticipationPermissionTests {
+        @Test
+        void createParticipationPermission_success() throws Exception {
+            CreateParticipationPermissionRequest request = CreateParticipationPermissionRequest.newBuilder()
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID).build();
+            AtomicReference<CreateParticipationPermissionResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.createParticipationPermission(request, new StreamObserver<>() {
+                public void onNext(CreateParticipationPermissionResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.OK_VALUE, ref.get().getStatus().getCode());
+            assertNotNull(ref.get().getOtp());
+        }
 
-        // Act
-        trackingManagerController.getUserTargets(request, mockResponseObserver);
+        @Test
+        void createParticipationPermission_thenUseOtpToParticipate_success() throws Exception {
+            // First, create the permission to get the OTP
+            CreateParticipationPermissionRequest createRequest = CreateParticipationPermissionRequest.newBuilder()
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID).build();
+            AtomicReference<CreateParticipationPermissionResponse> createRef = new AtomicReference<>();
+            CountDownLatch createLatch = new CountDownLatch(1);
+            trackingManagerController.createParticipationPermission(createRequest, new StreamObserver<>() {
+                public void onNext(CreateParticipationPermissionResponse value) { createRef.set(value); }
+                public void onError(Throwable t) { createLatch.countDown(); }
+                public void onCompleted() { createLatch.countDown(); }
+            });
+            assertTrue(createLatch.await(5, TimeUnit.SECONDS));
+            assertNotNull(createRef.get());
+            assertEquals(Code.OK_VALUE, createRef.get().getStatus().getCode());
+            String otp = createRef.get().getOtp();
 
-        // Assert
-        ArgumentCaptor<TargetResponse> captor = ArgumentCaptor.forClass(TargetResponse.class);
-        Mockito.verify(mockResponseObserver, Mockito.atLeastOnce()).onNext(captor.capture());
-        assertFalse(captor.getAllValues().isEmpty());
-        captor.getAllValues().forEach(response -> {
-            assertNotNull(response.getUserId());
-            assertNotNull(response.getUsername());
-        });
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onCompleted();
+            // Now use the OTP to participate
+            setUpSecurityContext(USER4_ID, "user4", "user4@gmail.com"); // Switch to another user
+            ParticipateInFamilyCircleRequest participateRequest = ParticipateInFamilyCircleRequest.newBuilder()
+                    .setOtp(otp).build();
+            AtomicReference<ParticipateInFamilyCircleResponse> participateRef = new AtomicReference<>();
+            CountDownLatch participateLatch = new CountDownLatch(1);
+            trackingManagerController.participateInFamilyCircle(participateRequest, new StreamObserver<>() {
+                public void onNext(ParticipateInFamilyCircleResponse value) { participateRef.set(value); }
+                public void onError(Throwable t) { participateLatch.countDown(); }
+                public void onCompleted() { participateLatch.countDown(); }
+            });
+            assertTrue(participateLatch.await(5, TimeUnit.SECONDS));
+            assertNotNull(participateRef.get());
+            assertEquals(Code.OK_VALUE, participateRef.get().getStatus().getCode());
+        }
     }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    public void getUserTrackers_ShouldRetrieveTrackersSuccessfully() {
-        // Arrange
-        StreamObserver<TrackerResponse> mockResponseObserver = Mockito.mock(StreamObserver.class);
-        Empty request = Empty.getDefaultInstance();
+    @Nested
+    @DisplayName("LeaveFamilyCircle")
+    class LeaveFamilyCircleTests {
+        @Test
+        void leaveFamilyCircle_success() throws Exception {
+            LeaveFamilyCircleRequest request = LeaveFamilyCircleRequest.newBuilder().setFamilyCircleId(FAMILY_CIRCLE_3_ID).build();
+            AtomicReference<LeaveFamilyCircleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.leaveFamilyCircle(request, new StreamObserver<>() {
+                public void onNext(LeaveFamilyCircleResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.OK_VALUE, ref.get().getStatus().getCode());
+        }
 
-        // Act
-        trackingManagerController.getUserTrackers(request, mockResponseObserver);
-
-        // Assert
-        ArgumentCaptor<TrackerResponse> captor = ArgumentCaptor.forClass(TrackerResponse.class);
-        Mockito.verify(mockResponseObserver, Mockito.atLeastOnce()).onNext(captor.capture());
-        assertFalse(captor.getAllValues().isEmpty());
-        captor.getAllValues().forEach(response -> {
-            assertNotNull(response.getUserId());
-            assertNotNull(response.getUsername());
-        });
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onCompleted();
+        @Test
+        void leaveFamilyCircle_isAdmin_shouldFail() throws Exception {
+            LeaveFamilyCircleRequest request = LeaveFamilyCircleRequest.newBuilder().setFamilyCircleId(ADMIN_CIRCLE_ID).build();
+            AtomicReference<LeaveFamilyCircleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.leaveFamilyCircle(request, new StreamObserver<>() {
+                public void onNext(LeaveFamilyCircleResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.FAILED_PRECONDITION_VALUE, ref.get().getStatus().getCode());
+        }
     }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    public void putTrackingStatus_ShouldUpdateStatusSuccessfully() {
-        // Arrange
-        StreamObserver<Empty> mockResponseObserver = Mockito.mock(StreamObserver.class);
-        BoolValue newStatus = BoolValue.newBuilder().setValue(true).build();
+    @Nested
+    @DisplayName("AssignFamilyCircleAdmin")
+    class AssignFamilyCircleAdminTests {
+        @Test
+        void assignFamilyCircleAdmin_success() throws Exception {
+            String memberId = USER3_ID.toString(); // user2
+            AssignFamilyCircleAdminRequest request = AssignFamilyCircleAdminRequest.newBuilder()
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
+                    .setMemberId(memberId).build();
+            AtomicReference<AssignFamilyCircleAdminResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.assignFamilyCircleAdmin(request, new StreamObserver<>() {
+                public void onNext(AssignFamilyCircleAdminResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.OK_VALUE, ref.get().getStatus().getCode());
+            assertEquals(memberId, ref.get().getMemberId());
+        }
+    }
 
-        // Act
-        trackingManagerController.putTrackingStatus(
-                newStatus,
-                mockResponseObserver
-        );
+    @Nested
+    @DisplayName("RemoveMemberFromFamilyCircle")
+    class RemoveMemberFromFamilyCircleTests {
+        @Test
+        void removeMemberFromFamilyCircle_success() throws Exception {
+            String memberId = USER3_ID.toString(); // user3
+            RemoveMemberFromFamilyCircleRequest request = RemoveMemberFromFamilyCircleRequest.newBuilder()
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
+                    .setMemberId(memberId).build();
+            AtomicReference<RemoveMemberFromFamilyCircleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.removeMemberFromFamilyCircle(request, new StreamObserver<>() {
+                public void onNext(RemoveMemberFromFamilyCircleResponse value) {
+                    ref.set(value);
+                }
 
-        // Assert
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onNext(Empty.getDefaultInstance());
-        Mockito.verify(mockResponseObserver, Mockito.times(1)).onCompleted();
+                public void onError(Throwable t) {
+                    latch.countDown();
+                }
+
+                public void onCompleted() {
+                    latch.countDown();
+                }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.OK_VALUE, ref.get().getStatus().getCode());
+            assertEquals(memberId, ref.get().getMemberId());
+        }
+
+        @Test
+        void removeMemberFromFamilyCircle_notFound() throws Exception {
+            String memberId = "00000000-0000-0000-0000-000000000000";
+            RemoveMemberFromFamilyCircleRequest request = RemoveMemberFromFamilyCircleRequest.newBuilder()
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
+                    .setMemberId(memberId).build();
+            AtomicReference<RemoveMemberFromFamilyCircleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.removeMemberFromFamilyCircle(request, new StreamObserver<>() {
+                public void onNext(RemoveMemberFromFamilyCircleResponse value) {
+                    ref.set(value);
+                }
+
+                public void onError(Throwable t) {
+                    latch.countDown();
+                }
+
+                public void onCompleted() {
+                    latch.countDown();
+                }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.NOT_FOUND_VALUE, ref.get().getStatus().getCode());
+        }
+
+        @Test
+        void removeMemberFromFamilyCircle_removeAdmin_shouldFail() throws Exception {
+            String memberId = ADMIN_USER_ID.toString();
+            RemoveMemberFromFamilyCircleRequest request = RemoveMemberFromFamilyCircleRequest.newBuilder()
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
+                    .setMemberId(memberId).build();
+            AtomicReference<RemoveMemberFromFamilyCircleResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.removeMemberFromFamilyCircle(request, new StreamObserver<>() {
+                public void onNext(RemoveMemberFromFamilyCircleResponse value) {
+                    ref.set(value);
+                }
+
+                public void onError(Throwable t) {
+                    latch.countDown();
+                }
+
+                public void onCompleted() {
+                    latch.countDown();
+                }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(Code.FAILED_PRECONDITION_VALUE, ref.get().getStatus().getCode());
+        }
     }
 }

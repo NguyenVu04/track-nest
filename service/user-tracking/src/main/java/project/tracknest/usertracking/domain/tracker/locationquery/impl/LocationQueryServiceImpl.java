@@ -17,7 +17,6 @@ import project.tracknest.usertracking.proto.lib.ListFamilyMemberLocationHistoryR
 import project.tracknest.usertracking.proto.lib.StreamFamilyMemberLocationsRequest;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -55,10 +54,10 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
         List<User> members = userRepository.findAllUserFamilyMembers(userId);
 
         return locationRepository.findLatestByUserIdIn(
-                members
-                        .stream()
-                        .map(User::getId)
-                        .collect(Collectors.toSet()))
+                        members
+                                .stream()
+                                .map(User::getId)
+                                .collect(Collectors.toSet()))
                 .stream()
                 .map(
                         location ->
@@ -77,8 +76,9 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
                                                 .getUser()
                                                 .getUsername())
                                         .setMemberAvatarUrl(location
-                                                .getUser()
-                                                .getAvatarUrl())
+                                                .getUser().getAvatarUrl() == null
+                                                ? ""
+                                                : location.getUser().getAvatarUrl())
                                         .setVelocityMps(location
                                                 .getVelocity())
                                         .setLatitudeDeg(location
@@ -95,6 +95,7 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ListFamilyMemberLocationHistoryResponse listFamilyMemberLocationHistory(
             UUID userId,
             ListFamilyMemberLocationHistoryRequest request
@@ -127,8 +128,8 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
 
         if (
                 !request.hasCenterLatitudeDeg()
-                || !request.hasCenterLongitudeDeg()
-                || !request.hasRadiusMeter()
+                        || !request.hasCenterLongitudeDeg()
+                        || !request.hasRadiusMeter()
         ) {
             locations = locationRepository.findByUserId(memberId);
         } else {
@@ -139,29 +140,29 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
                     request.getRadiusMeter());
         }
 
-         List<FamilyMemberLocation> memberLocations = locations
-                 .stream()
-                .map(
-                        location ->
-                                FamilyMemberLocation
-                                        .newBuilder()
-                                        .setMemberId(member.getId()
-                                                .toString())
-                                        .setMemberUsername(member
-                                                .getUsername())
-                                        .setMemberAvatarUrl(member
-                                                .getAvatarUrl())
-                                        .setAccuracyMeter(location.getAccuracy())
-                                        .setOnline(location.getUser()
-                                                .isConnected())
-                                        .setVelocityMps(location.getVelocity())
-                                        .setLatitudeDeg(location.getLatitude())
-                                        .setLongitudeDeg(location.getLongitude())
-                                        .setTimestampMs(location.getId()
-                                                .getTimestamp()
-                                                .toInstant()
-                                                .toEpochMilli())
-                                        .build())
+        List<FamilyMemberLocation> memberLocations = locations
+                .stream()
+                .map(location ->
+                        FamilyMemberLocation
+                                .newBuilder()
+                                .setMemberId(member.getId()
+                                        .toString())
+                                .setMemberUsername(member
+                                        .getUsername())
+                                .setMemberAvatarUrl(
+                                        member.getAvatarUrl() == null
+                                                ? ""
+                                                : member.getAvatarUrl())
+                                .setAccuracyMeter(location.getAccuracy())
+                                .setOnline(member.isConnected())
+                                .setVelocityMps(location.getVelocity())
+                                .setLatitudeDeg(location.getLatitude())
+                                .setLongitudeDeg(location.getLongitude())
+                                .setTimestampMs(location.getId()
+                                        .getTimestamp()
+                                        .toInstant()
+                                        .toEpochMilli())
+                                .build())
                 .toList();
 
         return ListFamilyMemberLocationHistoryResponse

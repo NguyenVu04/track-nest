@@ -22,4 +22,6 @@ public interface TrackingManagerService {
    LeaveFamilyCircleResponse leaveFamilyCircle(UUID userId, LeaveFamilyCircleRequest request);
 
    AssignFamilyCircleAdminResponse assignFamilyCircleAdmin(UUID userId, AssignFamilyCircleAdminRequest request);
+
+   RemoveMemberFromFamilyCircleResponse removeMemberFromFamilyCircle(UUID userId, RemoveMemberFromFamilyCircleRequest request);
 }

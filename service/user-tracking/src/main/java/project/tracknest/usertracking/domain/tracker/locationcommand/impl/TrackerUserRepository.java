@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-interface UserRepository extends JpaRepository<User, UUID> {
+interface TrackerUserRepository extends JpaRepository<User, UUID> {
     Optional<User> findById(UUID id);
 
     @Query(

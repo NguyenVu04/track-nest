@@ -160,14 +160,12 @@ services:
 
   envoy:
     image: envoyproxy/envoy:v1.36-latest
-    container_name: envoy-user-tracking
+    container_name: envoy
     ports:
       - "8800:8800"     # gRPC-Web / RN clients connect here
       - "9901:9901"     # admin (optional)
     volumes:
       - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
-    depends_on:
-      - user_tracking
     networks:
       - track_nest
 
@@ -211,6 +209,7 @@ services:
       - user_tracking_postgres_data:/var/lib/postgresql/data
       - ../database/01-user-tracking-init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ../database/02-user-tracking-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - ../database/tables_postgres.sql:/docker-entrypoint-initdb.d/03-quartz.sql
     networks:
       - track_nest
     healthcheck:

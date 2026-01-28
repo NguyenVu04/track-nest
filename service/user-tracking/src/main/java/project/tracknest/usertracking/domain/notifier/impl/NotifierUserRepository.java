@@ -5,5 +5,5 @@ import project.tracknest.usertracking.core.entity.User;
 
 import java.util.UUID;
 
-interface UserRepository extends JpaRepository<User, UUID> {
+interface NotifierUserRepository extends JpaRepository<User, UUID> {
 }

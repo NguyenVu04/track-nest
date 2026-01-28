@@ -10,7 +10,10 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.PageToken;
-import project.tracknest.usertracking.core.entity.*;
+import project.tracknest.usertracking.core.entity.MobileDevice;
+import project.tracknest.usertracking.core.entity.RiskNotification;
+import project.tracknest.usertracking.core.entity.TrackerTrackingNotification;
+import project.tracknest.usertracking.core.entity.TrackingNotification;
 import project.tracknest.usertracking.core.utils.PageTokenCodec;
 import project.tracknest.usertracking.domain.notifier.service.NotifierService;
 import project.tracknest.usertracking.proto.lib.*;
@@ -27,11 +30,11 @@ import java.util.UUID;
 class NotifierServiceImpl implements NotifierService {
     private static final int DEFAULT_PAGE_SIZE = 32;
 
-    private final UserRepository userRepository;
-    private final MobileDeviceRepository mobileRepository;
-    private final RiskNotificationRepository riskNotificationRepository;
-    private final TrackingNotificationRepository trackingNotificationRepository;
-    private final TrackerTrackingNotificationRepository trackerNotificationRepository;
+    private final NotifierUserRepository userRepository;
+    private final NotifierMobileDeviceRepository mobileRepository;
+    private final NotifierRiskNotificationRepository riskNotificationRepository;
+    private final NotifierTrackingNotificationRepository trackingNotificationRepository;
+    private final NotifierTrackerTrackingNotificationRepository trackerNotificationRepository;
 
     @Override
     @Transactional
@@ -58,7 +61,7 @@ class NotifierServiceImpl implements NotifierService {
                 .platform(request.getPlatform())
                 .build();
 
-        MobileDevice savedDevice = mobileRepository.save(device);
+        MobileDevice savedDevice = mobileRepository.saveAndFlush(device);
         log.info("Registered mobile device with ID {} for user ID {}", savedDevice.getId(), userId);
 
         return RegisterMobileDeviceResponse
@@ -126,7 +129,10 @@ class NotifierServiceImpl implements NotifierService {
                 .setId(notification.getId().toString())
                 .setMemberId(notification.getTarget().getId().toString())
                 .setMemberUsername(notification.getTarget().getUsername())
-                .setMemberAvatarUrl(notification.getTarget().getAvatarUrl())
+                .setMemberAvatarUrl(
+                        notification.getTarget().getAvatarUrl() == null
+                                ? ""
+                                : notification.getTarget().getAvatarUrl())
                 .setContent(notification.getContent())
                 .setTitle(notification.getTitle())
                 .setCreatedAtMs(notification.getCreatedAt().toInstant().toEpochMilli())
@@ -147,18 +153,14 @@ class NotifierServiceImpl implements NotifierService {
 
         Pageable pageable = PageRequest.ofSize(pageSize);
 
-        Slice<TrackingNotification> slice = trackingNotificationRepository
-                .findByTrackerId(
-                        userId,
-                        cursor == null
-                                ? null
-                                : Instant.ofEpochMilli(cursor.lastCreatedAtMs())
-                                .atOffset(ZoneOffset.UTC),
-                        cursor == null
-                                ? null
-                                : UUID.fromString(cursor.lastId()),
-                        pageable
-                );
+        Slice<TrackingNotification> slice = cursor == null
+                ? trackingNotificationRepository.findFirstPageByTrackerId(userId, pageable)
+                : trackingNotificationRepository.findNextPageByTrackerId(
+                userId,
+                Instant.ofEpochMilli(cursor.lastCreatedAtMs())
+                        .atOffset(ZoneOffset.UTC),
+                UUID.fromString(cursor.lastId()),
+                pageable);
 
         List<TrackingNotificationResponse> notifications = slice.getContent()
                 .stream()
@@ -192,7 +194,10 @@ class NotifierServiceImpl implements NotifierService {
                 .setId(notification.getId().toString())
                 .setMemberId(notification.getUser().getId().toString())
                 .setMemberUsername(notification.getUser().getUsername())
-                .setMemberAvatarUrl(notification.getUser().getAvatarUrl())
+                .setMemberAvatarUrl(
+                        notification.getUser().getAvatarUrl() == null
+                                ? ""
+                                : notification.getUser().getAvatarUrl())
                 .setContent(notification.getContent())
                 .setTitle(notification.getTitle())
                 .setCreatedAtMs(notification.getCreatedAt()
@@ -206,7 +211,7 @@ class NotifierServiceImpl implements NotifierService {
             UUID userId,
             ListRiskNotificationsRequest request
     ) {
-       PageToken cursor = PageTokenCodec.decode(request.getPageToken());
+        PageToken cursor = PageTokenCodec.decode(request.getPageToken());
 
         int pageSize = request.getPageSize() > 0
                 ? request.getPageSize()
@@ -214,18 +219,14 @@ class NotifierServiceImpl implements NotifierService {
 
         Pageable pageable = PageRequest.ofSize(pageSize);
 
-        Slice<RiskNotification> slice = riskNotificationRepository
-                .findByUserId(
-                        userId,
-                        cursor == null
-                                ? null
-                                : Instant.ofEpochMilli(cursor.lastCreatedAtMs())
-                                .atOffset(ZoneOffset.UTC),
-                        cursor == null
-                                ? null
-                                : UUID.fromString(cursor.lastId()),
-                        pageable
-                );
+        Slice<RiskNotification> slice = cursor == null
+                ? riskNotificationRepository.findFirstPageByUserId(userId, pageable)
+                : riskNotificationRepository.findNextPageByUserId(
+                userId,
+                Instant.ofEpochMilli(cursor.lastCreatedAtMs())
+                        .atOffset(ZoneOffset.UTC),
+                UUID.fromString(cursor.lastId()),
+                pageable);
 
         List<RiskNotificationResponse> notifications = slice.getContent()
                 .stream()
@@ -448,7 +449,7 @@ class NotifierServiceImpl implements NotifierService {
                         .newBuilder()
                         .setCode(Code.OK_VALUE)
                         .setMessage("Count retrieved successfully"))
-                        .build();
+                .build();
     }
 
     @Override
@@ -462,6 +463,6 @@ class NotifierServiceImpl implements NotifierService {
                         .newBuilder()
                         .setCode(Code.OK_VALUE)
                         .setMessage("Count retrieved successfully"))
-                        .build();
+                .build();
     }
 }

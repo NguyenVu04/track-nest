@@ -7,7 +7,7 @@ CREATE TABLE "user" (
     connected BOOLEAN NOT NULL DEFAULT TRUE,
     last_active TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     username VARCHAR(255) NOT NULL UNIQUE,
-    avatar_url TEXT,
+    avatar_url TEXT
 );
 
 CREATE TABLE location (
@@ -71,7 +71,7 @@ CREATE TABLE risk_notification (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    user_id UUID NOT NULL,
+    user_id UUID NOT NULL
 );
 
 CREATE TABLE tracking_notification_alerts_user (
@@ -99,9 +99,6 @@ ALTER TABLE user_in_family_circle
 
 ALTER TABLE user_in_family_circle
     ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
-
-ALTER TABLE participation_permission
-    ADD FOREIGN KEY (family_circle_id) REFERENCES family_circle (id) ON DELETE CASCADE;
 
 ALTER TABLE location
     ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;

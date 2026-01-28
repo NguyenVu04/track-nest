@@ -1,6 +1,7 @@
 package project.tracknest.usertracking.core.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.UUID;
@@ -18,6 +19,7 @@ public class FamilyCircleMember {
     @Column(name = "admin", nullable = false)
     private boolean isAdmin;
 
+    @Size(min = 1, max = 50)
     @Column(name = "role", length = 50)
     private String role;
 

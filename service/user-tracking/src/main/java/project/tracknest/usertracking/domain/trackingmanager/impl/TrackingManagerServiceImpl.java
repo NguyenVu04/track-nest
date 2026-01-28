@@ -11,11 +11,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.PageToken;
-import project.tracknest.usertracking.core.utils.OtpGenerator;
-import project.tracknest.usertracking.core.utils.PageTokenCodec;
 import project.tracknest.usertracking.core.entity.FamilyCircle;
 import project.tracknest.usertracking.core.entity.FamilyCircleMember;
 import project.tracknest.usertracking.core.entity.User;
+import project.tracknest.usertracking.core.utils.OtpGenerator;
+import project.tracknest.usertracking.core.utils.PageTokenCodec;
 import project.tracknest.usertracking.domain.trackingmanager.service.TrackingManagerService;
 import project.tracknest.usertracking.proto.lib.*;
 
@@ -37,9 +37,9 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
 
     private final StringRedisTemplate redisTemplate;
 
-    private final FamilyCircleRepository familyCircleRepository;
-    private final FamilyCircleMemberRepository familyCircleMemberRepository;
-    private final UserRepository userRepository;
+    private final TrackingManagerFamilyCircleRepository familyCircleRepository;
+    private final TrackingManagerFamilyCircleMemberRepository familyCircleMemberRepository;
+    private final TrackingManagerUserRepository userRepository;
 
     @Override
     @Transactional
@@ -48,7 +48,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                 .builder()
                 .name(request.getName())
                 .build();
-        FamilyCircle savedCircle = familyCircleRepository.save(circle);
+        FamilyCircle savedCircle = familyCircleRepository.saveAndFlush(circle);
 
         User user = userRepository
                 .findById(userId)
@@ -68,7 +68,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                 .role(request.getFamilyRole())
                 .build();
 
-        Set<FamilyCircleMember> members = new HashSet<>();
+        List<FamilyCircleMember> members = new ArrayList<>();
         members.add(member);
         savedCircle.setMembers(members);
 
@@ -109,7 +109,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
             UUID userId,
             ListFamilyCirclesRequest request
     ) {
-        PageToken cursor= PageTokenCodec.decode(request.getPageToken());
+        PageToken cursor = PageTokenCodec.decode(request.getPageToken());
 
         int pageSize = request.getPageSize() > 0
                 ? request.getPageSize()
@@ -118,17 +118,14 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
         Pageable pageable = PageRequest.ofSize(pageSize);
 
         // 2. Query
-        Slice<FamilyCircle> slice = familyCircleRepository.findNextByUserId(
-                userId,
-                cursor == null
-                        ? null
-                        : Instant.ofEpochMilli(cursor.lastCreatedAtMs())
-                        .atOffset(ZoneOffset.UTC),
-                cursor == null
-                        ? null
-                        : UUID.fromString(cursor.lastId()),
-                pageable
-        );
+        Slice<FamilyCircle> slice = cursor == null
+                ? familyCircleRepository.findFirstPageByUserId(userId, pageable)
+                : familyCircleRepository.findNextPageByUserId(
+                        userId,
+                        Instant.ofEpochMilli(cursor.lastCreatedAtMs())
+                            .atOffset(ZoneOffset.UTC), UUID.fromString(cursor.lastId()),
+                        pageable);
+
 
         List<FamilyCircleInfo> infos = slice.getContent().stream()
                 .map(this::toProto)
@@ -151,14 +148,15 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
     @Override
     @Transactional
     public DeleteFamilyCircleResponse deleteFamilyCircle(UUID userId, DeleteFamilyCircleRequest request) {
+        UUID circleId = UUID.fromString(request.getFamilyCircleId());
         Optional<FamilyCircle> circleOpt = familyCircleRepository
                 .findCircleIfAdmin(
                         userId,
-                        UUID.fromString(request.getFamilyCircleId()));
+                        circleId);
 
         if (circleOpt.isEmpty()) {
             log.warn("User {} is not an admin of the family circle {}",
-                    userId, request.getFamilyCircleId());
+                    userId, circleId);
 
             return DeleteFamilyCircleResponse
                     .newBuilder()
@@ -388,6 +386,19 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                     .build();
         }
 
+        if (memberOpt.get().isAdmin()) {
+            log.warn("Admin user {} cannot leave the family circle {} without assigning a new admin",
+                    userId, request.getFamilyCircleId());
+            return LeaveFamilyCircleResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.FAILED_PRECONDITION_VALUE)
+                            .setMessage("Admin cannot leave the family circle without assigning a new admin")
+                            .build())
+                    .build();
+        }
+
         familyCircleMemberRepository.delete(memberOpt.get());
         return LeaveFamilyCircleResponse
                 .newBuilder()
@@ -458,6 +469,78 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                         .setMessage("Admin role assigned successfully")
                         .build())
                 .setAssignedAtMs(Instant.now().toEpochMilli())
+                .setMemberId(member
+                        .getId()
+                        .getMemberId()
+                        .toString())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public RemoveMemberFromFamilyCircleResponse removeMemberFromFamilyCircle(UUID userId, RemoveMemberFromFamilyCircleRequest request) {
+        UUID circleId = UUID.fromString(request.getFamilyCircleId());
+
+        if (userId.toString().equals(request.getMemberId())) {
+            log.warn("User {} cannot remove themselves from family circle {}",
+                    userId, request.getFamilyCircleId());
+            return RemoveMemberFromFamilyCircleResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.FAILED_PRECONDITION_VALUE)
+                            .setMessage("User cannot remove themselves from the family circle")
+                            .build())
+                    .build();
+        }
+
+        Optional<FamilyCircleMember> adminOpt = familyCircleMemberRepository
+                .findById_FamilyCircleIdAndId_MemberId(
+                        circleId,
+                        userId);
+
+        if (adminOpt.isEmpty() || !adminOpt.get().isAdmin()) {
+            log.warn("User {} is not authorized to remove members from family circle {}",
+                    userId, request.getFamilyCircleId());
+            return RemoveMemberFromFamilyCircleResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.PERMISSION_DENIED_VALUE)
+                            .setMessage("User is not an admin of the family circle")
+                            .build())
+                    .build();
+        }
+
+        Optional<FamilyCircleMember> memberOpt = familyCircleMemberRepository
+                .findById_FamilyCircleIdAndId_MemberId(
+                        circleId,
+                        UUID.fromString(request.getMemberId()));
+
+        if (memberOpt.isEmpty()) {
+            log.warn("Member {} is not found in family circle {}",
+                    request.getMemberId(), request.getFamilyCircleId());
+            return RemoveMemberFromFamilyCircleResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.NOT_FOUND_VALUE)
+                            .setMessage("Member is not found in the family circle")
+                            .build())
+                    .build();
+        }
+
+        familyCircleMemberRepository.delete(memberOpt.get());
+
+        return RemoveMemberFromFamilyCircleResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Member removed successfully")
+                        .build())
+                .setRemovedAtMs(Instant.now().toEpochMilli())
+                .setMemberId(request.getMemberId())
                 .build();
     }
 }

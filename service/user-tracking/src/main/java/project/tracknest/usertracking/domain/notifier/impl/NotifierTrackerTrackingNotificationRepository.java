@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-interface TrackerTrackingNotificationRepository extends JpaRepository<TrackerTrackingNotification, TrackerTrackingNotification.TrackerTrackingNotificationId> {
+interface NotifierTrackerTrackingNotificationRepository extends JpaRepository<TrackerTrackingNotification, TrackerTrackingNotification.TrackerTrackingNotificationId> {
     Optional<TrackerTrackingNotification> findById_TrackerIdAndId_NotificationId(UUID trackerId, UUID notificationId);
 
     void deleteById_TrackerId(UUID trackerId);

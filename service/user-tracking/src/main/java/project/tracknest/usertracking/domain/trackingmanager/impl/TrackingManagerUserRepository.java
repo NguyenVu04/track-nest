@@ -1,4 +1,4 @@
-package project.tracknest.usertracking.domain.trackingmanager;
+package project.tracknest.usertracking.domain.trackingmanager.impl;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import project.tracknest.usertracking.core.entity.User;

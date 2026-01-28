@@ -47,17 +47,18 @@ spring:
   quartz:
     job-store-type: jdbc
     jdbc:
-      initialize-schema: always
+      initialize-schema: never
     properties:
       org:
         quartz:
           scheduler:
             instanceId: AUTO
           jobStore:
+            useProperties: true
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
             isClustered: true
           threadPool:
             threadCount: 10
-
 
 server:
   port: 18080

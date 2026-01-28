@@ -1,6 +1,8 @@
 package project.tracknest.usertracking.core.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,12 +23,18 @@ public class MobileDevice {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotBlank
+    @Size(min = 1)
     @Column(name = "device_token", nullable = false, updatable = false, columnDefinition = "TEXT")
     private String deviceToken;
 
+    @NotBlank
+    @Size(min = 2, max = 2)
     @Column(name = "language_code", nullable = false, length = 2)
     private String languageCode;
 
+    @NotBlank
+    @Size(min = 2, max = 50)
     @Column(name = "platform", nullable = false, length = 50)
     private String platform;
 

@@ -1,6 +1,8 @@
 package project.tracknest.usertracking.core.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +29,8 @@ public class User {
     @Column(name = "last_active", nullable = false)
     private OffsetDateTime lastActive;
 
+    @NotBlank
+    @Size(min = 1, max = 50)
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 

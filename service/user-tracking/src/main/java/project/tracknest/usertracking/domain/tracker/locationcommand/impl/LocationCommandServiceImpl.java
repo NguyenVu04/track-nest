@@ -23,9 +23,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class LocationCommandServiceImpl implements LocationCommandService {
-    private final LocationRepository locationRepository;
+    private final TrackerLocationRepository locationRepository;
     private final LocationMessageProducer messageProducer;
-    private final UserRepository userRepository;
+    private final TrackerUserRepository userRepository;
 
     @Override
     @Transactional

@@ -12,24 +12,35 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-interface RiskNotificationRepository extends JpaRepository<RiskNotification, UUID> {
+interface NotifierRiskNotificationRepository extends JpaRepository<RiskNotification, UUID> {
     @Query("""
-    SELECT rn FROM RiskNotification rn
-    WHERE rn.user.id = :userId
-      AND (
-            :lastCreatedAt IS NULL
-            OR (
+        SELECT rn
+        FROM RiskNotification rn
+        WHERE rn.user.id = :userId
+        ORDER BY rn.createdAt DESC, rn.id DESC
+    """)
+    Slice<RiskNotification> findFirstPageByUserId(
+            @Param("userId") UUID userId,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT rn
+        FROM RiskNotification rn
+        WHERE rn.user.id = :userId
+          AND (
                 rn.createdAt < :lastCreatedAt
                 OR (rn.createdAt = :lastCreatedAt AND rn.id < :lastId)
-            )
-      ) ORDER BY rn.createdAt DESC, rn.id DESC
+          )
+        ORDER BY rn.createdAt DESC, rn.id DESC
     """)
-    Slice<RiskNotification> findByUserId(
+    Slice<RiskNotification> findNextPageByUserId(
             @Param("userId") UUID userId,
             @Param("lastCreatedAt") OffsetDateTime lastCreatedAt,
             @Param("lastId") UUID lastId,
             Pageable pageable
     );
+
 
     Optional<RiskNotification> findByIdAndUserId(UUID id, UUID userId);
 

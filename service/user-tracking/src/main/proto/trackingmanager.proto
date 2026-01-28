@@ -71,6 +71,10 @@ service TrackingManagerController {
   rpc LeaveFamilyCircle(LeaveFamilyCircleRequest)
       returns (LeaveFamilyCircleResponse);
 
+  //Remove a Member From Family Circle by Admin
+  rpc RemoveMemberFromFamilyCircle(RemoveMemberFromFamilyCircleRequest)
+      returns (RemoveMemberFromFamilyCircleResponse);
+
   // AssignFamilyCircleAdmin
   // Grants admin privileges to the specified `member_id` within the given
   // family circle. Returns the `member_id` and `assigned_at_ms` on success.
@@ -174,4 +178,15 @@ message AssignFamilyCircleAdminResponse {
   google.rpc.Status status = 1;
   string member_id = 2;
   uint64 assigned_at_ms = 3;
+}
+
+message RemoveMemberFromFamilyCircleRequest {
+  string family_circle_id = 1;
+  string member_id = 2;
+}
+
+message RemoveMemberFromFamilyCircleResponse {
+  google.rpc.Status status = 1;
+  string member_id = 2;
+  uint64 removed_at_ms = 3;
 }

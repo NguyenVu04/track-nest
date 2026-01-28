@@ -142,4 +142,15 @@ public class TrackingManagerController extends TrackingManagerControllerGrpc.Tra
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
+
+    @Override
+    public void removeMemberFromFamilyCircle(RemoveMemberFromFamilyCircleRequest request, StreamObserver<RemoveMemberFromFamilyCircleResponse> responseObserver) {
+        UUID userId = getCurrentUserId();
+
+        RemoveMemberFromFamilyCircleResponse response = service
+                .removeMemberFromFamilyCircle(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
 }
