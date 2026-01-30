@@ -3,6 +3,7 @@ import {
   keycloakDiscovery,
   StoredTokens,
   useAuth,
+  clientId,
 } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,7 +36,7 @@ export default function LoginScreen() {
 
   const [request, response, promptAsync] = useAuthRequest(
     {
-      clientId: "tracknest-mobile",
+      clientId: clientId,
       scopes: ["openid", "profile", "email", "offline_access"],
       redirectUri: redirectUri,
       responseType: ResponseType.Code,
@@ -57,7 +58,7 @@ export default function LoginScreen() {
       try {
         const tokenResult = await exchangeCodeAsync(
           {
-            clientId: "tracknest-mobile",
+            clientId: clientId,
             code: code,
             redirectUri: redirectUri,
             extraParams: {

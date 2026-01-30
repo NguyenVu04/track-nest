@@ -16,13 +16,17 @@ import React, {
 // Storage keys for tokens
 const TOKEN_STORAGE_KEY = "@TrackNest:tokens";
 
+const realmName = "public-dev";
+
 // Keycloak configuration
 const baseUrl = getBaseUrl();
 export const keycloakDiscovery = {
-  authorizationEndpoint: `${baseUrl}:8080/realms/public-dev/protocol/openid-connect/auth`,
-  tokenEndpoint: `${baseUrl}:8080/realms/public-dev/protocol/openid-connect/token`,
-  revocationEndpoint: `${baseUrl}:8080/realms/public-dev/protocol/openid-connect/revoke`,
+  authorizationEndpoint: `${baseUrl}:80/auth/realms/${realmName}/protocol/openid-connect/auth`,
+  tokenEndpoint: `${baseUrl}:80/auth/realms/${realmName}/protocol/openid-connect/token`,
+  revocationEndpoint: `${baseUrl}:80/auth/realms/${realmName}/protocol/openid-connect/revoke`,
 };
+
+export const clientId = "mobile";
 
 // Token storage interface
 export interface StoredTokens {
@@ -114,7 +118,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // If we have an idToken and should not skip Keycloak logout, do full OIDC logout
         if (idToken && !options?.skipKeycloak) {
           const redirectUri = makeRedirectUri({ scheme: "tracknest" });
-          const logoutUrl = `${baseUrl}:8080/realms/tracknest-user/protocol/openid-connect/logout?id_token_hint=${idToken}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
+          const logoutUrl = `${baseUrl}:80/auth/realms/${realmName}/protocol/openid-connect/logout?id_token_hint=${idToken}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
 
           await WebBrowser.openAuthSessionAsync(logoutUrl, redirectUri);
         }
