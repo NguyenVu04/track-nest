@@ -22,12 +22,33 @@ static_resources:
                   cluster: user_tracking_grpc
                   timeout: 0s
           http_filters:
-          - name: envoy.filters.http.grpc_web
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
           - name: envoy.filters.http.cors
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
+          - name: envoy.filters.http.jwt_authn
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+              providers:
+                keycloak:
+                  issuer: "http://127.0.0.1/auth/realms/public-dev"
+                  audiences:
+                  - "account"
+                  remote_jwks:
+                    http_uri:
+                      uri: "http://keycloak:8080/auth/realms/public-dev/protocol/openid-connect/certs"
+                      cluster: keycloak_jwks
+                      timeout: 5s
+                    cache_duration: 600s
+                  forward: true
+                  payload_in_metadata: jwt_payload
+              rules:
+              - match:
+                  prefix: "/"
+                requires:
+                  provider_name: keycloak
+          - name: envoy.filters.http.grpc_web
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb 
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
@@ -44,8 +65,20 @@ static_resources:
         - endpoint:
             address:
               socket_address:
-                address: user_tracking
+                address: host.docker.internal
                 port_value: 19090
+  - name: keycloak_jwks
+    type: logical_dns
+    connect_timeout: 5s
+    load_assignment:
+      cluster_name: keycloak_jwks
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: keycloak
+                port_value: 8080
 
 admin:
   address:
