@@ -30,7 +30,7 @@ static_resources:
               "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
               providers:
                 keycloak:
-                  # Issuer validation disabled - accepts tokens from any issuer
+                  # issuer: "http://keycloak:8080/auth/realms/public-dev"
                   audiences:
                   - "account"
                   remote_jwks:
@@ -65,7 +65,7 @@ static_resources:
         - endpoint:
             address:
               socket_address:
-                address: user-tracking
+                address: user_tracking
                 port_value: 19090
   - name: keycloak_jwks
     type: logical_dns
