@@ -1,5 +1,7 @@
 package project.tracknest.usertracking.controller;
 
+import com.google.rpc.Code;
+import com.google.rpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
@@ -65,18 +67,36 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
     }
 
     @Override
-    public void updateUserLocation(
-            UpdateUserLocationRequest request,
+    public StreamObserver<UpdateUserLocationRequest> updateUserLocation(
             StreamObserver<UpdateUserLocationResponse> responseObserver
     ) {
         UUID userId = getCurrentUserId();
 
-        UpdateUserLocationResponse response = commandService
-                .updateUserLocation(
-                        userId,
-                        request);
+        return new StreamObserver<>() {
+            @Override
+            public void onNext(UpdateUserLocationRequest updateUserLocationRequest) {
+                commandService.updateUserLocation(userId, updateUserLocationRequest);
+            }
 
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+            @Override
+            public void onError(Throwable throwable) {
+                log.warn("Error receiving location update from userId {}: {}", userId, throwable.getMessage());
+            }
+
+            @Override
+            public void onCompleted() {
+                UpdateUserLocationResponse response = UpdateUserLocationResponse
+                        .newBuilder()
+                        .setStatus(Status
+                                .newBuilder()
+                                .setCode(Code.OK_VALUE)
+                                .setMessage("Location updates completed successfully")
+                                .build())
+                        .build();
+                responseObserver.onNext(response);
+                responseObserver.onCompleted();
+                log.info("Completed receiving location updates from userId {}", userId);
+            }
+        };
     }
 }

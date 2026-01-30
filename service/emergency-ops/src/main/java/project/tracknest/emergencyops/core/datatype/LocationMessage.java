@@ -7,12 +7,13 @@ import java.util.UUID;
 
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record LocationMessage (
+public record LocationMessage(
         UUID userId,
         String username,
-        double latitude,
-        double longitude,
-        long timestamp,
-        float accuracy,
-        float velocity) {
+        String avatarUrl,
+        double latitudeDeg,
+        double longitudeDeg,
+        long timestampMs,
+        float accuracyMeter,
+        float velocityMps) {
 }
