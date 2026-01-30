@@ -1,5 +1,6 @@
 import fetch from "cross-fetch"; // polyfill for RN
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { ClientReadableStream } from "grpc-web";
 
 import {
@@ -12,35 +13,49 @@ import {
 } from "@/proto/tracker_pb";
 import { TrackerControllerClient } from "@/proto/TrackerServiceClientPb";
 import { getBaseUrl } from "@/utils";
+import { StoredTokens } from "@/contexts/AuthContext";
 
 global.fetch = global.fetch || fetch;
 
-const jwt =
-  "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiZTl1LTJpS3d6Vkd3V09XUVNRc3pGNFBaaUV1X0RoZm8zbjE5T291bVBnIn0.eyJleHAiOjE3Njc2NzA1MTgsImlhdCI6MTc2NzYzNDUxOCwianRpIjoib25ydHJvOjMwNmY2OGZhLWNhYTYtNDBlOS05MDRjLWVmZjJiN2I0YWVmNSIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC9yZWFsbXMvdHJhY2tuZXN0LXVzZXIiLCJhdWQiOlsicmVhbG0tbWFuYWdlbWVudCIsImFjY291bnQiXSwic3ViIjoiZjhmNzM1YjQtNTQ5Yy00ZDhjLTllMTAtMTVmOGMxOThiNzFiIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoidHJhY2tuZXN0Iiwic2lkIjoiYmQ0N2Y5MGQtYTE3NC1kNWZkLWMwNmYtNDAyNjcyZThjZWJlIiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyIvKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXRyYWNrbmVzdC11c2VyIiwidW1hX2F1dGhvcml6YXRpb24iLCJVU0VSIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsicmVhbG0tbWFuYWdlbWVudCI6eyJyb2xlcyI6WyJ2aWV3LWlkZW50aXR5LXByb3ZpZGVycyIsInZpZXctcmVhbG0iLCJtYW5hZ2UtaWRlbnRpdHktcHJvdmlkZXJzIiwiaW1wZXJzb25hdGlvbiIsInJlYWxtLWFkbWluIiwiY3JlYXRlLWNsaWVudCIsIm1hbmFnZS11c2VycyIsInF1ZXJ5LXJlYWxtcyIsInZpZXctYXV0aG9yaXphdGlvbiIsInF1ZXJ5LWNsaWVudHMiLCJxdWVyeS11c2VycyIsIm1hbmFnZS1ldmVudHMiLCJtYW5hZ2UtcmVhbG0iLCJ2aWV3LWV2ZW50cyIsInZpZXctdXNlcnMiLCJ2aWV3LWNsaWVudHMiLCJtYW5hZ2UtYXV0aG9yaXphdGlvbiIsIm1hbmFnZS1jbGllbnRzIiwicXVlcnktZ3JvdXBzIl19LCJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBlbWFpbCBwcm9maWxlIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJKb2huIERvZSIsInByZWZlcnJlZF91c2VybmFtZSI6ImFkbWluIiwiZ2l2ZW5fbmFtZSI6IkpvaG4iLCJsb2NhbGUiOiJlbiIsImZhbWlseV9uYW1lIjoiRG9lIiwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20ifQ.YoV68NnN1wmjU7f9Si12g7zcCOe7JB_pBvRZFlcwKIH9uW1A2ce7ZpVQ6BekgpCoPLCQNZpKU0Vp2MxLSRhNERNEaMYQFcMCz6X2cUjfOJeZbwhfH8aElBoOSDmd9zMcsyayPktvLAkZ699nC0PRM8dXioW8PEWacb5ju_A1EhBvtVcqd8cMjAnr_j99V_FCggoGEuUx-ckdemon4VH2Fy4Hhn2QpLdpSBcH8mCJFvatRpMAszWEsWuXPZuQeJsH83pdq8Qtkg-lB2tDqzcIP2tP_hGZx83hxNtzggZqb17LoMAPmrlXIQzs24frr0pGln6PvIYFawGsUsmWU8fV5A";
+const TOKEN_STORAGE_KEY = "@TrackNest:tokens";
 
-const metadata = {
-  Authorization: `Bearer ${jwt}`,
+/**
+ * Retrieves the access token from device storage.
+ * Returns the authorization metadata object for gRPC calls.
+ */
+const getAuthMetadata = async (): Promise<{ Authorization: string }> => {
+  const tokensJson = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+  if (!tokensJson) {
+    throw new Error("No authentication token found. Please log in.");
+  }
+  const tokens: StoredTokens = JSON.parse(tokensJson);
+  return {
+    Authorization: `Bearer ${tokens.accessToken}`,
+  };
 };
 
-const client = new TrackerControllerClient(getBaseUrl(), null, {
+const baseUrl = getBaseUrl();
+
+const client = new TrackerControllerClient(`${baseUrl}:8800`, null, {
   format: "text",
 });
 
 /**
  * Streams live location updates for family members in a circle.
- * Returns the stream so caller can cancel it when needed.
+ * Returns a promise that resolves to the stream so caller can cancel it when needed.
  */
-export const streamFamilyMemberLocations = (
+export const streamFamilyMemberLocations = async (
   familyCircleId: string,
   onData: (location: FamilyMemberLocation.AsObject) => void,
   onError?: (err: Error) => void,
   onEnd?: () => void,
-): ClientReadableStream<FamilyMemberLocation> => {
+): Promise<ClientReadableStream<FamilyMemberLocation>> => {
   const request = new StreamFamilyMemberLocationsRequest();
   request.setFamilyCircleId(familyCircleId);
 
   console.log("Starting stream for family circle:", familyCircleId);
 
+  const metadata = await getAuthMetadata();
   const stream = client.streamFamilyMemberLocations(request, metadata);
 
   stream.on("data", (msg: FamilyMemberLocation) => {
@@ -98,6 +113,7 @@ export const listFamilyMemberLocationHistory = async (
   console.log("Fetching location history for member:", memberId);
 
   try {
+    const metadata = await getAuthMetadata();
     const response = await client.listFamilyMemberLocationHistory(
       request,
       metadata,
@@ -135,6 +151,7 @@ export const updateUserLocation = async (
   console.log("Updating user location:", { latitudeDeg, longitudeDeg });
 
   try {
+    const metadata = await getAuthMetadata();
     const response = await client.updateUserLocation(request, metadata);
     const result = response.toObject();
     console.log("Location update response:", result);

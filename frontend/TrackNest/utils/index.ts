@@ -46,7 +46,7 @@ export const formatAddressFromLatLng = async (
 
 export const getBaseUrl = () => {
   const hostUri = Constants.expoConfig?.hostUri;
-  if (!hostUri) return "http://192.168.1.16";
+  if (!hostUri) return "http://127.0.0.1";
 
   const ip = hostUri.split(":")[0];
   return `http://${ip}`;

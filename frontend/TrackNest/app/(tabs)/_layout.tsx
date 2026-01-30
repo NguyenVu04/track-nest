@@ -45,6 +45,15 @@ export default function RootLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="tracker-test"
+        options={{
+          title: "Tracker Test",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person" size={size} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
