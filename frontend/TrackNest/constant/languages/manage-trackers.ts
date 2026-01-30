@@ -5,6 +5,7 @@ export const Vietnamese = {
   lastPing: "Ping cuối",
   deleteConfirm: "Xóa thiết bị theo dõi này?",
   addNewTracker: "Thêm thiết bị theo dõi mới",
+  loading: "Đang tải...",
 };
 
 export const English = {
@@ -14,4 +15,5 @@ export const English = {
   lastPing: "Last ping",
   deleteConfirm: "Delete this tracker?",
   addNewTracker: "Add new tracker",
+  loading: "Loading...",
 };

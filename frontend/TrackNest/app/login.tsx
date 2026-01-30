@@ -1,53 +1,130 @@
 import { login as loginLang } from "@/constant/languages";
+import {
+  keycloakDiscovery,
+  StoredTokens,
+  useAuth,
+} from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
 import {
+  exchangeCodeAsync,
+  makeRedirectUri,
+  ResponseType,
+  useAuthRequest,
+} from "expo-auth-session";
+import { useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
   Alert,
   Image,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
-
-const CREDENTIALS_KEY = "@TrackNest:credentials";
 
 export default function LoginScreen() {
   const router = useRouter();
   const t = useTranslation(loginLang);
+  const { isAuthenticated, isLoading: isCheckingAuth, saveTokens } = useAuth();
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [saveCredentials, setSaveCredentials] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (username.trim() === "admin" && password === "admin") {
-      if (saveCredentials) {
-        try {
-          await AsyncStorage.setItem(
-            CREDENTIALS_KEY,
-            JSON.stringify({ username, password })
-          );
-        } catch (error) {
-          console.error("Failed to save credentials:", error);
-        }
-      } else {
-        // Clear saved credentials if user unchecked the box
-        await AsyncStorage.removeItem(CREDENTIALS_KEY);
-      }
-      // Navigate to the map screen
+  const redirectUri = makeRedirectUri({ scheme: "tracknest" });
+
+  const [request, response, promptAsync] = useAuthRequest(
+    {
+      clientId: "tracknest-mobile",
+      scopes: ["openid", "profile", "email", "offline_access"],
+      redirectUri: redirectUri,
+      responseType: ResponseType.Code,
+      usePKCE: true,
+    },
+    keycloakDiscovery,
+  );
+
+  // Redirect to map if already authenticated
+  useEffect(() => {
+    if (!isCheckingAuth && isAuthenticated) {
       router.replace("/(tabs)/map");
-    } else {
+    }
+  }, [isCheckingAuth, isAuthenticated, router]);
+
+  const exchangeToken = useCallback(
+    async (code: string) => {
+      setIsLoading(true);
+      try {
+        const tokenResult = await exchangeCodeAsync(
+          {
+            clientId: "tracknest-mobile",
+            code: code,
+            redirectUri: redirectUri,
+            extraParams: {
+              code_verifier: request?.codeVerifier || "",
+            },
+          },
+          keycloakDiscovery,
+        );
+
+        console.log("Token exchange successful");
+
+        // Calculate expiration time
+        const expiresAt = Date.now() + (tokenResult.expiresIn ?? 300) * 1000;
+
+        // Save tokens to context (and storage)
+        const tokens: StoredTokens = {
+          accessToken: tokenResult.accessToken,
+          refreshToken: tokenResult.refreshToken ?? null,
+          idToken: tokenResult.idToken ?? null,
+          expiresAt,
+        };
+
+        await saveTokens(tokens);
+
+        // Navigate to the map screen
+        router.replace("/(tabs)/map");
+      } catch (error) {
+        console.error("Token exchange error:", error);
+        Alert.alert(t.loginFailedTitle, t.loginFailedMessage, [
+          { text: t.okButton },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [redirectUri, request?.codeVerifier, router, t, saveTokens],
+  );
+
+  // Handle OAuth response
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { code } = response.params;
+      exchangeToken(code);
+    } else if (response?.type === "error") {
+      console.error("OAuth error:", response.error);
       Alert.alert(t.loginFailedTitle, t.loginFailedMessage, [
         { text: t.okButton },
       ]);
     }
+  }, [response, exchangeToken, t]);
+
+  const handleLogin = async () => {
+    if (!request) {
+      Alert.alert("Error", "Authentication not ready. Please try again.");
+      return;
+    }
+    promptAsync();
   };
+
+  // Show loading while checking existing auth
+  if (isCheckingAuth) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#74becb" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -64,73 +141,34 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t.usernameLabel}</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="person-outline" size={20} color="#6b7280" />
-              <TextInput
-                style={styles.input}
-                placeholder={t.usernamePlaceholder}
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t.passwordLabel}</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={20} color="#6b7280" />
-              <TextInput
-                style={styles.input}
-                placeholder={t.passwordPlaceholder}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <Pressable onPress={() => setShowPassword(!showPassword)}>
-                <Ionicons
-                  name={showPassword ? "eye-off-outline" : "eye-outline"}
-                  size={20}
-                  color="#6b7280"
-                />
-              </Pressable>
-            </View>
-          </View>
-
           <Pressable
-            style={styles.checkboxRow}
-            onPress={() => setSaveCredentials(!saveCredentials)}
-          >
-            <View
-              style={[
-                styles.checkbox,
-                saveCredentials && styles.checkboxChecked,
-              ]}
-            >
-              {saveCredentials && (
-                <Ionicons name="checkmark" size={16} color="#fff" />
-              )}
-            </View>
-            <Text style={styles.checkboxLabel}>{t.saveCredentials}</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.loginButton}
+            style={[
+              styles.loginButton,
+              (!request || isLoading) && styles.loginButtonDisabled,
+            ]}
             onPress={handleLogin}
+            disabled={!request || isLoading}
             android_ripple={{ color: "#0052cc" }}
           >
-            <Text style={styles.loginButtonText}>{t.loginButton}</Text>
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Ionicons
+                  name="key-outline"
+                  size={20}
+                  color="#fff"
+                  style={styles.buttonIcon}
+                />
+                <Text style={styles.loginButtonText}>{t.loginButton}</Text>
+              </>
+            )}
           </Pressable>
         </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>TrackNest v1.0.0</Text>
-          <Text style={styles.hintText}>Use admin/admin to login</Text>
+          <Text style={styles.hintText}>Secure login with Keycloak</Text>
         </View>
       </View>
     </View>
@@ -141,6 +179,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  centerContent: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     flex: 1,
@@ -174,65 +216,25 @@ const styles = StyleSheet.create({
   form: {
     gap: 20,
   },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f9fafb",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    gap: 10,
-    height: 52,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: "#0f172a",
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 4,
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: "#d1d5db",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkboxChecked: {
-    backgroundColor: "#0b62ff",
-    borderColor: "#0b62ff",
-  },
-  checkboxLabel: {
-    fontSize: 14,
-    color: "#4b5563",
-  },
   loginButton: {
-    backgroundColor: "#0b62ff",
+    backgroundColor: "#74becb",
     borderRadius: 12,
     height: 52,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 8,
+  },
+  loginButtonDisabled: {
+    backgroundColor: "#a8d4db",
   },
   loginButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   footer: {
     alignItems: "center",

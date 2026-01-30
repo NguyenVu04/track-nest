@@ -1,3 +1,5 @@
+import { manageTrackers as manageTrackersLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import { getInitials } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -36,6 +38,7 @@ type Tracker = (typeof mockTrackers)[number];
 
 export default function ManageTrackersScreen() {
   const router = useRouter();
+  const t = useTranslation(manageTrackersLang);
 
   const renderItem = ({ item }: { item: Tracker }) => {
     const isOnline = item.status === "online";
@@ -46,7 +49,7 @@ export default function ManageTrackersScreen() {
           <View
             style={[
               styles.initialsBg,
-              { backgroundColor: isOnline ? "#2b9fff" : "#999" },
+              { backgroundColor: isOnline ? "#74becb" : "#999" },
             ]}
           >
             <Text style={styles.initials}>{getInitials(item.name)}</Text>
@@ -67,20 +70,22 @@ export default function ManageTrackersScreen() {
                   { color: isOnline ? "#166534" : "#991b1b" },
                 ]}
               >
-                {isOnline ? "Online" : "Offline"}
+                {isOnline ? t.onlineStatus : t.offlineStatus}
               </Text>
             </View>
           </View>
           <View style={[styles.rowBetween, { marginTop: 6 }]}>
             <View style={styles.metaRow}>
               <Ionicons name="time" size={14} color="#6b7280" />
-              <Text style={styles.metaText}>Last ping {item.lastPing}</Text>
+              <Text style={styles.metaText}>
+                {t.lastPing} {item.lastPing}
+              </Text>
             </View>
           </View>
         </View>
         <Pressable
           onPress={() => {
-            Alert.alert("Delete this trackers?");
+            Alert.alert(t.deleteConfirm);
           }}
         >
           <Ionicons name="trash" size={18} color="#9ca3af" />
@@ -98,7 +103,7 @@ export default function ManageTrackersScreen() {
         >
           <Ionicons name="arrow-back" size={22} color="#111827" />
         </Pressable>
-        <Text style={styles.headerTitle}>Manage Trackers</Text>
+        <Text style={styles.headerTitle}>{t.pageTitle}</Text>
         <View style={styles.headerAction} />
       </View>
 
@@ -110,10 +115,10 @@ export default function ManageTrackersScreen() {
         ListFooterComponent={
           <Pressable
             style={styles.addButton}
-            android_ripple={{ color: "#dbeafe" }}
+            android_ripple={{ color: "#e0f2f5" }}
           >
-            <Ionicons name="add-circle" size={18} color="#0b62ff" />
-            <Text style={styles.addButtonText}>Add new tracker</Text>
+            <Ionicons name="add-circle" size={18} color="#74becb" />
+            <Text style={styles.addButtonText}>{t.addNewTracker}</Text>
           </Pressable>
         }
       />
@@ -174,14 +179,14 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#bfdbfe",
-    backgroundColor: "#eff6ff",
+    borderColor: "#a8d8e0",
+    backgroundColor: "#e0f2f5",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
   },
-  addButtonText: { color: "#0b62ff", fontWeight: "700" },
+  addButtonText: { color: "#74becb", fontWeight: "700" },
   initialsBg: {
     width: 42,
     height: 42,

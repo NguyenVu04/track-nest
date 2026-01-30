@@ -14,5 +14,13 @@ export type ProtoTrackerResponse = {
   userId: string;
   username: string;
   online: boolean;
-  lastActive: number;//seconds since epoch
-}
+  lastActive: number; //seconds since epoch
+};
+
+export type FamilyCircle = {
+  familyCircleId: string;
+  name: string;
+  createdAtMs: number;
+  memberCount?: number;
+  role?: string;
+};

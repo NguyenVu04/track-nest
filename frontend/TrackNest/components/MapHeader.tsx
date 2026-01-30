@@ -1,3 +1,5 @@
+import { MapHeader as mapHeaderLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -9,6 +11,8 @@ import {
   Text,
   View,
 } from "react-native";
+import { FamilyCircleSelector } from "./FamilyCircleSelector";
+import { FamilyCircle } from "@/constant/types";
 
 type Notification = {
   id: string;
@@ -98,18 +102,18 @@ type Props = {
   tracking: boolean;
   setTracking: (v: boolean) => void;
   onSearchPress?: () => void;
-  sharingEnabled?: boolean;
-  setSharingEnabled?: (v: boolean) => void;
+  selectedCircle: FamilyCircle | null;
+  handleFamilyCircleModalPress: () => void;
 };
 
 export default function MapHeader({
   tracking,
   setTracking,
   onSearchPress,
-  sharingEnabled,
-  setSharingEnabled,
+  selectedCircle,
+  handleFamilyCircleModalPress,
 }: Props) {
-  const onToggleShare = (v: boolean) => setSharingEnabled?.(v);
+  const t = useTranslation(mapHeaderLang);
   const [notificationsVisible, setNotificationsVisible] = useState(false);
 
   const getNotificationIcon = (type: Notification["type"]) => {
@@ -126,11 +130,11 @@ export default function MapHeader({
   const getNotificationColor = (type: Notification["type"]) => {
     switch (type) {
       case "alert":
-        return "#ef4444";
+        return "#e74c3c";
       case "warning":
-        return "#f59e0b";
+        return "#f39c12";
       case "info":
-        return "#3b82f6";
+        return "#74becb";
     }
   };
 
@@ -171,29 +175,33 @@ export default function MapHeader({
               onSearchPress?.();
             }}
           >
-            <Ionicons name="search" size={22} color="#ccc" />
+            <Ionicons name="search" size={22} color="#757575" />
           </Pressable>
 
           <Pressable
             style={styles.iconButton}
             onPress={() => setNotificationsVisible(true)}
           >
-            <Ionicons name="notifications" size={22} color="#ccc" />
+            <Ionicons name="notifications" size={22} color="#757575" />
             {mockNotifications.some((n) => !n.read) && (
               <View style={styles.badge} />
             )}
           </Pressable>
         </View>
 
+        <View style={styles.headerMid}>
+          <FamilyCircleSelector
+            selectedCircle={selectedCircle}
+            onPress={handleFamilyCircleModalPress}
+          />
+        </View>
+
         <View style={styles.headerRight}>
           <View style={styles.switchRow}>
-            <Text style={[styles.trackLabel, { color: "#ccc" }]}>Tracking</Text>
+            <Text style={[styles.trackLabel, { color: "#757575" }]}>
+              {t.tracking}
+            </Text>
             <Switch value={tracking} onValueChange={setTracking} />
-          </View>
-
-          <View style={styles.switchRow}>
-            <Text style={[styles.trackLabel, { color: "#ccc" }]}>Share</Text>
-            <Switch value={sharingEnabled} onValueChange={onToggleShare} />
           </View>
         </View>
       </View>
@@ -203,6 +211,7 @@ export default function MapHeader({
         transparent
         animationType="fade"
         onRequestClose={() => setNotificationsVisible(false)}
+        statusBarTranslucent
       >
         <Pressable
           style={styles.modalOverlay}
@@ -213,7 +222,7 @@ export default function MapHeader({
             onPress={(e) => e.stopPropagation()}
           >
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Notifications</Text>
+              <Text style={styles.modalTitle}>{t.notifications}</Text>
               <Pressable
                 style={styles.closeButton}
                 onPress={() => setNotificationsVisible(false)}
@@ -234,7 +243,7 @@ export default function MapHeader({
                     size={48}
                     color="#d1d5db"
                   />
-                  <Text style={styles.emptyText}>No notifications</Text>
+                  <Text style={styles.emptyText}>{t.noNotifications}</Text>
                 </View>
               }
             />
@@ -261,6 +270,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.06,
     shadowRadius: 8,
+    gap: 8,
     // elevation: 10,
   },
   headerLeft: {
@@ -273,7 +283,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "rgba(255,255,255,1)",
     marginLeft: 8,
     position: "relative",
   },
@@ -284,9 +294,12 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#ef4444",
+    backgroundColor: "#e74c3c",
     borderWidth: 2,
     borderColor: "#fff",
+  },
+  headerMid: {
+    flex: 1,
   },
   headerRight: {
     flexDirection: "column",
@@ -294,8 +307,8 @@ const styles = StyleSheet.create({
     gap: 0,
     paddingLeft: 8,
     paddingRight: 8,
-    borderRadius: 8,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,1)",
   },
   switchRow: {
     flexDirection: "row",
@@ -305,10 +318,14 @@ const styles = StyleSheet.create({
 
   trackLabel: { marginRight: 0 },
   modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
     width: "90%",
@@ -334,6 +351,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   notificationItem: {
+    flex: 1,
     flexDirection: "row",
     padding: 16,
     gap: 12,

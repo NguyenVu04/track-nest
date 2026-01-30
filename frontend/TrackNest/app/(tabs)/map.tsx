@@ -6,26 +6,40 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+  Animated,
+  Image,
+} from "react-native";
 
 import CurrentLocationMarker from "@/components/CurrentLocationMarker";
-import Fab from "@/components/Fab";
+import { FamilyCircleBottomSheet } from "@/components/FamilyCircleBottomSheet";
 import { FollowerBottomSheet } from "@/components/FollowerBottomSheet";
 import { FollowerInfo } from "@/components/FollowerInfo";
 import FollowerMarker from "@/components/FollowerMarker";
 import MapControls from "@/components/MapControls";
 import MapHeader from "@/components/MapHeader";
+import { MapTypeBottomSheet } from "@/components/MapTypeBottomSheet";
+import SosFab from "@/components/SosFab";
 import { map as mapLang } from "@/constant/languages";
-import { Follower } from "@/constant/types";
-import { useAddressFromLocation } from "@/hooks/useAddressFromLocation";
+import {
+  getMockFollowersForCircle,
+  mockFamilyCircles,
+} from "@/constant/mockFamilyCircles";
+import { FamilyCircle, Follower } from "@/constant/types";
+import { useTracking } from "@/contexts/TrackingContext";
 import useDeviceLocation from "@/hooks/useDeviceLocation";
 import { useFollowers } from "@/hooks/useFollowers";
+import { useFamilyCircle } from "@/hooks/useFamilyCircle";
 import { useMapController } from "@/hooks/useMapController";
 import { useMockFollowers } from "@/hooks/useMockFollowers";
 import { useTranslation } from "@/hooks/useTranslation";
-// import { ElizaService } from "@/proto/generated/connectrpc/eliza/v1/eliza_pb";
-// import { TrackerServiceClient } from "@/services/tracker";
-import { startLastLocationsStream } from "@/services/tracker";
 import {
   BottomSheetBackdrop,
   BottomSheetFlatList,
@@ -34,41 +48,32 @@ import {
 } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
-
-const parseToFollower = (data: any): Follower => {
-  return {
-    id: data.userid || data.id,
-    latitude: data.latitude,
-    longitude: data.longitude,
-    name: data.username || "Unknown",
-    avatar: undefined,
-    lastActive: data.timestamp ? data.timestamp * 1000 : Date.now(), // Convert Unix timestamp to milliseconds
-    sharingActive: data.connected ?? true,
-    shareTracking: data.connected ?? true,
-  };
-};
+import { useMapContext } from "@/contexts/MapContext";
 
 export default function MapScreen() {
-  const {
-    mapRef,
-    mapType,
-    setMapType,
-    regionDelta,
-    centerMap,
-    resetCenterFlag,
-  } = useMapController();
+  const { mapRef, regionDelta, centerMap, resetCenterFlag } =
+    useMapController();
 
-  const [tracking, setTracking] = useState(false);
+  const { mapType, setMapType } = useMapContext();
 
-  const [targetR, setTargetR] = useState<any[]>([]);
+  const { tracking, setTracking } = useTracking();
 
-  const [sharingEnabled, setSharingEnabled] = useState(false);
+  const [isMapReady, setIsMapReady] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const [pendingAction, setPendingAction] = useState<
     null | "tracking" | "sharing"
   >(null);
 
   const [showPinModal, setShowPinModal] = useState(false);
+
+  // Family circle state with persistence
+  const [familyCircles] = useState<FamilyCircle[]>(mockFamilyCircles);
+  const {
+    selectedCircle,
+    selectCircle,
+    isLoading: isLoadingCircle,
+  } = useFamilyCircle();
 
   const t = useTranslation(mapLang);
 
@@ -78,15 +83,6 @@ export default function MapScreen() {
       setShowPinModal(true);
     } else {
       setTracking(true);
-    }
-  };
-
-  const handleToggleSharing = (value: boolean) => {
-    if (value === false) {
-      setPendingAction("sharing");
-      setShowPinModal(true);
-    } else {
-      setSharingEnabled(true);
     }
   };
 
@@ -101,10 +97,6 @@ export default function MapScreen() {
 
     if (pendingAction === "tracking") {
       setTracking(false);
-    }
-
-    if (pendingAction === "sharing") {
-      setSharingEnabled(false);
     }
 
     setPendingAction(null);
@@ -125,29 +117,30 @@ export default function MapScreen() {
       latitudeDelta: regionDelta,
       longitudeDelta: regionDelta,
     }),
-    [location, regionDelta]
-  );
-
-  const formattedAddress = useAddressFromLocation(
-    location?.latitude,
-    location?.longitude
+    [location, regionDelta],
   );
 
   const mockFollowers = useMockFollowers(
     location?.latitude,
-    location?.longitude
+    location?.longitude,
   );
 
-  const targetFollowers: Follower[] = useMemo(
-    () => targetR.map(parseToFollower),
-    [targetR]
-  );
+  // Get mock followers for the selected family circle
+  const circleFollowers: Follower[] = useMemo(() => {
+    if (!selectedCircle || !location) return [];
+    return getMockFollowersForCircle(
+      selectedCircle.familyCircleId,
+      location.latitude,
+      location.longitude,
+    );
+  }, [selectedCircle, location]);
 
   const followersToRender = useMemo(() => {
+    // Priority: circle followers > mock followers
     const baseFollowers =
-      targetFollowers && targetFollowers.length > 0
-        ? targetFollowers
-        : [];
+      circleFollowers && circleFollowers.length > 0
+        ? circleFollowers
+        : mockFollowers;
 
     return [...baseFollowers].sort((a, b) => {
       // First, sort by active status (active first)
@@ -160,10 +153,31 @@ export default function MapScreen() {
       const timeB = b.lastActive ? new Date(b.lastActive).getTime() : 0;
       return timeB - timeA;
     });
-  }, [targetFollowers]);
+  }, [circleFollowers, mockFollowers]);
 
   const { selectedFollowerId, setSelectedFollowerId, selectedFollower } =
     useFollowers(followersToRender);
+
+  const meItem: Follower | null = useMemo(() => {
+    if (!location) return null;
+    return {
+      id: "me",
+      latitude: location.latitude,
+      longitude: location.longitude,
+      name: t.me,
+      avatar: undefined,
+      lastActive: Date.now(),
+      sharingActive: true,
+      shareTracking: true,
+    };
+  }, [location, t.me]);
+
+  const generalInfoListData = useMemo(() => {
+    const list: Follower[] = [];
+    if (meItem) list.push(meItem);
+    list.push(...followersToRender);
+    return list;
+  }, [meItem, followersToRender]);
 
   const checkBeforeCenterMap = useCallback(() => {
     if (location) {
@@ -174,6 +188,8 @@ export default function MapScreen() {
   // ref
   const followerInfoSheetRef = useRef<BottomSheetModal>(null);
   const generalInfoSheetRef = useRef<BottomSheetModal>(null);
+  const mapTypeSheetRef = useRef<BottomSheetModal>(null);
+  const familyCircleSheetRef = useRef<BottomSheetModal>(null);
 
   // callbacks
   const handleFollowerInfoModalPress = useCallback(() => {
@@ -184,6 +200,30 @@ export default function MapScreen() {
     generalInfoSheetRef.current?.present();
   }, [generalInfoSheetRef]);
 
+  const handleMapTypeModalPress = useCallback(() => {
+    mapTypeSheetRef.current?.present();
+  }, [mapTypeSheetRef]);
+
+  const handleFamilyCircleModalPress = useCallback(() => {
+    familyCircleSheetRef.current?.present();
+  }, [familyCircleSheetRef]);
+
+  const handleSelectFamilyCircle = useCallback(
+    (circle: FamilyCircle) => {
+      selectCircle(circle);
+      familyCircleSheetRef.current?.dismiss();
+    },
+    [selectCircle],
+  );
+
+  const handleSelectMapType = useCallback(
+    (type: any) => {
+      setMapType(type);
+      mapTypeSheetRef.current?.dismiss();
+    },
+    [setMapType],
+  );
+
   // show passed-in followers if provided, otherwise use mock data around device
   useEffect(() => {
     if (tracking) {
@@ -192,17 +232,19 @@ export default function MapScreen() {
     }
   }, [tracking, checkBeforeCenterMap, resetCenterFlag]);
 
-  console.log("Rendering map");
-
-  useEffect(() => {
-    if (tracking) {
-      startLastLocationsStream(setTargetR);
-    }
-  }, [tracking]);
-
-  console.log("Followers to render:", followersToRender.length);
-
-  console.log("TargetR:", targetR.length);
+  // Handle map ready state with fade animation
+  const handleMapReady = useCallback(() => {
+    // Small delay to ensure map tiles are loaded
+    setTimeout(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        setIsMapReady(true);
+      });
+    }, 500);
+  }, [fadeAnim]);
 
   const renderItem = useCallback(
     ({ item }: { item: Follower }) => (
@@ -223,11 +265,11 @@ export default function MapScreen() {
         />
       </Pressable>
     ),
-    [setSelectedFollowerId, handleFollowerInfoModalPress, centerMap]
+    [setSelectedFollowerId, handleFollowerInfoModalPress, centerMap],
   );
 
   const handleSheetChanges = useCallback((index: number) => {
-    console.log("handleSheetChanges", index);
+    // Do nothing for now
   }, []);
 
   const renderBackdrop = useCallback(
@@ -240,18 +282,65 @@ export default function MapScreen() {
         pressBehavior="close"
       />
     ),
-    []
+    [],
   );
+
+  // Show loading state until location is available
+  if (!location) {
+    return (
+      <View style={styles.loadingContainer}>
+        <View style={styles.loadingContent}>
+          <View style={styles.loadingLogoCircle}>
+            <Image
+              source={require("@/assets/images/android-icon-foreground.png")}
+              style={styles.loadingLogo}
+            />
+          </View>
+          <Text style={styles.loadingTitle}>TrackNest</Text>
+          <ActivityIndicator
+            size="large"
+            color="#74becb"
+            style={styles.loadingSpinner}
+          />
+          <Text style={styles.loadingText}>{t.gettingLocation}</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={styles.container}>
+        {/* Loading overlay with fade animation */}
+        {!isMapReady && (
+          <Animated.View
+            style={[styles.loadingOverlay, { opacity: fadeAnim }]}
+            pointerEvents={isMapReady ? "none" : "auto"}
+          >
+            <View style={styles.loadingContent}>
+              <View style={styles.loadingLogoCircle}>
+                <Image
+                  source={require("@/assets/images/android-icon-foreground.png")}
+                  style={styles.loadingLogo}
+                />
+              </View>
+              <Text style={styles.loadingTitle}>TrackNest</Text>
+              <ActivityIndicator
+                size="large"
+                color="#74becb"
+                style={styles.loadingSpinner}
+              />
+              <Text style={styles.loadingText}>{t.loadingMap}</Text>
+            </View>
+          </Animated.View>
+        )}
+
         <MapHeader
           tracking={tracking}
           setTracking={handleToggleTracking}
-          sharingEnabled={sharingEnabled}
-          setSharingEnabled={handleToggleSharing}
           onSearchPress={() => console.log("Go back")}
+          selectedCircle={selectedCircle}
+          handleFamilyCircleModalPress={handleFamilyCircleModalPress}
         />
 
         <Modal
@@ -281,20 +370,13 @@ export default function MapScreen() {
           initialRegion={initialRegion}
           showsUserLocation={false}
           showsMyLocationButton={false}
+          onMapReady={handleMapReady}
           onRegionChangeComplete={resetCenterFlag}
           onPress={(e) => {
             e.stopPropagation();
             setSelectedFollowerId(null);
           }}
         >
-          {location ? (
-            <CurrentLocationMarker
-              latitude={location.latitude}
-              longitude={location.longitude}
-              disabled={!tracking}
-            />
-          ) : null}
-
           {location && followersToRender && followersToRender.length > 0
             ? followersToRender.map((f) => (
                 <FollowerMarker
@@ -312,45 +394,27 @@ export default function MapScreen() {
                 />
               ))
             : null}
-        </MapView>
 
-        {formattedAddress && (
-          <View style={styles.addressContainer}>
-            <Text style={styles.addressText}>{formattedAddress}</Text>
-          </View>
-        )}
+          {location ? (
+            <CurrentLocationMarker
+              latitude={location.latitude}
+              longitude={location.longitude}
+              speed={location.speed}
+              disabled={!tracking}
+            />
+          ) : null}
+        </MapView>
 
         <MapControls
           onCenter={checkBeforeCenterMap}
           onZoomIn={null}
           onZoomOut={null}
           onGeneralModalPress={handleGeneralInfoModalPress}
+          onMapTypePress={handleMapTypeModalPress}
           mapType={mapType}
-          setMapType={setMapType}
         />
 
-        <Fab
-          size="large"
-          icon="warning"
-          style={styles.sosFab}
-          onPress={async () => {
-            console.log("SOS Pressed");
-
-            // try {
-            // const stream = TrackerServiceClient.getTargetsLastLocations({});
-
-            // for await (const res of stream) {
-            //   console.log("Received parsed object:", res);
-            // }
-
-            // console.log("Stream completed");
-            // } catch (err) {
-            //   if (err instanceof ConnectError) {
-            //     console.error("Message:", err);
-            //   }
-            // }
-          }}
-        />
+        <SosFab style={styles.sosFab} />
       </View>
 
       <BottomSheetModalProvider>
@@ -362,7 +426,7 @@ export default function MapScreen() {
           <FollowerBottomSheet follower={selectedFollower} />
         </BottomSheetModal>
 
-        {followersToRender && (
+        {generalInfoListData.length > 0 && (
           <BottomSheetModal
             ref={generalInfoSheetRef}
             style={styles.generalInfoSheet}
@@ -372,7 +436,7 @@ export default function MapScreen() {
             enableContentPanningGesture={false}
           >
             <BottomSheetFlatList
-              data={followersToRender}
+              data={generalInfoListData}
               horizontal
               snapToInterval={100}
               keyExtractor={(_: any, index: any) => index}
@@ -383,6 +447,31 @@ export default function MapScreen() {
             />
           </BottomSheetModal>
         )}
+
+        <BottomSheetModal
+          ref={mapTypeSheetRef}
+          onChange={handleSheetChanges}
+          backdropComponent={renderBackdrop}
+          enableDynamicSizing={true}
+        >
+          <MapTypeBottomSheet
+            currentMapType={mapType}
+            onSelectMapType={handleSelectMapType}
+          />
+        </BottomSheetModal>
+
+        <BottomSheetModal
+          ref={familyCircleSheetRef}
+          onChange={handleSheetChanges}
+          backdropComponent={renderBackdrop}
+          enableDynamicSizing={true}
+        >
+          <FamilyCircleBottomSheet
+            familyCircles={familyCircles}
+            selectedCircleId={selectedCircle?.familyCircleId ?? null}
+            onSelectCircle={handleSelectFamilyCircle}
+          />
+        </BottomSheetModal>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
@@ -390,6 +479,12 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  familyCircleSelectorContainer: {
+    position: "absolute",
+    top: 150,
+    left: 12,
+    zIndex: 10,
+  },
   header: {
     position: "absolute",
     top: 36,
@@ -526,5 +621,49 @@ const styles = StyleSheet.create({
   },
   pinContainer: {
     marginVertical: 12,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 100,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+  loadingContent: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingLogoCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#eff6ff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+    overflow: "hidden",
+  },
+  loadingLogo: {
+    width: 132,
+    height: 132,
+  },
+  loadingTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#0f172a",
+    marginBottom: 24,
+  },
+  loadingSpinner: {
+    marginBottom: 12,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#64748b",
   },
 });

@@ -1,59 +1,64 @@
 import { settings as settingsLang } from "@/constant/languages";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import { getUserTargets, getUserTrackers } from "@/services/trackingManager";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Modal, Pressable, StyleSheet, Text, View } from "react-native";
-
-const CREDENTIALS_KEY = "@TrackNest:credentials";
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { language, setLanguage } = useLanguage();
+  const { logout } = useAuth();
   const t = useTranslation(settingsLang);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showTrackersModal, setShowTrackersModal] = useState(false);
-
-  const [targets, setTargets] = useState([]);
-  const [trackers, setTrackers] = useState([]);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLanguageSelect = async (
-    selectedLang: "English" | "Vietnamese"
+    selectedLang: "English" | "Vietnamese",
   ) => {
     await setLanguage(selectedLang);
     setShowLanguageModal(false);
   };
 
-  const handleLogout = async () => {
+  const performLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+      Alert.alert("Error", "Failed to logout. Please try again.");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const handleLogout = () => {
     Alert.alert(
       "Sign Out",
-      "Are you sure you want to sign out? Your credentials will be cleared.",
+      "Are you sure you want to sign out? Your session will be ended.",
       [
         {
           text: "Cancel",
-          onPress: () => {},
           style: "cancel",
         },
         {
           text: "Sign Out",
-          onPress: async () => {
-            try {
-              // Clear saved credentials
-              await AsyncStorage.removeItem(CREDENTIALS_KEY);
-              // Navigate to login screen
-              router.replace("/login");
-            } catch (error) {
-              console.error("Error during logout:", error);
-              Alert.alert("Error", "Failed to sign out. Please try again.");
-            }
-          },
+          onPress: performLogout,
           style: "destructive",
         },
-      ]
+      ],
     );
   };
 
@@ -74,9 +79,7 @@ export default function SettingsScreen() {
       subtitle: `3 ${t.manageTrackersSubtitle}`,
       icon: "navigate",
       onPress: () => {
-        console.log("Manage Trackers Pressed");
         setShowTrackersModal(true);
-        getUserTrackers(setTrackers);
       },
     },
     {
@@ -85,9 +88,7 @@ export default function SettingsScreen() {
       subtitle: `12 ${t.manageFollowersSubtitle}`,
       icon: "people",
       onPress: () => {
-        console.log("Manage Followers Pressed");
         setShowFollowersModal(true);
-        getUserTargets(setTargets);
       },
     },
     {
@@ -127,7 +128,7 @@ export default function SettingsScreen() {
               style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
             >
               <View style={styles.iconWrap}>
-                <Ionicons name={it.icon as any} size={20} color="#3b82f6" />
+                <Ionicons name={it.icon as any} size={20} color="#74becb" />
               </View>
               <View>
                 <Text style={styles.rowTitle}>{it.title}</Text>
@@ -141,18 +142,28 @@ export default function SettingsScreen() {
         ))}
 
         <View style={{ marginTop: 28 }}>
-          <Pressable style={styles.signOutRow} onPress={handleLogout}>
+          <Pressable
+            style={styles.signOutRow}
+            onPress={handleLogout}
+            disabled={isLoggingOut}
+          >
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
             >
-              <View style={[styles.iconWrap, { backgroundColor: "#fff5f5" }]}>
-                <Ionicons name="log-out" size={20} color="#ff3b30" />
+              <View style={[styles.iconWrap, { backgroundColor: "#fdeaea" }]}>
+                {isLoggingOut ? (
+                  <ActivityIndicator size="small" color="#e74c3c" />
+                ) : (
+                  <Ionicons name="log-out" size={20} color="#e74c3c" />
+                )}
               </View>
-              <Text style={[styles.rowTitle, { color: "#ff3b30" }]}>
-                {t.signOutButton}
+              <Text style={[styles.rowTitle, { color: "#e74c3c" }]}>
+                {isLoggingOut ? "Signing out..." : t.signOutButton}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#999" />
+            {!isLoggingOut && (
+              <Ionicons name="chevron-forward" size={18} color="#999" />
+            )}
           </Pressable>
         </View>
 
@@ -197,7 +208,7 @@ export default function SettingsScreen() {
                     <Ionicons
                       name="checkmark-circle"
                       size={24}
-                      color="#0b62ff"
+                      color="#74becb"
                     />
                   )}
                 </View>
@@ -222,7 +233,7 @@ export default function SettingsScreen() {
                     <Ionicons
                       name="checkmark-circle"
                       size={24}
-                      color="#0b62ff"
+                      color="#74becb"
                     />
                   )}
                 </View>
@@ -241,51 +252,25 @@ export default function SettingsScreen() {
             style={styles.modalOverlay}
             onPress={() => setShowFollowersModal(false)}
           >
-            {targets.length === 0 ? (
-              <Text>Loading...</Text>
-            ) : (
-              <View
-                style={styles.modalContent}
-                onStartShouldSetResponder={() => true}
-              >
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>
-                    {t.manageFollowersTitle}
-                  </Text>
-                  <Pressable
-                    onPress={() => setShowFollowersModal(false)}
-                    style={styles.closeButton}
-                  >
-                    <Ionicons name="close" size={24} color="#666" />
-                  </Pressable>
-                </View>
-
-                {targets.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Ionicons name="people-outline" size={48} color="#ccc" />
-                    <Text style={styles.emptyStateText}>No followers yet</Text>
-                  </View>
-                ) : (
-                  <View style={styles.followersList}>
-                    {targets.map((target: any, index: number) => (
-                      <View key={index} style={styles.followerItem}>
-                        <View style={styles.followerAvatar}>
-                          <Ionicons name="person" size={24} color="#3b82f6" />
-                        </View>
-                        <View style={styles.followerInfo}>
-                          <Text style={styles.followerName}>
-                            {target.username || "Unknown User"}
-                          </Text>
-                          <Text style={styles.followerDetail}>
-                            ID: {target.userid || "N/A"}
-                          </Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                )}
+            <View
+              style={styles.modalContent}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{t.manageFollowersTitle}</Text>
+                <Pressable
+                  onPress={() => setShowFollowersModal(false)}
+                  style={styles.closeButton}
+                >
+                  <Ionicons name="close" size={24} color="#666" />
+                </Pressable>
               </View>
-            )}
+
+              <View style={styles.emptyState}>
+                <Ionicons name="people-outline" size={48} color="#ccc" />
+                <Text style={styles.emptyStateText}>No followers yet</Text>
+              </View>
+            </View>
           </Pressable>
         </Modal>
 
@@ -299,49 +284,25 @@ export default function SettingsScreen() {
             style={styles.modalOverlay}
             onPress={() => setShowTrackersModal(false)}
           >
-            {trackers.length === 0 ? (
-              <Text>Loading...</Text>
-            ) : (
-              <View
-                style={styles.modalContent}
-                onStartShouldSetResponder={() => true}
-              >
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>{t.manageTrackersTitle}</Text>
-                  <Pressable
-                    onPress={() => setShowTrackersModal(false)}
-                    style={styles.closeButton}
-                  >
-                    <Ionicons name="close" size={24} color="#666" />
-                  </Pressable>
-                </View>
-
-                {trackers.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Ionicons name="navigate-outline" size={48} color="#ccc" />
-                    <Text style={styles.emptyStateText}>No trackers yet</Text>
-                  </View>
-                ) : (
-                  <View style={styles.followersList}>
-                    {trackers.map((tracker: any, index: number) => (
-                      <View key={index} style={styles.followerItem}>
-                        <View style={styles.followerAvatar}>
-                          <Ionicons name="navigate" size={24} color="#3b82f6" />
-                        </View>
-                        <View style={styles.followerInfo}>
-                          <Text style={styles.followerName}>
-                            {tracker.username || "Unknown Tracker"}
-                          </Text>
-                          <Text style={styles.followerDetail}>
-                            ID: {tracker.userid || "N/A"}
-                          </Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                )}
+            <View
+              style={styles.modalContent}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{t.manageTrackersTitle}</Text>
+                <Pressable
+                  onPress={() => setShowTrackersModal(false)}
+                  style={styles.closeButton}
+                >
+                  <Ionicons name="close" size={24} color="#666" />
+                </Pressable>
               </View>
-            )}
+
+              <View style={styles.emptyState}>
+                <Ionicons name="navigate-outline" size={48} color="#ccc" />
+                <Text style={styles.emptyStateText}>No trackers yet</Text>
+              </View>
+            </View>
           </Pressable>
         </Modal>
         <View style={{ alignItems: "center", marginTop: 40 }}>

@@ -16,6 +16,12 @@ export const Vietnamese = {
   appName: "TrackNest",
   versionLabel: "Phiên bản",
   optimizedFor: "Được tối ưu hóa cho di động",
+  signOutTitle: "Đăng xuất",
+  signOutMessage: "Bạn có chắc muốn đăng xuất? Thông tin đăng nhập sẽ bị xóa.",
+  cancelButton: "Hủy",
+  errorTitle: "Lỗi",
+  signOutError: "Đăng xuất thất bại. Vui lòng thử lại.",
+  loading: "Đang tải...",
 };
 
 export const English = {
@@ -36,4 +42,11 @@ export const English = {
   appName: "TrackNest",
   versionLabel: "Version",
   optimizedFor: "Optimized for mobile",
+  signOutTitle: "Sign Out",
+  signOutMessage:
+    "Are you sure you want to sign out? Your credentials will be cleared.",
+  cancelButton: "Cancel",
+  errorTitle: "Error",
+  signOutError: "Failed to sign out. Please try again.",
+  loading: "Loading...",
 };

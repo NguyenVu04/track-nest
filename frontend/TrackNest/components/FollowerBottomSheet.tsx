@@ -1,4 +1,6 @@
+import { FollowerBottomSheet as followerBottomSheetLang } from "@/constant/languages";
 import { Follower } from "@/constant/types";
+import { useTranslation } from "@/hooks/useTranslation";
 import { BottomSheetView } from "@gorhom/bottom-sheet";
 import { Alert, Button } from "react-native";
 import { FollowerInfo } from "./FollowerInfo";
@@ -8,6 +10,8 @@ export const FollowerBottomSheet = ({
 }: {
   follower: Follower | null;
 }) => {
+  const t = useTranslation(followerBottomSheetLang);
+
   if (!follower) {
     console.warn("FollowerBottomSheet rendered without follower");
     return null;
@@ -32,9 +36,10 @@ export const FollowerBottomSheet = ({
             standMode="detailed"
           />
           <Button
-            title="Report missing"
+            color="#d97706"
+            title={t.reportMissing}
             onPress={() => {
-              Alert.alert("Report submitted", "Thank you for your report.");
+              Alert.alert(t.reportSubmitted, t.thankYou);
             }}
           />
         </>

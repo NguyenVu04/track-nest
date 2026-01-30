@@ -1,12 +1,11 @@
 import { useCallback, useRef, useState } from "react";
-import MapView, { MapType } from "react-native-maps";
+import MapView from "react-native-maps";
 
 export function useMapController() {
   const mapRef = useRef<MapView>(null);
   const hasCenteredRef = useRef(false);
 
   const [regionDelta, setRegionDelta] = useState(0.02);
-  const [mapType, setMapType] = useState<MapType>("standard");
 
   const centerMap = useCallback(
     (lat: number, lng: number) => {
@@ -19,12 +18,12 @@ export function useMapController() {
           latitudeDelta: regionDelta,
           longitudeDelta: regionDelta,
         },
-        500
+        500,
       );
 
       hasCenteredRef.current = true;
     },
-    [regionDelta, mapRef, hasCenteredRef]
+    [regionDelta, mapRef, hasCenteredRef],
   );
 
   const zoom = (factor: number) => {
@@ -34,8 +33,6 @@ export function useMapController() {
 
   return {
     mapRef,
-    mapType,
-    setMapType,
     regionDelta,
     setRegionDelta,
     centerMap,

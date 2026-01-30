@@ -1,3 +1,5 @@
+import { reportDetail as reportDetailLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import { getReportById, Report } from "@/services/reports";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -14,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ReportDetailScreen() {
   const router = useRouter();
+  const t = useTranslation(reportDetailLang);
   const { id } = useLocalSearchParams<{ id: string }>();
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,7 +43,7 @@ export default function ReportDetailScreen() {
         <View
           style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
         >
-          <ActivityIndicator size="large" color="#0b62ff" />
+          <ActivityIndicator size="large" color="#74becb" />
         </View>
       </SafeAreaView>
     );
@@ -53,13 +56,15 @@ export default function ReportDetailScreen() {
           <Pressable onPress={() => router.push("/(tabs)/reports")}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </Pressable>
-          <Text style={styles.headerTitle}>Report Details</Text>
+          <Text style={styles.headerTitle}>{t.pageTitle}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View
           style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
         >
-          <Text style={{ fontSize: 16, color: "#666" }}>Report not found</Text>
+          <Text style={{ fontSize: 16, color: "#666" }}>
+            {t.reportNotFound}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -71,7 +76,7 @@ export default function ReportDetailScreen() {
         <Pressable onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </Pressable>
-        <Text style={styles.headerTitle}>Report Details</Text>
+        <Text style={styles.headerTitle}>{t.pageTitle}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -90,8 +95,8 @@ export default function ReportDetailScreen() {
                 report.severity === "High"
                   ? styles.sevHigh
                   : report.severity === "Medium"
-                  ? styles.sevMed
-                  : styles.sevLow,
+                    ? styles.sevMed
+                    : styles.sevLow,
               ]}
             >
               <Text style={styles.severityText}>{report.severity}</Text>
@@ -99,35 +104,35 @@ export default function ReportDetailScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Location</Text>
+            <Text style={styles.sectionTitle}>{t.location}</Text>
             <View style={styles.infoRow}>
-              <Ionicons name="location" size={20} color="#0b62ff" />
+              <Ionicons name="location" size={20} color="#74becb" />
               <Text style={styles.infoText}>{report.address}</Text>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Date & Time</Text>
+            <Text style={styles.sectionTitle}>{t.dateTime}</Text>
             <View style={styles.infoRow}>
-              <Ionicons name="calendar" size={20} color="#0b62ff" />
+              <Ionicons name="calendar" size={20} color="#74becb" />
               <Text style={styles.infoText}>{report.date}</Text>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
+            <Text style={styles.sectionTitle}>{t.description}</Text>
             <Text style={styles.description}>{report.description}</Text>
           </View>
 
           <View style={styles.actionButtons}>
             <Pressable style={[styles.button, styles.callButton]}>
               <Ionicons name="call" size={20} color="#fff" />
-              <Text style={styles.buttonText}>Call Police</Text>
+              <Text style={styles.buttonText}>{t.callPolice}</Text>
             </Pressable>
             <Pressable style={[styles.button, styles.shareButton]}>
-              <Ionicons name="share-social" size={20} color="#0b62ff" />
-              <Text style={[styles.buttonText, { color: "#0b62ff" }]}>
-                Share
+              <Ionicons name="share-social" size={20} color="#74becb" />
+              <Text style={[styles.buttonText, { color: "#74becb" }]}>
+                {t.share}
               </Text>
             </Pressable>
           </View>

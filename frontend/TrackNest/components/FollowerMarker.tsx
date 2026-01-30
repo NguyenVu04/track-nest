@@ -1,4 +1,3 @@
-import { fetchHistoryForTarget } from "@/services/tracker";
 import { getInitials } from "@/utils";
 import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
@@ -46,7 +45,7 @@ export default function FollowerMarker({
     <View
       style={[
         styles.initialsBg,
-        { backgroundColor: sharingActive ? "#2b9fff" : "#999" },
+        { backgroundColor: sharingActive ? "#74becb" : "#999" },
       ]}
     >
       <Text style={styles.initials}>{getInitials(name)}</Text>
@@ -79,7 +78,7 @@ export default function FollowerMarker({
           handlePresentModalPress();
         }
 
-        fetchHistoryForTarget(id || "");
+        // fetchHistoryForTarget(id || "");
       }}
     >
       <View style={[styles.container]}>
@@ -87,7 +86,7 @@ export default function FollowerMarker({
           <View
             style={[
               styles.initialsBg,
-              { backgroundColor: sharingActive ? "#2b9fff" : "#999" },
+              { backgroundColor: sharingActive ? "#74becb" : "#999" },
             ]}
           >
             <Text style={styles.initials}>{getInitials(name)}</Text>

@@ -1,4 +1,6 @@
 import Card from "@/components/Card";
+import { reports as reportsLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   fetchGuides,
   fetchMissingPersons,
@@ -42,8 +44,8 @@ function ReportCard({ item }: { item: Report }) {
               item.severity === "High"
                 ? styles.sevHigh
                 : item.severity === "Medium"
-                ? styles.sevMed
-                : styles.sevLow,
+                  ? styles.sevMed
+                  : styles.sevLow,
             ]}
           >
             <Text style={styles.severityText}>{item.severity}</Text>
@@ -74,8 +76,8 @@ function MissingPersonCard({ item }: { item: MissingPerson }) {
               item.severity === "High"
                 ? styles.sevHigh
                 : item.severity === "Medium"
-                ? styles.sevMed
-                : styles.sevLow,
+                  ? styles.sevMed
+                  : styles.sevLow,
             ]}
           >
             <Text style={styles.severityText}>{item.severity}</Text>
@@ -97,7 +99,7 @@ function GuideCard({ item }: { item: Guide }) {
           <Ionicons
             name="information-circle-outline"
             size={20}
-            color="#0b62ff"
+            color="#74becb"
           />
           <Text style={styles.cardTitle}>{item.title}</Text>
         </View>
@@ -109,8 +111,13 @@ function GuideCard({ item }: { item: Guide }) {
 }
 
 export default function ReportsScreen() {
+  const t = useTranslation(reportsLang);
   const [tab, setTab] = useState("Crime Reports");
-  const tabs = ["Crime Reports", "Missing", "Guide"];
+  const tabs = [
+    { key: "Crime Reports", label: t.tabCrimeReports },
+    { key: "Missing", label: t.tabMissing },
+    { key: "Guide", label: t.tabGuide },
+  ];
 
   const [reports, setReports] = useState<Report[]>(INITIAL_REPORTS);
   const [missing, setMissing] = useState<MissingPerson[]>(INITIAL_MISSING);
@@ -217,22 +224,22 @@ export default function ReportsScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={styles.container}>
         <View style={styles.segmentRow}>
-          {tabs.map((t) => (
+          {tabs.map((tabItem) => (
             <Pressable
-              key={t}
-              onPress={() => setTab(t)}
+              key={tabItem.key}
+              onPress={() => setTab(tabItem.key)}
               style={[
                 styles.segmentBtn,
-                tab === t ? styles.segmentActive : null,
+                tab === tabItem.key ? styles.segmentActive : null,
               ]}
             >
               <Text
                 style={[
                   styles.segmentText,
-                  tab === t ? styles.segmentTextActive : null,
+                  tab === tabItem.key ? styles.segmentTextActive : null,
                 ]}
               >
-                {t}
+                {tabItem.label}
               </Text>
             </Pressable>
           ))}
@@ -242,7 +249,7 @@ export default function ReportsScreen() {
           <View
             style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
           >
-            <ActivityIndicator size="large" color="#0b62ff" />
+            <ActivityIndicator size="large" color="#74becb" />
           </View>
         ) : (
           <FlatList<DataItem>
@@ -285,7 +292,7 @@ const styles = StyleSheet.create({
     borderColor: "#e6e6e6",
   },
   segmentText: { color: "#666" },
-  segmentTextActive: { color: "#0b62ff", fontWeight: "600" },
+  segmentTextActive: { color: "#74becb", fontWeight: "600" },
   card: {
     backgroundColor: "#fff",
     borderRadius: 10,

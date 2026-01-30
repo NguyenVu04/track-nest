@@ -13,6 +13,13 @@ export const Vietnamese = {
   followerStarted: "đã bắt đầu theo dõi vị trí của bạn",
   systemUpdate: "Cập nhật hệ thống",
   appUpdated: "Ứng dụng TrackNest đã được cập nhật lên phiên bản",
+  gettingLocation: "Đang lấy vị trí của bạn...",
+  loadingMap: "Đang tải bản đồ...",
+  me: "Tôi",
+  selectFamilyCircle: "Chọn nhóm gia đình",
+  familyCircles: "Nhóm gia đình",
+  members: "thành viên",
+  noFamilyCircles: "Bạn chưa tham gia nhóm nào",
 };
 
 export const English = {
@@ -29,4 +36,11 @@ export const English = {
   followerStarted: "started following your location",
   systemUpdate: "System Update",
   appUpdated: "TrackNest app updated to version",
+  gettingLocation: "Getting your location...",
+  loadingMap: "Loading map...",
+  me: "Me",
+  selectFamilyCircle: "Select Family Circle",
+  familyCircles: "Family Circles",
+  members: "members",
+  noFamilyCircles: "You haven't joined any circles yet",
 };

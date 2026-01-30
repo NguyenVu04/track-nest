@@ -1,4 +1,6 @@
+import { FollowerInfo as followerInfoLang } from "@/constant/languages";
 import { Follower } from "@/constant/types";
+import { useTranslation } from "@/hooks/useTranslation";
 import { formatAddressFromLatLng, formatRelativeTime } from "@/utils";
 import { useState, useEffect, useCallback } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
@@ -17,6 +19,7 @@ export const FollowerInfo = ({
   height,
   standMode,
 }: FollowerInfoProps) => {
+  const t = useTranslation(followerInfoLang);
   const [address, setAddress] = useState<string>("");
   const [isGettingAddress, setIsGettingAddress] = useState<boolean>(false);
 
@@ -25,7 +28,7 @@ export const FollowerInfo = ({
     try {
       const address = await formatAddressFromLatLng(
         follower.latitude,
-        follower.longitude
+        follower.longitude,
       );
 
       setAddress(address);
@@ -44,8 +47,8 @@ export const FollowerInfo = ({
           ? parseInt(width)
           : width || 100
         : typeof width === "string"
-        ? parseInt(width) * 2
-        : (width || 100) * 2,
+          ? parseInt(width) * 2
+          : (width || 100) * 2,
   };
 
   useEffect(() => {
@@ -102,10 +105,10 @@ export const FollowerInfo = ({
         ellipsizeMode="tail"
       >
         {isGettingAddress
-          ? "Loading..."
+          ? t.loading
           : address?.length > 0
-          ? address
-          : "No address available"}
+            ? address
+            : t.noAddressAvailable}
       </Text>
     </View>
   );
@@ -143,7 +146,7 @@ const styles = StyleSheet.create({
     borderRadius: "50%",
     borderWidth: 2,
     borderColor: "#fff",
-    backgroundColor: "#2b9fff",
+    backgroundColor: "#74becb",
   },
   activeStatusText: {
     fontSize: 14,

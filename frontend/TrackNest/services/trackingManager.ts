@@ -1,172 +1,297 @@
-// import { createClient } from "@connectrpc/connect";
-// import Constants from "expo-constants";
-
 import fetch from "cross-fetch"; // polyfill for RN
 
 import Constants from "expo-constants";
 
+import {
+  AssignFamilyCircleAdminRequest,
+  AssignFamilyCircleAdminResponse,
+  CreateFamilyCircleRequest,
+  CreateFamilyCircleResponse,
+  CreateParticipationPermissionRequest,
+  CreateParticipationPermissionResponse,
+  DeleteFamilyCircleRequest,
+  DeleteFamilyCircleResponse,
+  LeaveFamilyCircleRequest,
+  LeaveFamilyCircleResponse,
+  ListFamilyCircleResponse,
+  ListFamilyCirclesRequest,
+  ParticipateInFamilyCircleRequest,
+  ParticipateInFamilyCircleResponse,
+  RemoveMemberFromFamilyCircleRequest,
+  RemoveMemberFromFamilyCircleResponse,
+  UpdateFamilyCircleRequest,
+  UpdateFamilyCircleResponse,
+  UpdateFamilyRoleRequest,
+  UpdateFamilyRoleResponse,
+} from "@/proto/trackingmanager_pb";
 import { TrackingManagerControllerClient } from "@/proto/TrackingmanagerServiceClientPb";
-import { Empty } from "google-protobuf/google/protobuf/empty_pb";
 
 global.fetch = global.fetch || fetch;
 
-// import { TrackerController as TrackerService } from "@/proto/generated/proto/tracker_pb";
-// import { createGrpcWebTransport } from "@connectrpc/connect-web";
-
-// const authInterceptor = (next) => async (req) => {
-//   const token =
-//     "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiZTl1LTJpS3d6Vkd3V09XUVNRc3pGNFBaaUV1X0RoZm8zbjE5T291bVBnIn0.eyJleHAiOjE3Njc2NTgwNTUsImlhdCI6MTc2NzYyMjA1NSwianRpIjoib25ydHJvOjMzMGUyMjEyLWY3MGYtOTY5MC05Mzc0LThmNmQyNTEwZWI1ZiIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC9yZWFsbXMvdHJhY2tuZXN0LXVzZXIiLCJhdWQiOlsicmVhbG0tbWFuYWdlbWVudCIsImFjY291bnQiXSwic3ViIjoiZjhmNzM1YjQtNTQ5Yy00ZDhjLTllMTAtMTVmOGMxOThiNzFiIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoidHJhY2tuZXN0Iiwic2lkIjoiMTEzZDgxNjEtZjYwZS0yNTkxLTk0ZTMtYWY3NGI1MTE4M2I3IiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyIvKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXRyYWNrbmVzdC11c2VyIiwidW1hX2F1dGhvcml6YXRpb24iLCJVU0VSIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsicmVhbG0tbWFuYWdlbWVudCI6eyJyb2xlcyI6WyJ2aWV3LWlkZW50aXR5LXByb3ZpZGVycyIsInZpZXctcmVhbG0iLCJtYW5hZ2UtaWRlbnRpdHktcHJvdmlkZXJzIiwiaW1wZXJzb25hdGlvbiIsInJlYWxtLWFkbWluIiwiY3JlYXRlLWNsaWVudCIsIm1hbmFnZS11c2VycyIsInF1ZXJ5LXJlYWxtcyIsInZpZXctYXV0aG9yaXphdGlvbiIsInF1ZXJ5LWNsaWVudHMiLCJxdWVyeS11c2VycyIsIm1hbmFnZS1ldmVudHMiLCJtYW5hZ2UtcmVhbG0iLCJ2aWV3LWV2ZW50cyIsInZpZXctdXNlcnMiLCJ2aWV3LWNsaWVudHMiLCJtYW5hZ2UtYXV0aG9yaXphdGlvbiIsIm1hbmFnZS1jbGllbnRzIiwicXVlcnktZ3JvdXBzIl19LCJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBlbWFpbCBwcm9maWxlIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJKb2huIERvZSIsInByZWZlcnJlZF91c2VybmFtZSI6ImFkbWluIiwiZ2l2ZW5fbmFtZSI6IkpvaG4iLCJsb2NhbGUiOiJlbiIsImZhbWlseV9uYW1lIjoiRG9lIiwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20ifQ.O7ejekNwSdViksavdH8V44UW9ScmCMuxIFTLs2QC-oTmly8PKiQ4VQx5gHzAuzm2peR76Xbb8HopB75L6pVzCrAUz4UksPzlPiHILHHNyMTY635vdO0QlGWDDvng7rMcPXu9H2jquEX6u4JmLNfvwTrcdd_k52ZcCixJkqF5X31v8tLy0mY6ejPNy70-r8hKN1nQ3OhnUWXNzXqoVj9ahQneGMzlyP45z9bicvopwbsVpnt8pFpdAUeiGbhHG-vldJSToXAgDsj0boIJGhMkmwvwtu6HLkOyvDkkZmXoFk7mqhtTW94Sl7YNlkgFFQLneivtoAUuvyqb07kX-m8bBg";
-
-//   if (token) {
-//     req.header.set("Authorization", `Bearer ${token}`);
-//   }
-
-//   return await next(req);
-// };
-
-// const getBaseUrl = () => {
-//   const hostUri = Constants.expoConfig?.hostUri; // Lấy IP dev server
-//   if (!hostUri) return "http://localhost:8800"; // Fallback cho production/simulator
-
-//   const ip = hostUri.split(":")[0];
-//   return `http://${ip}:8800`;
-// };
-
-// const transport = createGrpcWebTransport({
-//   baseUrl: getBaseUrl(),
-//   interceptors: [authInterceptor],
-//   useBinaryFormat: true,
-// });
-
-// const client = createClient(TrackerService, transport);
-
-// export const TrackerServiceClient = client;
-
 const jwt =
   "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiZTl1LTJpS3d6Vkd3V09XUVNRc3pGNFBaaUV1X0RoZm8zbjE5T291bVBnIn0.eyJleHAiOjE3Njc2NzA1MTgsImlhdCI6MTc2NzYzNDUxOCwianRpIjoib25ydHJvOjMwNmY2OGZhLWNhYTYtNDBlOS05MDRjLWVmZjJiN2I0YWVmNSIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC9yZWFsbXMvdHJhY2tuZXN0LXVzZXIiLCJhdWQiOlsicmVhbG0tbWFuYWdlbWVudCIsImFjY291bnQiXSwic3ViIjoiZjhmNzM1YjQtNTQ5Yy00ZDhjLTllMTAtMTVmOGMxOThiNzFiIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoidHJhY2tuZXN0Iiwic2lkIjoiYmQ0N2Y5MGQtYTE3NC1kNWZkLWMwNmYtNDAyNjcyZThjZWJlIiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyIvKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJkZWZhdWx0LXJvbGVzLXRyYWNrbmVzdC11c2VyIiwidW1hX2F1dGhvcml6YXRpb24iLCJVU0VSIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsicmVhbG0tbWFuYWdlbWVudCI6eyJyb2xlcyI6WyJ2aWV3LWlkZW50aXR5LXByb3ZpZGVycyIsInZpZXctcmVhbG0iLCJtYW5hZ2UtaWRlbnRpdHktcHJvdmlkZXJzIiwiaW1wZXJzb25hdGlvbiIsInJlYWxtLWFkbWluIiwiY3JlYXRlLWNsaWVudCIsIm1hbmFnZS11c2VycyIsInF1ZXJ5LXJlYWxtcyIsInZpZXctYXV0aG9yaXphdGlvbiIsInF1ZXJ5LWNsaWVudHMiLCJxdWVyeS11c2VycyIsIm1hbmFnZS1ldmVudHMiLCJtYW5hZ2UtcmVhbG0iLCJ2aWV3LWV2ZW50cyIsInZpZXctdXNlcnMiLCJ2aWV3LWNsaWVudHMiLCJtYW5hZ2UtYXV0aG9yaXphdGlvbiIsIm1hbmFnZS1jbGllbnRzIiwicXVlcnktZ3JvdXBzIl19LCJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBlbWFpbCBwcm9maWxlIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJKb2huIERvZSIsInByZWZlcnJlZF91c2VybmFtZSI6ImFkbWluIiwiZ2l2ZW5fbmFtZSI6IkpvaG4iLCJsb2NhbGUiOiJlbiIsImZhbWlseV9uYW1lIjoiRG9lIiwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20ifQ.YoV68NnN1wmjU7f9Si12g7zcCOe7JB_pBvRZFlcwKIH9uW1A2ce7ZpVQ6BekgpCoPLCQNZpKU0Vp2MxLSRhNERNEaMYQFcMCz6X2cUjfOJeZbwhfH8aElBoOSDmd9zMcsyayPktvLAkZ699nC0PRM8dXioW8PEWacb5ju_A1EhBvtVcqd8cMjAnr_j99V_FCggoGEuUx-ckdemon4VH2Fy4Hhn2QpLdpSBcH8mCJFvatRpMAszWEsWuXPZuQeJsH83pdq8Qtkg-lB2tDqzcIP2tP_hGZx83hxNtzggZqb17LoMAPmrlXIQzs24frr0pGln6PvIYFawGsUsmWU8fV5A";
+
 const metadata = {
   Authorization: `Bearer ${jwt}`,
 };
 
 const getBaseUrl = () => {
-  const hostUri = Constants.expoConfig?.hostUri; // Lấy IP dev server
-  if (!hostUri) return "http://localhost:8800"; // Fallback cho production/simulator
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (!hostUri) return "http://localhost:8800";
 
   const ip = hostUri.split(":")[0];
   return `http://${ip}:8800`;
 };
 
-// 👇 replace localhost if running on real device
-const client = new TrackingManagerControllerClient(
-  getBaseUrl(),
-  null,
-  { format: "text" } // 👈 IMPORTANT
-);
-export const getUserTargets = (setTargets: any) => {
-  const req = new Empty();
+const client = new TrackingManagerControllerClient(getBaseUrl(), null, {
+  format: "text",
+});
 
-  const stream = client.getUserTargets(req, metadata);
-  console.log("Creating Stream for getUserTargets");
+/**
+ * Creates a new family circle with the provided name and initial role.
+ */
+export const createFamilyCircle = async (
+  name: string,
+  familyRole: string,
+): Promise<CreateFamilyCircleResponse.AsObject> => {
+  const request = new CreateFamilyCircleRequest();
+  request.setName(name);
+  request.setFamilyRole(familyRole);
 
-  stream.on("data", (msg: any) => {
-    const obj = msg.toObject();
-    console.log(obj);
-    console.log("Received location data");
-    setTargets((prevTargets: any[]) => {
-      // Check if target with same userid already exists
-      const isDuplicate = prevTargets.some(
-        (target) => target.userid === obj.userid
-      );
+  console.log("Creating family circle:", name);
 
-      // Only add if it's not a duplicate
-      if (!isDuplicate) {
-        return [...prevTargets, obj];
-      }
-
-      return prevTargets;
-    });
-  });
-
-  stream.on("metadata", (metadata: any) => {
-    console.log("stream metadata", metadata);
-  });
-
-  stream.on("error", (err: any) => {
-    console.log("stream error", err);
-  });
-
-  stream.on("status", (status: any) => {
-    console.log("stream status", status);
-  });
-
-  stream.on("end", () => {
-    console.log("stream ended");
-  });
+  try {
+    const response = await client.createFamilyCircle(request, metadata);
+    const result = response.toObject();
+    console.log("Family circle created:", result);
+    return result;
+  } catch (error) {
+    console.error("Failed to create family circle:", error);
+    throw error;
+  }
 };
 
-export const getUserTrackers = (setTrackers: any) => {
-  const req = new Empty();
+/**
+ * Returns a paginated list of family circles visible to the caller.
+ */
+export const listFamilyCircles = async (
+  pageSize: number,
+  pageToken?: string,
+): Promise<ListFamilyCircleResponse.AsObject> => {
+  const request = new ListFamilyCirclesRequest();
+  request.setPageSize(pageSize);
+  if (pageToken) {
+    request.setPageToken(pageToken);
+  }
 
-  const stream = client.getUserTrackers(req, metadata);
-  console.log("Creating Stream for getUserTargets");
+  console.log("Listing family circles, page size:", pageSize);
 
-  stream.on("data", (msg: any) => {
-    const obj = msg.toObject();
-    console.log(obj);
-    console.log("Received location data");
-    setTrackers((prevTrackers: any[]) => {
-      // Check if tracker with same userid already exists
-      const isDuplicate = prevTrackers.some(
-        (tracker) => tracker.userid === obj.userid
-      );
-
-      // Only add if it's not a duplicate
-      if (!isDuplicate) {
-        return [...prevTrackers, obj];
-      }
-
-      return prevTrackers;
-    });
-  });
-
-  stream.on("metadata", (metadata: any) => {
-    console.log("stream metadata", metadata);
-  });
-
-  stream.on("error", (err: any) => {
-    console.log("stream error", err);
-  });
-
-  stream.on("status", (status: any) => {
-    console.log("stream status", status);
-  });
-
-  stream.on("end", () => {
-    console.log("stream ended");
-  });
+  try {
+    const response = await client.listFamilyCircles(request, metadata);
+    const result = response.toObject();
+    console.log("Family circles listed:", result.familyCirclesList.length);
+    return result;
+  } catch (error) {
+    console.error("Failed to list family circles:", error);
+    throw error;
+  }
 };
 
-// export const fetchHistoryForTarget = (targetId: string) => {
-//   const req = new LocationHistoryRequest();
-//   console.log("Fetching history for target:", targetId);
-//   req.setTargetuserid(targetId);
+/**
+ * Deletes the specified family circle.
+ */
+export const deleteFamilyCircle = async (
+  familyCircleId: string,
+): Promise<DeleteFamilyCircleResponse.AsObject> => {
+  const request = new DeleteFamilyCircleRequest();
+  request.setFamilyCircleId(familyCircleId);
 
-//   const stream = client.getTargetLocationHistory(req, metadata);
+  console.log("Deleting family circle:", familyCircleId);
 
-//   stream.on("data", (msg: any) => {
-//     const obj = msg.toObject();
-//     console.log(obj);
-//   });
+  try {
+    const response = await client.deleteFamilyCircle(request, metadata);
+    const result = response.toObject();
+    console.log("Family circle deleted:", result);
+    return result;
+  } catch (error) {
+    console.error("Failed to delete family circle:", error);
+    throw error;
+  }
+};
 
-//   stream.on("error", (err: any) => {
-//     console.log("history stream error", err);
-//   });
+/**
+ * Updates mutable fields of a family circle.
+ */
+export const updateFamilyCircle = async (
+  familyCircleId: string,
+  name: string,
+): Promise<UpdateFamilyCircleResponse.AsObject> => {
+  const request = new UpdateFamilyCircleRequest();
+  request.setFamilyCircleId(familyCircleId);
+  request.setName(name);
 
-//   stream.on("status", (status: any) => {
-//     console.log("history stream status", status);
-//   });
+  console.log("Updating family circle:", familyCircleId);
 
-//   stream.on("end", () => {
-//     console.log("history stream ended");
-//   });
-// };
+  try {
+    const response = await client.updateFamilyCircle(request, metadata);
+    const result = response.toObject();
+    console.log("Family circle updated:", result);
+    return result;
+  } catch (error) {
+    console.error("Failed to update family circle:", error);
+    throw error;
+  }
+};
+
+/**
+ * Updates the caller's role within the specified family circle.
+ */
+export const updateFamilyRole = async (
+  familyCircleId: string,
+  familyRole: string,
+): Promise<UpdateFamilyRoleResponse.AsObject> => {
+  const request = new UpdateFamilyRoleRequest();
+  request.setFamilyCircleId(familyCircleId);
+  request.setFamilyRole(familyRole);
+
+  console.log("Updating family role in circle:", familyCircleId);
+
+  try {
+    const response = await client.updateFamilyRole(request, metadata);
+    const result = response.toObject();
+    console.log("Family role updated:", result);
+    return result;
+  } catch (error) {
+    console.error("Failed to update family role:", error);
+    throw error;
+  }
+};
+
+/**
+ * Issues a time-limited OTP for joining a family circle.
+ */
+export const createParticipationPermission = async (
+  familyCircleId: string,
+  previousOtp?: string,
+): Promise<CreateParticipationPermissionResponse.AsObject> => {
+  const request = new CreateParticipationPermissionRequest();
+  request.setFamilyCircleId(familyCircleId);
+  if (previousOtp) {
+    request.setPreviousOtp(previousOtp);
+  }
+
+  console.log("Creating participation permission for circle:", familyCircleId);
+
+  try {
+    const response = await client.createParticipationPermission(
+      request,
+      metadata,
+    );
+    const result = response.toObject();
+    console.log("Participation permission created:", result);
+    return result;
+  } catch (error) {
+    console.error("Failed to create participation permission:", error);
+    throw error;
+  }
+};
+
+/**
+ * Consumes a valid OTP to join a family circle.
+ */
+export const participateInFamilyCircle = async (
+  otp: string,
+): Promise<ParticipateInFamilyCircleResponse.AsObject> => {
+  const request = new ParticipateInFamilyCircleRequest();
+  request.setOtp(otp);
+
+  console.log("Joining family circle with OTP");
+
+  try {
+    const response = await client.participateInFamilyCircle(request, metadata);
+    const result = response.toObject();
+    console.log("Joined family circle:", result);
+    return result;
+  } catch (error) {
+    console.error("Failed to join family circle:", error);
+    throw error;
+  }
+};
+
+/**
+ * Removes the caller from the specified family circle.
+ */
+export const leaveFamilyCircle = async (
+  familyCircleId: string,
+): Promise<LeaveFamilyCircleResponse.AsObject> => {
+  const request = new LeaveFamilyCircleRequest();
+  request.setFamilyCircleId(familyCircleId);
+
+  console.log("Leaving family circle:", familyCircleId);
+
+  try {
+    const response = await client.leaveFamilyCircle(request, metadata);
+    const result = response.toObject();
+    console.log("Left family circle:", result);
+    return result;
+  } catch (error) {
+    console.error("Failed to leave family circle:", error);
+    throw error;
+  }
+};
+
+/**
+ * Removes a member from a family circle (admin only).
+ */
+export const removeMemberFromFamilyCircle = async (
+  familyCircleId: string,
+  memberId: string,
+): Promise<RemoveMemberFromFamilyCircleResponse.AsObject> => {
+  const request = new RemoveMemberFromFamilyCircleRequest();
+  request.setFamilyCircleId(familyCircleId);
+  request.setMemberId(memberId);
+
+  console.log("Removing member:", memberId, "from circle:", familyCircleId);
+
+  try {
+    const response = await client.removeMemberFromFamilyCircle(
+      request,
+      metadata,
+    );
+    const result = response.toObject();
+    console.log("Member removed:", result);
+    return result;
+  } catch (error) {
+    console.error("Failed to remove member from family circle:", error);
+    throw error;
+  }
+};
+
+/**
+ * Grants admin privileges to a member within a family circle.
+ */
+export const assignFamilyCircleAdmin = async (
+  familyCircleId: string,
+  memberId: string,
+): Promise<AssignFamilyCircleAdminResponse.AsObject> => {
+  const request = new AssignFamilyCircleAdminRequest();
+  request.setFamilyCircleId(familyCircleId);
+  request.setMemberId(memberId);
+
+  console.log(
+    "Assigning admin to member:",
+    memberId,
+    "in circle:",
+    familyCircleId,
+  );
+
+  try {
+    const response = await client.assignFamilyCircleAdmin(request, metadata);
+    const result = response.toObject();
+    console.log("Admin assigned:", result);
+    return result;
+  } catch (error) {
+    console.error("Failed to assign admin:", error);
+    throw error;
+  }
+};

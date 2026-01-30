@@ -1,3 +1,5 @@
+import Constants from "expo-constants";
+
 export const formatRelativeTime = (lastActive?: string | number | Date) => {
   if (!lastActive) return "";
   const d = new Date(lastActive);
@@ -20,7 +22,7 @@ export const getInitials = (name = "") => {
 
 export const formatAddressFromLatLng = async (
   lat: number,
-  lng: number
+  lng: number,
 ): Promise<string> => {
   if (!lat || !lng) return "";
 
@@ -40,4 +42,12 @@ export const formatAddressFromLatLng = async (
     console.error("Error reverse geocoding:", error);
     return "";
   }
+};
+
+export const getBaseUrl = () => {
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (!hostUri) return "http://192.168.1.16";
+
+  const ip = hostUri.split(":")[0];
+  return `http://${ip}`;
 };

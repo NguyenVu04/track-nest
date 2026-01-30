@@ -8,9 +8,9 @@ type Props = {
   onZoomIn?: (() => void) | null;
   onZoomOut?: (() => void) | null;
   onGeneralModalPress?: (() => void) | null;
+  onMapTypePress?: (() => void) | null;
   style?: object;
   mapType?: MapType;
-  setMapType?: (t: MapType) => void;
 };
 
 export default function MapControls({
@@ -18,26 +18,18 @@ export default function MapControls({
   onZoomIn,
   onZoomOut,
   onGeneralModalPress,
+  onMapTypePress,
   style,
   mapType = "standard",
-  setMapType,
 }: Props) {
-  const MAP_TYPES: MapType[] = ["standard", "satellite", "hybrid"];
-  const cycleMapType = () => {
-    if (!setMapType) return;
-    const idx = MAP_TYPES.indexOf(mapType as MapType);
-    const next = MAP_TYPES[(idx + 1) % MAP_TYPES.length];
-    setMapType(next);
-  };
-  const label =
-    mapType === "standard" ? "S" : mapType === "satellite" ? "Sat" : "H";
+  const label = mapType === "standard" ? "S" : "H";
 
   return (
     <View style={[styles.fabColumn, style]}>
       {onGeneralModalPress && <Fab icon="menu" onPress={onGeneralModalPress} />}
       {onCenter && <Fab icon="navigate-outline" onPress={onCenter} />}
-      {cycleMapType && (
-        <Fab onPress={cycleMapType}>
+      {onMapTypePress && (
+        <Fab onPress={onMapTypePress}>
           <Text style={styles.mapTypeLabel}>{label}</Text>
         </Fab>
       )}

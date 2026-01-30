@@ -14,6 +14,10 @@ export const Vietnamese = {
   reportButton: "Báo cáo đã nhìn thấy",
   reportSuccess: "Báo cáo đã được gửi",
   reportThankYou: "Cảm ơn bạn đã báo cáo.",
+  personalInformation: "Thông tin cá nhân",
+  callPolice: "Gọi cảnh sát",
+  share: "Chia sẻ",
+  sendTip: "Gửi mẹo",
 };
 
 export const English = {
@@ -32,4 +36,8 @@ export const English = {
   reportButton: "Report a Sighting",
   reportSuccess: "Report submitted",
   reportThankYou: "Thank you for your report.",
+  personalInformation: "Personal Information",
+  callPolice: "Call Police",
+  share: "Share",
+  sendTip: "Send a Tip",
 };

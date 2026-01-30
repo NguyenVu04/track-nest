@@ -1,13 +1,41 @@
 import { StyleSheet } from "react-native";
 
 export const colors = {
-  primary: "#0b62ff",
-  danger: "#ff3b30",
-  warn: "#ff9f0a",
-  success: "#34c759",
+  // Primary palette based on #74becb
+  primary: "#74becb",
+  primaryDark: "#5aa8b5",
+  primaryLight: "#a8d8e0",
+  primaryMuted: "#e0f2f5",
+
+  // Secondary/accent colors
+  secondary: "#5b9aa6",
+  accent: "#4a8a96",
+
+  // Semantic colors
+  danger: "#e74c3c",
+  dangerLight: "#fdeaea",
+  warn: "#f39c12",
+  warnLight: "#fef5e7",
+  success: "#27ae60",
+  successLight: "#e8f8ef",
+  info: "#74becb",
+  infoLight: "#e0f2f5",
+
+  // Neutral colors
   muted: "#666",
+  textPrimary: "#1a1a1a",
+  textSecondary: "#6b7280",
+  textMuted: "#9ca3af",
+
+  // Background colors
   bg: "#fff",
+  bgSecondary: "#f8fafa",
   surface: "#f2f2f2",
+  surfaceLight: "#fafafa",
+
+  // Border colors
+  border: "#e5e7eb",
+  borderLight: "#f3f4f6",
 };
 
 export const spacing = {

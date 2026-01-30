@@ -1,3 +1,5 @@
+import { missingDetail as missingDetailLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import { MissingPerson, MOCK_MISSING } from "@/services/reports";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -14,10 +16,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 // Mock function to get a missing person by ID
 async function getMissingPersonById(
-  id: string
+  id: string,
 ): Promise<MissingPerson | undefined> {
-  
-
   return new Promise((resolve) => {
     setTimeout(() => resolve(MOCK_MISSING.find((m) => m.id === id)), 200);
   });
@@ -25,6 +25,7 @@ async function getMissingPersonById(
 
 export default function MissingDetailScreen() {
   const router = useRouter();
+  const t = useTranslation(missingDetailLang);
   const { id } = useLocalSearchParams<{ id: string }>();
   const [person, setPerson] = useState<MissingPerson | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +52,7 @@ export default function MissingDetailScreen() {
         <View
           style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
         >
-          <ActivityIndicator size="large" color="#0b62ff" />
+          <ActivityIndicator size="large" color="#74becb" />
         </View>
       </SafeAreaView>
     );
@@ -64,13 +65,15 @@ export default function MissingDetailScreen() {
           <Pressable onPress={() => router.push("/(tabs)/reports")}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </Pressable>
-          <Text style={styles.headerTitle}>Missing Person Details</Text>
+          <Text style={styles.headerTitle}>{t.pageTitle}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View
           style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
         >
-          <Text style={{ fontSize: 16, color: "#666" }}>Person not found</Text>
+          <Text style={{ fontSize: 16, color: "#666" }}>
+            {t.personNotFound}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -82,7 +85,7 @@ export default function MissingDetailScreen() {
         <Pressable onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </Pressable>
-        <Text style={styles.headerTitle}>Missing Person</Text>
+        <Text style={styles.headerTitle}>{t.pageTitle}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -101,8 +104,8 @@ export default function MissingDetailScreen() {
                 person.severity === "High"
                   ? styles.sevHigh
                   : person.severity === "Medium"
-                  ? styles.sevMed
-                  : styles.sevLow,
+                    ? styles.sevMed
+                    : styles.sevLow,
               ]}
             >
               <Text style={styles.severityText}>{person.severity}</Text>
@@ -110,42 +113,44 @@ export default function MissingDetailScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
+            <Text style={styles.sectionTitle}>{t.personalInformation}</Text>
             <View style={styles.infoRow}>
-              <Ionicons name="person" size={20} color="#0b62ff" />
-              <Text style={styles.infoText}>Age: {person.age} years old</Text>
+              <Ionicons name="person" size={20} color="#74becb" />
+              <Text style={styles.infoText}>
+                {t.age}: {person.age} {t.yearsOld}
+              </Text>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Last Seen</Text>
+            <Text style={styles.sectionTitle}>{t.lastSeen}</Text>
             <View style={styles.infoRow}>
-              <Ionicons name="time" size={20} color="#0b62ff" />
+              <Ionicons name="time" size={20} color="#74becb" />
               <Text style={styles.infoText}>{person.lastSeen}</Text>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Physical Description</Text>
+            <Text style={styles.sectionTitle}>{t.physicalDescription}</Text>
             <Text style={styles.description}>{person.description}</Text>
           </View>
 
           <View style={styles.actionButtons}>
             <Pressable style={[styles.button, styles.callButton]}>
               <Ionicons name="call" size={20} color="#fff" />
-              <Text style={styles.buttonText}>Call Police</Text>
+              <Text style={styles.buttonText}>{t.callPolice}</Text>
             </Pressable>
             <Pressable style={[styles.button, styles.shareButton]}>
-              <Ionicons name="share-social" size={20} color="#0b62ff" />
-              <Text style={[styles.buttonText, { color: "#0b62ff" }]}>
-                Share
+              <Ionicons name="share-social" size={20} color="#74becb" />
+              <Text style={[styles.buttonText, { color: "#74becb" }]}>
+                {t.share}
               </Text>
             </Pressable>
           </View>
 
           <Pressable style={styles.tipButton}>
             <Ionicons name="information-circle" size={20} color="#fff" />
-            <Text style={styles.tipButtonText}>Send a Tip</Text>
+            <Text style={styles.tipButtonText}>{t.sendTip}</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -269,7 +274,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
-    backgroundColor: "#0b62ff",
+    backgroundColor: "#74becb",
     borderRadius: 10,
     gap: 8,
   },

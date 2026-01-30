@@ -8,6 +8,9 @@ export const Vietnamese = {
   status: "Trạng thái",
   contactReporter: "Liên hệ người báo cáo",
   viewOnMap: "Xem trên bản đồ",
+  dateTime: "Ngày & Giờ",
+  callPolice: "Gọi cảnh sát",
+  share: "Chia sẻ",
 };
 
 export const English = {
@@ -20,4 +23,7 @@ export const English = {
   status: "Status",
   contactReporter: "Contact Reporter",
   viewOnMap: "View on Map",
+  dateTime: "Date & Time",
+  callPolice: "Call Police",
+  share: "Share",
 };
