@@ -137,4 +137,9 @@ public class NotifierController extends NotifierControllerGrpc.NotifierControlle
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
+
+    @Override
+    public void updateMobileDevice(UpdateMobileDeviceRequest request, StreamObserver<UpdateMobileDeviceResponse> responseObserver) {
+        super.updateMobileDevice(request, responseObserver);
+    }
 }

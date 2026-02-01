@@ -79,6 +79,48 @@ class NotifierServiceImpl implements NotifierService {
 
     @Override
     @Transactional
+    public UpdateMobileDeviceResponse updateMobileDevice(
+            UUID userId,
+            UpdateMobileDeviceRequest request
+    ) {
+        UUID deviceId = UUID.fromString(request.getId());
+
+        Optional<MobileDevice> deviceOpt = mobileRepository.findByIdAndUserId(
+                deviceId,
+                userId);
+
+        if (deviceOpt.isEmpty()) {
+            log.warn("Mobile device with ID {} not found for user ID {} when updating device token", deviceId, userId);
+            return UpdateMobileDeviceResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.NOT_FOUND_VALUE)
+                            .setMessage("Mobile device not found")
+                            .build())
+                    .build();
+        }
+
+        MobileDevice device = deviceOpt.get();
+        device.setDeviceToken(request.getDeviceToken());
+        device.setLanguageCode(request.getLanguageCode());
+        device.setPlatform(request.getPlatform());
+
+        mobileRepository.saveAndFlush(device);
+        log.info("Updated mobile device with ID {} for user ID {}", deviceId, userId);
+
+        return UpdateMobileDeviceResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Mobile device updated successfully")
+                        .build())
+                .build();
+    }
+
+    @Override
+    @Transactional //TODO: test this
     public UnregisterMobileDeviceResponse unregisterMobileDevice(
             UUID userId,
             UnregisterMobileDeviceRequest request
@@ -102,7 +144,7 @@ class NotifierServiceImpl implements NotifierService {
         }
 
         mobileRepository.deleteById(deviceId);
-        log.info("Unregistered mobile device with ID {} for user ID {}", deviceId, userId);
+        log.info("Unregistered mobile device with ID {} for user ID {} when unregistering device", deviceId, userId);
 
         return UnregisterMobileDeviceResponse
                 .newBuilder()

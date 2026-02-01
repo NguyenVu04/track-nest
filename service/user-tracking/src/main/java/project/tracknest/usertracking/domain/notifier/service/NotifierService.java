@@ -9,6 +9,10 @@ public interface NotifierService {
             UUID userId,
             RegisterMobileDeviceRequest request);
 
+    UpdateMobileDeviceResponse updateMobileDevice(
+            UUID userId,
+            UpdateMobileDeviceRequest request);
+
     UnregisterMobileDeviceResponse unregisterMobileDevice(
             UUID userId,
             UnregisterMobileDeviceRequest request);

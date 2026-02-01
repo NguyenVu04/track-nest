@@ -25,6 +25,10 @@ service NotifierController {
   rpc RegisterMobileDevice (RegisterMobileDeviceRequest)
       returns (RegisterMobileDeviceResponse);
 
+  // Updates an existing mobile device registration by id.
+  rpc UpdateMobileDevice (UpdateMobileDeviceRequest)
+      returns (UpdateMobileDeviceResponse);
+
   // Unregisters a previously registered mobile device by id.
   rpc UnregisterMobileDevice (UnregisterMobileDeviceRequest)
       returns (UnregisterMobileDeviceResponse);
@@ -74,6 +78,18 @@ message RegisterMobileDeviceRequest {
   string deviceToken = 1;
   string platform = 2;
   string languageCode = 3;
+}
+
+message UpdateMobileDeviceRequest {
+  string id = 1;
+  string deviceToken = 2;
+  string platform = 3;
+  string languageCode = 4;
+}
+
+message UpdateMobileDeviceResponse {
+  google.rpc.Status status = 1;
+  uint64 updated_at_ms = 2;
 }
 
 message RegisterMobileDeviceResponse {
