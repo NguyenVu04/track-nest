@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Search, Filter } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
 import type { MissingPerson } from "@/types";
-import { MissingPersonList } from "@/components/MissingPersonList";
+import { MissingPersonDetail } from "@/components/MissingPersonDetail";
+import { Loading } from "@/components/Loading";
 import { toast } from "sonner";
 
 // Mock data
@@ -56,24 +56,43 @@ const mockMissingPersons: MissingPerson[] = [
   },
 ];
 
-export default function MissingPersonsPage() {
+export default function MissingPersonDetailPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { addNotification } = useNotification();
   const [missingPersons, setMissingPersons] =
     useState<MissingPerson[]>(mockMissingPersons);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+  }, []);
+
+  const { id } = useParams();
+
+  const selectedPerson = missingPersons.find((p) => p.id === id);
 
   if (!user) return null;
 
-  const handleViewDetail = (person: MissingPerson) => {
-    router.push(`/dashboard/missing-persons/${person.id}`);
-  };
+  if (isLoading) {
+    return <Loading />;
+  }
 
-  const handleCreateNew = () => {
-    router.push("/dashboard/missing-persons/create");
-  };
+  if (!selectedPerson) {
+    return (
+      <div className="text-gray-900">
+        <h2 className="text-xl font-semibold mb-4">Missing Person Not Found</h2>
+        <button
+          onClick={() => router.back()}
+          className="text-indigo-600 hover:text-indigo-700"
+        >
+          ← Go Back
+        </button>
+      </div>
+    );
+  }
 
   const mockRequest = async (shouldFail = false) => {
     await new Promise((resolve) => setTimeout(resolve, 350));
@@ -118,74 +137,29 @@ export default function MissingPersonsPage() {
         description: `${person.name} report has been removed`,
         reportId: person.id,
       });
+      router.push("/dashboard/missing-persons");
     } catch (error) {
       toast.error("Lỗi khi xóa báo cáo");
       console.error(error);
     }
   };
 
-  const filteredPersons = missingPersons.filter((person) => {
-    const matchesSearch =
-      person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      person.lastSeenLocation.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || person.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const handleEdit = (person: MissingPerson) => {
+    router.push(`/dashboard/missing-persons/${person.id}/edit`);
+  };
+
+  const handleBack = () => {
+    router.back();
+  };
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h2 className="text-gray-900 text-xl font-semibold">
-          Missing Person Reports
-        </h2>
-        {user.role === "Reporter" && (
-          <button
-            onClick={handleCreateNew}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            New Report
-          </button>
-        )}
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by name or location..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-            />
-          </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent appearance-none"
-            >
-              <option value="all">All Statuses</option>
-              <option value="Unhandled">Unhandled</option>
-              <option value="Published">Published</option>
-              <option value="Resolved">Resolved</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <MissingPersonList
-        persons={filteredPersons}
-        onViewDetail={handleViewDetail}
-        onPublish={handlePublish}
-        onDelete={handleDelete}
-        userRole={user.role}
-      />
-    </div>
+    <MissingPersonDetail
+      person={selectedPerson}
+      onBack={handleBack}
+      onEdit={handleEdit}
+      onPublish={handlePublish}
+      onDelete={handleDelete}
+      userRole={user.role}
+    />
   );
 }

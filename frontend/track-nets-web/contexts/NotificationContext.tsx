@@ -9,7 +9,7 @@ import {
   useEffect,
 } from "react";
 
-export type NotificationType = "crime" | "missing-person";
+export type NotificationType = "crime" | "missing-person" | "emergency";
 
 export interface Notification {
   id: string;
@@ -24,7 +24,7 @@ export interface Notification {
 interface NotificationContextType {
   notifications: Notification[];
   addNotification: (
-    notification: Omit<Notification, "id" | "timestamp" | "read">
+    notification: Omit<Notification, "id" | "timestamp" | "read">,
   ) => void;
   markAsRead: (id: string) => void;
   removeNotification: (id: string) => void;
@@ -33,7 +33,7 @@ interface NotificationContextType {
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
@@ -52,20 +52,20 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         ...prev,
       ]);
     },
-    []
+    [],
   );
 
   const markAsRead = useCallback((id: string) => {
     setNotifications((prev) =>
       prev.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
+        notification.id === id ? { ...notification, read: true } : notification,
+      ),
     );
   }, []);
 
   const removeNotification = useCallback((id: string) => {
     setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
+      prev.filter((notification) => notification.id !== id),
     );
   }, []);
 
@@ -95,7 +95,7 @@ export function useNotification() {
   const context = useContext(NotificationContext);
   if (context === undefined) {
     throw new Error(
-      "useNotification must be used within a NotificationProvider"
+      "useNotification must be used within a NotificationProvider",
     );
   }
   return context;

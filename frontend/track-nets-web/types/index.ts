@@ -3,8 +3,27 @@ export interface User {
   username: string;
   password: string;
   email: string;
-  role: "Reporter" | "Emergency Services";
+  role: "Admin" | "Reporter" | "Emergency Services";
   fullName: string;
+  status?: "Active" | "Banned";
+  createdAt?: string;
+}
+
+export interface UserActivity {
+  id: string;
+  userId: string;
+  action: "create" | "edit" | "delete" | "publish" | "ban" | "unban";
+  targetType:
+    | "missing-person"
+    | "crime-report"
+    | "guideline"
+    | "emergency-request"
+    | "account"
+    | "safe-zone";
+  targetId: string;
+  targetName: string;
+  timestamp: string;
+  details?: string;
 }
 
 export interface MissingPerson {
@@ -49,4 +68,25 @@ export interface Guideline {
   uploadedDate: string;
   fileUrl?: string;
   content: string;
+}
+
+export interface EmergencyRequest {
+  id: string;
+  requesterName: string;
+  requesterContact: string;
+  location: string;
+  coordinates: [number, number];
+  createdAt: string;
+  status: "Pending" | "Accepted" | "Rejected" | "Completed";
+  rejectReason?: string;
+  completionNote?: string;
+}
+
+export interface SafeZone {
+  id: string;
+  name: string;
+  type: "Police Station" | "Hospital" | "Shelter" | "Other";
+  address: string;
+  coordinates: [number, number];
+  createdAt: string;
 }

@@ -1,5 +1,13 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import { DashboardSummary } from "@/components/DashboardSummary";
 
 export default function DashboardPage() {
-  redirect("/dashboard/missing-persons");
+  return (
+    <div className="flex-1 overflow-auto">
+      <div className="p-8">
+        <DashboardSummary />
+      </div>
+    </div>
+  );
 }

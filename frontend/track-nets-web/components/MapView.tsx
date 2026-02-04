@@ -81,15 +81,11 @@ export function MapView({
     center,
     markers,
     zones,
-    heatmapData
+    heatmapData,
   );
 
   return (
-    <MapContainer
-      center={center}
-      zoom={13}
-      className="rounded-lg flex-1"
-    >
+    <MapContainer center={center} zoom={13} className="rounded-lg flex-1 z-10">
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
