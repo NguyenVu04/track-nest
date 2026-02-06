@@ -140,6 +140,11 @@ public class NotifierController extends NotifierControllerGrpc.NotifierControlle
 
     @Override
     public void updateMobileDevice(UpdateMobileDeviceRequest request, StreamObserver<UpdateMobileDeviceResponse> responseObserver) {
-        super.updateMobileDevice(request, responseObserver);
+        UUID userId = getCurrentUserId();
+
+        UpdateMobileDeviceResponse response = service.updateMobileDevice(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 }

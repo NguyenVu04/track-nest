@@ -57,4 +57,6 @@ interface NotifierRiskNotificationRepository extends JpaRepository<RiskNotificat
     );
 
     int countByUser_Id(UUID userId);
+
+    Optional<RiskNotification> findTopByUser_IdOrderByCreatedAt(UUID userId);
 }

@@ -120,7 +120,7 @@ class NotifierServiceImpl implements NotifierService {
     }
 
     @Override
-    @Transactional //TODO: test this
+    @Transactional
     public UnregisterMobileDeviceResponse unregisterMobileDevice(
             UUID userId,
             UnregisterMobileDeviceRequest request

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import project.tracknest.usertracking.core.entity.TrackingNotification;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface NotifierTrackingNotificationRepository extends JpaRepository<TrackingNotification, UUID> {
@@ -46,4 +47,6 @@ public interface NotifierTrackingNotificationRepository extends JpaRepository<Tr
             @Param("lastId") UUID lastId,
             Pageable pageable
     );
+
+    Optional<TrackingNotification> findTopByTarget_IdOrderByCreatedAt(UUID targetId);
 }
