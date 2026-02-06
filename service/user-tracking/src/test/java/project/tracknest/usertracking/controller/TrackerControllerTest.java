@@ -497,10 +497,7 @@ class TrackerControllerTest {
                         }
                     };
 
-            StreamObserver<UpdateUserLocationRequest> requestObserver =
-                    trackerController.updateUserLocation(responseObserver);
-            requestObserver.onNext(request);
-            requestObserver.onCompleted();
+            trackerController.updateUserLocation(request, responseObserver);
 
             try {
                 assertTrue(latch.await(5, TimeUnit.SECONDS));
@@ -511,7 +508,6 @@ class TrackerControllerTest {
             assertNotNull(responseRef.get());
             UpdateUserLocationResponse response = responseRef.get();
             assertEquals(Code.OK_VALUE, response.getStatus().getCode());
-            assertEquals("Location updates completed successfully", response.getStatus().getMessage());
         }
 
         @Test
@@ -549,11 +545,7 @@ class TrackerControllerTest {
                 }
             };
 
-            // Obtain request observer from controller (matches method signature) and send request
-            StreamObserver<UpdateUserLocationRequest> requestObserver =
-                    trackerController.updateUserLocation(responseObserver);
-            requestObserver.onNext(request);
-            requestObserver.onCompleted();
+            trackerController.updateUserLocation(request, responseObserver);
 
             try {
                 assertTrue(latch.await(5, TimeUnit.SECONDS));
@@ -601,10 +593,7 @@ class TrackerControllerTest {
                         }
                     };
 
-            StreamObserver<UpdateUserLocationRequest> requestObserver =
-                    trackerController.updateUserLocation(responseObserver);
-            requestObserver.onNext(request);
-            requestObserver.onCompleted();
+            trackerController.updateUserLocation(request, responseObserver);
 
             try {
                 assertTrue(latch.await(5, TimeUnit.SECONDS));
@@ -652,10 +641,7 @@ class TrackerControllerTest {
                         }
                     };
 
-            StreamObserver<UpdateUserLocationRequest> requestObserver =
-                    trackerController.updateUserLocation(responseObserver);
-            requestObserver.onNext(request);
-            requestObserver.onCompleted();
+            trackerController.updateUserLocation(request, responseObserver);
 
             try {
                 assertTrue(latch.await(5, TimeUnit.SECONDS));
@@ -703,10 +689,7 @@ class TrackerControllerTest {
                         }
                     };
 
-            StreamObserver<UpdateUserLocationRequest> requestObserver =
-                    trackerController.updateUserLocation(responseObserver);
-            requestObserver.onNext(request);
-            requestObserver.onCompleted();
+            trackerController.updateUserLocation(request, responseObserver);
 
             try {
                 assertTrue(latch.await(5, TimeUnit.SECONDS));
@@ -754,10 +737,7 @@ class TrackerControllerTest {
                         }
                     };
 
-            StreamObserver<UpdateUserLocationRequest> requestObserver =
-                    trackerController.updateUserLocation(responseObserver);
-            requestObserver.onNext(request);
-            requestObserver.onCompleted();
+            trackerController.updateUserLocation(request, responseObserver);
 
             try {
                 assertTrue(latch.await(5, TimeUnit.SECONDS));
@@ -811,11 +791,8 @@ class TrackerControllerTest {
                     }
                 };
 
-                // Match controller signature: obtain request observer, send request, then complete
-                StreamObserver<UpdateUserLocationRequest> requestObserver =
-                        trackerController.updateUserLocation(responseObserver);
-                requestObserver.onNext(updateRequest);
-                requestObserver.onCompleted();
+                // Call the unary RPC directly
+                trackerController.updateUserLocation(updateRequest, responseObserver);
 
                 try {
                     assertTrue(updateLatch.await(5, TimeUnit.SECONDS));
@@ -884,10 +861,8 @@ class TrackerControllerTest {
                 @SuppressWarnings("unchecked")
                 StreamObserver<UpdateUserLocationResponse> mockObserver = mock(StreamObserver.class);
 
-                // Obtain the request observer from the controller, send the request and complete the stream
-                StreamObserver<UpdateUserLocationRequest> requestObserver = trackerController.updateUserLocation(mockObserver);
-                requestObserver.onNext(request);
-                requestObserver.onCompleted();
+                // Call the unary RPC directly
+                trackerController.updateUserLocation(request, mockObserver);
 
                 // Verify onNext was called with a response
                 ArgumentCaptor<UpdateUserLocationResponse> responseCaptor =
@@ -1108,13 +1083,8 @@ class TrackerControllerTest {
                     }
                 };
 
-                // Obtain request observer from the controller (bidi streaming)
-                StreamObserver<UpdateUserLocationRequest> requestObserver =
-                        trackerController.updateUserLocation(responseObserver);
-
-                // Send the single request and signal completion
-                requestObserver.onNext(request);
-                requestObserver.onCompleted();
+                // Call the unary RPC directly
+                trackerController.updateUserLocation(request, responseObserver);
 
                 try {
                     assertTrue(latch.await(5, TimeUnit.SECONDS), "Timed out waiting for response");
@@ -1163,10 +1133,7 @@ class TrackerControllerTest {
                     }
                 };
 
-                StreamObserver<UpdateUserLocationRequest> requestObserver =
-                        trackerController.updateUserLocation(responseObserver);
-                requestObserver.onNext(request);
-                requestObserver.onCompleted();
+                trackerController.updateUserLocation(request, responseObserver);
 
                 try {
                     assertTrue(latch.await(5, TimeUnit.SECONDS));
@@ -1213,10 +1180,7 @@ class TrackerControllerTest {
                     }
                 };
 
-                StreamObserver<UpdateUserLocationRequest> requestObserver =
-                        trackerController.updateUserLocation(responseObserver);
-                requestObserver.onNext(request);
-                requestObserver.onCompleted();
+                trackerController.updateUserLocation(request, responseObserver);
 
                 try {
                     assertTrue(latch.await(5, TimeUnit.SECONDS));

@@ -1,5 +1,7 @@
 package project.tracknest.usertracking.domain.tracker.locationcommand.impl;
 
+import com.google.rpc.Code;
+import com.google.rpc.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import project.tracknest.usertracking.core.entity.User;
 import project.tracknest.usertracking.domain.tracker.locationcommand.service.LocationCommandService;
 import project.tracknest.usertracking.domain.tracker.locationcommand.service.LocationMessageProducer;
 import project.tracknest.usertracking.proto.lib.UpdateUserLocationRequest;
+import project.tracknest.usertracking.proto.lib.UpdateUserLocationResponse;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -26,7 +29,7 @@ class LocationCommandServiceImpl implements LocationCommandService {
 
     @Override
     @Transactional
-    public void updateUserLocation(UUID userId, UpdateUserLocationRequest request) {
+    public UpdateUserLocationResponse updateUserLocation(UUID userId, UpdateUserLocationRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.error("User with ID {} not found", userId);
@@ -70,5 +73,12 @@ class LocationCommandServiceImpl implements LocationCommandService {
         messageProducer.produce(message);
 
         log.info("Received request to update location command");
+
+        return UpdateUserLocationResponse.newBuilder()
+                .setStatus(Status.newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Location updated successfully")
+                        .build())
+                .build();
     }
 }

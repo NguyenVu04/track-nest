@@ -67,36 +67,16 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
     }
 
     @Override
-    public StreamObserver<UpdateUserLocationRequest> updateUserLocation(
+    public void updateUserLocation(
+            UpdateUserLocationRequest request,
             StreamObserver<UpdateUserLocationResponse> responseObserver
     ) {
         UUID userId = getCurrentUserId();
 
-        return new StreamObserver<>() {
-            @Override
-            public void onNext(UpdateUserLocationRequest updateUserLocationRequest) {
-                commandService.updateUserLocation(userId, updateUserLocationRequest);
-            }
+         UpdateUserLocationResponse response = commandService
+                .updateUserLocation(userId, request);
 
-            @Override
-            public void onError(Throwable throwable) {
-                log.warn("Error receiving location update from userId {}: {}", userId, throwable.getMessage());
-            }
-
-            @Override
-            public void onCompleted() {
-                UpdateUserLocationResponse response = UpdateUserLocationResponse
-                        .newBuilder()
-                        .setStatus(Status
-                                .newBuilder()
-                                .setCode(Code.OK_VALUE)
-                                .setMessage("Location updates completed successfully")
-                                .build())
-                        .build();
-                responseObserver.onNext(response);
-                responseObserver.onCompleted();
-                log.info("Completed receiving location updates from userId {}", userId);
-            }
-        };
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 }

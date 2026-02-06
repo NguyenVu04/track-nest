@@ -341,4 +341,27 @@ class NotifierControllerTest {
             assertEquals(0, ref.get().getStatus().getCode());
         }
     }
+    @Nested
+    @DisplayName("UpdateMobileDevice")
+    class UpdateMobileDeviceTests {
+        @Test
+        void updateMobileDevice_success() throws Exception {
+            UpdateMobileDeviceRequest request = UpdateMobileDeviceRequest.newBuilder()
+                    .setId(ADMIN_DEVICE_ID)
+                    .setDeviceToken("updated-token-user-admin")
+                    .setPlatform("ios")
+                    .setLanguageCode("fr")
+                    .build();
+            AtomicReference<UpdateMobileDeviceResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            notifierController.updateMobileDevice(request, new StreamObserver<>() {
+                public void onNext(UpdateMobileDeviceResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertEquals(0, ref.get().getStatus().getCode());
+        }
+    }
 }

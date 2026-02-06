@@ -48,7 +48,7 @@ service TrackerController {
   // Server validates and persists the new location, and returns an UpdateUserLocationResponse
   // with a `google.rpc.Status` indicating success or the reason for failure
   // (e.g., invalid payload, rate-limited, or unauthorized).
-  rpc UpdateUserLocation(stream UpdateUserLocationRequest)
+  rpc UpdateUserLocation(UpdateUserLocationRequest)
       returns (UpdateUserLocationResponse);
 }
 
