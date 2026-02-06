@@ -2,6 +2,7 @@ package project.tracknest.usertracking.domain.tracker.locationquery.impl;
 
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationStreamObserverRegistry;
@@ -16,15 +17,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @Slf4j
 class LocationObserverImpl implements LocationObserver, LocationStreamObserverRegistry {
+    private final StringRedisTemplate redisTemplate; //TODO: Use Redis for distributed observer management
     private final ConcurrentHashMap<UUID, Set<StreamObserver<FamilyMemberLocation>>> observers;
 
-    public LocationObserverImpl() {
+    public LocationObserverImpl(StringRedisTemplate redisTemplate) {
         this.observers = new ConcurrentHashMap<>();
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
     public void sendTargetLocation(UUID userId, LocationMessage message) {
-        //TODO: save connection to redis to support multiple instances
+
         observers.computeIfPresent(userId, (_, observers) -> {
             List<StreamObserver<FamilyMemberLocation>> failed = new ArrayList<>();
 
