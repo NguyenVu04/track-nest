@@ -42,12 +42,14 @@ export function NotificationButton() {
 
   const handleNotificationClick = (
     reportId: string,
-    type: "crime" | "missing-person"
+    type: "crime" | "missing-person" | "emergency",
   ) => {
     const path =
       type === "crime"
         ? `/dashboard/crime-reports/${reportId}`
-        : `/dashboard/missing-persons/${reportId}`;
+        : type === "missing-person"
+          ? `/dashboard/missing-persons/${reportId}`
+          : `/dashboard/emergency-requests`;
     router.push(path);
     setIsOpen(false);
   };
@@ -63,7 +65,7 @@ export function NotificationButton() {
   };
 
   const sortedNotifications = [...notifications].sort(
-    (a, b) => b.timestamp - a.timestamp
+    (a, b) => b.timestamp - a.timestamp,
   );
 
   return (
@@ -113,7 +115,7 @@ export function NotificationButton() {
                 onClick={() =>
                   handleNotificationClick(
                     notification.reportId,
-                    notification.type
+                    notification.type,
                   )
                 }
               >

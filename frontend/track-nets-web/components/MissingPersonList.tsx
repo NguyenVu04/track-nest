@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Edit, CheckCircle, Trash2 } from "lucide-react";
+import { Eye, CheckCircle, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { MissingPerson } from "@/types";
 import { ConfirmModal } from "./ConfirmModal";
@@ -8,7 +8,6 @@ import { ConfirmModal } from "./ConfirmModal";
 interface MissingPersonListProps {
   persons: MissingPerson[];
   onViewDetail: (person: MissingPerson) => void;
-  onEdit: (person: MissingPerson) => void;
   onPublish: (id: string) => void;
   onDelete: (id: string) => void;
   userRole: string;
@@ -17,7 +16,6 @@ interface MissingPersonListProps {
 export function MissingPersonList({
   persons,
   onViewDetail,
-  onEdit,
   onPublish,
   onDelete,
   userRole,
@@ -115,13 +113,6 @@ export function MissingPersonList({
                       </button>
                       {userRole === "Reporter" && (
                         <>
-                          <button
-                            onClick={() => onEdit(person)}
-                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
                           {person.status === "Unhandled" && (
                             <button
                               onClick={() =>

@@ -1,8 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Save, X } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Save, X, MapPin } from "lucide-react";
 import type { MissingPerson } from "@/types";
+
+// Dynamically import LocationPicker to avoid SSR issues with Leaflet
+const LocationPicker = dynamic(
+  () => import("./LocationPicker").then((mod) => mod.LocationPicker),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center">
+        <span className="text-gray-500">Loading map...</span>
+      </div>
+    ),
+  },
+);
 
 interface MissingPersonFormProps {
   person: MissingPerson | null;
@@ -30,7 +44,7 @@ export function MissingPersonForm({
       reportedBy: "",
       reportedDate: new Date().toISOString(),
       contactInfo: "",
-    }
+    },
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -151,6 +165,26 @@ export function MissingPersonForm({
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               placeholder="e.g., Central Park, New York"
               required
+            />
+          </div>
+
+          {/* Location Picker Map */}
+          <div className="md:col-span-2">
+            <label className="block text-gray-700 mb-2">
+              <span className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Last Seen Coordinates *
+              </span>
+            </label>
+            <LocationPicker
+              position={
+                (formData.coordinates as [number, number]) || [
+                  40.7829, -73.9654,
+                ]
+              }
+              onPositionChange={(position) =>
+                setFormData({ ...formData, coordinates: position })
+              }
             />
           </div>
 

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, Upload, FileText, Trash2, Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, Search, FileText, Trash2, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Guideline } from "@/types";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { toast } from "sonner";
 
 // Mock data
 const mockGuidelines: Guideline[] = [
@@ -111,73 +113,40 @@ To establish standardized procedures for documenting and reporting criminal inci
 ];
 
 export default function GuidelinesPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [guidelines, setGuidelines] = useState<Guideline[]>(mockGuidelines);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [selectedGuideline, setSelectedGuideline] = useState<Guideline | null>(
-    null
-  );
-  const [isCreating, setIsCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    category: "Missing Persons",
-    content: "",
-  });
 
   if (!user) return null;
 
-  const handleCreateNew = () => {
-    setIsCreating(true);
-    setSelectedGuideline(null);
-    setFormData({
-      title: "",
-      description: "",
-      category: "Missing Persons",
-      content: "",
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newGuideline: Guideline = {
-      id: Date.now().toString(),
-      title: formData.title,
-      description: formData.description,
-      category: formData.category,
-      uploadedBy: user.username,
-      uploadedDate: new Date().toISOString(),
-      content: formData.content,
-    };
-    setGuidelines([newGuideline, ...guidelines]);
-    setIsCreating(false);
-    setFormData({
-      title: "",
-      description: "",
-      category: "Missing Persons",
-      content: "",
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    setGuidelines(guidelines.filter((g) => g.id !== id));
-    setConfirmDelete(null);
-    if (selectedGuideline?.id === id) {
-      setSelectedGuideline(null);
+  const mockRequest = async (shouldFail = false) => {
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    if (shouldFail) {
+      throw new Error("Mock server error");
     }
   };
 
-  const handleView = (guideline: Guideline) => {
-    setSelectedGuideline(guideline);
-    setIsCreating(false);
+  const handleCreateNew = () => {
+    router.push("/dashboard/guidelines/create");
   };
 
-  const handleBack = () => {
-    setSelectedGuideline(null);
-    setIsCreating(false);
+  const handleView = (guideline: Guideline) => {
+    router.push(`/dashboard/guidelines/${guideline.id}`);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await mockRequest(false);
+      setGuidelines(guidelines.filter((g) => g.id !== id));
+      setConfirmDelete(null);
+      toast.success("Xóa thành công");
+    } catch (error) {
+      toast.error("Lỗi khi xóa tài liệu hướng dẫn");
+      console.error(error);
+    }
   };
 
   const filteredGuidelines = guidelines.filter((guideline) => {
@@ -188,170 +157,6 @@ export default function GuidelinesPage() {
       categoryFilter === "all" || guideline.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
-
-  // View mode - showing a specific guideline
-  if (selectedGuideline) {
-    return (
-      <div className="max-w-4xl">
-        <button
-          onClick={handleBack}
-          className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-6"
-        >
-          ← Back to Guidelines
-        </button>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h2 className="text-gray-900 mb-2 text-xl font-semibold">
-                {selectedGuideline.title}
-              </h2>
-              <p className="text-gray-600">{selectedGuideline.description}</p>
-            </div>
-            {user.role === "Reporter" && (
-              <button
-                onClick={() => setConfirmDelete(selectedGuideline.id)}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete Guideline"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-4 text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">
-            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full">
-              {selectedGuideline.category}
-            </span>
-            <span>Uploaded by {selectedGuideline.uploadedBy}</span>
-            <span>
-              {new Date(selectedGuideline.uploadedDate).toLocaleDateString()}
-            </span>
-          </div>
-          <div className="prose max-w-none">
-            <div className="whitespace-pre-wrap text-gray-900">
-              {selectedGuideline.content}
-            </div>
-          </div>
-        </div>
-        {confirmDelete && (
-          <ConfirmModal
-            title="Delete Guideline"
-            message="Are you sure you want to delete this guideline? This action cannot be undone."
-            onConfirm={() => handleDelete(confirmDelete)}
-            onCancel={() => setConfirmDelete(null)}
-            confirmText="Delete"
-            confirmStyle="danger"
-          />
-        )}
-      </div>
-    );
-  }
-
-  // Create mode - form to create a new guideline
-  if (isCreating) {
-    return (
-      <div className="max-w-4xl">
-        <button
-          onClick={handleBack}
-          className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-6"
-        >
-          ← Back to Guidelines
-        </button>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-gray-900 mb-6 text-xl font-semibold">
-            Publish New Guideline
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="title" className="block text-gray-700 mb-2">
-                Title *
-              </label>
-              <input
-                id="title"
-                type="text"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="description" className="block text-gray-700 mb-2">
-                Description *
-              </label>
-              <input
-                id="description"
-                type="text"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="category" className="block text-gray-700 mb-2">
-                Category *
-              </label>
-              <select
-                id="category"
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                required
-              >
-                <option value="Missing Persons">Missing Persons</option>
-                <option value="Crime Reports">Crime Reports</option>
-                <option value="System Administration">
-                  System Administration
-                </option>
-                <option value="Emergency Procedures">
-                  Emergency Procedures
-                </option>
-                <option value="General">General</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="content" className="block text-gray-700 mb-2">
-                Content *
-              </label>
-              <textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                rows={12}
-                placeholder="Enter the guideline content. You can use Markdown formatting."
-                required
-              />
-            </div>
-            <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
-              <button
-                type="submit"
-                className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                <Upload className="w-4 h-4" />
-                Publish Guideline
-              </button>
-              <button
-                type="button"
-                onClick={handleBack}
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   // List mode - showing all guidelines
   return (

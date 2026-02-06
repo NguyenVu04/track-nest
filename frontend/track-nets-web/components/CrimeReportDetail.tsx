@@ -101,14 +101,14 @@ export function CrimeReportDetail({
                 <div className="flex items-center gap-2">
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${getSeverityColor(
-                      report.severity
+                      report.severity,
                     )}`}
                   >
                     {report.severity} Severity
                   </span>
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
-                      report.status
+                      report.status,
                     )}`}
                   >
                     {report.status}
@@ -212,7 +212,7 @@ export function CrimeReportDetail({
       {confirmDelete && (
         <ConfirmModal
           title="Delete Crime Report"
-          message="Are you sure you want to delete this crime report? This action cannot be undone."
+          message={`Are you sure you want to delete this crime report? Title: ${report.title}. Type: ${report.type}. Location: ${report.location}.`}
           onConfirm={handleConfirmDelete}
           onCancel={() => setConfirmDelete(false)}
           confirmText="Delete"

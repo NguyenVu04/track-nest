@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Search, Filter, BarChart3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { CrimeReport } from "@/types";
 import { CrimeReportList } from "@/components/CrimeReportList";
-import { CrimeReportDetail } from "@/components/CrimeReportDetail";
-import { CrimeReportForm } from "@/components/CrimeReportForm";
 import { CrimeHeatmapView } from "@/components/CrimeHeatmapView";
+import { toast } from "sonner";
 
 // Mock data
 const mockCrimeReports: CrimeReport[] = [
@@ -79,58 +79,51 @@ const mockCrimeReports: CrimeReport[] = [
   },
 ];
 
-type ViewMode = "list" | "detail" | "create" | "edit" | "heatmap";
+type ViewMode = "list" | "heatmap";
 
 export default function CrimeReportsPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [crimeReports, setCrimeReports] =
     useState<CrimeReport[]>(mockCrimeReports);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [selectedReport, setSelectedReport] = useState<CrimeReport | null>(
-    null
-  );
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [severityFilter, setSeverityFilter] = useState<string>("all");
 
   if (!user) return null;
 
+  const mockRequest = async (shouldFail = false) => {
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    if (shouldFail) {
+      throw new Error("Mock server error");
+    }
+  };
+
   const handleViewDetail = (report: CrimeReport) => {
-    setSelectedReport(report);
-    setViewMode("detail");
+    router.push(`/dashboard/crime-reports/${report.id}`);
   };
 
   const handleCreateNew = () => {
-    setSelectedReport(null);
-    setViewMode("create");
+    router.push("/dashboard/crime-reports/create");
   };
 
   const handleEdit = (report: CrimeReport) => {
-    setSelectedReport(report);
-    setViewMode("edit");
+    router.push(`/dashboard/crime-reports/${report.id}/edit`);
   };
 
-  const handleSave = (report: CrimeReport) => {
-    if (viewMode === "create") {
-      setCrimeReports([...crimeReports, report]);
-    } else {
-      setCrimeReports(
-        crimeReports.map((r) => (r.id === report.id ? report : r))
-      );
-    }
-    setViewMode("list");
-  };
-
-  const handleDelete = (id: string) => {
-    setCrimeReports(crimeReports.filter((r) => r.id !== id));
-    if (selectedReport?.id === id) {
-      setViewMode("list");
+  const handleDelete = async (id: string) => {
+    try {
+      await mockRequest(false);
+      setCrimeReports(crimeReports.filter((r) => r.id !== id));
+      toast.success("Thành công");
+    } catch (error) {
+      toast.error("Lỗi khi xóa báo cáo tội phạm");
     }
   };
 
   const handleBackToList = () => {
     setViewMode("list");
-    setSelectedReport(null);
   };
 
   const handleViewHeatmap = () => {
@@ -154,43 +147,18 @@ export default function CrimeReportsPage() {
     );
   }
 
-  if (viewMode === "detail" && selectedReport) {
-    return (
-      <CrimeReportDetail
-        report={selectedReport}
-        onBack={handleBackToList}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        userRole={user.role}
-      />
-    );
-  }
-
-  if (viewMode === "create" || viewMode === "edit") {
-    return (
-      <CrimeReportForm
-        report={selectedReport}
-        onSave={handleSave}
-        onCancel={handleBackToList}
-        mode={viewMode}
-      />
-    );
-  }
-
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-gray-900 text-xl font-semibold">Crime Reports</h2>
         <div className="flex items-center gap-2">
-          {user.role === "Emergency Services" && (
-            <button
-              onClick={handleViewHeatmap}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              <BarChart3 className="w-4 h-4" />
-              Crime Heatmap
-            </button>
-          )}
+          <button
+            onClick={handleViewHeatmap}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Crime Heatmap
+          </button>
           {user.role === "Reporter" && (
             <button
               onClick={handleCreateNew}

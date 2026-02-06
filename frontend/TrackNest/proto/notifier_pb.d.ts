@@ -29,6 +29,60 @@ export namespace RegisterMobileDeviceRequest {
   };
 }
 
+export class UpdateMobileDeviceRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): UpdateMobileDeviceRequest;
+
+  getDevicetoken(): string;
+  setDevicetoken(value: string): UpdateMobileDeviceRequest;
+
+  getPlatform(): string;
+  setPlatform(value: string): UpdateMobileDeviceRequest;
+
+  getLanguagecode(): string;
+  setLanguagecode(value: string): UpdateMobileDeviceRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateMobileDeviceRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateMobileDeviceRequest): UpdateMobileDeviceRequest.AsObject;
+  static serializeBinaryToWriter(message: UpdateMobileDeviceRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateMobileDeviceRequest;
+  static deserializeBinaryFromReader(message: UpdateMobileDeviceRequest, reader: jspb.BinaryReader): UpdateMobileDeviceRequest;
+}
+
+export namespace UpdateMobileDeviceRequest {
+  export type AsObject = {
+    id: string;
+    devicetoken: string;
+    platform: string;
+    languagecode: string;
+  };
+}
+
+export class UpdateMobileDeviceResponse extends jspb.Message {
+  getStatus(): google_rpc_status_pb.Status | undefined;
+  setStatus(value?: google_rpc_status_pb.Status): UpdateMobileDeviceResponse;
+  hasStatus(): boolean;
+  clearStatus(): UpdateMobileDeviceResponse;
+
+  getUpdatedAtMs(): number;
+  setUpdatedAtMs(value: number): UpdateMobileDeviceResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateMobileDeviceResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateMobileDeviceResponse): UpdateMobileDeviceResponse.AsObject;
+  static serializeBinaryToWriter(message: UpdateMobileDeviceResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateMobileDeviceResponse;
+  static deserializeBinaryFromReader(message: UpdateMobileDeviceResponse, reader: jspb.BinaryReader): UpdateMobileDeviceResponse;
+}
+
+export namespace UpdateMobileDeviceResponse {
+  export type AsObject = {
+    status?: google_rpc_status_pb.Status.AsObject;
+    updatedAtMs: number;
+  };
+}
+
 export class RegisterMobileDeviceResponse extends jspb.Message {
   getStatus(): google_rpc_status_pb.Status | undefined;
   setStatus(value?: google_rpc_status_pb.Status): RegisterMobileDeviceResponse;

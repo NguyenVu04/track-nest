@@ -82,6 +82,49 @@ export class NotifierControllerClient {
     this.methodDescriptorRegisterMobileDevice);
   }
 
+  methodDescriptorUpdateMobileDevice = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.NotifierController/UpdateMobileDevice',
+    grpcWeb.MethodType.UNARY,
+    notifier_pb.UpdateMobileDeviceRequest,
+    notifier_pb.UpdateMobileDeviceResponse,
+    (request: notifier_pb.UpdateMobileDeviceRequest) => {
+      return request.serializeBinary();
+    },
+    notifier_pb.UpdateMobileDeviceResponse.deserializeBinary
+  );
+
+  updateMobileDevice(
+    request: notifier_pb.UpdateMobileDeviceRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<notifier_pb.UpdateMobileDeviceResponse>;
+
+  updateMobileDevice(
+    request: notifier_pb.UpdateMobileDeviceRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: notifier_pb.UpdateMobileDeviceResponse) => void): grpcWeb.ClientReadableStream<notifier_pb.UpdateMobileDeviceResponse>;
+
+  updateMobileDevice(
+    request: notifier_pb.UpdateMobileDeviceRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: notifier_pb.UpdateMobileDeviceResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/project.tracknest.usertracking.proto.v1.NotifierController/UpdateMobileDevice',
+        request,
+        metadata || {},
+        this.methodDescriptorUpdateMobileDevice,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/project.tracknest.usertracking.proto.v1.NotifierController/UpdateMobileDevice',
+    request,
+    metadata || {},
+    this.methodDescriptorUpdateMobileDevice);
+  }
+
   methodDescriptorUnregisterMobileDevice = new grpcWeb.MethodDescriptor(
     '/project.tracknest.usertracking.proto.v1.NotifierController/UnregisterMobileDevice',
     grpcWeb.MethodType.UNARY,

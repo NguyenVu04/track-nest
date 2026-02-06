@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Edit, Trash2 } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { CrimeReport } from "@/types";
 import { ConfirmModal } from "./ConfirmModal";
@@ -16,15 +16,14 @@ interface CrimeReportListProps {
 export function CrimeReportList({
   reports,
   onViewDetail,
-  onEdit,
   onDelete,
   userRole,
 }: CrimeReportListProps) {
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<CrimeReport | null>(null);
 
   const handleConfirmDelete = () => {
     if (confirmDelete) {
-      onDelete(confirmDelete);
+      onDelete(confirmDelete.id);
       setConfirmDelete(null);
     }
   };
@@ -95,7 +94,7 @@ export function CrimeReportList({
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 rounded-full text-sm ${getSeverityColor(
-                        report.severity
+                        report.severity,
                       )}`}
                     >
                       {report.severity}
@@ -104,7 +103,7 @@ export function CrimeReportList({
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
-                        report.status
+                        report.status,
                       )}`}
                     >
                       {report.status}
@@ -122,14 +121,7 @@ export function CrimeReportList({
                       {userRole === "Reporter" && (
                         <>
                           <button
-                            onClick={() => onEdit(report)}
-                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setConfirmDelete(report.id)}
+                            onClick={() => setConfirmDelete(report)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Delete Report"
                           >
@@ -149,7 +141,7 @@ export function CrimeReportList({
       {confirmDelete && (
         <ConfirmModal
           title="Delete Crime Report"
-          message="Are you sure you want to delete this crime report? This action cannot be undone."
+          message={`Are you sure you want to delete this crime report? Title: ${confirmDelete.title}. Type: ${confirmDelete.type}. Location: ${confirmDelete.location}.`}
           onConfirm={handleConfirmDelete}
           onCancel={() => setConfirmDelete(null)}
           confirmText="Delete"

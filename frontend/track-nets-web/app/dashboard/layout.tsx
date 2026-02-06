@@ -4,9 +4,12 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import {
+  LayoutDashboard,
   Users,
   Shield,
   BookOpen,
+  LifeBuoy,
+  MapPin,
   LogOut,
   UserCircle,
   Menu,
@@ -15,11 +18,46 @@ import {
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationButton } from "@/components/NotificationButton";
+import { Loading } from "@/components/Loading";
 
 const navigation = [
-  { href: "/dashboard/missing-persons", name: "Missing Persons", icon: Users },
-  { href: "/dashboard/crime-reports", name: "Crime Reports", icon: Shield },
-  { href: "/dashboard/guidelines", name: "Guidelines", icon: BookOpen },
+  {
+    href: "/dashboard",
+    name: "Overview",
+    icon: LayoutDashboard,
+  },
+  {
+    href: "/dashboard/missing-persons",
+    name: "Missing Persons",
+    icon: Users,
+  },
+  {
+    href: "/dashboard/crime-reports",
+    name: "Crime Reports",
+    icon: Shield,
+  },
+  {
+    href: "/dashboard/guidelines",
+    name: "Guidelines",
+    icon: BookOpen,
+  },
+  {
+    href: "/dashboard/emergency-requests",
+    name: "Emergency Requests",
+    icon: LifeBuoy,
+    roles: ["Emergency Services"],
+  },
+  {
+    href: "/dashboard/safe-zones",
+    name: "Safe Zones",
+    icon: MapPin,
+    roles: ["Emergency Services"],
+  },
+  {
+    href: "/dashboard/accounts",
+    name: "Accounts",
+    icon: UserCircle,
+  },
 ];
 
 export default function DashboardLayout({
@@ -27,24 +65,31 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Wait for auth to finish loading before checking authentication
+    if (!isLoading && !isAuthenticated) {
       router.push("/login");
     }
-  }, [isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router]);
 
   const handleLogout = () => {
     logout();
     router.push("/login");
   };
 
+  if (isLoading) {
+    // Show loading spinner while auth state is being restored
+    return <Loading fullScreen />;
+  }
+
   if (!isAuthenticated || !user) {
-    return null; // or a loading spinner
+    return null; // Router will redirect to login
   }
 
   return (
@@ -99,19 +144,24 @@ export default function DashboardLayout({
                 ? "translate-x-0"
                 : "-translate-x-full lg:translate-x-0"
             }
-            mt-[73px] lg:mt-0
+            mt-[73px] lg:mt-0 min-h-screen
           `}
         >
           <nav className="p-4 space-y-1">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`
+            {navigation
+              // .filter(
+              //   (item) =>
+              //     !item.roles || (user && item.roles.includes(user.role)),
+              // )
+              .map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`
                     w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
                     ${
                       isActive
@@ -119,12 +169,12 @@ export default function DashboardLayout({
                         : "text-gray-700 hover:bg-gray-100"
                     }
                   `}
-                >
-                  <Icon className="w-5 h-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {item.name}
+                  </Link>
+                );
+              })}
           </nav>
         </aside>
 
