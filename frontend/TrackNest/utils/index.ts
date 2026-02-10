@@ -1,4 +1,9 @@
+import { BACKGROUND_USER_LOCATION_TASK_NAME } from "@/constant";
+import { StoredTokens } from "@/contexts/AuthContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import * as Location from "expo-location";
+import * as TaskManager from "expo-task-manager";
 
 export const formatRelativeTime = (lastActive?: string | number | Date) => {
   if (!lastActive) return "";
@@ -50,4 +55,83 @@ export const getBaseUrl = () => {
 
   const ip = hostUri.split(":")[0];
   return `http://${ip}`;
+};
+
+const TOKEN_STORAGE_KEY = "@TrackNest:tokens";
+
+/**
+ * Retrieves the access token from device storage.
+ * Returns the authorization metadata object for gRPC calls.
+ */
+export const getAuthMetadata = async (): Promise<{ Authorization: string }> => {
+  const tokensJson = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+  if (!tokensJson) {
+    throw new Error("No authentication token found. Please log in.");
+  }
+  const tokens: StoredTokens = JSON.parse(tokensJson);
+  return {
+    Authorization: `Bearer ${tokens.accessToken}`,
+  };
+};
+
+export async function requestPermissionsAndStart() {
+  const { status: fgStatus } =
+    await Location.requestForegroundPermissionsAsync();
+
+  if (fgStatus !== "granted") {
+    return;
+  }
+
+  const { status: bgStatus } =
+    await Location.requestBackgroundPermissionsAsync();
+
+  if (bgStatus !== "granted") {
+    return;
+  }
+
+  await Location.startLocationUpdatesAsync(BACKGROUND_USER_LOCATION_TASK_NAME, {
+    accuracy: Location.Accuracy.BestForNavigation,
+    mayShowUserSettingsDialog: true,
+    // Optional foreground service notification shown while tracking in background
+    foregroundService: {
+      notificationTitle: "TrackNest is tracking your location",
+      notificationBody: "",
+      killServiceOnDestroy: false,
+    },
+    timeInterval: 60000, // milliseconds
+    distanceInterval: 300, // meters
+  });
+}
+
+export async function stopBackgroundLocationTracking() {
+  const isRegistered = await TaskManager.isTaskRegisteredAsync(
+    BACKGROUND_USER_LOCATION_TASK_NAME,
+  );
+  if (isRegistered) {
+    await Location.stopLocationUpdatesAsync(BACKGROUND_USER_LOCATION_TASK_NAME);
+
+    console.log("Background location tracking stopped.");
+  }
+}
+
+// Load saved location from storage
+export const loadSavedKey = async <T>(key: string): Promise<T | null> => {
+  try {
+    const saved = await AsyncStorage.getItem(key);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+};
+
+// Save location to storage
+export const saveKey = async <T>(key: string, value: T): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* ignore */
+  }
 };

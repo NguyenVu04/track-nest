@@ -49,6 +49,7 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
 import { useMapContext } from "@/contexts/MapContext";
+import { CORRECT_PIN } from "@/constant";
 
 export default function MapScreen() {
   const { mapRef, regionDelta, centerMap, resetCenterFlag } =
@@ -85,8 +86,6 @@ export default function MapScreen() {
       setTracking(true);
     }
   };
-
-  const CORRECT_PIN = "1234";
 
   const handlePinSubmit = (pin: string) => {
     if (pin !== CORRECT_PIN) {
@@ -215,6 +214,10 @@ export default function MapScreen() {
     },
     [selectCircle],
   );
+
+  const handleAddFamilyCircle = useCallback(() => {
+    
+  }, []);
 
   const handleSelectMapType = useCallback(
     (type: any) => {
@@ -470,6 +473,7 @@ export default function MapScreen() {
             familyCircles={familyCircles}
             selectedCircleId={selectedCircle?.familyCircleId ?? null}
             onSelectCircle={handleSelectFamilyCircle}
+            onAddFamilyCircle={}
           />
         </BottomSheetModal>
       </BottomSheetModalProvider>

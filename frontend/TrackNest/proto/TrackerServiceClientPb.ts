@@ -104,5 +104,48 @@ export class TrackerControllerClient {
     this.methodDescriptorListFamilyMemberLocationHistory);
   }
 
+  methodDescriptorUpdateUserLocation = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackerController/UpdateUserLocation',
+    grpcWeb.MethodType.UNARY,
+    tracker_pb.UpdateUserLocationRequest,
+    tracker_pb.UpdateUserLocationResponse,
+    (request: tracker_pb.UpdateUserLocationRequest) => {
+      return request.serializeBinary();
+    },
+    tracker_pb.UpdateUserLocationResponse.deserializeBinary
+  );
+
+  updateUserLocation(
+    request: tracker_pb.UpdateUserLocationRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<tracker_pb.UpdateUserLocationResponse>;
+
+  updateUserLocation(
+    request: tracker_pb.UpdateUserLocationRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: tracker_pb.UpdateUserLocationResponse) => void): grpcWeb.ClientReadableStream<tracker_pb.UpdateUserLocationResponse>;
+
+  updateUserLocation(
+    request: tracker_pb.UpdateUserLocationRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: tracker_pb.UpdateUserLocationResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/project.tracknest.usertracking.proto.v1.TrackerController/UpdateUserLocation',
+        request,
+        metadata || {},
+        this.methodDescriptorUpdateUserLocation,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/project.tracknest.usertracking.proto.v1.TrackerController/UpdateUserLocation',
+    request,
+    metadata || {},
+    this.methodDescriptorUpdateUserLocation);
+  }
+
 }
 

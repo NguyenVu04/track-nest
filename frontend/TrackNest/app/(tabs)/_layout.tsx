@@ -7,7 +7,9 @@ import { Tabs } from "expo-router";
 export default function RootLayout() {
   const t = useTranslation(tabsLang);
 
-  useRequireAuth();
+  const { isAuthenticated } = useRequireAuth();
+
+  if (!isAuthenticated && !__DEV__) return null;
 
   return (
     <Tabs

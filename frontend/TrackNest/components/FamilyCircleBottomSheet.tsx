@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { map as mapLang } from "@/constant/languages";
 import { FamilyCircle } from "@/constant/types";
@@ -11,11 +11,12 @@ interface FamilyCircleBottomSheetProps {
   familyCircles: FamilyCircle[];
   selectedCircleId: string | null;
   onSelectCircle: (circle: FamilyCircle) => void;
+  onAddFamilyCircle: () => void;
 }
 
 export const FamilyCircleBottomSheet: React.FC<
   FamilyCircleBottomSheetProps
-> = ({ familyCircles, selectedCircleId, onSelectCircle }) => {
+> = ({ familyCircles, selectedCircleId, onSelectCircle, onAddFamilyCircle }) => {
   const t = useTranslation(mapLang);
 
   if (familyCircles.length === 0) {
@@ -27,6 +28,22 @@ export const FamilyCircleBottomSheet: React.FC<
         <View style={styles.emptyContainer}>
           <Ionicons name="people-outline" size={48} color="#ccc" />
           <Text style={styles.emptyText}>{t.noFamilyCircles}</Text>
+          <TouchableOpacity
+            style={{
+              marginTop: 16,
+              backgroundColor: "#74becb",
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              borderRadius: 4,
+            }}
+            onPress={onAddFamilyCircle}
+          >
+            <Text
+              style={{ color: "#fff", fontWeight: "600", textAlign: "center" }}
+            >
+              Add new circle
+            </Text>
+          </TouchableOpacity>
         </View>
       </BottomSheetView>
     );
@@ -73,6 +90,22 @@ export const FamilyCircleBottomSheet: React.FC<
             </Pressable>
           );
         })}
+        <TouchableOpacity
+          style={{
+            marginTop: 16,
+            backgroundColor: "#74becb",
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            borderRadius: 4,
+          }}
+          onPress={onAddFamilyCircle}
+        >
+          <Text
+            style={{ color: "#fff", fontWeight: "600", textAlign: "center" }}
+          >
+            Add new circle
+          </Text>
+        </TouchableOpacity>
       </View>
     </BottomSheetView>
   );

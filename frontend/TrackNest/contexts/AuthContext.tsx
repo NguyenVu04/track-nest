@@ -242,7 +242,7 @@ export function useRequireAuth(): AuthContextType & { isReady: boolean } {
 
   useEffect(() => {
     // Wait until loading is complete before checking auth
-    if (!auth.isLoading && !auth.isAuthenticated) {
+    if (!auth.isLoading && !auth.isAuthenticated && !__DEV__) {
       router.replace("/login");
     }
   }, [auth.isLoading, auth.isAuthenticated, router]);

@@ -1,14 +1,6 @@
-export const images = [
-  {
-    id: 0,
-    src: "../assets/images/150-0.jpeg",
-  },
-  {
-    id: 1,
-    src: "../assets/images/150-1.jpg",
-  },
-  {
-    id: 2,
-    src: "../assets/images/150-2.jpg",
-  },
-];
+export const BACKGROUND_USER_LOCATION_TASK_NAME =
+  "background-user-location-task";
+
+export const LOCATION_STORAGE_KEY = "@tracknest/last_location";
+
+export const CORRECT_PIN = "1234";

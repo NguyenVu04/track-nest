@@ -24,3 +24,9 @@ export type FamilyCircle = {
   memberCount?: number;
   role?: string;
 };
+
+export type LocationState = {
+  latitude: number;
+  longitude: number;
+  speed: number | null;
+};

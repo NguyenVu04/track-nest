@@ -1,6 +1,5 @@
 import fetch from "cross-fetch"; // polyfill for RN
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { ClientReadableStream } from "grpc-web";
 
 import {
@@ -12,27 +11,9 @@ import {
   UpdateUserLocationResponse,
 } from "@/proto/tracker_pb";
 import { TrackerControllerClient } from "@/proto/TrackerServiceClientPb";
-import { getBaseUrl } from "@/utils";
-import { StoredTokens } from "@/contexts/AuthContext";
+import { getAuthMetadata, getBaseUrl } from "@/utils";
 
 global.fetch = global.fetch || fetch;
-
-const TOKEN_STORAGE_KEY = "@TrackNest:tokens";
-
-/**
- * Retrieves the access token from device storage.
- * Returns the authorization metadata object for gRPC calls.
- */
-const getAuthMetadata = async (): Promise<{ Authorization: string }> => {
-  const tokensJson = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
-  if (!tokensJson) {
-    throw new Error("No authentication token found. Please log in.");
-  }
-  const tokens: StoredTokens = JSON.parse(tokensJson);
-  return {
-    Authorization: `Bearer ${tokens.accessToken}`,
-  };
-};
 
 const baseUrl = getBaseUrl();
 
@@ -147,8 +128,6 @@ export const updateUserLocation = async (
   request.setAccuracyMeter(accuracyMeter);
   request.setVelocityMps(velocityMps);
   request.setTimestampMs(timestampMs ?? Date.now());
-
-  console.log("Updating user location:", { latitudeDeg, longitudeDeg });
 
   try {
     const metadata = await getAuthMetadata();
