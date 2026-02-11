@@ -6,7 +6,7 @@ import { Marker } from "react-native-maps";
 type Props = {
   latitude: number;
   longitude: number;
-  id?: string;
+  id: string;
   avatar?: string;
   name: string;
   sharingActive?: boolean; // true = actively sharing location

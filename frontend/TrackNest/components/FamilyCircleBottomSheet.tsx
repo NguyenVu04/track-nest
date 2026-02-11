@@ -1,14 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useState } from "react";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { map as mapLang } from "@/constant/languages";
+import { mockFamilyCircles } from "@/constant/mockFamilyCircles";
 import { FamilyCircle } from "@/constant/types";
 import { useTranslation } from "@/hooks/useTranslation";
-import { BottomSheetView } from "@gorhom/bottom-sheet";
+import { BottomSheetFlatList, BottomSheetView } from "@gorhom/bottom-sheet";
 
 interface FamilyCircleBottomSheetProps {
-  familyCircles: FamilyCircle[];
   selectedCircleId: string | null;
   onSelectCircle: (circle: FamilyCircle) => void;
   onAddFamilyCircle: () => void;
@@ -16,8 +22,48 @@ interface FamilyCircleBottomSheetProps {
 
 export const FamilyCircleBottomSheet: React.FC<
   FamilyCircleBottomSheetProps
-> = ({ familyCircles, selectedCircleId, onSelectCircle, onAddFamilyCircle }) => {
+> = ({ selectedCircleId, onSelectCircle, onAddFamilyCircle }) => {
   const t = useTranslation(mapLang);
+
+  const [familyCircles] = useState<FamilyCircle[]>(mockFamilyCircles);
+
+  const renderItem = useCallback(
+    ({ item }: { item: FamilyCircle }) => {
+      const isSelected = item.familyCircleId === selectedCircleId;
+      return (
+        <Pressable
+          key={item.familyCircleId}
+          style={[styles.circleItem, isSelected && styles.selectedItem]}
+          onPress={() => onSelectCircle(item)}
+        >
+          <View
+            style={[styles.circleIcon, isSelected && styles.selectedCircleIcon]}
+          >
+            <Ionicons
+              name="people"
+              size={24}
+              color={isSelected ? "#fff" : "#74becb"}
+            />
+          </View>
+          <View style={styles.circleInfo}>
+            <Text
+              style={[styles.circleName, isSelected && styles.selectedText]}
+            >
+              {item.name}
+            </Text>
+            <Text style={styles.circleMeta}>
+              {item.memberCount} {t.members}
+              {item.role === "admin" && " • Admin"}
+            </Text>
+          </View>
+          {isSelected && (
+            <Ionicons name="checkmark-circle" size={24} color="#74becb" />
+          )}
+        </Pressable>
+      );
+    },
+    [onSelectCircle, selectedCircleId, t.members],
+  );
 
   if (familyCircles.length === 0) {
     console.log("No family circles available");
@@ -53,43 +99,18 @@ export const FamilyCircleBottomSheet: React.FC<
     <BottomSheetView style={styles.container}>
       <Text style={styles.title}>{t.selectFamilyCircle}</Text>
       <View style={styles.listContainer}>
-        {familyCircles.map((circle) => {
-          const isSelected = circle.familyCircleId === selectedCircleId;
-          return (
-            <Pressable
-              key={circle.familyCircleId}
-              style={[styles.circleItem, isSelected && styles.selectedItem]}
-              onPress={() => onSelectCircle(circle)}
-            >
-              <View
-                style={[
-                  styles.circleIcon,
-                  isSelected && styles.selectedCircleIcon,
-                ]}
-              >
-                <Ionicons
-                  name="people"
-                  size={24}
-                  color={isSelected ? "#fff" : "#74becb"}
-                />
-              </View>
-              <View style={styles.circleInfo}>
-                <Text
-                  style={[styles.circleName, isSelected && styles.selectedText]}
-                >
-                  {circle.name}
-                </Text>
-                <Text style={styles.circleMeta}>
-                  {circle.memberCount} {t.members}
-                  {circle.role === "admin" && " • Admin"}
-                </Text>
-              </View>
-              {isSelected && (
-                <Ionicons name="checkmark-circle" size={24} color="#74becb" />
-              )}
-            </Pressable>
-          );
-        })}
+        <BottomSheetFlatList
+          data={familyCircles}
+          keyExtractor={(item: FamilyCircle) => item.familyCircleId}
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={true}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            gap: 24,
+            paddingBottom: 16,
+          }}
+          style={{ maxHeight: 320 }}
+        />
         <TouchableOpacity
           style={{
             marginTop: 16,
@@ -97,6 +118,7 @@ export const FamilyCircleBottomSheet: React.FC<
             paddingVertical: 8,
             paddingHorizontal: 16,
             borderRadius: 4,
+            flex: 1,
           }}
           onPress={onAddFamilyCircle}
         >
