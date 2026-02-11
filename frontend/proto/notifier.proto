@@ -1,54 +1,218 @@
 syntax = "proto3";
 
-package project.tracknest.usertracking.proto;
+package project.tracknest.usertracking.proto.v1;
 
-import "google/protobuf/empty.proto";
-import "google/protobuf/wrappers.proto";
+import "google/rpc/status.proto";
 
 option java_multiple_files = true;
 option java_package = "project.tracknest.usertracking.proto.lib";
 option java_outer_classname = "NotifierProto";
 
 service NotifierController {
-  rpc postMobileDevice (MobileDeviceRequest) returns (google.protobuf.StringValue);
-  rpc deleteMobileDevice (google.protobuf.StringValue) returns (google.protobuf.Empty);
-  rpc getTrackingNotifications (google.protobuf.Empty) returns (TrackingNotificationResponse);
-  rpc getRiskNotifications (google.protobuf.Empty) returns (RiskNotificationResponse);
-  rpc deleteTrackingNotification (google.protobuf.StringValue) returns (google.protobuf.Empty);
-  rpc deleteRiskNotification (google.protobuf.StringValue) returns (google.protobuf.Empty);
-  rpc deleteTrackingNotifications (NotificationIds) returns (google.protobuf.Empty);
-  rpc deleteRiskNotifications (NotificationIds) returns (google.protobuf.Empty);
-  rpc deleteAllTrackingNotifications (google.protobuf.Empty) returns (google.protobuf.Empty);
-  rpc deleteAllRiskNotifications (google.protobuf.Empty) returns (google.protobuf.Empty);
+  // NotifierController provides RPCs to manage mobile device registration
+  // and the lifecycle of tracking and risk notifications.
+  //
+  // Supported operations:
+  // - Register / Unregister mobile device tokens for push notifications.
+  // - List notifications with pagination.
+  // - Delete single or multiple notifications.
+  // - Clear all notifications.
+  //
+  // Responses generally include a `google.rpc.Status` to indicate the outcome
+  // and timestamps expressed as milliseconds since epoch for relevant events.
+
+  // Registers a mobile device token for push notifications.
+  rpc RegisterMobileDevice (RegisterMobileDeviceRequest)
+      returns (RegisterMobileDeviceResponse);
+
+  // Updates an existing mobile device registration by id.
+  rpc UpdateMobileDevice (UpdateMobileDeviceRequest)
+      returns (UpdateMobileDeviceResponse);
+
+  // Unregisters a previously registered mobile device by id.
+  rpc UnregisterMobileDevice (UnregisterMobileDeviceRequest)
+      returns (UnregisterMobileDeviceResponse);
+
+  // Lists tracking notifications for the current user with pagination.
+  rpc ListTrackingNotifications (ListTrackingNotificationsRequest)
+      returns (ListTrackingNotificationsResponse);
+
+  // Lists risk notifications for the current user with pagination.
+  rpc ListRiskNotifications (ListRiskNotificationsRequest)
+      returns (ListRiskNotificationsResponse);
+
+  // Deletes a single tracking notification by id.
+  rpc DeleteTrackingNotification (DeleteTrackingNotificationRequest)
+      returns (DeleteTrackingNotificationResponse);
+
+  // Deletes a single risk notification by id.
+  rpc DeleteRiskNotification (DeleteRiskNotificationRequest)
+      returns (DeleteRiskNotificationResponse);
+
+  // Deletes multiple tracking notifications by ids.
+  rpc DeleteTrackingNotifications (DeleteTrackingNotificationsRequest)
+      returns (DeleteTrackingNotificationsResponse);
+
+  // Deletes multiple risk notifications by ids.
+  rpc deleteRiskNotifications (DeleteRiskNotificationsRequest)
+      returns (DeleteRiskNotificationsResponse);
+
+  // Clears all tracking notifications for the current user.
+  rpc ClearTrackingNotifications (ClearTrackingNotificationsRequest)
+      returns (ClearTrackingNotificationsResponse);
+
+  // Clears all risk notifications for the current user.
+  rpc ClearRiskNotifications (ClearRiskNotificationsRequest)
+      returns (ClearRiskNotificationsResponse);
+
+  // Counts the total number of tracking notifications for the current user.
+  rpc CountTrackingNotifications (CountTrackingNotificationsRequest)
+      returns (CountTrackingNotificationsResponse);
+
+  // Counts the total number of risk notifications for the current user.
+  rpc CountRiskNotifications (CountRiskNotificationsRequest)
+      returns (CountRiskNotificationsResponse);
 }
 
-message NotificationIds {
-  repeated string ids = 1;
-}
-
-message MobileDeviceRequest {
+message RegisterMobileDeviceRequest {
   string deviceToken = 1;
-  string languageCode = 2;
+  string platform = 2;
+  string languageCode = 3;
+}
+
+message UpdateMobileDeviceRequest {
+  string id = 1;
+  string deviceToken = 2;
+  string platform = 3;
+  string languageCode = 4;
+}
+
+message UpdateMobileDeviceResponse {
+  google.rpc.Status status = 1;
+  uint64 updated_at_ms = 2;
+}
+
+message RegisterMobileDeviceResponse {
+  google.rpc.Status status = 1;
+  string id = 2;
+  uint64 created_at_ms = 3;
+}
+
+message UnregisterMobileDeviceRequest {
+  string id = 1;
+}
+
+message UnregisterMobileDeviceResponse {
+  google.rpc.Status status = 1;
+  uint64 deleted_at_ms = 2;
+}
+
+message ListTrackingNotificationsRequest {
+  int32 page_size = 1;
+  optional string page_token = 2;
+}
+
+message ListTrackingNotificationsResponse {
+  repeated TrackingNotificationResponse tracking_notifications = 1;
+  string next_page_token = 2;
 }
 
 message TrackingNotificationResponse {
   string id = 1;
-  string trackerId = 2;
-  string trackerUsername = 3;
-  string targetId = 4;
-  string targetUsername = 5;
-  uint64 createdAt = 6;//seconds since epoch
-  string title = 7;
-  string content = 8;
-  bool seen = 9;
+  string member_id = 4;
+  string member_username = 5;
+  string member_avatar_url = 6;
+  uint64 created_at_ms = 7;
+  string title = 8;
+  string content = 9;
+}
+
+message ListRiskNotificationsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListRiskNotificationsResponse {
+  repeated RiskNotificationResponse risk_notifications = 1;
+  string next_page_token = 2;
 }
 
 message RiskNotificationResponse {
   string id = 1;
-  string targetId = 2;
-  string targetUsername = 3;
-  uint64 createdAt = 4;//seconds since epoch
-  string title = 5;
-  string content = 6;
-  bool seen = 7;
+  string member_id = 2;
+  string member_username = 3;
+  string member_avatar_url = 4;
+  uint64 created_at_ms = 5;
+  string title = 6;
+  string content = 7;
+}
+
+message DeleteTrackingNotificationRequest {
+  string id = 1;
+}
+
+message DeleteTrackingNotificationResponse {
+  google.rpc.Status status = 1;
+  uint64 deleted_at_ms = 2;
+}
+
+message DeleteRiskNotificationRequest {
+  string id = 1;
+}
+
+message DeleteRiskNotificationResponse {
+  google.rpc.Status status = 1;
+  uint64 deleted_at_ms = 2;
+}
+
+message DeleteTrackingNotificationsRequest {
+  repeated string ids = 1;
+}
+
+message DeleteTrackingNotificationsResponse {
+  google.rpc.Status status = 1;
+  uint64 deleted_at_ms = 2;
+}
+
+message DeleteRiskNotificationsRequest {
+  repeated string ids = 1;
+}
+
+message DeleteRiskNotificationsResponse {
+  google.rpc.Status status = 1;
+  uint64 deleted_at_ms = 2;
+}
+
+message ClearTrackingNotificationsRequest {
+}
+
+message ClearTrackingNotificationsResponse {
+  google.rpc.Status status = 1;
+  uint64 cleared_at_ms = 2;
+}
+
+message ClearRiskNotificationsRequest {
+}
+
+message ClearRiskNotificationsResponse {
+  google.rpc.Status status = 1;
+  uint64 cleared_at_ms = 2;
+}
+
+message CountTrackingNotificationsRequest {
+}
+
+message CountTrackingNotificationsResponse {
+  int32 total_count = 1;
+  google.rpc.Status status = 2;
+  uint64 counted_at_ms = 3;
+}
+
+message CountRiskNotificationsRequest {
+}
+
+message CountRiskNotificationsResponse {
+  int32 total_count = 1;
+  google.rpc.Status status = 2;
+  uint64 counted_at_ms = 3;
 }
