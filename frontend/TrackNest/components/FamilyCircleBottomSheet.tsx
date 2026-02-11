@@ -13,17 +13,18 @@ import { mockFamilyCircles } from "@/constant/mockFamilyCircles";
 import { FamilyCircle } from "@/constant/types";
 import { useTranslation } from "@/hooks/useTranslation";
 import { BottomSheetFlatList, BottomSheetView } from "@gorhom/bottom-sheet";
+import { useRouter } from "expo-router";
 
 interface FamilyCircleBottomSheetProps {
   selectedCircleId: string | null;
   onSelectCircle: (circle: FamilyCircle) => void;
-  onAddFamilyCircle: () => void;
 }
 
 export const FamilyCircleBottomSheet: React.FC<
   FamilyCircleBottomSheetProps
-> = ({ selectedCircleId, onSelectCircle, onAddFamilyCircle }) => {
+> = ({ selectedCircleId, onSelectCircle }) => {
   const t = useTranslation(mapLang);
+  const router = useRouter();
 
   const [familyCircles] = useState<FamilyCircle[]>(mockFamilyCircles);
 
@@ -65,6 +66,27 @@ export const FamilyCircleBottomSheet: React.FC<
     [onSelectCircle, selectedCircleId, t.members],
   );
 
+  const onAddFamilyCircle = () => {
+    router.push("/family-circles/new");
+  };
+
+  const AddFamilyCircleButton = () => (
+    <TouchableOpacity
+      style={{
+        marginTop: 16,
+        backgroundColor: "#74becb",
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 4,
+      }}
+      onPress={onAddFamilyCircle}
+    >
+      <Text style={{ color: "#fff", fontWeight: "600", textAlign: "center" }}>
+        {t.addFamilyCircle}
+      </Text>
+    </TouchableOpacity>
+  );
+
   if (familyCircles.length === 0) {
     console.log("No family circles available");
 
@@ -74,22 +96,7 @@ export const FamilyCircleBottomSheet: React.FC<
         <View style={styles.emptyContainer}>
           <Ionicons name="people-outline" size={48} color="#ccc" />
           <Text style={styles.emptyText}>{t.noFamilyCircles}</Text>
-          <TouchableOpacity
-            style={{
-              marginTop: 16,
-              backgroundColor: "#74becb",
-              paddingVertical: 8,
-              paddingHorizontal: 16,
-              borderRadius: 4,
-            }}
-            onPress={onAddFamilyCircle}
-          >
-            <Text
-              style={{ color: "#fff", fontWeight: "600", textAlign: "center" }}
-            >
-              Add new circle
-            </Text>
-          </TouchableOpacity>
+          <AddFamilyCircleButton />
         </View>
       </BottomSheetView>
     );
@@ -111,23 +118,7 @@ export const FamilyCircleBottomSheet: React.FC<
           }}
           style={{ maxHeight: 320 }}
         />
-        <TouchableOpacity
-          style={{
-            marginTop: 16,
-            backgroundColor: "#74becb",
-            paddingVertical: 8,
-            paddingHorizontal: 16,
-            borderRadius: 4,
-            flex: 1,
-          }}
-          onPress={onAddFamilyCircle}
-        >
-          <Text
-            style={{ color: "#fff", fontWeight: "600", textAlign: "center" }}
-          >
-            Add new circle
-          </Text>
-        </TouchableOpacity>
+        <AddFamilyCircleButton />
       </View>
     </BottomSheetView>
   );

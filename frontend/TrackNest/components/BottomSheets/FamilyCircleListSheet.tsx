@@ -8,7 +8,6 @@ type FamilyCircleProps = {
   renderBackdrop: (props: any) => React.ReactElement;
   selectedCircle: any;
   handleSelectFamilyCircle: (circle: any) => void;
-  handleAddFamilyCircle: () => void;
 };
 
 const FamilyCircleListSheet = ({
@@ -16,7 +15,6 @@ const FamilyCircleListSheet = ({
   renderBackdrop,
   selectedCircle,
   handleSelectFamilyCircle,
-  handleAddFamilyCircle,
 }: FamilyCircleProps) => {
   const handleSheetChanges = (index: number) => {};
 
@@ -33,7 +31,6 @@ const FamilyCircleListSheet = ({
       <FamilyCircleBottomSheet
         selectedCircleId={selectedCircle?.familyCircleId ?? null}
         onSelectCircle={handleSelectFamilyCircle}
-        onAddFamilyCircle={handleAddFamilyCircle}
       />
     </BottomSheetModal>
   );

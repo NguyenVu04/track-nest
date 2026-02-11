@@ -18,6 +18,7 @@ export const Vietnamese = {
   me: "Tôi",
   selectFamilyCircle: "Chọn nhóm gia đình",
   familyCircles: "Nhóm gia đình",
+  addFamilyCircle: "Thêm nhóm gia đình",
   members: "thành viên",
   noFamilyCircles: "Bạn chưa tham gia nhóm nào",
 };
@@ -41,6 +42,7 @@ export const English = {
   me: "Me",
   selectFamilyCircle: "Select Family Circle",
   familyCircles: "Family Circles",
+  addFamilyCircle: "Add Family Circle",
   members: "members",
   noFamilyCircles: "You haven't joined any circles yet",
 };
