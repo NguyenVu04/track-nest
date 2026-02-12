@@ -8,6 +8,7 @@ export const Vietnamese = {
   category: "Danh mục",
   loading: "Đang tải...",
   noDataAvailable: "Không có dữ liệu",
+  title: "Báo cáo",
 };
 
 export const English = {
@@ -20,4 +21,5 @@ export const English = {
   category: "Category",
   loading: "Loading...",
   noDataAvailable: "No data available",
+  title: "Reports",
 };

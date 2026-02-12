@@ -223,6 +223,10 @@ export default function ReportsScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={styles.container}>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>{t.title}</Text>
+        </View>
+
         <View style={styles.segmentRow}>
           {tabs.map((tabItem) => (
             <Pressable
@@ -272,11 +276,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   headerRow: {
     height: 72,
-    paddingTop: 24,
-    paddingHorizontal: 12,
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
+    justifyContent: "center",
   },
   headerTitle: { fontSize: 18, fontWeight: "600" },
   segmentRow: { flexDirection: "row", padding: 12, gap: 8 },

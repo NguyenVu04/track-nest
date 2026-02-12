@@ -3,7 +3,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -14,9 +13,9 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
-  const router = useRouter();
   const { language, setLanguage } = useLanguage();
   const { logout } = useAuth();
   const t = useTranslation(settingsLang);
@@ -107,13 +106,9 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.headerRow}>
-        <Pressable onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </Pressable>
         <Text style={styles.headerTitle}>{t.pageTitle}</Text>
-        <View style={{ width: 24 }} />
       </View>
 
       <View style={{ padding: 12 }}>
@@ -313,7 +308,7 @@ export default function SettingsScreen() {
           </Text>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -321,11 +316,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   headerRow: {
     height: 72,
-    paddingTop: 24,
-    paddingHorizontal: 12,
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
+    justifyContent: "center",
   },
   headerTitle: { fontSize: 18, fontWeight: "600" },
   row: {
