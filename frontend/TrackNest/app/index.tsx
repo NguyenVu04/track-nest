@@ -1,6 +1,7 @@
 import {
   BACKGROUND_USER_LOCATION_TASK_NAME,
   LOCATION_STORAGE_KEY,
+  LOCATION_UPDATE_EMIT_EVENT,
 } from "@/constant";
 import { LocationState } from "@/constant/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,7 +10,7 @@ import { saveKey } from "@/utils";
 import * as Location from "expo-location";
 import { Redirect } from "expo-router";
 import * as TaskManager from "expo-task-manager";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, DeviceEventEmitter, View } from "react-native";
 
 TaskManager.defineTask(
   BACKGROUND_USER_LOCATION_TASK_NAME,
@@ -39,6 +40,11 @@ TaskManager.defineTask(
 
       try {
         await saveKey<LocationState>(LOCATION_STORAGE_KEY, {
+          latitude: lat,
+          longitude: lng,
+          speed: vel,
+        });
+        DeviceEventEmitter.emit(LOCATION_UPDATE_EMIT_EVENT, {
           latitude: lat,
           longitude: lng,
           speed: vel,

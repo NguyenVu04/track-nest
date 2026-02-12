@@ -92,10 +92,11 @@ export async function requestPermissionsAndStart() {
   await Location.startLocationUpdatesAsync(BACKGROUND_USER_LOCATION_TASK_NAME, {
     accuracy: Location.Accuracy.BestForNavigation,
     mayShowUserSettingsDialog: true,
-    // Optional foreground service notification shown while tracking in background
+    // Foreground service notification shown while tracking in background
     foregroundService: {
       notificationTitle: "TrackNest is tracking your location",
       notificationBody: "",
+      notificationColor: "#74becb",
       killServiceOnDestroy: false,
     },
     timeInterval: 60000, // milliseconds

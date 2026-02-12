@@ -1,4 +1,4 @@
-import { LOCATION_STORAGE_KEY } from "@/constant";
+import { LOCATION_STORAGE_KEY, LOCATION_UPDATE_EMIT_EVENT } from "@/constant";
 import { LocationState } from "@/constant/types";
 import {
   loadSavedKey,
@@ -7,6 +7,7 @@ import {
 } from "@/utils";
 import * as Location from "expo-location";
 import { useEffect, useRef, useState } from "react";
+import { DeviceEventEmitter } from "react-native";
 
 // Check if two locations are significantly different (more than ~10 meters)
 const isLocationDifferent = (
@@ -45,7 +46,6 @@ export default function useDeviceLocation(tracking: boolean) {
           (!locationRef.current ||
             isLocationDifferent(locationRef.current, saved))
         ) {
-          console.log("Loaded saved location:", saved);
           locationRef.current = saved;
           setLocation(saved);
         }
@@ -75,6 +75,19 @@ export default function useDeviceLocation(tracking: boolean) {
       } catch {
         /* ignore */
       }
+    };
+  }, [tracking]);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      LOCATION_UPDATE_EMIT_EVENT,
+      (newLocation) => {
+        locationRef.current = newLocation;
+        setLocation(newLocation);
+      },
+    );
+    return () => {
+      subscription.remove();
     };
   }, [tracking]);
 

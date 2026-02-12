@@ -7,3 +7,5 @@ export const BACKGROUND_CIRCLE_LOCATION_TASK_NAME =
 export const LOCATION_STORAGE_KEY = "@tracknest/last_location";
 
 export const CORRECT_PIN = "1234";
+
+export const LOCATION_UPDATE_EMIT_EVENT = "locationUpdated";
