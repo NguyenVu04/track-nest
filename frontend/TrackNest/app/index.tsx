@@ -1,4 +1,5 @@
 import {
+  BACKGROUND_CIRCLE_LOCATION_TASK_NAME,
   BACKGROUND_USER_LOCATION_TASK_NAME,
   LOCATION_STORAGE_KEY,
   LOCATION_UPDATE_EMIT_EVENT,
@@ -7,17 +8,20 @@ import { LocationState } from "@/constant/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { updateUserLocation } from "@/services/tracker";
 import { saveKey } from "@/utils";
+import * as BackgroundTask from "expo-background-task";
 import * as Location from "expo-location";
 import { Redirect } from "expo-router";
 import * as TaskManager from "expo-task-manager";
 import { ActivityIndicator, DeviceEventEmitter, View } from "react-native";
 
+// Background location task definition
 TaskManager.defineTask(
   BACKGROUND_USER_LOCATION_TASK_NAME,
   async ({ data, error }) => {
     if (error) {
       // check `error.message` for more details.
-      return;
+
+      return BackgroundTask.BackgroundTaskResult.Failed;
     }
 
     const locations = (data as { locations?: Location.LocationObject[] })
@@ -52,14 +56,31 @@ TaskManager.defineTask(
         const response = await updateUserLocation(lat, lng, acc || 0, vel || 0);
 
         console.log(JSON.stringify(response, null, 2));
+
+        return BackgroundTask.BackgroundTaskResult.Success;
       } catch (error: any) {
         console.error("Error updating location in background:", error.message);
+        return BackgroundTask.BackgroundTaskResult.Failed;
       } finally {
         console.log("Location updated in background.");
       }
     }
   },
 );
+
+// Background circle location task definition
+TaskManager.defineTask(BACKGROUND_CIRCLE_LOCATION_TASK_NAME, async () => {
+  try {
+    const now = Date.now();
+    console.log(
+      `Got background task call at date: ${new Date(now).toISOString()}`,
+    );
+  } catch (error) {
+    console.error("Failed to execute the background task:", error);
+    return BackgroundTask.BackgroundTaskResult.Failed;
+  }
+  return BackgroundTask.BackgroundTaskResult.Success;
+});
 
 export default function Index() {
   const { isAuthenticated, isLoading } = useAuth();

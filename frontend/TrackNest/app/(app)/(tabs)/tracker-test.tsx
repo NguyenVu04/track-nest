@@ -1,6 +1,8 @@
+import type { ClientReadableStream } from "grpc-web";
 import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Pressable,
   Alert,
   ScrollView,
   StyleSheet,
@@ -10,15 +12,16 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import type { ClientReadableStream } from "grpc-web";
 
-import { colors, spacing } from "@/styles/styles";
+import { FamilyMemberLocation } from "@/proto/tracker_pb";
 import {
-  streamFamilyMemberLocations,
   listFamilyMemberLocationHistory,
+  streamFamilyMemberLocations,
   updateUserLocation,
 } from "@/services/tracker";
-import { FamilyMemberLocation } from "@/proto/tracker_pb";
+import { colors, spacing } from "@/styles/styles";
+import { BACKGROUND_CIRCLE_LOCATION_TASK_NAME } from "@/constant";
+import { registerBackgroundTaskAsync, unregisterBackgroundTaskAsync } from "@/utils";
 
 export default function TrackerTestScreen() {
   // Stream state
@@ -146,6 +149,24 @@ export default function TrackerTestScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Tracker Service Test</Text>
+
+        <Pressable
+          style={{ marginBottom: 20, padding: 10, backgroundColor: "#eee" }}
+          onPress={() =>
+            registerBackgroundTaskAsync(BACKGROUND_CIRCLE_LOCATION_TASK_NAME)
+          }
+        >
+          <Text>Start</Text>
+        </Pressable>
+
+        <Pressable
+          style={{ marginBottom: 20, padding: 10, backgroundColor: "#eee" }}
+          onPress={() =>
+            unregisterBackgroundTaskAsync(BACKGROUND_CIRCLE_LOCATION_TASK_NAME)
+          }
+        >
+          <Text>Stop</Text>
+        </Pressable>
 
         {/* Stream Section */}
         <View style={styles.section}>

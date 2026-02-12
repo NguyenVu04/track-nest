@@ -6,7 +6,6 @@ import {
   BottomSheetModal,
   BottomSheetModalProvider,
 } from "@gorhom/bottom-sheet";
-import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Alert, Animated, Pressable, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -68,7 +67,6 @@ export default function MapScreen() {
   const { mapType, setMapType } = useMapContext();
   const { tracking, setTracking } = useTracking();
   const { selectedCircle, selectCircle } = useFamilyCircle();
-  const router = useRouter();
   const t = useTranslation(mapLang);
   const { location } = useDeviceLocation(tracking);
   const mockFollowers = useMockFollowers(
@@ -190,11 +188,6 @@ export default function MapScreen() {
     },
     [selectCircle],
   );
-
-  const handleAddFamilyCircle = () => {
-    router.push("/family-circles/new");
-    familyCircleSheetRef.current?.dismiss();
-  };
 
   const handleSelectMapType = useCallback(
     (type: any) => {
@@ -361,7 +354,6 @@ export default function MapScreen() {
           renderBackdrop={renderBackdrop}
           selectedCircle={selectedCircle}
           handleSelectFamilyCircle={handleSelectFamilyCircle}
-          handleAddFamilyCircle={handleAddFamilyCircle}
         />
       </BottomSheetModalProvider>
     </GestureHandlerRootView>

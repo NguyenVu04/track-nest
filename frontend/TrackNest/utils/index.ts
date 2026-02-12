@@ -1,6 +1,7 @@
 import { BACKGROUND_USER_LOCATION_TASK_NAME } from "@/constant";
 import { StoredTokens } from "@/contexts/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as BackgroundTask from "expo-background-task";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
@@ -113,6 +114,24 @@ export async function stopBackgroundLocationTracking() {
 
     console.log("Background location tracking stopped.");
   }
+}
+
+export async function registerBackgroundTaskAsync(taskName: string) {
+  console.log(`Registering background task: ${taskName}`);
+
+  const isRegistered = await BackgroundTask.getStatusAsync();
+
+  console.log(`Background task status: ${isRegistered}`);
+
+  return BackgroundTask.registerTaskAsync(taskName);
+}
+
+// 3. (Optional) Unregister tasks by specifying the task name
+// This will cancel any future background task calls that match the given name
+// Note: This does NOT need to be in the global scope and CAN be used in your React components!
+export async function unregisterBackgroundTaskAsync(taskName: string) {
+  console.log(`Unregistering background task: ${taskName}`);
+  return BackgroundTask.unregisterTaskAsync(taskName);
 }
 
 // Load saved location from storage
