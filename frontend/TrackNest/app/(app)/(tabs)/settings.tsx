@@ -22,7 +22,7 @@ export default function SettingsScreen() {
   const t = useTranslation(settingsLang);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
-  const [showTrackersModal, setShowTrackersModal] = useState(false);
+  const [showCirclesModal, setShowCirclesModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLanguageSelect = async (
@@ -74,12 +74,12 @@ export default function SettingsScreen() {
       },
     },
     {
-      key: "manageTrackers",
-      title: t.manageTrackersTitle,
-      subtitle: `3 ${t.manageTrackersSubtitle}`,
+      key: "manageCircles",
+      title: t.manageCirclesTitle,
+      subtitle: `3 ${t.manageCirclesSubtitle}`,
       icon: "navigate",
       onPress: () => {
-        setShowTrackersModal(true);
+        setShowCirclesModal(true);
       },
     },
     {
@@ -275,23 +275,23 @@ export default function SettingsScreen() {
         </Modal>
 
         <Modal
-          visible={showTrackersModal}
+          visible={showCirclesModal}
           transparent
           animationType="fade"
-          onRequestClose={() => setShowTrackersModal(false)}
+          onRequestClose={() => setShowCirclesModal(false)}
         >
           <Pressable
             style={styles.modalOverlay}
-            onPress={() => setShowTrackersModal(false)}
+            onPress={() => setShowCirclesModal(false)}
           >
             <View
               style={styles.modalContent}
               onStartShouldSetResponder={() => true}
             >
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{t.manageTrackersTitle}</Text>
+                <Text style={styles.modalTitle}>{t.manageCirclesTitle}</Text>
                 <Pressable
-                  onPress={() => setShowTrackersModal(false)}
+                  onPress={() => setShowCirclesModal(false)}
                   style={styles.closeButton}
                 >
                   <Ionicons name="close" size={24} color="#666" />
@@ -300,7 +300,7 @@ export default function SettingsScreen() {
 
               <View style={styles.emptyState}>
                 <Ionicons name="navigate-outline" size={48} color="#ccc" />
-                <Text style={styles.emptyStateText}>No trackers yet</Text>
+                <Text style={styles.emptyStateText}>No circles yet</Text>
               </View>
             </View>
           </Pressable>

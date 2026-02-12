@@ -15,19 +15,8 @@ export default function RootLayout() {
           <MapProvider>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
-              <Stack.Screen name="login" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="manage-trackers" />
-              <Stack.Screen name="missing-detail" />
-              <Stack.Screen name="report-detail" />
-              <Stack.Screen
-                name="sos"
-                options={{
-                  gestureEnabled: false,
-                  animation: "none",
-                  headerBackVisible: false,
-                }}
-              />
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(app)" />
             </Stack>
           </MapProvider>
         </TrackingProvider>
