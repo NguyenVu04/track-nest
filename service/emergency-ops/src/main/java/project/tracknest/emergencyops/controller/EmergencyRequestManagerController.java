@@ -1,10 +1,12 @@
 package project.tracknest.emergencyops.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.AcceptEmergencyRequestResponse;
+import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.CloseEmergencyRequestResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.GetEmergencyRequestsResponse;
 import project.tracknest.emergencyops.core.datatype.PageRequest;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.RejectEmergencyRequestResponse;
@@ -19,7 +21,9 @@ public class EmergencyRequestManagerController {
     private final EmergencyRequestManagerService service;
 
     @GetMapping("/requests")
-    public ResponseEntity<PageResponse<GetEmergencyRequestsResponse>> getEmergencyRequests(PageRequest request) {
+    public ResponseEntity<PageResponse<GetEmergencyRequestsResponse>> getEmergencyRequests(
+            @RequestBody @Valid PageRequest request
+    ) {
         //TODO: Implementation would go here
         return ResponseEntity.ok().build();
     }
@@ -41,7 +45,7 @@ public class EmergencyRequestManagerController {
     }
 
     @PatchMapping("/requests/{requestId}/close")
-    public ResponseEntity<Void> closeEmergencyRequest(
+    public ResponseEntity<CloseEmergencyRequestResponse> closeEmergencyRequest(
             @PathVariable("requestId") UUID requestId
     ) {
         //TODO: Implementation would go here
