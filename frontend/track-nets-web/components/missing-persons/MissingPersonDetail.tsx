@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import type { MissingPerson } from "@/types";
-import { MapView } from "./MapView";
-import { ConfirmModal } from "./ConfirmModal";
+import { MapView } from "../shared/MapView";
+import { ConfirmModal } from "../shared/ConfirmModal";
 
 interface MissingPersonDetailProps {
   person: MissingPerson;
@@ -80,7 +80,7 @@ export function MissingPersonDetail({
                 <h3 className="text-gray-900 mb-2">{person.name}</h3>
                 <span
                   className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
-                    person.status
+                    person.status,
                   )}`}
                 >
                   {person.status}

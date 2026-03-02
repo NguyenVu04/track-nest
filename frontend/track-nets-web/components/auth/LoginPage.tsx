@@ -1,44 +1,46 @@
-import { useState } from 'react';
-import { Lock, User as UserIcon } from 'lucide-react';
-import type { User } from '../App';
+import { useState } from "react";
+import { Lock, User as UserIcon } from "lucide-react";
 
 interface LoginPageProps {
-  onLogin: (user: User) => void;
+  onLogin: (user: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+  }) => void;
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     // Mock authentication - in production, this would validate against a backend
-    if (username === 'reporter' && password === 'demo123') {
+    if (username === "reporter" && password === "demo123") {
       onLogin({
-        id: '1',
-        username: 'reporter',
-        email: 'reporter@track.com',
-        role: 'Reporter',
-        fullName: 'John Reporter',
+        id: "1",
+        email: "reporter@track.com",
+        role: "Reporter",
+        fullName: "John Reporter",
       });
-    } else if (username === 'emergency' && password === 'demo123') {
+    } else if (username === "emergency" && password === "demo123") {
       onLogin({
-        id: '2',
-        username: 'emergency',
-        email: 'emergency@track.com',
-        role: 'Emergency Services',
-        fullName: 'Jane Emergency',
+        id: "2",
+        email: "emergency@track.com",
+        role: "Emergency Services",
+        fullName: "Jane Emergency",
       });
     } else {
-      setError('Invalid username or password');
+      setError("Invalid username or password");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4">
@@ -102,8 +104,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <div className="mt-6 pt-6 border-t border-gray-200">
           <p className="text-gray-600 text-sm">Demo Credentials:</p>
           <div className="mt-2 space-y-1 text-sm">
-            <p className="text-gray-500">Reporter: <span className="font-mono">reporter / demo123</span></p>
-            <p className="text-gray-500">Emergency: <span className="font-mono">emergency / demo123</span></p>
+            <p className="text-gray-500">
+              Reporter: <span className="font-mono">reporter / demo123</span>
+            </p>
+            <p className="text-gray-500">
+              Emergency: <span className="font-mono">emergency / demo123</span>
+            </p>
           </div>
         </div>
       </div>

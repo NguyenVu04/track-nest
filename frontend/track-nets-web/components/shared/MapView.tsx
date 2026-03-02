@@ -44,6 +44,7 @@ interface MapViewProps {
   markers?: MarkerData[];
   zones?: ZoneData[];
   heatmapData?: [number, number, number][]; // [lat, lng, intensity]
+  height?: string;
 }
 
 // Component to handle map bounds fitting
@@ -75,17 +76,15 @@ export function MapView({
   markers = [],
   zones = [],
   heatmapData = [],
+  height = "100%",
 }: MapViewProps) {
-  console.log(
-    "MapView render with center:",
-    center,
-    markers,
-    zones,
-    heatmapData,
-  );
-
   return (
-    <MapContainer center={center} zoom={13} className="rounded-lg flex-1 z-10">
+    <MapContainer
+      center={center}
+      zoom={13}
+      className="rounded-lg flex-1 z-10"
+      style={{ height }}
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

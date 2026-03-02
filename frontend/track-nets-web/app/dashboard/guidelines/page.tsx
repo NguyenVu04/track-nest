@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Search, FileText, Trash2, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Guideline } from "@/types";
-import { ConfirmModal } from "@/components/ConfirmModal";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { toast } from "sonner";
 
 // Mock data

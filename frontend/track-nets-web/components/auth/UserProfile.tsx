@@ -1,38 +1,42 @@
-import { useState } from 'react';
-import { User, Mail, Lock, Save } from 'lucide-react';
-import type { User as UserType } from '../App';
+import { useState } from "react";
+import { User, Mail, Lock, Save } from "lucide-react";
 
 interface UserProfileProps {
-  user: UserType;
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+  };
 }
 
 export function UserProfile({ user }: UserProfileProps) {
   const [fullName, setFullName] = useState(user.fullName);
   const [email, setEmail] = useState(user.email);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
     // Mock update - in production, this would update the backend
-    setSuccessMessage('Profile updated successfully!');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    setSuccessMessage("Profile updated successfully!");
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      alert('Passwords do not match!');
+      alert("Passwords do not match!");
       return;
     }
     // Mock update - in production, this would update the backend
-    setSuccessMessage('Password updated successfully!');
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    setSuccessMessage("Password updated successfully!");
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   return (
@@ -59,7 +63,7 @@ export function UserProfile({ user }: UserProfileProps) {
                 <input
                   id="username"
                   type="text"
-                  value={user.username}
+                  value={user.email.split("@")[0]}
                   disabled
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                 />
@@ -126,7 +130,10 @@ export function UserProfile({ user }: UserProfileProps) {
           <h3 className="text-gray-900 mb-4">Change Password</h3>
           <form onSubmit={handleUpdatePassword} className="space-y-4">
             <div>
-              <label htmlFor="currentPassword" className="block text-gray-700 mb-2">
+              <label
+                htmlFor="currentPassword"
+                className="block text-gray-700 mb-2"
+              >
                 Current Password
               </label>
               <div className="relative">
@@ -160,7 +167,10 @@ export function UserProfile({ user }: UserProfileProps) {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-gray-700 mb-2">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-gray-700 mb-2"
+              >
                 Confirm New Password
               </label>
               <div className="relative">

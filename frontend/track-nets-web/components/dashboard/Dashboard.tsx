@@ -1,35 +1,39 @@
-import { useState } from 'react';
-import { 
-  Users, 
-  FileText, 
-  Shield, 
-  BookOpen, 
-  LogOut, 
+import { useState } from "react";
+import {
+  Users,
+  FileText,
+  Shield,
+  BookOpen,
+  LogOut,
   UserCircle,
   Menu,
-  X
-} from 'lucide-react';
-import type { User } from '../App';
-import { MissingPersonDashboard } from './MissingPersonDashboard';
-import { CrimeDashboard } from './CrimeDashboard';
-import { GuidelineDashboard } from './GuidelineDashboard';
-import { UserProfile } from './UserProfile';
+  X,
+} from "lucide-react";
+import { MissingPersonDashboard } from "../missing-persons/MissingPersonDashboard";
+import { CrimeDashboard } from "../crime-reports/CrimeDashboard";
+import { GuidelineDashboard } from "../shared/GuidelineDashboard";
+import { UserProfile } from "../auth/UserProfile";
 
 interface DashboardProps {
-  user: User;
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+  };
   onLogout: () => void;
 }
 
-type View = 'missing-persons' | 'crime-reports' | 'guidelines' | 'profile';
+type View = "missing-persons" | "crime-reports" | "guidelines" | "profile";
 
 export function Dashboard({ user, onLogout }: DashboardProps) {
-  const [currentView, setCurrentView] = useState<View>('missing-persons');
+  const [currentView, setCurrentView] = useState<View>("missing-persons");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigation = [
-    { id: 'missing-persons', name: 'Missing Persons', icon: Users },
-    { id: 'crime-reports', name: 'Crime Reports', icon: Shield },
-    { id: 'guidelines', name: 'Guidelines', icon: BookOpen },
+    { id: "missing-persons", name: "Missing Persons", icon: Users },
+    { id: "crime-reports", name: "Crime Reports", icon: Shield },
+    { id: "guidelines", name: "Guidelines", icon: BookOpen },
   ];
 
   return (
@@ -42,7 +46,11 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
             >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {sidebarOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
             <div>
               <h1 className="text-gray-900">TRACK Dashboard</h1>
@@ -51,7 +59,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setCurrentView('profile')}
+              onClick={() => setCurrentView("profile")}
               className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <UserCircle className="w-5 h-5" />
@@ -74,7 +82,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           className={`
             fixed lg:static inset-y-0 left-0 z-20 w-64 bg-white border-r border-gray-200
             transform transition-transform duration-300 ease-in-out
-            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
             mt-[73px] lg:mt-0
           `}
         >
@@ -91,9 +99,10 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
                   }}
                   className={`
                     w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                    ${isActive 
-                      ? 'bg-indigo-50 text-indigo-600' 
-                      : 'text-gray-700 hover:bg-gray-100'
+                    ${
+                      isActive
+                        ? "bg-indigo-50 text-indigo-600"
+                        : "text-gray-700 hover:bg-gray-100"
                     }
                   `}
                 >
@@ -107,10 +116,12 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
 
         {/* Main Content */}
         <main className="flex-1 p-6">
-          {currentView === 'missing-persons' && <MissingPersonDashboard user={user} />}
-          {currentView === 'crime-reports' && <CrimeDashboard user={user} />}
-          {currentView === 'guidelines' && <GuidelineDashboard user={user} />}
-          {currentView === 'profile' && <UserProfile user={user} />}
+          {currentView === "missing-persons" && (
+            <MissingPersonDashboard user={user} />
+          )}
+          {currentView === "crime-reports" && <CrimeDashboard user={user} />}
+          {currentView === "guidelines" && <GuidelineDashboard user={user} />}
+          {currentView === "profile" && <UserProfile user={user} />}
         </main>
       </div>
 

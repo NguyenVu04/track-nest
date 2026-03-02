@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { MissingPerson } from "@/types";
-import { MissingPersonForm } from "@/components/MissingPersonForm";
-import { Loading } from "@/components/Loading";
+import { MissingPersonForm } from "@/components/missing-persons/MissingPersonForm";
+import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 
 // Mock data

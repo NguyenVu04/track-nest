@@ -24,7 +24,7 @@ import {
   TrendingUp,
   Calendar,
 } from "lucide-react";
-import { Card } from "./ui/card";
+import { Card } from "../ui/card";
 
 interface StatCard {
   title: string;
@@ -37,8 +37,8 @@ interface StatCard {
 
 interface ChartDataPoint {
   name: string;
-  value: number;
-  [key: string]: string | number;
+  value?: number;
+  [key: string]: string | number | undefined;
 }
 
 export function DashboardSummary() {
@@ -184,7 +184,7 @@ export function DashboardSummary() {
                 <p className="text-xs text-gray-500 mt-2">{stat.description}</p>
               </div>
               <div
-                className={`p-3 rounded-lg bg-gradient-to-br ${stat.color} text-gray-700`}
+                className={`p-3 rounded-lg bg-linear-to-br ${stat.color} text-gray-700`}
               >
                 {stat.icon}
               </div>
@@ -421,23 +421,23 @@ export function DashboardSummary() {
           Safety Guidelines
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+          <div className="p-4 bg-linear-to-br from-green-50 to-green-100 rounded-lg">
             <p className="text-sm text-gray-600 mb-1">Total Guidelines</p>
             <p className="text-2xl font-bold text-green-600">
               {guidelineStats.total}
             </p>
           </div>
-          <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+          <div className="p-4 bg-linear-to-br from-blue-50 to-blue-100 rounded-lg">
             <p className="text-sm text-gray-600 mb-1">This Month</p>
             <p className="text-2xl font-bold text-blue-600">
               {guidelineStats.recent}
             </p>
           </div>
-          <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg">
+          <div className="p-4 bg-linear-to-br from-indigo-50 to-indigo-100 rounded-lg">
             <p className="text-sm text-gray-600 mb-1">New This Week</p>
             <p className="text-2xl font-bold text-indigo-600">2</p>
           </div>
-          <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
+          <div className="p-4 bg-linear-to-br from-purple-50 to-purple-100 rounded-lg">
             <p className="text-sm text-gray-600 mb-1">Views</p>
             <p className="text-2xl font-bold text-purple-600">342</p>
           </div>

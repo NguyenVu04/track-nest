@@ -5,7 +5,7 @@ import { CheckCircle, XCircle, ClipboardCheck, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
 import type { EmergencyRequest } from "@/types";
-import { MapView } from "@/components/MapView";
+import { MapView } from "@/components/shared/MapView";
 import { toast } from "sonner";
 
 const mockRequests: EmergencyRequest[] = [

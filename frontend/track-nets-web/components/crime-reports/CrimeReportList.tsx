@@ -1,9 +1,11 @@
 "use client";
 
-import { Eye, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Eye, Trash2, Shield } from "lucide-react";
+import { useState, memo } from "react";
 import type { CrimeReport } from "@/types";
-import { ConfirmModal } from "./ConfirmModal";
+import { ConfirmModal } from "../shared/ConfirmModal";
+import { AnimatedListItem } from "../animations/AnimatedListItem";
+import { EmptyState } from "../shared/EmptyState";
 
 interface CrimeReportListProps {
   reports: CrimeReport[];
@@ -13,7 +15,7 @@ interface CrimeReportListProps {
   userRole: string;
 }
 
-export function CrimeReportList({
+export const CrimeReportList = memo(function CrimeReportList({
   reports,
   onViewDetail,
   onDelete,
@@ -56,9 +58,11 @@ export function CrimeReportList({
 
   if (reports.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-        <p className="text-gray-500">No crime reports found.</p>
-      </div>
+      <EmptyState
+        icon={Shield}
+        title="No Crime Reports Found"
+        description="There are no crime reports matching your current filters. Try adjusting your search criteria or create a new report."
+      />
     );
   }
 
@@ -81,8 +85,8 @@ export function CrimeReportList({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {reports.map((report) => (
-                <tr key={report.id} className="hover:bg-gray-50">
+              {reports.map((report, index) => (
+                <AnimatedListItem key={report.id} index={index}>
                   <td className="px-6 py-4">
                     <div className="text-gray-900">{report.title}</div>
                   </td>
@@ -131,7 +135,7 @@ export function CrimeReportList({
                       )}
                     </div>
                   </td>
-                </tr>
+                </AnimatedListItem>
               ))}
             </tbody>
           </table>
@@ -150,4 +154,4 @@ export function CrimeReportList({
       )}
     </>
   );
-}
+});
