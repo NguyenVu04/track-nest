@@ -22,8 +22,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { User, UserActivity } from "@/types";
-import { ConfirmModal } from "@/components/ConfirmModal";
-import { Loading } from "@/components/Loading";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 
 // Mock data for users

@@ -1,9 +1,11 @@
 "use client";
 
-import { Eye, CheckCircle, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Eye, CheckCircle, Trash2, Users } from "lucide-react";
+import { useState, memo } from "react";
 import type { MissingPerson } from "@/types";
-import { ConfirmModal } from "./ConfirmModal";
+import { ConfirmModal } from "../shared/ConfirmModal";
+import { AnimatedListItem } from "../animations/AnimatedListItem";
+import { EmptyState } from "../shared/EmptyState";
 
 interface MissingPersonListProps {
   persons: MissingPerson[];
@@ -13,7 +15,7 @@ interface MissingPersonListProps {
   userRole: string;
 }
 
-export function MissingPersonList({
+export const MissingPersonList = memo(function MissingPersonList({
   persons,
   onViewDetail,
   onPublish,
@@ -54,9 +56,11 @@ export function MissingPersonList({
 
   if (persons.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-        <p className="text-gray-500">No missing person reports found.</p>
-      </div>
+      <EmptyState
+        icon={Users}
+        title="No Missing Person Reports Found"
+        description="There are currently no missing person reports. When new reports are submitted, they will appear here."
+      />
     );
   }
 
@@ -80,8 +84,8 @@ export function MissingPersonList({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {persons.map((person) => (
-                <tr key={person.id} className="hover:bg-gray-50">
+              {persons.map((person, index) => (
+                <AnimatedListItem key={person.id} index={index}>
                   <td className="px-6 py-4">
                     <div className="text-gray-900">{person.name}</div>
                     <div className="text-gray-500 text-sm">{person.gender}</div>
@@ -96,7 +100,7 @@ export function MissingPersonList({
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
-                        person.status
+                        person.status,
                       )}`}
                     >
                       {person.status}
@@ -143,7 +147,7 @@ export function MissingPersonList({
                       )}
                     </div>
                   </td>
-                </tr>
+                </AnimatedListItem>
               ))}
             </tbody>
           </table>
@@ -173,4 +177,4 @@ export function MissingPersonList({
       )}
     </>
   );
-}
+});

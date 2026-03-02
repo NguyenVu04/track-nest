@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { Plus, Search, Upload, FileText, Trash2, Eye } from 'lucide-react';
-import type { User } from '../App';
-import { ConfirmModal } from './ConfirmModal';
+import { useState } from "react";
+import { Plus, Search, Upload, FileText, Trash2, Eye } from "lucide-react";
+import { ConfirmModal } from "./ConfirmModal";
 
 export interface Guideline {
   id: string;
@@ -15,18 +14,24 @@ export interface Guideline {
 }
 
 interface GuidelineDashboardProps {
-  user: User;
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+  };
 }
 
 // Mock data
 const mockGuidelines: Guideline[] = [
   {
-    id: '1',
-    title: 'Missing Person Report Guidelines',
-    description: 'Step-by-step guide for filing and managing missing person reports',
-    category: 'Missing Persons',
-    uploadedBy: 'Admin',
-    uploadedDate: '2025-12-15T10:00:00Z',
+    id: "1",
+    title: "Missing Person Report Guidelines",
+    description:
+      "Step-by-step guide for filing and managing missing person reports",
+    category: "Missing Persons",
+    uploadedBy: "Admin",
+    uploadedDate: "2025-12-15T10:00:00Z",
     content: `# Missing Person Report Guidelines
 
 ## Overview
@@ -53,12 +58,12 @@ This document provides comprehensive guidelines for handling missing person repo
 - Update reports as new information becomes available`,
   },
   {
-    id: '2',
-    title: 'Crime Reporting Procedures',
-    description: 'Protocols for documenting and reporting criminal incidents',
-    category: 'Crime Reports',
-    uploadedBy: 'Admin',
-    uploadedDate: '2025-12-20T14:30:00Z',
+    id: "2",
+    title: "Crime Reporting Procedures",
+    description: "Protocols for documenting and reporting criminal incidents",
+    category: "Crime Reports",
+    uploadedBy: "Admin",
+    uploadedDate: "2025-12-20T14:30:00Z",
     content: `# Crime Reporting Procedures
 
 ## Purpose
@@ -84,12 +89,12 @@ To establish standardized procedures for documenting and reporting criminal inci
 - Monitor report status regularly`,
   },
   {
-    id: '3',
-    title: 'System Access and Security',
-    description: 'User authentication and security best practices',
-    category: 'System Administration',
-    uploadedBy: 'Admin',
-    uploadedDate: '2026-01-01T09:00:00Z',
+    id: "3",
+    title: "System Access and Security",
+    description: "User authentication and security best practices",
+    category: "System Administration",
+    uploadedBy: "Admin",
+    uploadedDate: "2026-01-01T09:00:00Z",
     content: `# System Access and Security
 
 ## Account Security
@@ -123,27 +128,29 @@ To establish standardized procedures for documenting and reporting criminal inci
 
 export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
   const [guidelines, setGuidelines] = useState<Guideline[]>(mockGuidelines);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [selectedGuideline, setSelectedGuideline] = useState<Guideline | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [selectedGuideline, setSelectedGuideline] = useState<Guideline | null>(
+    null,
+  );
   const [isCreating, setIsCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: 'Missing Persons',
-    content: '',
+    title: "",
+    description: "",
+    category: "Missing Persons",
+    content: "",
   });
 
   const handleCreateNew = () => {
     setIsCreating(true);
     setSelectedGuideline(null);
     setFormData({
-      title: '',
-      description: '',
-      category: 'Missing Persons',
-      content: '',
+      title: "",
+      description: "",
+      category: "Missing Persons",
+      content: "",
     });
   };
 
@@ -154,13 +161,18 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
       title: formData.title,
       description: formData.description,
       category: formData.category,
-      uploadedBy: user.username,
+      uploadedBy: user.fullName,
       uploadedDate: new Date().toISOString(),
       content: formData.content,
     };
     setGuidelines([newGuideline, ...guidelines]);
     setIsCreating(false);
-    setFormData({ title: '', description: '', category: 'Missing Persons', content: '' });
+    setFormData({
+      title: "",
+      description: "",
+      category: "Missing Persons",
+      content: "",
+    });
   };
 
   const handleDelete = (id: string) => {
@@ -185,7 +197,8 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
     const matchesSearch =
       guideline.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       guideline.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || guideline.category === categoryFilter;
+    const matchesCategory =
+      categoryFilter === "all" || guideline.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
@@ -205,7 +218,7 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
               <h2 className="text-gray-900 mb-2">{selectedGuideline.title}</h2>
               <p className="text-gray-600">{selectedGuideline.description}</p>
             </div>
-            {user.role === 'Reporter' && (
+            {user.role === "Reporter" && (
               <button
                 onClick={() => setConfirmDelete(selectedGuideline.id)}
                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -220,10 +233,14 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
               {selectedGuideline.category}
             </span>
             <span>Uploaded by {selectedGuideline.uploadedBy}</span>
-            <span>{new Date(selectedGuideline.uploadedDate).toLocaleDateString()}</span>
+            <span>
+              {new Date(selectedGuideline.uploadedDate).toLocaleDateString()}
+            </span>
           </div>
           <div className="prose max-w-none">
-            <div className="whitespace-pre-wrap text-gray-900">{selectedGuideline.content}</div>
+            <div className="whitespace-pre-wrap text-gray-900">
+              {selectedGuideline.content}
+            </div>
           </div>
         </div>
         {confirmDelete && (
@@ -261,7 +278,9 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
                 id="title"
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               />
@@ -274,7 +293,9 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
                 id="description"
                 type="text"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               />
@@ -286,14 +307,20 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
               <select
                 id="category"
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 required
               >
                 <option value="Missing Persons">Missing Persons</option>
                 <option value="Crime Reports">Crime Reports</option>
-                <option value="System Administration">System Administration</option>
-                <option value="Emergency Procedures">Emergency Procedures</option>
+                <option value="System Administration">
+                  System Administration
+                </option>
+                <option value="Emergency Procedures">
+                  Emergency Procedures
+                </option>
                 <option value="General">General</option>
               </select>
             </div>
@@ -304,7 +331,9 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
               <textarea
                 id="content"
                 value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, content: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 rows={12}
                 placeholder="Enter the guideline content. You can use Markdown formatting."
@@ -338,7 +367,7 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-gray-900">System Guidelines</h2>
-        {user.role === 'Reporter' && (
+        {user.role === "Reporter" && (
           <button
             onClick={handleCreateNew}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -371,7 +400,9 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
               <option value="all">All Categories</option>
               <option value="Missing Persons">Missing Persons</option>
               <option value="Crime Reports">Crime Reports</option>
-              <option value="System Administration">System Administration</option>
+              <option value="System Administration">
+                System Administration
+              </option>
               <option value="Emergency Procedures">Emergency Procedures</option>
               <option value="General">General</option>
             </select>
@@ -403,7 +434,9 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
                       {guideline.category}
                     </span>
                     <span>By {guideline.uploadedBy}</span>
-                    <span>{new Date(guideline.uploadedDate).toLocaleDateString()}</span>
+                    <span>
+                      {new Date(guideline.uploadedDate).toLocaleDateString()}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
@@ -414,7 +447,7 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
                   >
                     <Eye className="w-4 h-4" />
                   </button>
-                  {user.role === 'Reporter' && (
+                  {user.role === "Reporter" && (
                     <button
                       onClick={() => setConfirmDelete(guideline.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

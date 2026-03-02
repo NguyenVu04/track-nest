@@ -5,8 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Guideline } from "@/types";
-import { ConfirmModal } from "@/components/ConfirmModal";
-import { Loading } from "@/components/Loading";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 
 // Mock data

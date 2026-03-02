@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { User } from "@/types";
-import { ConfirmModal } from "@/components/ConfirmModal";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { toast } from "sonner";
 
 // Mock data for users

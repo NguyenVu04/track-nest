@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import type { CrimeReport } from "@/types";
-import { MapView } from "./MapView";
-import { ConfirmModal } from "./ConfirmModal";
+import { MapView } from "../shared/MapView";
+import { ConfirmModal } from "../shared/ConfirmModal";
 
 interface CrimeReportDetailProps {
   report: CrimeReport;

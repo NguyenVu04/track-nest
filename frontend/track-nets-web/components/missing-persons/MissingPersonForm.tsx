@@ -7,7 +7,7 @@ import type { MissingPerson } from "@/types";
 
 // Dynamically import LocationPicker to avoid SSR issues with Leaflet
 const LocationPicker = dynamic(
-  () => import("./LocationPicker").then((mod) => mod.LocationPicker),
+  () => import("../shared/LocationPicker").then((mod) => mod.LocationPicker),
   {
     ssr: false,
     loading: () => (

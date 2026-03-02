@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Plus, Trash2, Search, MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { SafeZone } from "@/types";
-import { ConfirmModal } from "@/components/ConfirmModal";
-import { MapView } from "@/components/MapView";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { MapView } from "@/components/shared/MapView";
 import { toast } from "sonner";
 
 const mockZones: SafeZone[] = [
@@ -180,7 +180,7 @@ export default function SafeZonesPage() {
               : "All Safe Zones Map"}
           </h3>
         </div>
-        <div className="h-96">
+        <div className="h-128">
           <MapView
             center={
               selectedZone

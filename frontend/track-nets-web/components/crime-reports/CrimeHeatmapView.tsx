@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowLeft, Download } from "lucide-react";
 import type { CrimeReport } from "@/types";
-import { MapView } from "./MapView";
+import { MapView } from "../shared/MapView";
 import { toast } from "sonner";
 
 interface CrimeHeatmapViewProps {

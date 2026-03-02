@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { CrimeReport } from "@/types";
-import { CrimeReportForm } from "@/components/CrimeReportForm";
+import { CrimeReportForm } from "@/components/crime-reports/CrimeReportForm";
 import { toast } from "sonner";
 
 // Mock data

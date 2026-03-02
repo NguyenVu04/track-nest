@@ -5,8 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
 import type { MissingPerson } from "@/types";
-import { MissingPersonDetail } from "@/components/MissingPersonDetail";
-import { Loading } from "@/components/Loading";
+import { MissingPersonDetail } from "@/components/missing-persons/MissingPersonDetail";
+import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 
 // Mock data

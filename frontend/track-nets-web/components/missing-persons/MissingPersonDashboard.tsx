@@ -1,9 +1,8 @@
-import { useState } from 'react';
-import { Plus, Search, Filter } from 'lucide-react';
-import type { User } from '../App';
-import { MissingPersonList } from './MissingPersonList';
-import { MissingPersonDetail } from './MissingPersonDetail';
-import { MissingPersonForm } from './MissingPersonForm';
+import { useState } from "react";
+import { Plus, Search, Filter } from "lucide-react";
+import { MissingPersonList } from "./MissingPersonList";
+import { MissingPersonDetail } from "./MissingPersonDetail";
+import { MissingPersonForm } from "./MissingPersonForm";
 
 export interface MissingPerson {
   id: string;
@@ -14,7 +13,7 @@ export interface MissingPerson {
   lastSeenLocation: string;
   lastSeenDate: string;
   coordinates: [number, number];
-  status: 'Unhandled' | 'Published' | 'Resolved';
+  status: "Unhandled" | "Published" | "Resolved";
   reportedBy: string;
   reportedDate: string;
   contactInfo: string;
@@ -22,103 +21,116 @@ export interface MissingPerson {
 }
 
 interface MissingPersonDashboardProps {
-  user: User;
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+  };
 }
 
-type ViewMode = 'list' | 'detail' | 'create' | 'edit';
+type ViewMode = "list" | "detail" | "create" | "edit";
 
 // Mock data
 const mockMissingPersons: MissingPerson[] = [
   {
-    id: '1',
-    name: 'Sarah Johnson',
+    id: "1",
+    name: "Sarah Johnson",
     age: 28,
-    gender: 'Female',
-    description: 'Brown hair, blue eyes, 5\'6" tall, wearing a red jacket',
-    lastSeenLocation: 'Central Park, New York',
-    lastSeenDate: '2026-01-02T14:30:00Z',
+    gender: "Female",
+    description: "Brown hair, blue eyes, 5'6\" tall, wearing a red jacket",
+    lastSeenLocation: "Central Park, New York",
+    lastSeenDate: "2026-01-02T14:30:00Z",
     coordinates: [40.7829, -73.9654],
-    status: 'Unhandled',
-    reportedBy: 'Mike Johnson',
-    reportedDate: '2026-01-02T16:00:00Z',
-    contactInfo: '+1 (555) 123-4567',
+    status: "Unhandled",
+    reportedBy: "Mike Johnson",
+    reportedDate: "2026-01-02T16:00:00Z",
+    contactInfo: "+1 (555) 123-4567",
   },
   {
-    id: '2',
-    name: 'David Martinez',
+    id: "2",
+    name: "David Martinez",
     age: 16,
-    gender: 'Male',
-    description: 'Black hair, brown eyes, 5\'8" tall, wearing school uniform',
-    lastSeenLocation: 'Downtown Metro Station',
-    lastSeenDate: '2026-01-03T08:15:00Z',
-    coordinates: [40.7580, -73.9855],
-    status: 'Published',
-    reportedBy: 'Maria Martinez',
-    reportedDate: '2026-01-03T10:00:00Z',
-    contactInfo: '+1 (555) 987-6543',
+    gender: "Male",
+    description: "Black hair, brown eyes, 5'8\" tall, wearing school uniform",
+    lastSeenLocation: "Downtown Metro Station",
+    lastSeenDate: "2026-01-03T08:15:00Z",
+    coordinates: [40.758, -73.9855],
+    status: "Published",
+    reportedBy: "Maria Martinez",
+    reportedDate: "2026-01-03T10:00:00Z",
+    contactInfo: "+1 (555) 987-6543",
   },
   {
-    id: '3',
-    name: 'Emily Chen',
+    id: "3",
+    name: "Emily Chen",
     age: 35,
-    gender: 'Female',
-    description: 'Long black hair, brown eyes, 5\'4" tall, last seen in business attire',
-    lastSeenLocation: 'Financial District',
-    lastSeenDate: '2026-01-01T18:45:00Z',
+    gender: "Female",
+    description:
+      "Long black hair, brown eyes, 5'4\" tall, last seen in business attire",
+    lastSeenLocation: "Financial District",
+    lastSeenDate: "2026-01-01T18:45:00Z",
     coordinates: [40.7074, -74.0113],
-    status: 'Published',
-    reportedBy: 'James Chen',
-    reportedDate: '2026-01-02T09:00:00Z',
-    contactInfo: '+1 (555) 456-7890',
+    status: "Published",
+    reportedBy: "James Chen",
+    reportedDate: "2026-01-02T09:00:00Z",
+    contactInfo: "+1 (555) 456-7890",
   },
 ];
 
 export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
-  const [missingPersons, setMissingPersons] = useState<MissingPerson[]>(mockMissingPersons);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [selectedPerson, setSelectedPerson] = useState<MissingPerson | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [missingPersons, setMissingPersons] =
+    useState<MissingPerson[]>(mockMissingPersons);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [selectedPerson, setSelectedPerson] = useState<MissingPerson | null>(
+    null,
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const handleViewDetail = (person: MissingPerson) => {
     setSelectedPerson(person);
-    setViewMode('detail');
+    setViewMode("detail");
   };
 
   const handleCreateNew = () => {
     setSelectedPerson(null);
-    setViewMode('create');
+    setViewMode("create");
   };
 
   const handleEdit = (person: MissingPerson) => {
     setSelectedPerson(person);
-    setViewMode('edit');
+    setViewMode("edit");
   };
 
   const handleSave = (person: MissingPerson) => {
-    if (viewMode === 'create') {
+    if (viewMode === "create") {
       setMissingPersons([...missingPersons, person]);
     } else {
-      setMissingPersons(missingPersons.map((p) => (p.id === person.id ? person : p)));
+      setMissingPersons(
+        missingPersons.map((p) => (p.id === person.id ? person : p)),
+      );
     }
-    setViewMode('list');
+    setViewMode("list");
   };
 
   const handlePublish = (id: string) => {
     setMissingPersons(
-      missingPersons.map((p) => (p.id === id ? { ...p, status: 'Published' } : p))
+      missingPersons.map((p) =>
+        p.id === id ? { ...p, status: "Published" } : p,
+      ),
     );
   };
 
   const handleDelete = (id: string) => {
     setMissingPersons(missingPersons.filter((p) => p.id !== id));
     if (selectedPerson?.id === id) {
-      setViewMode('list');
+      setViewMode("list");
     }
   };
 
   const handleBackToList = () => {
-    setViewMode('list');
+    setViewMode("list");
     setSelectedPerson(null);
   };
 
@@ -126,11 +138,12 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
     const matchesSearch =
       person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       person.lastSeenLocation.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || person.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || person.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  if (viewMode === 'detail' && selectedPerson) {
+  if (viewMode === "detail" && selectedPerson) {
     return (
       <MissingPersonDetail
         person={selectedPerson}
@@ -143,7 +156,7 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
     );
   }
 
-  if (viewMode === 'create' || viewMode === 'edit') {
+  if (viewMode === "create" || viewMode === "edit") {
     return (
       <MissingPersonForm
         person={selectedPerson}
@@ -158,7 +171,7 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-gray-900">Missing Person Reports</h2>
-        {user.role === 'Reporter' && (
+        {user.role === "Reporter" && (
           <button
             onClick={handleCreateNew}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -201,7 +214,6 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
       <MissingPersonList
         persons={filteredPersons}
         onViewDetail={handleViewDetail}
-        onEdit={handleEdit}
         onPublish={handlePublish}
         onDelete={handleDelete}
         userRole={user.role}
