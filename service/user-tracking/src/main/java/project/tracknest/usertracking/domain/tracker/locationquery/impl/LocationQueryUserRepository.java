@@ -8,7 +8,7 @@ import project.tracknest.usertracking.core.entity.User;
 import java.util.List;
 import java.util.UUID;
 
-interface UserRepository extends JpaRepository<User, UUID> {
+interface LocationQueryUserRepository extends JpaRepository<User, UUID> {
 
     @Query("""
     SELECT u

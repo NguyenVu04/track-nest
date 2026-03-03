@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 class LocationQueryServiceImpl implements LocationQueryService, LocationMessageConsumer {
     private final LocationObserver observer;
-    private final LocationRepository locationRepository;
-    private final UserRepository userRepository;
+    private final LocationQueryLocationRepository locationRepository;
+    private final LocationQueryUserRepository userRepository;
 
     @Override
     @Transactional(readOnly = true)

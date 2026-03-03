@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-interface LocationRepository extends JpaRepository<Location, Location.LocationId> {
+interface LocationQueryLocationRepository extends JpaRepository<Location, Location.LocationId> {
     @Query(value =
             "SELECT * FROM location l " +
                     "WHERE l.user_id = :userId " +

@@ -39,9 +39,9 @@ class SafeZoneManagerServiceImpl implements SafeZoneManagerService {
                 .builder()
                 .emergencyService(service)
                 .name(request.getName())
-                .latitude(request.getLatitude())
-                .longitude(request.getLongitude())
-                .radius(request.getRadius())
+                .latitude(request.getLatitudeDegrees())
+                .longitude(request.getLongitudeDegrees())
+                .radius(request.getRadiusMeters())
                 .build();
 
         SafeZone savedSafeZone = safeZoneRepository.saveAndFlush(safeZone);
