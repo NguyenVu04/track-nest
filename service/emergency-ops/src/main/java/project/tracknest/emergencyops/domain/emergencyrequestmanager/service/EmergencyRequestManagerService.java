@@ -1,6 +1,5 @@
 package project.tracknest.emergencyops.domain.emergencyrequestmanager.service;
 
-import project.tracknest.emergencyops.core.datatype.PageRequest;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.AcceptEmergencyRequestResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.CloseEmergencyRequestResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.GetEmergencyRequestsResponse;

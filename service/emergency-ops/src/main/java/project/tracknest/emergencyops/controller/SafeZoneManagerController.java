@@ -4,12 +4,18 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.Range;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
 import project.tracknest.emergencyops.domain.safezonemanager.impl.datatype.*;
 import project.tracknest.emergencyops.domain.safezonemanager.service.SafeZoneManagerService;
+
+import java.util.UUID;
+
+import static project.tracknest.emergencyops.configuration.security.SecurityUtils.getCurrentUserId;
 
 @RestController
 @RequestMapping("/safe-zone-manager")
@@ -22,35 +28,56 @@ public class SafeZoneManagerController {
     public ResponseEntity<PostSafeZoneResponse> postSafeZone(
             @Valid @RequestBody PostSafeZoneRequest request
     ) {
+        UUID serviceId = getCurrentUserId();
 
-        //TODO: implement the logic to create a safe zone and return the response
-        return ResponseEntity.ok().build();
+        PostSafeZoneResponse response = service.createSafeZone(serviceId, request);
+
+        return ResponseEntity
+                .ok(response);
     }
 
-    @GetMapping("/safe-zone")
-    public ResponseEntity<PageResponse<GetServiceSafeZoneResponse>> getServiceSafeZones(
-            @RequestParam(name = "pageSize")
-            @Size(min = 1, max = 256, message = "Page size must be between 1 and 256")
-            int pageSize,
+    @GetMapping("/safe-zones")
+    public ResponseEntity<PageResponse<GetServiceSafeZonesResponse>> getServiceSafeZones(
+            @RequestParam(name = "nameFilter", required = false)
+            @Size(max = 100, message = "Name filter must be at most 100 characters")
+            String nameFilter,
 
-            @RequestParam(name = "pageToken") String pageToken
+            Pageable pageable
     ) {
-        // TODO: implement the logic to get the safe zones for a service and return the response
-        return ResponseEntity.ok().build();
+        UUID serviceId = getCurrentUserId();
+
+        PageResponse<GetServiceSafeZonesResponse> response = service
+                .retrieveServiceSafeZones(
+                        serviceId,
+                        nameFilter,
+                        pageable);
+
+        return ResponseEntity
+                .ok(response);
     }
 
     @PutMapping("/safe-zone/{safeZoneId}")
     public ResponseEntity<PutSafeZoneResponse> updateSafeZone(
-            @PathVariable("safeZoneId") String safeZoneId,
-            @Valid @RequestBody PostSafeZoneRequest request
+            @PathVariable String safeZoneId,
+            @Valid @RequestBody PutSafeZoneRequest request
     ) {
-        return ResponseEntity.ok().build();
+        UUID serviceId = getCurrentUserId();
+        UUID safeZoneUUID = UUID.fromString(safeZoneId);
+
+        PutSafeZoneResponse response = service.updateSafeZone(serviceId, safeZoneUUID, request);
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/safe-zone/{safeZoneId}")
     public ResponseEntity<DeleteSafeZoneResponse> deleteSafeZone(
-            @PathVariable("safeZoneId") String safeZoneId
+            @PathVariable String safeZoneId
     ) {
-        return ResponseEntity.ok().build();
+        UUID serviceId = getCurrentUserId();
+        UUID safeZoneUUID = UUID.fromString(safeZoneId);
+
+        DeleteSafeZoneResponse response = service.deleteSafeZone(serviceId, safeZoneUUID);
+
+        return ResponseEntity.ok(response);
     }
 }

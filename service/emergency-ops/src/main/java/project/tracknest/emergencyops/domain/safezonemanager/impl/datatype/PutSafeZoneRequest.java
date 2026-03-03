@@ -6,5 +6,8 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PutSafeZoneRequest {
-
+    float latitude;
+    float longitude;
+    float radius;
+    String name;
 }

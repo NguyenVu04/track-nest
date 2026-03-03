@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import project.tracknest.emergencyops.core.datatype.PageRequest;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.EmergencyRequestReceiverService;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.datatype.GetTrackerEmergencyRequestResponse;

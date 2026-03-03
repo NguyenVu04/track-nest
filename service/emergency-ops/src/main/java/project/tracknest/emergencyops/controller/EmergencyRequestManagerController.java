@@ -8,7 +8,6 @@ import project.tracknest.emergencyops.core.datatype.PageResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.AcceptEmergencyRequestResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.CloseEmergencyRequestResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.GetEmergencyRequestsResponse;
-import project.tracknest.emergencyops.core.datatype.PageRequest;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.RejectEmergencyRequestResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.service.EmergencyRequestManagerService;
 

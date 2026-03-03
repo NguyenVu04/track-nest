@@ -1,4 +1,4 @@
-package project.tracknest.emergencyops.domain.safezonemanager.impl.datatype;
+package project.tracknest.emergencyops.domain.safezonelocator.datatype;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
@@ -7,6 +7,5 @@ import lombok.Data;
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class GetServiceSafeZoneResponse {
-
+public class GetNearestSafeZoneResponse {
 }

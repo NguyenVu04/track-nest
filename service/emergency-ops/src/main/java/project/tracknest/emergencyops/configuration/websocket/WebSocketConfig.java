@@ -1,22 +1,28 @@
 package project.tracknest.emergencyops.configuration.websocket;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.socket.config.annotation.EnableWebSocket;
-import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.*;
 
 @Configuration
 @EnableWebSocket
-@RequiredArgsConstructor
-public class WebSocketConfig implements WebSocketConfigurer {
-    private final UserWebSocketHandler userWebSocketHandler;
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        String USER_WEBSOCKET_PATH = "/user";
-        registry.addHandler(userWebSocketHandler, USER_WEBSOCKET_PATH)
-                .setAllowedOriginPatterns("*")
-                .setHandshakeHandler(new PrincipalHandshakeHandler());
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+
+        registry.setApplicationDestinationPrefixes("/app");
+
+        registry.setUserDestinationPrefix("/user");
+
     }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry
+                .addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+    }
+
 }

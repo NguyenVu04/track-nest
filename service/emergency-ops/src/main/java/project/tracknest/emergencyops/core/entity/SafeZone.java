@@ -30,11 +30,11 @@ public class SafeZone {
 
     @Range(min = -180, max = 180, message = "Longitude must be between -180 and 180")
     @Column(name = "longitude", nullable = false, updatable = false)
-    private double longitude;
+    private float longitude;
 
     @Range(min = -90, max = 90, message = "Latitude must be between -90 and 90")
     @Column(name = "latitude", nullable = false, updatable = false)
-    private double latitude;
+    private float latitude;
 
     @Generated
     @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", updatable = false)
@@ -42,12 +42,12 @@ public class SafeZone {
 
     @Min(value = 0, message = "Radius must be non-negative")
     @Column(name = "radius", nullable = false, updatable = false)
-    private double radius;
+    private float radius;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "emergency_service_id", nullable = false, updatable = false)
     private EmergencyService emergencyService;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 }
