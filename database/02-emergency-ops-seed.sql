@@ -1,64 +1,229 @@
 BEGIN;
+------------------------------------------------
+-- Emergency services
+------------------------------------------------
+INSERT INTO emergency_service (id, username, phone_number, longitude, latitude)
+VALUES (
+        '6c6ca52f-46b9-472b-8868-86ab2775b187',
+        'emgser1',
+        '0112345678',
+        106.7009,
+        10.7769
+    ),
+    (
+        '2c57e800-b4e2-48ba-b43c-b61075530236',
+        'emgser2',
+        '0212345678',
+        106.7031,
+        10.7785
+    ),
+    (
+        '168d6df2-21ef-4773-8a38-6fad42d527e9',
+        'emgser3',
+        '0312345678',
+        106.6984,
+        10.7752
+    ),
+    (
+        '7ed33501-bcf8-4944-b043-44b328a3a071',
+        'emgser4',
+        '850963741',
+        106.7048,
+        10.7798
+    ),
+    (
+        '2077665d-ecaa-44f6-82ee-a721bf7785bd',
+        'emgser5',
+        '4563217890',
+        106.7015,
+        10.7746
+    );
 
-INSERT INTO emergency_service (id, longitude, latitude) VALUES
-    ('6c6ca52f-46b9-472b-8868-86ab2775b187', -73.935242, 40.730610),
-    ('2c57e800-b4e2-48ba-b43c-b61075530236', -0.127758, 51.507351),
-    ('168d6df2-21ef-4773-8a38-6fad42d527e9', 139.691711, 35.689487),
-    ('0e745cb3-5f38-419b-b446-d204c2e15ba9', 151.209290, -33.868820)
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO emergency_request_status (name)
+VALUES ('PENDING'),
+('REJECTED'),
+('ACCEPTED'),
+('CLOSED') ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO emergency_service_tracks_user (user_id, emergency_service_id) VALUES
-    ('dd382dcf-3652-499c-acdb-5d9ce99a67b8','6c6ca52f-46b9-472b-8868-86ab2775b187'),
-    ('dd382dcf-3652-499c-acdb-5d9ce99a67b8','2c57e800-b4e2-48ba-b43c-b61075530236'),
-    ('8c52c01e-42a7-45cc-9254-db8a7601c764','6c6ca52f-46b9-472b-8868-86ab2775b187'),
-    ('8c52c01e-42a7-45cc-9254-db8a7601c764','168d6df2-21ef-4773-8a38-6fad42d527e9'),
-    ('4405a37d-bc86-403e-b605-bedd7db88d37','0e745cb3-5f38-419b-b446-d204c2e15ba9'),
-    ('4405a37d-bc86-403e-b605-bedd7db88d37','168d6df2-21ef-4773-8a38-6fad42d527e9'),
-    ('2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5','2c57e800-b4e2-48ba-b43c-b61075530236'),
-    ('2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5','0e745cb3-5f38-419b-b446-d204c2e15ba9'),
-    ('f8f735b4-549c-4d8c-9e10-15f8c198b71b','6c6ca52f-46b9-472b-8868-86ab2775b187'),
-    ('f8f735b4-549c-4d8c-9e10-15f8c198b71b','2c57e800-b4e2-48ba-b43c-b61075530236')
-ON CONFLICT DO NOTHING;
+INSERT INTO emergency_request_status_translation (language_code, value, status_name)
+VALUES ('en', 'Pending', 'PENDING'),
+    ('vi', 'Đang chờ', 'PENDING'),
+    ('en', 'Rejected', 'REJECTED'),
+    ('vi', 'Từ chối', 'REJECTED'),
+    ('en', 'Accepted', 'ACCEPTED'),
+    ('vi', 'Đã chấp nhận', 'ACCEPTED'),
+    ('en', 'Closed', 'CLOSED'),
+    ('vi', 'Đã đóng', 'CLOSED') ON CONFLICT (language_code, status_name) DO NOTHING;
 
-INSERT INTO emergency_request_status (name) VALUES
-    ('PENDING'),('REJECTED'),('ACCEPTED'),('CLOSED')
-ON CONFLICT (name) DO NOTHING;
-
-INSERT INTO emergency_request_status_translation (language_code, value, status_name) VALUES
-    ('en','Pending','PENDING'),
-    ('vi','Đang chờ','PENDING'),
-    ('en','Rejected','REJECTED'),
-    ('vi','Từ chối','REJECTED'),
-    ('en','Accepted','ACCEPTED'),
-    ('vi','Đã chấp nhận','ACCEPTED'),
-    ('en','Closed','CLOSED'),
-    ('vi','Đã đóng','CLOSED')
-ON CONFLICT (language_code, status_name) DO NOTHING;
-
-INSERT INTO emergency_request (id, open_at, close_at, sender_id, target_id, emergency_service_id, status_name, longitude, latitude) VALUES
-    ('10000000-0000-4000-8000-000000000001', NOW() - INTERVAL '60 minutes', NULL, 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', '8c52c01e-42a7-45cc-9254-db8a7601c764', '6c6ca52f-46b9-472b-8868-86ab2775b187', 'PENDING', -73.935242, 40.730610),
-    ('10000000-0000-4000-8000-000000000002', NOW() - INTERVAL '55 minutes', NOW() - INTERVAL '40 minutes', '8c52c01e-42a7-45cc-9254-db8a7601c764', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', '2c57e800-b4e2-48ba-b43c-b61075530236', 'ACCEPTED', 151.209290, -33.868820),
-    ('10000000-0000-4000-8000-000000000003', NOW() - INTERVAL '50 minutes', NOW() - INTERVAL '30 minutes', '4405a37d-bc86-403e-b605-bedd7db88d37', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', '168d6df2-21ef-4773-8a38-6fad42d527e9', 'CLOSED', 139.691711, 35.689487),
-    ('10000000-0000-4000-8000-000000000004', NOW() - INTERVAL '45 minutes', NULL, '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', '4405a37d-bc86-403e-b605-bedd7db88d37', '0e745cb3-5f38-419b-b446-d204c2e15ba9', 'PENDING', -0.127758, 51.507351),
-    ('10000000-0000-4000-8000-000000000005', NOW() - INTERVAL '40 minutes', NOW() - INTERVAL '10 minutes', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', '6c6ca52f-46b9-472b-8868-86ab2775b187', 'REJECTED', -73.935242, 40.730610),
-    ('10000000-0000-4000-8000-000000000006', NOW() - INTERVAL '35 minutes', NOW() - INTERVAL '5 minutes', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', '4405a37d-bc86-403e-b605-bedd7db88d37', '168d6df2-21ef-4773-8a38-6fad42d527e9', 'CLOSED', -139.691711, 35.689487),
-    ('10000000-0000-4000-8000-000000000007', NOW() - INTERVAL '30 minutes', NULL, '8c52c01e-42a7-45cc-9254-db8a7601c764', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', '2c57e800-b4e2-48ba-b43c-b61075530236', 'PENDING', -0.127758, 51.507351),
-    ('10000000-0000-4000-8000-000000000008', NOW() - INTERVAL '25 minutes', NOW() - INTERVAL '2 minutes', '4405a37d-bc86-403e-b605-bedd7db88d37', '8c52c01e-42a7-45cc-9254-db8a7601c764', '0e745cb3-5f38-419b-b446-d204c2e15ba9', 'ACCEPTED', 151.209290, -33.868820),
-    ('10000000-0000-4000-8000-000000000009', NOW() - INTERVAL '20 minutes', NOW() - INTERVAL '1 minutes', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', '6c6ca52f-46b9-472b-8868-86ab2775b187', 'REJECTED', -73.935242, 40.730610),
-    ('10000000-0000-4000-8000-000000000010', NOW() - INTERVAL '15 minutes', NULL, 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', '168d6df2-21ef-4773-8a38-6fad42d527e9', 'PENDING', 139.691711, 35.689487)
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO safe_zone (id, name, longitude, latitude, radius, created_at, emergency_service_id) VALUES
-    ('20000000-0000-4000-8000-000000000001','Safe Zone 1', -73.935500, 40.731000, 500.0, NOW() - INTERVAL '120 minutes', '6c6ca52f-46b9-472b-8868-86ab2775b187'),
-    ('20000000-0000-4000-8000-000000000002','Safe Zone 2', -73.934000, 40.729500, 300.0, NOW() - INTERVAL '115 minutes', '6c6ca52f-46b9-472b-8868-86ab2775b187'),
-    ('20000000-0000-4000-8000-000000000003','Safe Zone 3', -0.128000, 51.507800, 400.0, NOW() - INTERVAL '110 minutes', '2c57e800-b4e2-48ba-b43c-b61075530236'),
-    ('20000000-0000-4000-8000-000000000004','Safe Zone 4', -0.126500, 51.506900, 250.0, NOW() - INTERVAL '105 minutes', '2c57e800-b4e2-48ba-b43c-b61075530236'),
-    ('20000000-0000-4000-8000-000000000005','Safe Zone 5', 139.692000, 35.690000, 600.0, NOW() - INTERVAL '100 minutes', '168d6df2-21ef-4773-8a38-6fad42d527e9'),
-    ('20000000-0000-4000-8000-000000000006','Safe Zone 6', 139.690000, 35.689000, 350.0, NOW() - INTERVAL '95 minutes', '168d6df2-21ef-4773-8a38-6fad42d527e9'),
-    ('20000000-0000-4000-8000-000000000007','Safe Zone 7', 151.209000, -33.869000, 450.0, NOW() - INTERVAL '90 minutes', '0e745cb3-5f38-419b-b446-d204c2e15ba9'),
-    ('20000000-0000-4000-8000-000000000008','Safe Zone 8', 151.210500, -33.868500, 200.0, NOW() - INTERVAL '85 minutes', '0e745cb3-5f38-419b-b446-d204c2e15ba9'),
-    ('20000000-0000-4000-8000-000000000009','Safe Zone 9', -73.936000, 40.732000, 150.0, NOW() - INTERVAL '80 minutes', '6c6ca52f-46b9-472b-8868-86ab2775b187'),
-    ('20000000-0000-4000-8000-000000000010','Safe Zone 10', -0.129500, 51.508500, 275.0, NOW() - INTERVAL '75 minutes', '2c57e800-b4e2-48ba-b43c-b61075530236')
-ON CONFLICT (id) DO NOTHING;
-
+------------------------------------------------
+-- Safe zones
+------------------------------------------------
+INSERT INTO safe_zone (
+        id,
+        name,
+        longitude,
+        latitude,
+        radius,
+        created_at,
+        emergency_service_id
+    )
+VALUES (
+        'a1a11111-1111-1111-1111-111111111111',
+        'District1 Safe Point',
+        106.7000,
+        10.7765,
+        200,
+        NOW(),
+        '6c6ca52f-46b9-472b-8868-86ab2775b187'
+    ),
+    (
+        'a2a22222-2222-2222-2222-222222222222',
+        'City Hall Shelter',
+        106.7030,
+        10.7779,
+        150,
+        NOW(),
+        '2c57e800-b4e2-48ba-b43c-b61075530236'
+    ),
+    (
+        'a3a33333-3333-3333-3333-333333333333',
+        'Hospital Safe Area',
+        106.6988,
+        10.7758,
+        250,
+        NOW(),
+        '168d6df2-21ef-4773-8a38-6fad42d527e9'
+    ),
+    (
+        'a4a44444-4444-4444-4444-444444444444',
+        'Central Park Refuge',
+        106.7042,
+        10.7792,
+        180,
+        NOW(),
+        '7ed33501-bcf8-4944-b043-44b328a3a071'
+    ),
+    (
+        'a5a55555-5555-5555-5555-555555555555',
+        'Ben Thanh Shelter',
+        106.7012,
+        10.7753,
+        220,
+        NOW(),
+        '2077665d-ecaa-44f6-82ee-a721bf7785bd'
+    );
+------------------------------------------------
+-- Users tracked by emergency services
+------------------------------------------------
+INSERT INTO emergency_service_tracks_user (
+        user_id,
+        last_longitude,
+        last_latitude,
+        last_update_time,
+        emergency_service_id
+    )
+VALUES (
+        'b1b11111-1111-1111-1111-111111111111',
+        106.7003,
+        10.7767,
+        '2026-03-04 10:00:00+07',
+        '6c6ca52f-46b9-472b-8868-86ab2775b187'
+    ),
+    (
+        'b2b22222-2222-2222-2222-222222222222',
+        106.7033,
+        10.7781,
+        '2026-03-04 10:01:00+07',
+        '2c57e800-b4e2-48ba-b43c-b61075530236'
+    ),
+    (
+        'b3b33333-3333-3333-3333-333333333333',
+        106.6981,
+        10.7754,
+        '2026-03-04 10:02:00+07',
+        '168d6df2-21ef-4773-8a38-6fad42d527e9'
+    ),
+    (
+        'b4b44444-4444-4444-4444-444444444444',
+        106.7045,
+        10.7795,
+        '2026-03-04 10:03:00+07',
+        '7ed33501-bcf8-4944-b043-44b328a3a071'
+    ),
+    (
+        'b5b55555-5555-5555-5555-555555555555',
+        106.7010,
+        10.7748,
+        '2026-03-04 10:04:00+07',
+        '2077665d-ecaa-44f6-82ee-a721bf7785bd'
+    );
+------------------------------------------------
+-- Emergency requests
+------------------------------------------------
+INSERT INTO emergency_request (
+        id,
+        open_at,
+        close_at,
+        sender_id,
+        target_id,
+        emergency_service_id,
+        status_name,
+        longitude,
+        latitude
+    )
+VALUES (
+        'c1c11111-1111-1111-1111-111111111111',
+        '2026-03-04 09:30:00+07',
+        NULL,
+        'b1b11111-1111-1111-1111-111111111111',
+        'b2b22222-2222-2222-2222-222222222222',
+        '6c6ca52f-46b9-472b-8868-86ab2775b187',
+        'PENDING',
+        106.7004,
+        10.7766
+    ),
+    (
+        'c2c22222-2222-2222-2222-222222222222',
+        '2026-03-04 09:10:00+07',
+        '2026-03-04 09:20:00+07',
+        'b2b22222-2222-2222-2222-222222222222',
+        'b3b33333-3333-3333-3333-333333333333',
+        '2c57e800-b4e2-48ba-b43c-b61075530236',
+        'CLOSED',
+        106.7035,
+        10.7780
+    ),
+    (
+        'c3c33333-3333-3333-3333-333333333333',
+        '2026-03-04 09:40:00+07',
+        NULL,
+        'b3b33333-3333-3333-3333-333333333333',
+        'b4b44444-4444-4444-4444-444444444444',
+        '168d6df2-21ef-4773-8a38-6fad42d527e9',
+        'ACCEPTED',
+        106.6980,
+        10.7755
+    ),
+    (
+        'c4c44444-4444-4444-4444-444444444444',
+        '2026-03-04 08:50:00+07',
+        '2026-03-04 09:00:00+07',
+        'b4b44444-4444-4444-4444-444444444444',
+        'b5b55555-5555-5555-5555-555555555555',
+        '7ed33501-bcf8-4944-b043-44b328a3a071',
+        'REJECTED',
+        106.7044,
+        10.7791
+    ),
+    (
+        'c5c55555-5555-5555-5555-555555555555',
+        '2026-03-04 09:50:00+07',
+        NULL,
+        'b5b55555-5555-5555-5555-555555555555',
+        'b1b11111-1111-1111-1111-111111111111',
+        '2077665d-ecaa-44f6-82ee-a721bf7785bd',
+        'PENDING',
+        106.7011,
+        10.7747
+    );
 COMMIT;

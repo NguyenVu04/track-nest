@@ -10,7 +10,7 @@ import java.util.List;
 public class KafkaProperties {
     private List<String> topics;
 
-    private int partitions;
+    private short partitions;
 
     private short replicationFactor;
 }

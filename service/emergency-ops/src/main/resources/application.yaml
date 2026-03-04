@@ -47,6 +47,12 @@ app:
       - user_location
     partitions: 3
     replication-factor: 1
+  keycloak:
+    server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost/auth}
+    restricted-realm: ${KEYCLOAK_RESTRICTED_REALM:restricted-dev}
+    client-id: ${KEYCLOAK_CLIENT_ID:emergency-operations}
+    client-secret: ${KEYCLOAK_CLIENT_SECRET:cW1FLnTduHxSEjb7L1V8v2paCuHQYEs0}
+    public-realm: ${KEYCLOAK_PUBLIC_REALM:public-dev}
   server-name: ${POD_NAME:user-tracking}
   server-uid: ${$POD_UID:0}
 

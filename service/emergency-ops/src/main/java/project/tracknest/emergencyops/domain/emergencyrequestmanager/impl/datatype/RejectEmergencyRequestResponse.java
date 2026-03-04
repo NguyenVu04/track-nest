@@ -2,8 +2,10 @@ package project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datat
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.util.UUID;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record RejectEmergencyRequestResponse(
-        Integer statusCode,
-        Long rejectedAtMs
+        Long rejectedAtMs,
+        UUID id
 ) {}

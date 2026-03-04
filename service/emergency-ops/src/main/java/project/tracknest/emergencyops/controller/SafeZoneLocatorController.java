@@ -24,11 +24,11 @@ public class SafeZoneLocatorController {
     public ResponseEntity<List<GetNearestSafeZonesResponse>> getNearestSafeZones(
             @RequestParam("latitudeDegrees")
             @Range(min = -90, max = 90, message = "Latitude must be between -90 and 90 degrees")
-            float latitudeDegrees,
+            double latitudeDegrees,
 
             @RequestParam("longitudeDegrees")
             @Range(min = -180, max = 180, message = "Longitude must be between -180 and 180 degrees")
-            float longitudeDegrees,
+            double longitudeDegrees,
 
             @RequestParam("maxDistanceMeters")
             @Range(min = 0, message = "Max distance must be a non-negative value")

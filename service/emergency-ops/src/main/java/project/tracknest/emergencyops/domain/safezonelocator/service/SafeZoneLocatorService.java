@@ -6,8 +6,8 @@ import java.util.List;
 
 public interface SafeZoneLocatorService {
     List<GetNearestSafeZonesResponse> retrieveNearestSafeZones(
-            float latitudeDegrees,
-            float longitudeDegrees,
+            double latitudeDegrees,
+            double longitudeDegrees,
             float maxDistanceMeters,
             int maxNumberOfSafeZones
     );

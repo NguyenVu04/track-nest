@@ -4,8 +4,10 @@ CREATE EXTENSION IF NOT EXISTS "postgis";
 
 CREATE TABLE emergency_service (
     id UUID PRIMARY KEY,
-    longitude FLOAT NOT NULL,
-    latitude FLOAT NOT NULL,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    phone_number VARCHAR(25) UNIQUE NOT NULL,
+    longitude DOUBLE PRECISION,
+    latitude DOUBLE PRECISION,
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
     CHECK ( longitude >= -180 AND longitude <= 180 ),
     CHECK ( latitude >= -90 AND latitude <= 90 )
@@ -13,7 +15,13 @@ CREATE TABLE emergency_service (
 
 CREATE TABLE emergency_service_tracks_user (
     user_id UUID PRIMARY KEY,
-    emergency_service_id UUID NOT NULL
+    last_longitude DOUBLE PRECISION NOT NULL,
+    last_latitude DOUBLE PRECISION NOT NULL,
+    last_update_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(last_longitude, last_latitude),4326)) STORED,
+    emergency_service_id UUID NOT NULL,
+    CHECK ( last_longitude >= -180 AND last_longitude <= 180 ),
+    CHECK ( last_latitude >= -90 AND last_latitude <= 90 )
 );
 
 CREATE TABLE emergency_request (
@@ -24,8 +32,8 @@ CREATE TABLE emergency_request (
     target_id UUID NOT NULL,
     emergency_service_id UUID NOT NULL,
     status_name VARCHAR(15) NOT NULL,
-    longitude FLOAT NOT NULL,
-    latitude FLOAT NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
     CHECK ( longitude >= -180 AND longitude <= 180 ),
     CHECK ( latitude >= -90 AND latitude <= 90 )
@@ -45,8 +53,8 @@ CREATE TABLE emergency_request_status_translation (
 CREATE TABLE safe_zone (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) UNIQUE NOT NULL,
-    longitude FLOAT NOT NULL,
-    latitude FLOAT NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
     radius FLOAT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     emergency_service_id UUID NOT NULL,

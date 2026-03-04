@@ -1,9 +1,11 @@
-package project.tracknest.emergencyops.domain.emergencyrequestreceiver.datatype;
+package project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.util.UUID;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PostEmergencyRequestResponse(
-        Integer statusCode,
-        Long createdAtMs
+        Long createdAtMs,
+        UUID id
 ) {}

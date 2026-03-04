@@ -1,16 +1,20 @@
 package project.tracknest.emergencyops.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestreceiver.EmergencyRequestReceiverService;
-import project.tracknest.emergencyops.domain.emergencyrequestreceiver.datatype.GetTrackerEmergencyRequestResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestreceiver.datatype.PostEmergencyRequestRequest;
-import project.tracknest.emergencyops.domain.emergencyrequestreceiver.datatype.PostEmergencyRequestResponse;
+import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.DeleteEmergencyRequestResponse;
+import project.tracknest.emergencyops.domain.emergencyrequestreceiver.service.EmergencyRequestReceiverService;
+import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.GetTrackerEmergencyRequestsResponse;
+import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.PostEmergencyRequestRequest;
+import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.PostEmergencyRequestResponse;
+
+import java.util.UUID;
+
+import static project.tracknest.emergencyops.configuration.security.SecurityUtils.getCurrentUserId;
 
 @RestController
 @RequestMapping("/emergency-request-receiver")
@@ -20,17 +24,36 @@ public class EmergencyRequestReceiverController {
 
     @PostMapping("/request")
     public ResponseEntity<PostEmergencyRequestResponse> postEmergencyRequest(
+            @Valid
+            @RequestBody
             PostEmergencyRequestRequest request
     ) {
-        // TODO: implementation here
-        return ResponseEntity.ok().build();
+        UUID userId = getCurrentUserId();
+
+        PostEmergencyRequestResponse response = service.createEmergencyRequest(userId, request);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/requests")
-    public ResponseEntity<PageResponse<GetTrackerEmergencyRequestResponse>> getTrackerEmergencyRequests(
-            PageRequest request
+    public ResponseEntity<PageResponse<GetTrackerEmergencyRequestsResponse>> getTrackerEmergencyRequests(
+            Pageable pageable
     ) {
-        // TODO: implementation here
-        return ResponseEntity.ok().build();
+        UUID userId = getCurrentUserId();
+
+        PageResponse<GetTrackerEmergencyRequestsResponse> response = service.retrieveTrackerEmergencyRequests(userId, pageable);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/request/{requestId}")
+    public ResponseEntity<DeleteEmergencyRequestResponse> deleteEmergencyRequest(
+            @PathVariable UUID requestId
+    ) {
+        UUID userId = getCurrentUserId();
+
+        DeleteEmergencyRequestResponse response = service.deleteEmergencyRequest(userId, requestId);
+
+        return ResponseEntity.ok(response);
     }
 }

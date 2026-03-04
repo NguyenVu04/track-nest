@@ -20,7 +20,12 @@ class SafeZoneLocatorServiceImpl implements SafeZoneLocatorService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<GetNearestSafeZonesResponse> retrieveNearestSafeZones(float latitudeDegrees, float longitudeDegrees, float maxDistanceMeters, int maxNumberOfSafeZones) {
+    public List<GetNearestSafeZonesResponse> retrieveNearestSafeZones(
+            double latitudeDegrees,
+            double longitudeDegrees,
+            float maxDistanceMeters,
+            int maxNumberOfSafeZones
+    ) {
         Pageable pageable = Pageable.ofSize(maxNumberOfSafeZones);
 
         Slice<SafeZone> safeZoneSlice = safeZoneRepository.findNearestSafeZones(

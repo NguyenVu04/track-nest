@@ -12,7 +12,7 @@ import java.util.UUID;
 public class GetNearestSafeZonesResponse {
     private UUID safeZoneId;
     private String safeZoneName;
-    private float latitudeDegrees;
-    private float longitudeDegrees;
+    private double latitudeDegrees;
+    private double longitudeDegrees;
     private float radiusMeters;
 }

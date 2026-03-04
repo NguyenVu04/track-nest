@@ -4,10 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @Entity
@@ -19,4 +16,18 @@ public class EmergencyRequestStatus {
     @Id
     @Column(name = "name", nullable = false, updatable = false, length = 15)
     private String name;
+
+    @Getter
+    public enum Status {
+        PENDING("PENDING"),
+        REJECTED("REJECTED"),
+        ACCEPTED("ACCEPTED"),
+        CLOSED("CLOSED");
+
+        private final String value;
+
+        Status(String value) {
+            this.value = value;
+        }
+    }
 }

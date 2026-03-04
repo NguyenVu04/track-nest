@@ -1,17 +1,17 @@
 package project.tracknest.emergencyops.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.AcceptEmergencyRequestResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.CloseEmergencyRequestResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.GetEmergencyRequestsResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.RejectEmergencyRequestResponse;
+import project.tracknest.emergencyops.core.entity.EmergencyRequestStatus;
+import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.*;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.service.EmergencyRequestManagerService;
 
 import java.util.UUID;
+
+import static project.tracknest.emergencyops.configuration.security.SecurityUtils.getCurrentUserId;
 
 @RestController
 @RequestMapping("/emergency-request-manager")
@@ -19,35 +19,80 @@ import java.util.UUID;
 public class EmergencyRequestManagerController {
     private final EmergencyRequestManagerService service;
 
+    @PatchMapping("/emergency-service/location")
+    public ResponseEntity<PatchEmergencyServiceLocationResponse> updateEmergencyServiceLocation(
+            @RequestBody PatchEmergencyServiceLocationRequest request
+    ) {
+        UUID serviceId = getCurrentUserId();
+
+        PatchEmergencyServiceLocationResponse response = service
+                .updateEmergencyServiceLocation(serviceId, request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/requests/count")
+    public ResponseEntity<GetRequestCountResponse> getPendingRequestCount(
+            @RequestParam(name = "status", required = false)
+            EmergencyRequestStatus.Status status
+    ) {
+        UUID serviceId = getCurrentUserId();
+
+        GetRequestCountResponse response = service
+                .getEmergencyRequestCount(serviceId, status);
+
+        return ResponseEntity.ok(response);
+    }
+
+
     @GetMapping("/requests")
     public ResponseEntity<PageResponse<GetEmergencyRequestsResponse>> getEmergencyRequests(
-            @RequestBody @Valid PageRequest request
+            @RequestParam(name = "status", required = false)
+            EmergencyRequestStatus.Status status,
+
+            Pageable pageable
     ) {
-        //TODO: Implementation would go here
-        return ResponseEntity.ok().build();
+        UUID serviceId = getCurrentUserId();
+
+        PageResponse<GetEmergencyRequestsResponse> response = service
+                .getEmergencyRequests(serviceId, status, pageable);
+
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/requests/{requestId}/accept")
     public ResponseEntity<AcceptEmergencyRequestResponse> acceptEmergencyRequest(
-            @PathVariable("requestId") UUID requestId
+            @PathVariable UUID requestId
     ) {
-        //TODO: Implementation would go here
-        return ResponseEntity.ok().build();
+        UUID serviceId = getCurrentUserId();
+
+        AcceptEmergencyRequestResponse response = service
+                .acceptEmergencyRequest(serviceId, requestId);
+
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/requests/{requestId}/reject")
     public ResponseEntity<RejectEmergencyRequestResponse> rejectEmergencyRequest(
-            @PathVariable("requestId") UUID requestId
+            @PathVariable UUID requestId
     ) {
-        //TODO: Implementation would go here
-        return ResponseEntity.ok().build();
+        UUID serviceId = getCurrentUserId();
+
+        RejectEmergencyRequestResponse response = service
+                .rejectEmergencyRequest(serviceId, requestId);
+
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/requests/{requestId}/close")
     public ResponseEntity<CloseEmergencyRequestResponse> closeEmergencyRequest(
-            @PathVariable("requestId") UUID requestId
+            @PathVariable UUID requestId
     ) {
-        //TODO: Implementation would go here
-        return ResponseEntity.ok().build();
+        UUID serviceId = getCurrentUserId();
+
+        CloseEmergencyRequestResponse response = service
+                .closeEmergencyRequest(serviceId, requestId);
+
+        return ResponseEntity.ok(response);
     }
 }

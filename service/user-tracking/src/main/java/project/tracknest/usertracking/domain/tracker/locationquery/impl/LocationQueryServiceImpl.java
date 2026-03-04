@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.entity.Location;
 import project.tracknest.usertracking.core.entity.User;
-import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationMessageConsumer;
 import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationQueryService;
 import project.tracknest.usertracking.proto.lib.FamilyMemberLocation;
 import project.tracknest.usertracking.proto.lib.ListFamilyMemberLocationHistoryRequest;

@@ -1,19 +1,22 @@
 package project.tracknest.emergencyops.domain.emergencyrequestmanager.service;
 
-import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.AcceptEmergencyRequestResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.CloseEmergencyRequestResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.GetEmergencyRequestsResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.RejectEmergencyRequestResponse;
+import org.springframework.data.domain.Pageable;
+import project.tracknest.emergencyops.core.datatype.PageResponse;
+import project.tracknest.emergencyops.core.entity.EmergencyRequestStatus;
+import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.*;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface EmergencyRequestManagerService {
-    List<GetEmergencyRequestsResponse> getEmergencyRequests(UUID userId, PageRequest request);
+    GetRequestCountResponse getEmergencyRequestCount(UUID userId, EmergencyRequestStatus.Status status);
+
+    PageResponse<GetEmergencyRequestsResponse> getEmergencyRequests(UUID userId, EmergencyRequestStatus.Status status, Pageable pageable);
 
     AcceptEmergencyRequestResponse acceptEmergencyRequest(UUID userId, UUID requestId);
 
     RejectEmergencyRequestResponse rejectEmergencyRequest(UUID userId, UUID requestId);
 
     CloseEmergencyRequestResponse closeEmergencyRequest(UUID userId, UUID requestId);
+
+    PatchEmergencyServiceLocationResponse updateEmergencyServiceLocation(UUID userId, PatchEmergencyServiceLocationRequest request);
 }

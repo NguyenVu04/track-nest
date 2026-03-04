@@ -182,32 +182,32 @@ services:
       - keycloak
       # - nextjs
 
-  user_tracking:
-    build:
-      context: ../service/user-tracking
-      dockerfile: Dockerfile
-    container_name: user_tracking
-    ports:
-      - "19090:19090"
-    environment:
-      KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
-      REDIS_HOST: "redis"
-      REDIS_PORT: 6379
-      DB_HOST: "user_tracking_postgres"
-      DB_PORT: 5432
-      DB_NAME: "tracknest"
-      DB_USER: "tracknestadmin"
-      DB_PASSWORD: "tracknestadmin"
-    networks:
-      - track_nest
-    depends_on:
-      - user_tracking_postgres
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+  # user_tracking:
+  #   build:
+  #     context: ../service/user-tracking
+  #     dockerfile: Dockerfile
+  #   container_name: user_tracking
+  #   ports:
+  #     - "19090:19090"
+  #   environment:
+  #     KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
+  #     REDIS_HOST: "redis"
+  #     REDIS_PORT: 6379
+  #     DB_HOST: "user_tracking_postgres"
+  #     DB_PORT: 5432
+  #     DB_NAME: "tracknest"
+  #     DB_USER: "tracknestadmin"
+  #     DB_PASSWORD: "tracknestadmin"
+  #   networks:
+  #     - track_nest
+  #   depends_on:
+  #     - user_tracking_postgres
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 10s
 
   user_tracking_postgres:
     image: timescale/timescaledb-ha:pg17

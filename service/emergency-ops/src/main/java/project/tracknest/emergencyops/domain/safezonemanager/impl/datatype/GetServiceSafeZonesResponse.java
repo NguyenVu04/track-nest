@@ -6,8 +6,8 @@ import java.time.OffsetDateTime;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record GetServiceSafeZonesResponse (
-    float latitude,
-    float longitude,
+    double latitude,
+    double longitude,
     float radius,
     String name,
     OffsetDateTime createdAt

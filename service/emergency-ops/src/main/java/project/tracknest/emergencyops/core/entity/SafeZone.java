@@ -30,11 +30,11 @@ public class SafeZone {
 
     @Range(min = -180, max = 180, message = "Longitude must be between -180 and 180")
     @Column(name = "longitude", nullable = false, updatable = false)
-    private float longitude;
+    private double longitude;
 
     @Range(min = -90, max = 90, message = "Latitude must be between -90 and 90")
     @Column(name = "latitude", nullable = false, updatable = false)
-    private float latitude;
+    private double latitude;
 
     @Generated
     @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", updatable = false)

@@ -17,8 +17,8 @@ public interface SafeZoneLocatorSafeZoneRepository extends JpaRepository<SafeZon
             nativeQuery = true
     )
     Slice<SafeZone> findNearestSafeZones(
-            float latitude,
-            float longitude,
+            double latitude,
+            double longitude,
             float radius,
             Pageable pageable
     );

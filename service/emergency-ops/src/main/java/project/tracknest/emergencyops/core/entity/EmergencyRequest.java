@@ -24,7 +24,7 @@ public class EmergencyRequest {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "open_at", nullable = false)
+    @Column(name = "open_at", updatable = false, insertable = false)
     private OffsetDateTime openAt;
 
     @Column(name = "close_at")
@@ -45,12 +45,12 @@ public class EmergencyRequest {
     private double latitude;
 
     @Generated
-    @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", updatable = false)
+    @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", updatable = false, insertable = false)
     private Point geom;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "emergency_service_id", nullable = false, updatable = false)
-    private EmergencyService emergencyServiceId;
+    private EmergencyService emergencyService;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "status_name", nullable = false)
