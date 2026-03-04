@@ -9,6 +9,7 @@ import org.hibernate.annotations.Generated;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.Point;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,6 +39,9 @@ public class EmergencyService {
     @Range(min = -90, max = 90, message = "Latitude must be between -90 and 90")
     @Column(name = "latitude")
     private Double latitude;
+
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
 
     @Generated
     @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", updatable = false)

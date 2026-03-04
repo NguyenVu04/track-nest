@@ -37,14 +37,22 @@ VALUES (
         '4563217890',
         106.7015,
         10.7746
+    ),
+    (
+        '0e745cb3-5f38-419b-b446-d204c2e15ba9',
+        'admin',
+        '0812345678',
+        0.0,
+        0.0
     );
-
+------------------------------------------------
+-- Emergency request statuses
+------------------------------------------------
 INSERT INTO emergency_request_status (name)
 VALUES ('PENDING'),
-('REJECTED'),
-('ACCEPTED'),
-('CLOSED') ON CONFLICT (name) DO NOTHING;
-
+    ('REJECTED'),
+    ('ACCEPTED'),
+    ('CLOSED') ON CONFLICT (name) DO NOTHING;
 INSERT INTO emergency_request_status_translation (language_code, value, status_name)
 VALUES ('en', 'Pending', 'PENDING'),
     ('vi', 'Đang chờ', 'PENDING'),
@@ -54,7 +62,6 @@ VALUES ('en', 'Pending', 'PENDING'),
     ('vi', 'Đã chấp nhận', 'ACCEPTED'),
     ('en', 'Closed', 'CLOSED'),
     ('vi', 'Đã đóng', 'CLOSED') ON CONFLICT (language_code, status_name) DO NOTHING;
-
 ------------------------------------------------
 -- Safe zones
 ------------------------------------------------
@@ -111,6 +118,15 @@ VALUES (
         220,
         NOW(),
         '2077665d-ecaa-44f6-82ee-a721bf7785bd'
+    ),
+    (
+        'a6a66666-6666-6666-6666-666666666666',
+        'Admin Command Shelter',
+        106.7024,
+        10.7761,
+        300,
+        NOW(),
+        '0e745cb3-5f38-419b-b446-d204c2e15ba9'
     );
 ------------------------------------------------
 -- Users tracked by emergency services
@@ -156,6 +172,20 @@ VALUES (
         10.7748,
         '2026-03-04 10:04:00+07',
         '2077665d-ecaa-44f6-82ee-a721bf7785bd'
+    ),
+    (
+        '4405a37d-bc86-403e-b605-bedd7db88d37',
+        106.7023,
+        10.7762,
+        '2026-03-04 10:06:00+07',
+        '0e745cb3-5f38-419b-b446-d204c2e15ba9'
+    ),
+    (
+        '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5',
+        106.7027,
+        10.7759,
+        '2026-03-04 10:07:00+07',
+        '0e745cb3-5f38-419b-b446-d204c2e15ba9'
     );
 ------------------------------------------------
 -- Emergency requests
@@ -225,5 +255,38 @@ VALUES (
         'PENDING',
         106.7011,
         10.7747
+    ),
+    (
+        'c6c66666-6666-6666-6666-666666666666',
+        '2026-03-04 10:10:00+07',
+        NULL,
+        '4405a37d-bc86-403e-b605-bedd7db88d37',
+        '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5',
+        '0e745cb3-5f38-419b-b446-d204c2e15ba9',
+        'PENDING',
+        106.7020,
+        10.7762
+    ),
+    (
+        'c7c77777-7777-7777-7777-777777777777',
+        '2026-03-04 09:55:00+07',
+        '2026-03-04 10:05:00+07',
+        '8c52c01e-42a7-45cc-9254-db8a7601c764',
+        'dd382dcf-3652-499c-acdb-5d9ce99a67b8',
+        '0e745cb3-5f38-419b-b446-d204c2e15ba9',
+        'CLOSED',
+        106.7030,
+        10.7770
+    ),
+    (
+        'c8c88888-8888-8888-8888-888888888888',
+        '2026-03-04 10:15:00+07',
+        NULL,
+        'dd382dcf-3652-499c-acdb-5d9ce99a67b8',
+        '8c52c01e-42a7-45cc-9254-db8a7601c764',
+        '0e745cb3-5f38-419b-b446-d204c2e15ba9',
+        'ACCEPTED',
+        106.7018,
+        10.7759
     );
 COMMIT;

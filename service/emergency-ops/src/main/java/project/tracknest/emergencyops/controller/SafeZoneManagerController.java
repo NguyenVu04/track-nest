@@ -58,25 +58,23 @@ public class SafeZoneManagerController {
 
     @PutMapping("/safe-zone/{safeZoneId}")
     public ResponseEntity<PutSafeZoneResponse> updateSafeZone(
-            @PathVariable String safeZoneId,
+            @PathVariable UUID safeZoneId,
             @Valid @RequestBody PutSafeZoneRequest request
     ) {
         UUID serviceId = getCurrentUserId();
-        UUID safeZoneUUID = UUID.fromString(safeZoneId);
 
-        PutSafeZoneResponse response = service.updateSafeZone(serviceId, safeZoneUUID, request);
+        PutSafeZoneResponse response = service.updateSafeZone(serviceId, safeZoneId, request);
 
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/safe-zone/{safeZoneId}")
     public ResponseEntity<DeleteSafeZoneResponse> deleteSafeZone(
-            @PathVariable String safeZoneId
+            @PathVariable UUID safeZoneId
     ) {
         UUID serviceId = getCurrentUserId();
-        UUID safeZoneUUID = UUID.fromString(safeZoneId);
 
-        DeleteSafeZoneResponse response = service.deleteSafeZone(serviceId, safeZoneUUID);
+        DeleteSafeZoneResponse response = service.deleteSafeZone(serviceId, safeZoneId);
 
         return ResponseEntity.ok(response);
     }

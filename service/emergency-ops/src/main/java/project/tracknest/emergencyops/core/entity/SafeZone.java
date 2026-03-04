@@ -25,7 +25,7 @@ public class SafeZone {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "name", nullable = false, updatable = false, unique = true, length = 100)
+    @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
 
     @Range(min = -180, max = 180, message = "Longitude must be between -180 and 180")

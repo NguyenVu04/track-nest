@@ -8,6 +8,7 @@ CREATE TABLE emergency_service (
     phone_number VARCHAR(25) UNIQUE NOT NULL,
     longitude DOUBLE PRECISION,
     latitude DOUBLE PRECISION,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
     CHECK ( longitude >= -180 AND longitude <= 180 ),
     CHECK ( latitude >= -90 AND latitude <= 90 )
@@ -56,7 +57,7 @@ CREATE TABLE safe_zone (
     longitude DOUBLE PRECISION NOT NULL,
     latitude DOUBLE PRECISION NOT NULL,
     radius FLOAT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     emergency_service_id UUID NOT NULL,
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
     CHECK ( longitude >= -180 AND longitude <= 180 AND latitude >= -90 AND latitude <= 90 )

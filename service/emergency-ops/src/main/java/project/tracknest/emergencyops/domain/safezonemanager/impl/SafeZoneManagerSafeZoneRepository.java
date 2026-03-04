@@ -12,11 +12,19 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface SafeZoneManagerSafeZoneRepository extends JpaRepository<SafeZone, UUID> {
-    @Query("""
-    SELECT sz FROM SafeZone sz
-    WHERE sz.emergencyService.id = :serviceId
-        AND (:nameFilter IS NULL OR LOWER(sz.name) LIKE LOWER(CONCAT('%', :nameFilter, '%')))
-    """)
+    @Query(
+            value = """
+        SELECT sz.* FROM safe_zone sz
+        WHERE sz.emergency_service_id = :serviceId
+            AND (CAST(:nameFilter AS text) IS NULL OR LOWER(sz.name) LIKE LOWER(CONCAT('%', CAST(:nameFilter AS text), '%')))
+        """,
+            countQuery = """
+        SELECT count(*) FROM safe_zone sz
+        WHERE sz.emergency_service_id = :serviceId
+            AND (CAST(:nameFilter AS text) IS NULL OR LOWER(sz.name) LIKE LOWER(CONCAT('%', CAST(:nameFilter AS text), '%')))
+        """,
+            nativeQuery = true
+    )
     Page<SafeZone> findByEmergencyService_Id(
             @Param("serviceId") UUID serviceId,
             @Param("nameFilter") String nameFilter,

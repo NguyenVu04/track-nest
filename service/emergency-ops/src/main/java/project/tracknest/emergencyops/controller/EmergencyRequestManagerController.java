@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
 import project.tracknest.emergencyops.core.entity.EmergencyRequestStatus;
+import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.GetEmergencyServiceLocationResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.*;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.service.EmergencyRequestManagerService;
 
@@ -27,6 +28,16 @@ public class EmergencyRequestManagerController {
 
         PatchEmergencyServiceLocationResponse response = service
                 .updateEmergencyServiceLocation(serviceId, request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/emergency-service/location")
+    public ResponseEntity<GetEmergencyServiceLocationResponse> getEmergencyServiceLocation() {
+        UUID serviceId = getCurrentUserId();
+
+        GetEmergencyServiceLocationResponse response = service
+                .getEmergencyServiceLocation(serviceId);
 
         return ResponseEntity.ok(response);
     }

@@ -1,4 +1,4 @@
-package project.tracknest.emergencyops.configuration.security;
+package project.tracknest.emergencyops.configuration.security.datatype;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

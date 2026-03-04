@@ -19,7 +19,7 @@ public class KeycloakConfig {
         return KeycloakBuilder
                 .builder()
                 .serverUrl(properties.getServerUrl())
-                .realm(properties.getRestrictedRealm())
+                .realm(properties.getPublicRealm())
                 .clientId(properties.getClientId())
                 .clientSecret(properties.getClientSecret())
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS)

@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import project.tracknest.emergencyops.configuration.security.datatype.KeycloakAuthorizationHeader;
 import project.tracknest.emergencyops.core.datatype.KeycloakPrincipal;
 import project.tracknest.emergencyops.core.datatype.KeycloakUserDetails;
 

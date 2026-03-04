@@ -58,7 +58,9 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
                     .toInstant()
                     .toEpochMilli()
                     : null,
-            request.getStatus().getName()
+            request.getStatus().getName(),
+            request.getLatitude(),
+            request.getLongitude()
         );
     }
 
@@ -75,8 +77,10 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
     @Override
     @Transactional
     public PageResponse<GetEmergencyRequestsResponse> getEmergencyRequests(UUID userId, EmergencyRequestStatus.Status status, Pageable pageable) {
+        String statusValue = status != null ? status.getValue() : null;
+
         Page<EmergencyRequest> emergencyRequestPage = emergencyRequestRepository
-                .findServiceEmergencyRequests(userId, status.getValue(), pageable);
+                .findServiceEmergencyRequests(userId, statusValue, pageable);
 
         List<GetEmergencyRequestsResponse> responseContent = emergencyRequestPage.stream()
                 .map(this::mapToGetEmergencyRequestsResponse)
@@ -110,7 +114,7 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
                         .getValue())
         ) {
             log.warn("Emergency request with ID {} for service ID {} is not in PENDING status when trying to accept request", requestId, userId);
-            throw new IllegalStateException("Only emergency requests in PENDING status can be accepted");
+            throw new IllegalArgumentException("Only emergency requests in PENDING status can be accepted");
         }
 
         Optional<EmergencyRequestStatus> acceptedStatusOpt = emergencyRequestStatusRepository
@@ -138,6 +142,8 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
                 .lastUpdateTime(now)
                 .build();
 
+        emergencyServiceUserRepository.save(serviceUser);
+
         Long acceptedAtMs = now.toInstant().toEpochMilli();
 
         return new AcceptEmergencyRequestResponse(
@@ -164,7 +170,7 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
                         .getValue())
         ) {
             log.warn("Emergency request with ID {} for service ID {} is not in PENDING status when trying to reject request", requestId, userId);
-            throw new IllegalStateException("Only emergency requests in PENDING status can be rejected");
+            throw new IllegalArgumentException("Only emergency requests in PENDING status can be rejected");
         }
 
         Optional<EmergencyRequestStatus> rejectedStatusOpt = emergencyRequestStatusRepository
@@ -211,7 +217,7 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
                         .getValue())
         ) {
             log.warn("Emergency request with ID {} for service ID {} is not in ACCEPTED status when trying to close request", requestId, userId);
-            throw new IllegalStateException("Only emergency requests in ACCEPTED status can be closed");
+            throw new IllegalArgumentException("Only emergency requests in ACCEPTED status can be closed");
         }
 
         Optional<EmergencyRequestStatus> closedStatusOpt = emergencyRequestStatusRepository
@@ -262,8 +268,8 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
         }
 
         EmergencyService service = serviceOpt.get();
-        service.setLongitude(request.getLongitudeDegrees());
-        service.setLatitude(request.getLatitudeDegrees());
+        service.setLongitude(request.longitudeDegrees());
+        service.setLatitude(request.latitudeDegrees());
 
         emergencyServiceRepository.save(service);
 
@@ -273,6 +279,29 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
 
         return new PatchEmergencyServiceLocationResponse(
                 updatedAtMs, service.getId()
+        );
+    }
+
+    @Override
+    public GetEmergencyServiceLocationResponse getEmergencyServiceLocation(UUID userId) {
+        Optional<EmergencyService> serviceOpt = emergencyServiceRepository
+                .findById(userId);
+
+        if (serviceOpt.isEmpty()) {
+            log.warn("Emergency Service with ID {} not found when trying to get service location", userId);
+            throw new IllegalArgumentException("Emergency Service not found");
+        }
+
+        EmergencyService service = serviceOpt.get();
+
+        return new GetEmergencyServiceLocationResponse(
+                service.getLatitude(),
+                service.getLongitude(),
+                service.getUpdatedAt() != null
+                        ? service.getUpdatedAt()
+                        .toInstant()
+                        .toEpochMilli()
+                        : null
         );
     }
 }

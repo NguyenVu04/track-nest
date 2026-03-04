@@ -82,6 +82,18 @@ public class RestGlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest req) {
+        ApiError body = ApiError.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message("Invalid argument: " + ex.getMessage())
+                .path(req.getRequestURI())
+                .errors(List.of(ex.getMessage()))
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleAll(Exception ex, HttpServletRequest req) {
         ApiError body = ApiError.builder()

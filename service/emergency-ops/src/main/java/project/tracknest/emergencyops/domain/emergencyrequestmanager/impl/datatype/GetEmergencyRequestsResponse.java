@@ -25,6 +25,8 @@ public record GetEmergencyRequestsResponse(
         String targetAvatarUrl,
         Long openedAt,
         Long closedAt,
-        String status
+        String status,
+        double targetLastLatitude,
+        double targetLastLongitude
 ) {
 }

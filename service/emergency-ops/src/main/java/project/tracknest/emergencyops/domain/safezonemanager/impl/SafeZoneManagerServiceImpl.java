@@ -68,6 +68,7 @@ class SafeZoneManagerServiceImpl implements SafeZoneManagerService {
 
         List<GetServiceSafeZonesResponse> safeZoneResponses = safeZonePage
                 .map(sz -> new GetServiceSafeZonesResponse(
+                        sz.getId(),
                         sz.getLatitude(),
                         sz.getLongitude(),
                         sz.getRadius(),
@@ -96,10 +97,10 @@ class SafeZoneManagerServiceImpl implements SafeZoneManagerService {
         }
 
         SafeZone safeZone = safeZoneOpt.get();
-        safeZone.setName(request.getName());
-        safeZone.setLatitude(request.getLatitude());
-        safeZone.setLongitude(request.getLongitude());
-        safeZone.setRadius(request.getRadius());
+        safeZone.setName(request.name());
+        safeZone.setLatitude(request.latitudeDegrees());
+        safeZone.setLongitude(request.longitudeDegrees());
+        safeZone.setRadius(request.radiusMeters());
 
         SafeZone updatedSafeZone = safeZoneRepository.save(safeZone);
 
