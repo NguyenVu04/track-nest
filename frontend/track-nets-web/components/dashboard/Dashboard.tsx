@@ -101,7 +101,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
                     w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
                     ${
                       isActive
-                        ? "bg-indigo-50 text-indigo-600"
+                        ? "bg-brand-50 text-brand-500"
                         : "text-gray-700 hover:bg-gray-100"
                     }
                   `}

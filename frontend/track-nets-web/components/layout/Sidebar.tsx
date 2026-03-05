@@ -74,7 +74,7 @@ export const AppSidebar = memo(function AppSidebar({
     <SidebarPrimitive collapsible="offcanvas">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-2">
-          <Shield className="size-6 text-indigo-600" />
+          <Shield className="size-6 text-brand-500" />
           <div className="flex flex-col">
             <span className="text-sm font-semibold">TRACK</span>
             <span className="text-xs text-muted-foreground">Dashboard</span>
@@ -98,7 +98,7 @@ export const AppSidebar = memo(function AppSidebar({
                         href={item.href}
                         className={
                           isActive
-                            ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 hover:text-indigo-800"
+                            ? "bg-brand-100 text-brand-700 hover:bg-brand-100 hover:text-brand-700"
                             : ""
                         }
                       >

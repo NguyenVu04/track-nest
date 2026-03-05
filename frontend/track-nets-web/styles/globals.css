@@ -39,6 +39,36 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* MÀU CHỦ ĐẠO (Brand Colors) */
+  --primary-50: #f0f8f9; /* Dùng cho nền item đang active ở Sidebar */
+  --primary-100: #e0f2f4; /* Dùng cho nền button hover nhạt */
+  --primary-500: #74becb; /* MÀU CHÍNH: Nút bấm, viền active, icon chính */
+  --primary-600: #5fa5b2; /* Dùng khi hover vào nút bấm chính */
+  --primary-700: #4a8b98; /* Dùng cho text nhấn mạnh */
+
+  /* MÀU NỀN & VĂN BẢN (Neutral/Surface Colors) */
+  --bg-app: #f8fafc; /* Màu nền tổng thể của toàn bộ web (xám rất nhạt) giúp thẻ trắng nổi bật */
+  --bg-surface: #ffffff; /* Màu nền của các thẻ (Card), bảng (Table), Header */
+  --text-main: #0f172a; /* Màu chữ chính (Đen nhạt, dễ đọc hơn đen tuyền) */
+  --text-muted: #64748b; /* Màu chữ phụ (Cho label, ghi chú, placeholder) */
+  --border-subtle: #e2e8f0; /* Màu đường kẻ viền rất mờ để phân cách */
+
+  /* MÀU TRẠNG THÁI (Semantic/Status Colors) */
+  --success-bg: #dcfce7;
+  --success-txt: #166534; /* Active, Resolved, Low Severity */
+
+  --warning-bg: #fef3c7;
+  --warning-txt: #92400e; /* Pending, Medium Severity, Emergency Role */
+
+  --danger-bg: #fee2e2;
+  --danger-txt: #991b1b; /* Banned, High Severity, Xóa */
+
+  --info-bg: #dbeafe;
+  --info-txt: #1e40af; /* Published, Reporter Role */
+
+  /* SHADOWS (Đổ bóng) */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
 .dark {
@@ -117,6 +147,13 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Brand Colors */
+  --color-brand-50: var(--primary-50);
+  --color-brand-100: var(--primary-100);
+  --color-brand-500: var(--primary-500);
+  --color-brand-600: var(--primary-600);
+  --color-brand-700: var(--primary-700);
 }
 
 @layer base {
@@ -135,7 +172,7 @@
  * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
  */
 @layer base {
-  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
     h1 {
       font-size: var(--text-2xl);
       font-weight: var(--font-weight-medium);
@@ -254,16 +291,34 @@ html {
   z-index: auto;
 }
 
-.leaflet-pane { z-index: 400; }
-.leaflet-tile-pane { z-index: 200; }
-.leaflet-overlay-pane { z-index: 400; }
-.leaflet-shadow-pane { z-index: 500; }
-.leaflet-marker-pane { z-index: 600; }
-.leaflet-tooltip-pane { z-index: 650; }
-.leaflet-popup-pane { z-index: 700; }
+.leaflet-pane {
+  z-index: 400;
+}
+.leaflet-tile-pane {
+  z-index: 200;
+}
+.leaflet-overlay-pane {
+  z-index: 400;
+}
+.leaflet-shadow-pane {
+  z-index: 500;
+}
+.leaflet-marker-pane {
+  z-index: 600;
+}
+.leaflet-tooltip-pane {
+  z-index: 650;
+}
+.leaflet-popup-pane {
+  z-index: 700;
+}
 
-.leaflet-map-pane canvas { z-index: 100; }
-.leaflet-map-pane svg { z-index: 200; }
+.leaflet-map-pane canvas {
+  z-index: 100;
+}
+.leaflet-map-pane svg {
+  z-index: 200;
+}
 
 .leaflet-control {
   position: relative;
@@ -417,7 +472,10 @@ svg.leaflet-zoom-animated {
 
 .leaflet-control-zoom-in,
 .leaflet-control-zoom-out {
-  font: bold 18px 'Lucida Console', Monaco, monospace;
+  font:
+    bold 18px "Lucida Console",
+    Monaco,
+    monospace;
   text-indent: 1px;
 }
 
@@ -631,7 +689,10 @@ svg.leaflet-zoom-animated {
   text-align: center;
   width: 24px;
   height: 24px;
-  font: 16px/24px Tahoma, Verdana, sans-serif;
+  font:
+    16px/24px Tahoma,
+    Verdana,
+    sans-serif;
   color: #757575;
   text-decoration: none;
   background: transparent;
