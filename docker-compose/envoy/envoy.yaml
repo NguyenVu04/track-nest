@@ -17,6 +17,13 @@ static_resources:
             - name: user_tracking_service
               domains: ["*"]
               routes:
+              - match: { prefix: "/emergency-ops" }
+                route:
+                  cluster: emergency_ops_rest
+                  timeout: 0s
+                  prefix_rewrite: "/api/v1"
+                  upgrade_configs:
+                  - upgrade_type: websocket
               - match: { prefix: "/" }
                 route:
                   cluster: user_tracking_grpc
@@ -29,8 +36,7 @@ static_resources:
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
               providers:
-                keycloak:
-                  # issuer: "http://keycloak:8080/auth/realms/public-dev"
+                keycloak_public:
                   audiences:
                   - "account"
                   remote_jwks:
@@ -41,11 +47,29 @@ static_resources:
                     cache_duration: 600s
                   forward: true
                   payload_in_metadata: jwt_payload
+                keycloak_restricted:
+                  audiences:
+                  - "account"
+                  remote_jwks:
+                    http_uri:
+                      uri: "http://keycloak:8080/auth/realms/restricted-dev/protocol/openid-connect/certs"
+                      cluster: keycloak_jwks
+                      timeout: 5s
+                    cache_duration: 600s
+                  forward: true
+                  payload_in_metadata: jwt_payload
               rules:
+              - match:
+                  prefix: "/emergency-ops"
+                requires:
+                  requires_any:
+                    requirements:
+                    - provider_name: keycloak_public
+                    - provider_name: keycloak_restricted
               - match:
                   prefix: "/"
                 requires:
-                  provider_name: keycloak
+                  provider_name: keycloak_public
           - name: envoy.filters.http.grpc_web
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb 
@@ -54,6 +78,18 @@ static_resources:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
   clusters:
+  - name: emergency_ops_rest
+    connect_timeout: 5s
+    type: logical_dns
+    load_assignment:
+      cluster_name: emergency_ops_rest
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: emergency_ops
+                port_value: 28080
   - name: user_tracking_grpc
     connect_timeout: 5s
     type: logical_dns

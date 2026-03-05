@@ -7,7 +7,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app.keycloak")
 public class KeycloakProperties {
     private String serverUrl;
-    private String restrictedRealm;
     private String publicRealm;
     private String clientId;
     private String clientSecret;

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record PostEmergencyRequestResponse(
-        long createdAtMs,
-        UUID id
+public record AssignedEmergencyRequestMessage(
+        UUID requestId,
+        long assignedAtMs
 ) {}

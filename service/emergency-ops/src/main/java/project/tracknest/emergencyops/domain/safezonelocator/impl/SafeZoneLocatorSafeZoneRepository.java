@@ -13,7 +13,7 @@ public interface SafeZoneLocatorSafeZoneRepository extends JpaRepository<SafeZon
     @Query(value =
             "SELECT * FROM safe_zone sz " +
                     "WHERE ST_DWithin(sz.geom, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography, :radius) " +
-                    "ORDER BY s.created_at DESC ",
+                    "ORDER BY sz.created_at DESC ",
             nativeQuery = true
     )
     Slice<SafeZone> findNearestSafeZones(

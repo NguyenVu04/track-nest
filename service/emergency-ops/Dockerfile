@@ -16,6 +16,6 @@ WORKDIR /app
 
 COPY --from=builder /app/build/libs/emergency-ops-1.0.0.jar app.jar
 
-EXPOSE 38080
+EXPOSE 28080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

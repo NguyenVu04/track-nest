@@ -18,6 +18,12 @@ public class SecuritySetup {
     public static final double ADMIN_DEFAULT_LATITUDE = 0.0;
     public static final double ADMIN_DEFAULT_LONGITUDE = 0.0;
 
+    public static final UUID NORMAL_USER_ID = UUID.fromString("8c52c01e-42a7-45cc-9254-db8a7601c764");
+    public static final String NORMAL_USERNAME = "user2";
+    public static final String NORMAL_EMAIL = "user2@gmail.com";
+    public static final double NORMAL_DEFAULT_LATITUDE = 10.7759;
+    public static final double NORMAL_DEFAULT_LONGITUDE = 106.7018;
+
     public static void setUpSecurityContext() {
         setUpSecurityContext(ADMIN_USER_ID, ADMIN_USERNAME, ADMIN_EMAIL);
     }

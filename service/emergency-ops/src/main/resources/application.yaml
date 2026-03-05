@@ -44,15 +44,18 @@ server:
 app:
   kafka:
     topics:
-      - user_location
+      - location_updated
     partitions: 3
     replication-factor: 1
   keycloak:
     server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost/auth}
-    restricted-realm: ${KEYCLOAK_RESTRICTED_REALM:restricted-dev}
     client-id: ${KEYCLOAK_CLIENT_ID:emergency-operations}
     client-secret: ${KEYCLOAK_CLIENT_SECRET:2Bu3haFOwsOW7ONprnSGnmVoU8SvHLmy}
     public-realm: ${KEYCLOAK_PUBLIC_REALM:public-dev}
+  stomp:
+    queue:
+      user-location: /queue/user-location
+      emergency-request: /queue/emergency-request
   server-name: ${POD_NAME:user-tracking}
   server-uid: ${$POD_UID:0}
 

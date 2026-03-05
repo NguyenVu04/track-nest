@@ -1,4 +1,4 @@
-package project.tracknest.emergencyops.domain.emergencyrequestreceiver;
+package project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -8,7 +8,7 @@ import project.tracknest.emergencyops.core.entity.EmergencyService;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface EmergencyRequestReceiverEmergencyServiceRepository extends JpaRepository<EmergencyService, UUID> {
+interface EmergencyRequestReceiverEmergencyServiceRepository extends JpaRepository<EmergencyService, UUID> {
 
     @Query(value = """
     SELECT es.*

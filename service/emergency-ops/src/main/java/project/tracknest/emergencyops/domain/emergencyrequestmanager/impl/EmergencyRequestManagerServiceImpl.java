@@ -66,7 +66,9 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
 
     @Override
     public GetRequestCountResponse getEmergencyRequestCount(UUID userId, EmergencyRequestStatus.Status status) {
-        long count = emergencyRequestRepository.countEmergencyRequests(userId, status.getValue());
+        String statusValue = status != null ? status.getValue() : null;
+
+        long count = emergencyRequestRepository.countEmergencyRequests(userId, statusValue);
         long timestampMs = OffsetDateTime.now()
                 .toInstant()
                 .toEpochMilli();

@@ -182,6 +182,37 @@ services:
       - keycloak
       # - nextjs
 
+  emergency_ops:
+    build:
+      context: ../service/emergency-ops
+      dockerfile: Dockerfile
+    container_name: emergency_ops
+    ports:
+      - "28080:28080"
+    environment:
+      KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
+      REDIS_HOST: "redis"
+      REDIS_PORT: 6379
+      DB_HOST: "emergency_ops_postgres"
+      DB_PORT: 5432
+      DB_NAME: "tracknest"
+      DB_USER: "tracknestadmin"
+      DB_PASSWORD: "tracknestadmin"
+      KEYCLOAK_AUTH_SERVER_URL: "http://keycloak:8080"
+      KEYCLOAK_CLIENT_ID: "emergency-operations"
+      KEYCLOAK_CLIENT_SECRET: "2Bu3haFOwsOW7ONprnSGnmVoU8SvHLmy"
+      KEYCLOAK_PUBLIC_REALM: "public-dev"
+    networks:
+      - track_nest
+    depends_on:
+      - emergency_ops_postgres
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   user_tracking:
     build:
       context: ../service/user-tracking

@@ -27,7 +27,7 @@ CREATE TABLE emergency_service_tracks_user (
 
 CREATE TABLE emergency_request (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    open_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    open_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     close_at TIMESTAMP WITH TIME ZONE,
     sender_id UUID NOT NULL,
     target_id UUID NOT NULL,

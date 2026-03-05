@@ -29,7 +29,7 @@ interface EmergencyRequestManagerEmergencyRequestRepository extends JpaRepositor
     SELECT COUNT(er)
     FROM EmergencyRequest er
     WHERE er.emergencyService.id = :serviceId
-      AND :status IS NULL OR er.status.name = :status
+      AND (:status IS NULL OR er.status.name = :status)
     """)
     long countEmergencyRequests(
             @Param("serviceId") UUID serviceId,

@@ -420,9 +420,7 @@
     "emailVerified" : true,
     "attributes" : {
       "phoneNumber" : [ "0812345678" ],
-      "locale" : [ "en" ],
-      "latitude" : [ "0" ],
-      "longitude" : [ "0" ]
+      "locale" : [ "en" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1764041071337,
@@ -449,9 +447,7 @@
     "emailVerified" : true,
     "attributes" : {
       "phoneNumber" : [ "0112345678" ],
-      "locale" : [ "en" ],
-      "latitude" : [ "10" ],
-      "longitude" : [ "10" ]
+      "locale" : [ "en" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1764136795672,
@@ -478,9 +474,7 @@
     "emailVerified" : true,
     "attributes" : {
       "phoneNumber" : [ "0212345678" ],
-      "locale" : [ "en" ],
-      "latitude" : [ "20" ],
-      "longitude" : [ "20" ]
+      "locale" : [ "en" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1764136864847,
@@ -507,9 +501,7 @@
     "emailVerified" : true,
     "attributes" : {
       "phoneNumber" : [ "0312345678" ],
-      "locale" : [ "en" ],
-      "latitude" : [ "30" ],
-      "longitude" : [ "30" ]
+      "locale" : [ "en" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1764136947213,

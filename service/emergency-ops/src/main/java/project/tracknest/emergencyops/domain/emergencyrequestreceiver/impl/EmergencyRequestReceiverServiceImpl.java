@@ -2,22 +2,23 @@ package project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.tracknest.emergencyops.configuration.cache.ServerRedisMessage;
+import project.tracknest.emergencyops.configuration.cache.ServerRedisMessagePublisher;
 import project.tracknest.emergencyops.configuration.security.KeycloakService;
 import project.tracknest.emergencyops.configuration.security.datatype.KeycloakUserProfile;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
 import project.tracknest.emergencyops.core.entity.EmergencyRequest;
 import project.tracknest.emergencyops.core.entity.EmergencyRequestStatus;
 import project.tracknest.emergencyops.core.entity.EmergencyService;
-import project.tracknest.emergencyops.domain.emergencyrequestreceiver.EmergencyRequestReceiverEmergencyServiceRepository;
-import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.DeleteEmergencyRequestResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.GetTrackerEmergencyRequestsResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.PostEmergencyRequestRequest;
-import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.PostEmergencyRequestResponse;
+import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.*;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.service.EmergencyRequestReceiverService;
+import project.tracknest.emergencyops.domain.emergencyrequestreceiver.service.EmergencyRequestReceiverSubscriber;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -27,11 +28,16 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverService {
+class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverService, EmergencyRequestReceiverSubscriber {
+    @Value("${app.stomp.queue.emergency-request}")
+    private String emergencyRequestQueue;
+
     private final EmergencyRequestReceiverEmergencyRequestRepository emergencyRequestRepository;
     private final EmergencyRequestReceiverEmergencyRequestStatusRepository emergencyRequestStatusRepository;
     private final EmergencyRequestReceiverEmergencyServiceRepository emergencyServiceRepository;
     private final KeycloakService keycloakService;
+    private final ServerRedisMessagePublisher redisPublisher;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     @Transactional
@@ -55,6 +61,7 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
             throw new RuntimeException("No emergency service found near your location");
         }
 
+        EmergencyService service = emergencyService.get();
         EmergencyRequest emergencyRequest = EmergencyRequest
                 .builder()
                 .senderId(userId)
@@ -62,19 +69,45 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 .latitude(request.getLastLatitudeDegrees())
                 .longitude(request.getLastLongitudeDegrees())
                 .status(status.get())
-                .emergencyService(emergencyService.get())
+                .emergencyService(service)
                 .build();
 
-        EmergencyRequest savedEmergencyRequest = emergencyRequestRepository.saveAndFlush(emergencyRequest);
+        EmergencyRequest savedEmergencyRequest = emergencyRequestRepository
+                .saveAndFlush(emergencyRequest);
 
-        Long createdAtMs = OffsetDateTime.now()
+        long createdAtMs = OffsetDateTime.now()
                 .toInstant()
                 .toEpochMilli();
+
+        AssignedEmergencyRequestMessage assignedMessage = new AssignedEmergencyRequestMessage(
+                savedEmergencyRequest.getId(),
+                createdAtMs
+        );
+        sendAssignedEmergencyRequest(service.getId(), userId, assignedMessage);
 
         return new PostEmergencyRequestResponse(
                 createdAtMs,
                 savedEmergencyRequest.getId()
         );
+    }
+
+    private void sendAssignedEmergencyRequest(UUID serviceId, UUID userId, AssignedEmergencyRequestMessage message) {
+        ServerRedisMessage redisMessage = ServerRedisMessage
+                .builder()
+                .method("receiveEmergencyRequestMessage")
+                .receiverId(serviceId)
+                .payload(message)
+                .build();
+        redisPublisher.publishMessage(redisMessage, userId);
+        log.info("Published emergency request assignment to Redis for service {}: {}", serviceId, message);
+    }
+
+    @Override
+    public void receiveEmergencyRequestMessage(UUID receiverId, Object message) {
+        messagingTemplate.convertAndSendToUser(
+                receiverId.toString(),
+                emergencyRequestQueue,
+                message);
     }
 
     private GetTrackerEmergencyRequestsResponse mapToGetTrackerEmergencyRequestsResponse(EmergencyRequest emergencyRequest) {
@@ -121,29 +154,6 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 emergencyRequestPage.getTotalPages(),
                 emergencyRequestPage.getNumber(),
                 emergencyRequestPage.getSize()
-        );
-    }
-
-    @Override
-    public DeleteEmergencyRequestResponse deleteEmergencyRequest(UUID userId, UUID requestId) {
-        Optional<EmergencyRequest> emergencyRequestOpt = emergencyRequestRepository
-                .findByIdAndSenderId(requestId, userId);
-
-        if (emergencyRequestOpt.isEmpty()) {
-            log.error("Emergency request not found for deletion: requestId={}, userId={}", requestId, userId);
-            throw new RuntimeException("Emergency request not found");
-        }
-
-        EmergencyRequest emergencyRequest = emergencyRequestOpt.get();
-        emergencyRequestRepository.delete(emergencyRequest);
-
-        Long deletedAtMs = OffsetDateTime.now()
-                .toInstant()
-                .toEpochMilli();
-
-        return new DeleteEmergencyRequestResponse(
-                deletedAtMs,
-                requestId
         );
     }
 }

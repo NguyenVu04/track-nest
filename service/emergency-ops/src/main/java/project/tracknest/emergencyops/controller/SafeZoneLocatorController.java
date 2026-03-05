@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import project.tracknest.emergencyops.domain.safezonelocator.service.SafeZoneLocatorService;
 import project.tracknest.emergencyops.domain.safezonelocator.impl.datatype.GetNearestSafeZonesResponse;
+import project.tracknest.emergencyops.domain.safezonelocator.service.SafeZoneLocatorService;
 
 import java.util.List;
 
@@ -38,7 +38,14 @@ public class SafeZoneLocatorController {
             @Range(min = 1, max = 64, message = "Max number of safe zones must be between 1 and 64")
             int maxNumberOfSafeZones
     ) {
-        return ResponseEntity.ok().build();
+        List<GetNearestSafeZonesResponse> response = service
+                .retrieveNearestSafeZones(
+                        latitudeDegrees,
+                        longitudeDegrees,
+                        maxDistanceMeters,
+                        maxNumberOfSafeZones
+                );
+        return ResponseEntity.ok(response);
     }
 
 }

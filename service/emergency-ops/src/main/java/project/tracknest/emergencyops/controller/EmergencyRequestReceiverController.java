@@ -6,7 +6,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
-import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.DeleteEmergencyRequestResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.service.EmergencyRequestReceiverService;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.GetTrackerEmergencyRequestsResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.PostEmergencyRequestRequest;
@@ -41,18 +40,8 @@ public class EmergencyRequestReceiverController {
     ) {
         UUID userId = getCurrentUserId();
 
-        PageResponse<GetTrackerEmergencyRequestsResponse> response = service.retrieveTrackerEmergencyRequests(userId, pageable);
-
-        return ResponseEntity.ok(response);
-    }
-
-    @DeleteMapping("/request/{requestId}")
-    public ResponseEntity<DeleteEmergencyRequestResponse> deleteEmergencyRequest(
-            @PathVariable UUID requestId
-    ) {
-        UUID userId = getCurrentUserId();
-
-        DeleteEmergencyRequestResponse response = service.deleteEmergencyRequest(userId, requestId);
+        PageResponse<GetTrackerEmergencyRequestsResponse> response = service
+                .retrieveTrackerEmergencyRequests(userId, pageable);
 
         return ResponseEntity.ok(response);
     }
