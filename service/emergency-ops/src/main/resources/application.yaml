@@ -44,7 +44,7 @@ server:
 app:
   kafka:
     topics:
-      - location_updated
+    - location_updated
     partitions: 3
     replication-factor: 1
   keycloak:
@@ -52,6 +52,15 @@ app:
     client-id: ${KEYCLOAK_CLIENT_ID:emergency-operations}
     client-secret: ${KEYCLOAK_CLIENT_SECRET:2Bu3haFOwsOW7ONprnSGnmVoU8SvHLmy}
     public-realm: ${KEYCLOAK_PUBLIC_REALM:public-dev}
+  security:
+    allowed-origins:
+      - http://localhost
+      - http://localhost:3000
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
   stomp:
     queue:
       user-location: /queue/user-location
