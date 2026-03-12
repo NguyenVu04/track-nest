@@ -167,7 +167,6 @@ class TrackerControllerTest {
             ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                     .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                     .setMemberId(USER1_ID.toString())
-                    .setMemberUsername("user1")
                     .build();
 
             AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
@@ -220,7 +219,6 @@ class TrackerControllerTest {
             ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                     .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                     .setMemberId(USER1_ID.toString())
-                    .setMemberUsername("user1")
                     .setCenterLatitudeDeg(40.730610)
                     .setCenterLongitudeDeg(-73.935242)
                     .setRadiusMeter(1000.0f)  // 1km radius
@@ -270,7 +268,6 @@ class TrackerControllerTest {
             ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                     .setFamilyCircleId(ADMIN_CIRCLE_ID)
                     .setMemberId(ADMIN_USER_ID.toString())  // Admin is not in same circle as user1
-                    .setMemberUsername("admin")
                     .build();
 
             AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
@@ -318,8 +315,6 @@ class TrackerControllerTest {
             ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                     .setFamilyCircleId(FAMILY_CIRCLE_2_ID)
                     .setMemberId(USER3_ID.toString())
-                    .setMemberUsername("user3")
-                    .setMemberAvatarUrl("https://example.com/avatar.png")
                     .build();
 
             AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
@@ -364,7 +359,6 @@ class TrackerControllerTest {
             ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                     .setFamilyCircleId(ADMIN_CIRCLE_ID)
                     .setMemberId(USER4_ID.toString())
-                    .setMemberUsername("user4")
                     .build();
 
             AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
@@ -413,7 +407,6 @@ class TrackerControllerTest {
             ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                     .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                     .setMemberId(USER1_ID.toString())
-                    .setMemberUsername("user1")
                     .setCenterLatitudeDeg(35.689487)   // Tokyo
                     .setCenterLongitudeDeg(139.691711)
                     .setRadiusMeter(100.0f)  // Very small radius
@@ -808,7 +801,6 @@ class TrackerControllerTest {
                 ListFamilyMemberLocationHistoryRequest historyRequest = ListFamilyMemberLocationHistoryRequest.newBuilder()
                         .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                         .setMemberId(USER1_ID.toString())
-                        .setMemberUsername("user1")
                         .build();
 
                 CountDownLatch historyLatch = new CountDownLatch(1);
@@ -887,7 +879,6 @@ class TrackerControllerTest {
                 ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                         .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                         .setMemberId(USER1_ID.toString())
-                        .setMemberUsername("user1")
                         .build();
 
                 @SuppressWarnings("unchecked")
@@ -964,7 +955,6 @@ class TrackerControllerTest {
                 ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                         .setFamilyCircleId(FAMILY_CIRCLE_3_ID)
                         .setMemberId(USER3_ID.toString())
-                        .setMemberUsername("user3")
                         .build();
 
                 AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
@@ -1005,7 +995,6 @@ class TrackerControllerTest {
                 ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                         .setFamilyCircleId(FAMILY_CIRCLE_4_ID)
                         .setMemberId(USER3_ID.toString())
-                        .setMemberUsername("user3")
                         .build();
 
                 AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
@@ -1201,7 +1190,6 @@ class TrackerControllerTest {
                 ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                         .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                         .setMemberId(USER1_ID.toString())
-                        .setMemberUsername("user1")
                         .setCenterLatitudeDeg(40.730610)
                         .build();
 
@@ -1244,7 +1232,6 @@ class TrackerControllerTest {
                 ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                         .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                         .setMemberId(USER1_ID.toString())
-                        .setMemberUsername("user1")
                         .setCenterLongitudeDeg(-73.935242)
                         .build();
 
@@ -1287,7 +1274,6 @@ class TrackerControllerTest {
                 ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                         .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                         .setMemberId(USER1_ID.toString())
-                        .setMemberUsername("user1")
                         .setRadiusMeter(1000.0f)
                         .build();
 
@@ -1330,7 +1316,6 @@ class TrackerControllerTest {
                 ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                         .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                         .setMemberId(USER1_ID.toString())
-                        .setMemberUsername("user1")
                         .setCenterLatitudeDeg(40.730610)
                         .setCenterLongitudeDeg(-73.935242)
                         .build();
@@ -1404,7 +1389,6 @@ class TrackerControllerTest {
                 ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
                         .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                         .setMemberId(USER1_ID.toString())
-                        .setMemberUsername("user1")
                         .setCenterLatitudeDeg(40.730610)
                         .setCenterLongitudeDeg(-73.935242)
                         .setRadiusMeter(100000.0f)  // 100km radius

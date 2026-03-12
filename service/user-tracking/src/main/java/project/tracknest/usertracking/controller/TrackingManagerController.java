@@ -153,4 +153,15 @@ public class TrackingManagerController extends TrackingManagerControllerGrpc.Tra
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
+
+    @Override
+    public void listFamilyCircleMembers(ListFamilyCircleMembersRequest request, StreamObserver<ListFamilyCircleMembersResponse> responseObserver) {
+        UUID userId = getCurrentUserId();
+
+        ListFamilyCircleMembersResponse response = service
+                .listFamilyCircleMembers(userId, request);
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
 }

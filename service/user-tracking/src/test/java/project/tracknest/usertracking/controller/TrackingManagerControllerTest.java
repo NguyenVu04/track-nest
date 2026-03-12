@@ -374,4 +374,25 @@ class TrackingManagerControllerTest {
             assertEquals(Code.FAILED_PRECONDITION_VALUE, ref.get().getStatus().getCode());
         }
     }
+
+    @Nested
+    @DisplayName("ListFamilyCircleMembers")
+    class ListFamilyCircleMembersTests {
+        @Test
+        void listFamilyCircleMembers_success() throws Exception {
+            ListFamilyCircleMembersRequest request = ListFamilyCircleMembersRequest.newBuilder()
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
+                    .build();
+            AtomicReference<ListFamilyCircleMembersResponse> ref = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            trackingManagerController.listFamilyCircleMembers(request, new StreamObserver<>() {
+                public void onNext(ListFamilyCircleMembersResponse value) { ref.set(value); }
+                public void onError(Throwable t) { latch.countDown(); }
+                public void onCompleted() { latch.countDown(); }
+            });
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertNotNull(ref.get());
+            assertTrue(ref.get().getMembersCount() > 1);
+        }
+    }
 }

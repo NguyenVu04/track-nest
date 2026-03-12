@@ -72,8 +72,6 @@ message FamilyMemberLocation {
 message ListFamilyMemberLocationHistoryRequest {
    string family_circle_id = 1;
    string member_id = 2;
-   string member_username = 3;
-   optional string member_avatar_url = 4;
    optional double center_latitude_deg = 5;
    optional double center_longitude_deg = 6;
    optional float radius_meter = 7;

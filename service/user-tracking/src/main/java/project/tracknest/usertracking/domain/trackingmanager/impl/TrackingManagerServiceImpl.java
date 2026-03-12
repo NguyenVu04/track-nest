@@ -23,7 +23,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static project.tracknest.usertracking.core.utils.OtpGenerator.OTP_TTL_SECONDS;
 
@@ -121,10 +124,10 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
         Slice<FamilyCircle> slice = cursor == null
                 ? familyCircleRepository.findFirstPageByUserId(userId, pageable)
                 : familyCircleRepository.findNextPageByUserId(
-                        userId,
-                        Instant.ofEpochMilli(cursor.lastCreatedAtMs())
-                            .atOffset(ZoneOffset.UTC), UUID.fromString(cursor.lastId()),
-                        pageable);
+                userId,
+                Instant.ofEpochMilli(cursor.lastCreatedAtMs())
+                        .atOffset(ZoneOffset.UTC), UUID.fromString(cursor.lastId()),
+                pageable);
 
 
         List<FamilyCircleInfo> infos = slice.getContent().stream()
@@ -541,6 +544,65 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                         .build())
                 .setRemovedAtMs(Instant.now().toEpochMilli())
                 .setMemberId(request.getMemberId())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ListFamilyCircleMembersResponse listFamilyCircleMembers(UUID userId, ListFamilyCircleMembersRequest request) {
+        UUID circleId = UUID.fromString(request.getFamilyCircleId());
+
+        Optional<FamilyCircleMember> memberOpt = familyCircleMemberRepository
+                .findById_FamilyCircleIdAndId_MemberId(
+                        circleId,
+                        userId);
+
+        if (memberOpt.isEmpty()) {
+            log.warn("User {} is not a member of the family circle {} when listing members",
+                    userId, request.getFamilyCircleId());
+            return ListFamilyCircleMembersResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.PERMISSION_DENIED_VALUE)
+                            .setMessage("User is not a member of the family circle")
+                            .build())
+                    .build();
+        }
+
+        List<FamilyCircleMember> members = familyCircleMemberRepository
+                .findById_FamilyCircleId(circleId);
+
+        List<FamilyCircleMemberInfo> memberInfos = members.stream()
+                .map(m -> FamilyCircleMemberInfo.newBuilder()
+                        .setMemberId(m.getId()
+                                .getMemberId()
+                                .toString())
+                        .setIsAdmin(m.isAdmin())
+                        .setFamilyRole(m.getRole())
+                        .setMemberUsername(m.getMember()
+                                .getUsername())
+                        .setMemberAvatarUrl(m.getMember()
+                                .getAvatarUrl() == null
+                                ? ""
+                                : m.getMember().getAvatarUrl())
+                        .setLastActiveMs(m.getMember()
+                                .getLastActive()
+                                .toInstant()
+                                .toEpochMilli())
+                        .setOnline(m.getMember()
+                                .isConnected())
+                        .build())
+                .toList();
+
+        return ListFamilyCircleMembersResponse
+                .newBuilder()
+                .setStatus(Status
+                        .newBuilder()
+                        .setCode(Code.OK_VALUE)
+                        .setMessage("Family circle members listed successfully")
+                        .build())
+                .addAllMembers(memberInfos)
                 .build();
     }
 }
