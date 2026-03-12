@@ -46,6 +46,10 @@ service TrackingManagerController {
   rpc UpdateFamilyCircle(UpdateFamilyCircleRequest)
       returns (UpdateFamilyCircleResponse);
 
+  // ListFamilyCircleMembers
+  // Retrieves a list of members in the specified family circle along with their
+  // roles and statuses. Errors such as "circle not found" or "not a member"
+  // will be reflected in the `status` field of the response.
   rpc ListFamilyCircleMembers(ListFamilyCircleMembersRequest)
       returns (ListFamilyCircleMembersResponse);
 
