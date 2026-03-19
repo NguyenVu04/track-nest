@@ -141,23 +141,6 @@ services:
       - "9000:9000"
       - "9001:9001"
 
-  # elasticsearch:
-  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
-  #   container_name: elasticsearch
-  #   environment:
-  #     - discovery.type=single-node
-  #     - ES_JAVA_OPTS=-Xms512m -Xmx512m
-  #     - xpack.security.enabled=false
-  #   ports:
-  #     - 9200:9200
-  #     - 9300:9300
-  #   volumes:
-  #     - esdata:/usr/share/elasticsearch/data
-  #   ulimits:
-  #     memlock:
-  #       soft: -1
-  #       hard: -1
-
   envoy:
     image: envoyproxy/envoy:v1.36-latest
     container_name: envoy
@@ -407,6 +390,5 @@ volumes:
   emergency_detection_postgres_data:
   keycloak_postgres_data:
   redis-data:
-  # esdata:
   minio-1:
   minio-2:
