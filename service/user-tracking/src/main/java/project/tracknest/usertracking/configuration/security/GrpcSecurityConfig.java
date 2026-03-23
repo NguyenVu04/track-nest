@@ -12,11 +12,13 @@ import project.tracknest.usertracking.controller.GrpcGlobalExceptionHandler;
 @Configuration
 @RequiredArgsConstructor
 public class GrpcSecurityConfig {
+    private final SecurityUserRepository userRepository;
+
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     @GlobalServerInterceptor
     public GrpcSecurityInterceptor grpcSecurityInterceptor() {
-        return new GrpcSecurityInterceptor();
+        return new GrpcSecurityInterceptor(userRepository);
     }
 
     @Bean

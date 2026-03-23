@@ -21,11 +21,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final SecurityProperties securityProperties;
+    private final SecurityEmergencyServiceRepository serviceRepository;
 
     @Bean
     protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .addFilterAfter(new KeycloakFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new KeycloakFilter(serviceRepository), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**")
                         .permitAll()

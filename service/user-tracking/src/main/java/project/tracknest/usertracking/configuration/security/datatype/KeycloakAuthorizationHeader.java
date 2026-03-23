@@ -21,6 +21,7 @@ public class KeycloakAuthorizationHeader {
     private String username;
     private String name;
     private String email;
+    private String avatar;
     @JsonProperty("exp")
     private Long expiration;
     @JsonProperty("realm_access")

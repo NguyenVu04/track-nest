@@ -10,10 +10,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import project.tracknest.usertracking.configuration.security.datatype.KeycloakAuthorizationHeader;
 import project.tracknest.usertracking.core.datatype.KeycloakPrincipal;
 import project.tracknest.usertracking.core.datatype.KeycloakUserDetails;
+import project.tracknest.usertracking.core.entity.User;
 
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -23,6 +26,12 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
     private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer [A-Za-z0-9\\-_=]+\\.[A-Za-z0-9\\-_=]+\\.?[A-Za-z0-9\\-_.+/=]*$");
     private static final Metadata.Key<String> AUTHORIZATION_KEY =
             Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
+
+    private final SecurityUserRepository userRepository;
+
+    public GrpcSecurityInterceptor(SecurityUserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
@@ -56,6 +65,30 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(principal, authorizationHeader, roles);
                 authentication.setDetails(userDetails);
+
+                Optional<User> userOpt = userRepository.findById(decoded.getUserId());
+
+                OffsetDateTime now = OffsetDateTime.now();
+                if (userOpt.isEmpty()) {
+                    log.warn("User not found in database for ID: {}", decoded.getUserId());
+
+                    User user = User
+                            .builder()
+                            .id(decoded.getUserId())
+                            .username(decoded.getUsername())
+                            .connected(true)
+                            .lastActive(now)
+                            .avatarUrl(decoded.getAvatar())
+                            .build();
+                    userRepository.save(user);
+                } else {
+                    User user = userOpt.get();
+                    user.setConnected(true);
+                    user.setLastActive(now);
+                    user.setUsername(decoded.getUsername());
+                    user.setAvatarUrl(decoded.getAvatar());
+                    userRepository.save(user);
+                }
 
                 log.info("Setting gRPC security context with user: {}", principal.getName());
                 SecurityContextHolder.getContext().setAuthentication(authentication);

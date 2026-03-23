@@ -9,7 +9,7 @@
   "refreshTokenMaxReuse" : 0,
   "accessTokenLifespan" : 86400,
   "accessTokenLifespanForImplicitFlow" : 900,
-  "ssoSessionIdleTimeout" : 0,
+  "ssoSessionIdleTimeout" : 259200,
   "ssoSessionMaxLifespan" : 1209600,
   "ssoSessionIdleTimeoutRememberMe" : 0,
   "ssoSessionMaxLifespanRememberMe" : 0,
@@ -419,8 +419,8 @@
     "email" : "admin@gmail.com",
     "emailVerified" : true,
     "attributes" : {
-      "phoneNumber" : [ "0812345678" ],
-      "locale" : [ "en" ]
+      "locale" : [ "en" ],
+      "phoneNumber" : [ "0812345678" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1764041071337,
@@ -446,8 +446,8 @@
     "email" : "emgser1@gmail.com",
     "emailVerified" : true,
     "attributes" : {
-      "phoneNumber" : [ "0112345678" ],
-      "locale" : [ "en" ]
+      "locale" : [ "en" ],
+      "phoneNumber" : [ "0112345678" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1764136795672,
@@ -473,8 +473,8 @@
     "email" : "emgser2@gmail.com",
     "emailVerified" : true,
     "attributes" : {
-      "phoneNumber" : [ "0212345678" ],
-      "locale" : [ "en" ]
+      "locale" : [ "en" ],
+      "phoneNumber" : [ "0212345678" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1764136864847,
@@ -500,8 +500,8 @@
     "email" : "emgser3@gmail.com",
     "emailVerified" : true,
     "attributes" : {
-      "phoneNumber" : [ "0312345678" ],
-      "locale" : [ "en" ]
+      "locale" : [ "en" ],
+      "phoneNumber" : [ "0312345678" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1764136947213,
@@ -1330,6 +1330,22 @@
         "jsonType.label" : "String"
       }
     }, {
+      "id" : "16af00ed-4204-4466-a277-c46cd0577b4d",
+      "name" : "phone number",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usermodel-attribute-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "user.attribute" : "phoneNumber",
+        "id.token.claim" : "true",
+        "lightweight.claim" : "false",
+        "access.token.claim" : "true",
+        "claim.name" : "phone_number",
+        "jsonType.label" : "String"
+      }
+    }, {
       "id" : "7476ccf9-df20-49e4-8229-d677b3e6e777",
       "name" : "middle name",
       "protocol" : "openid-connect",
@@ -1880,7 +1896,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "saml-role-list-mapper", "saml-user-property-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-full-name-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-usermodel-attribute-mapper", "oidc-address-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-sha256-pairwise-sub-mapper", "oidc-address-mapper", "saml-role-list-mapper", "oidc-full-name-mapper", "saml-user-attribute-mapper", "saml-user-property-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper" ]
       }
     }, {
       "id" : "320bd42f-864f-41f7-85fe-05ff2015c98a",
@@ -1889,7 +1905,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-usermodel-attribute-mapper", "saml-role-list-mapper", "oidc-full-name-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper", "saml-user-attribute-mapper", "oidc-address-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-usermodel-property-mapper", "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "saml-user-property-mapper", "saml-user-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-role-list-mapper", "oidc-full-name-mapper" ]
       }
     }, {
       "id" : "473ec6d6-a4da-4e63-8a84-83343f14b127",

@@ -412,9 +412,10 @@
     "email" : "admin@gmail.com",
     "emailVerified" : true,
     "attributes" : {
-      "locale" : [ "en" ],
       "personalId" : [ "123456789" ],
-      "phoneNumber" : [ "0812345678" ]
+      "phoneNumber" : [ "0812345678" ],
+      "avatar" : [ "https://placehold.net/avatar-5.svg" ],
+      "locale" : [ "en" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1764004046556,
@@ -513,7 +514,7 @@
     "attributes" : {
       "personalId" : [ "1111111111" ],
       "phoneNumber" : [ "0112345678" ],
-      "avatar" : [ "https://example.com/avatar.jpg" ],
+      "avatar" : [ "https://placehold.net/avatar.svg" ],
       "locale" : [ "en" ]
     },
     "enabled" : true,
@@ -540,7 +541,9 @@
     "email" : "user10@gmail.com",
     "emailVerified" : true,
     "attributes" : {
-      "phoneNumber" : [ "1236547890" ]
+      "personalId" : [ "4545646487" ],
+      "phoneNumber" : [ "1236547890" ],
+      "avatar" : [ "https://placehold.net/avatar.svg" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1769764160944,
@@ -568,7 +571,7 @@
     "attributes" : {
       "personalId" : [ "2222222222" ],
       "phoneNumber" : [ "0212345678" ],
-      "avatar" : [ "https://example.com/avatar.jpg" ],
+      "avatar" : [ "https://placehold.net/avatar-5.svg" ],
       "locale" : [ "en" ]
     },
     "enabled" : true,
@@ -597,7 +600,7 @@
     "attributes" : {
       "personalId" : [ "3333333333" ],
       "phoneNumber" : [ "0312345678" ],
-      "avatar" : [ "https://example.com/avatar.jpg" ],
+      "avatar" : [ "https://placehold.net/avatar.svg" ],
       "locale" : [ "en" ]
     },
     "enabled" : true,
@@ -626,7 +629,7 @@
     "attributes" : {
       "personalId" : [ "4444444444" ],
       "phoneNumber" : [ "0412345678" ],
-      "avatar" : [ "https://example.com/avatar.jpg" ],
+      "avatar" : [ "https://placehold.net/avatar-5.svg" ],
       "locale" : [ "en" ]
     },
     "enabled" : true,
@@ -653,8 +656,10 @@
     "email" : "user5@gmail.com",
     "emailVerified" : true,
     "attributes" : {
-      "locale" : [ "en" ],
-      "phoneNumber" : [ "0456987321" ]
+      "personalId" : [ "256314789" ],
+      "phoneNumber" : [ "0456987321" ],
+      "avatar" : [ "https://placehold.net/avatar-4.svg" ],
+      "locale" : [ "en" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1769763807023,
@@ -680,8 +685,10 @@
     "email" : "user6@gmail.com",
     "emailVerified" : true,
     "attributes" : {
-      "locale" : [ "en" ],
-      "phoneNumber" : [ "7418520963" ]
+      "personalId" : [ "45456589632" ],
+      "phoneNumber" : [ "7418520963" ],
+      "avatar" : [ "https://placehold.net/avatar-2.svg" ],
+      "locale" : [ "en" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1769763878792,
@@ -707,7 +714,9 @@
     "email" : "user7@gmail.com",
     "emailVerified" : true,
     "attributes" : {
-      "phoneNumber" : [ "3698520147" ]
+      "personalId" : [ "8529631479" ],
+      "phoneNumber" : [ "3698520147" ],
+      "avatar" : [ "https://placehold.net/avatar-2.svg" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1769763922152,
@@ -733,8 +742,10 @@
     "email" : "user8@gmail.com",
     "emailVerified" : true,
     "attributes" : {
-      "locale" : [ "en" ],
-      "phoneNumber" : [ "7896541230" ]
+      "personalId" : [ "4563217896" ],
+      "phoneNumber" : [ "7896541230" ],
+      "avatar" : [ "https://placehold.net/avatar-5.svg" ],
+      "locale" : [ "en" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1769763997871,
@@ -760,7 +771,9 @@
     "email" : "user9@gmail.com",
     "emailVerified" : true,
     "attributes" : {
-      "phoneNumber" : [ "4569871230" ]
+      "personalId" : [ "25896471232" ],
+      "phoneNumber" : [ "4569871230" ],
+      "avatar" : [ "https://placehold.net/avatar-2.svg" ]
     },
     "enabled" : true,
     "createdTimestamp" : 1769764099700,
@@ -1713,6 +1726,22 @@
         "jsonType.label" : "long"
       }
     }, {
+      "id" : "e471ebd0-ecd3-480a-b5ef-79001ad78009",
+      "name" : "avatar",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usermodel-attribute-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "user.attribute" : "avatar",
+        "id.token.claim" : "true",
+        "lightweight.claim" : "false",
+        "access.token.claim" : "true",
+        "claim.name" : "avatar",
+        "jsonType.label" : "String"
+      }
+    }, {
       "id" : "398ce504-40fb-4b0d-b2bc-6e4d280d157e",
       "name" : "full name",
       "protocol" : "openid-connect",
@@ -1927,7 +1956,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "saml-role-list-mapper", "saml-user-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-property-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-full-name-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-full-name-mapper", "oidc-usermodel-attribute-mapper", "saml-user-property-mapper", "oidc-address-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "saml-role-list-mapper", "oidc-sha256-pairwise-sub-mapper" ]
       }
     }, {
       "id" : "5f2e9e8c-2b88-45e9-bec7-5da28a842a33",
@@ -1936,7 +1965,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper", "saml-role-list-mapper", "saml-user-attribute-mapper", "oidc-full-name-mapper", "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper", "oidc-address-mapper", "saml-role-list-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper", "oidc-full-name-mapper" ]
       }
     }, {
       "id" : "85a1428b-3bd3-4af3-9f51-4efb14262528",

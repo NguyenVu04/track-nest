@@ -14,10 +14,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import project.tracknest.emergencyops.configuration.security.datatype.KeycloakAuthorizationHeader;
 import project.tracknest.emergencyops.core.datatype.KeycloakPrincipal;
 import project.tracknest.emergencyops.core.datatype.KeycloakUserDetails;
+import project.tracknest.emergencyops.core.entity.EmergencyService;
 
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -26,6 +28,12 @@ public class KeycloakFilter extends OncePerRequestFilter {
     private static final int MAX_HEADER_LENGTH = 4096;
     private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer [A-Za-z0-9\\-_=]+\\.[A-Za-z0-9\\-_=]+\\.?[A-Za-z0-9\\-_.+/=]*$");
     private static final String AUTHORIZATION_KEY = "Authorization";
+
+    private final SecurityEmergencyServiceRepository serviceRepository;
+
+    public KeycloakFilter(SecurityEmergencyServiceRepository serviceRepository) {
+        this.serviceRepository = serviceRepository;
+    }
 
     @Override
     protected void doFilterInternal(
@@ -59,6 +67,30 @@ public class KeycloakFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(principal, authorizationHeader, roles);
                 authentication.setDetails(userDetails);
+
+                Optional<EmergencyService> serviceOpt = serviceRepository.findById(decoded.getUserId());
+                if (serviceOpt.isEmpty()) {
+                    log.warn("No emergency service found for ID: {}", decoded.getUserId());
+
+                    EmergencyService service = EmergencyService
+                            .builder()
+                            .id(decoded.getUserId())
+                            .username(decoded.getUsername())
+                            .phoneNumber(decoded.getPhoneNumber())
+                            .build();
+                    serviceRepository.save(service);
+                } else {
+                    EmergencyService service = serviceOpt.get();
+                    if (!service.getUsername().equals(decoded.getUsername()) ||
+                            !service.getPhoneNumber().equals(decoded.getPhoneNumber())) {
+                        log.info("Updating emergency service info for ID: {}", decoded.getUserId());
+
+                        service.setUsername(decoded.getUsername());
+                        service.setPhoneNumber(decoded.getPhoneNumber());
+                        serviceRepository.save(service);
+                    }
+                }
+
                 log.info("Setting security context with user: {}", principal.getName());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception ex) {

@@ -1,10 +1,7 @@
 package project.tracknest.emergencyops.core.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Generated;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.Point;
@@ -19,15 +16,19 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class EmergencyService {
+    @EqualsAndHashCode.Include
     @Id
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
+    @EqualsAndHashCode.Include
     @Range(min = 3, max = 255, message = "Username must be between 3 and 255 characters")
     @Column(name = "username", nullable = false, updatable = false)
     private String username;
 
+    @EqualsAndHashCode.Include
     @Range(min = 3, max = 25, message = "Phone number must be between 3 and 25 characters")
     @Column(name = "phone_number", nullable = false, updatable = false)
     private String phoneNumber;
