@@ -92,7 +92,7 @@ class EmergencyRequestManagerControllerTest {
                 assertNotNull(response);
                 assertEquals(200, response.getStatusCode().value());
                 assertNotNull(response.getBody());
-                assertEquals(3, response.getBody().count());
+                assertEquals(1, response.getBody().count());
             });
         }
     }

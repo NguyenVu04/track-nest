@@ -76,3 +76,11 @@ app:
     replication-factor: 1
   server-name: ${POD_NAME:user-tracking}
   server-uid: ${$POD_UID:0}
+  quartz:
+    jobs:
+      disconnectInactiveUsers:
+        cron: "0 */3 * * * ?"
+        description: "Disconnect inactive users"
+      updateGrpcSessions:
+        cron: "0 */3 * * * ?"
+        description: "Update gRPC sessions"

@@ -45,7 +45,7 @@ public class RedisConfig {
                                 new GenericJackson2JsonRedisSerializer()
                         )
                 )
-                .entryTtl(Duration.ofMinutes(5)); // default TTL
+                .entryTtl(Duration.ofMinutes(10)); // default TTL
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)

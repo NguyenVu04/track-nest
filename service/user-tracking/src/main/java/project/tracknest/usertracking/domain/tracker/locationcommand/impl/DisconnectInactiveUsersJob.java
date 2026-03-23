@@ -59,9 +59,9 @@ public class DisconnectInactiveUsersJob implements Job {
                 String body = String.format(DISCONNECT_NOTIFICATION_BODY_TEMPLATE, user.getUsername(), OffsetDateTime.now());
                 TrackingNotificationMessage notification = new TrackingNotificationMessage(
                         user.getId(),
-                        DISCONNECT_NOTIFICATION_TYPE,
+                        body,
                         DISCONNECT_NOTIFICATION_TITLE,
-                        body
+                        DISCONNECT_NOTIFICATION_TYPE
                 );
                 kafkaTemplate.send(TOPIC, notification);
 

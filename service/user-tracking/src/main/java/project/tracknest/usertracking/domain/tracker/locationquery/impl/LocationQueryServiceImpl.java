@@ -6,10 +6,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.tracknest.usertracking.configuration.redis.ServerRedisMessage;
+import project.tracknest.usertracking.configuration.redis.ServerRedisMessagePublisher;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.entity.Location;
 import project.tracknest.usertracking.core.entity.User;
 import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationQueryService;
+import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationQuerySubscriber;
 import project.tracknest.usertracking.proto.lib.FamilyMemberLocation;
 import project.tracknest.usertracking.proto.lib.ListFamilyMemberLocationHistoryRequest;
 import project.tracknest.usertracking.proto.lib.ListFamilyMemberLocationHistoryResponse;
@@ -22,10 +25,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-class LocationQueryServiceImpl implements LocationQueryService, LocationMessageConsumer {
+class LocationQueryServiceImpl implements LocationQueryService, LocationMessageConsumer, LocationQuerySubscriber {
     private final LocationObserver observer;
     private final LocationQueryLocationRepository locationRepository;
     private final LocationQueryUserRepository userRepository;
+    private final ServerRedisMessagePublisher redisPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -34,14 +38,35 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
                 .findAllUserFamilyMembers(message.userId());
 
         familyMembers.forEach(
-                (member) ->
-                        observer.sendTargetLocation(
-                                member.getId(),
-                                message
-                        )
+                (member) -> {
+                    ServerRedisMessage redisMessage = ServerRedisMessage
+                            .builder()
+                            .payload(message)
+                            .method("receiveLocationMessage")
+                            .receiverId(member.getId())
+                            .build();
+
+                    redisPublisher.publishMessage(
+                            redisMessage,
+                            redisMessage.getReceiverId()
+                    );
+                }
         );
 
         log.info("Tracked location for userId {}: {}", message.userId(), message);
+    }
+
+    @Override
+    public void receiveLocationMessage(UUID receiverId, LocationMessage message) {
+        try {
+            observer.sendTargetLocation(
+                    receiverId,
+                    message
+            );
+        } catch (Exception e) {
+            log.error("Failed to process location message for receiverId {}: {}",
+                    receiverId, e.getMessage(), e);
+        }
     }
 
     @Override
@@ -50,7 +75,15 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
             UUID userId,
             StreamFamilyMemberLocationsRequest request
     ) {
-        List<User> members = userRepository.findAllUserFamilyMembers(userId);
+        UUID circleId = UUID.fromString(request.getFamilyCircleId());
+
+        List<User> members = userRepository.findAllUserFamilyMembersInCircle(userId, circleId);
+
+        if (!userRepository.isCircleMember(userId, circleId)) {
+            log.warn("User with id {} is not a member of family circle with id {}. Cannot stream locations.",
+                    userId, circleId);
+            throw new IllegalArgumentException("User is not a member of the specified family circle");
+        }
 
         return locationRepository.findLatestByUserIdIn(
                         members
@@ -176,5 +209,4 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
                 .addAllLocations(memberLocations)
                 .build();
     }
-
 }

@@ -26,6 +26,30 @@ interface LocationQueryUserRepository extends JpaRepository<User, UUID> {
     List<User> findAllUserFamilyMembers(@Param("userId") UUID userId);
 
     @Query("""
+    SELECT fcm.member
+    FROM FamilyCircleMember fcm
+    WHERE fcm.id.familyCircleId = :circleId
+        AND fcm.id.memberId != :userId
+    """)
+    List<User> findAllUserFamilyMembersInCircle(
+            @Param("userId") UUID userId,
+            @Param("circleId") UUID circleId
+    );
+
+    @Query("""
+    SELECT EXISTS (
+        SELECT 1
+        FROM FamilyCircleMember fcm
+        WHERE fcm.id.memberId = :userId
+            AND fcm.id.familyCircleId = :circleId
+        )
+    """)
+    boolean isCircleMember(
+            @Param("userId") UUID userId,
+            @Param("circleId") UUID circleId
+    );
+
+    @Query("""
     SELECT EXISTS (
         SELECT 1
         FROM FamilyCircleMember fcm

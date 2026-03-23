@@ -65,8 +65,13 @@ app:
     queue:
       user-location: /queue/user-location
       emergency-request: /queue/emergency-request
-  server-name: ${POD_NAME:user-tracking}
+  server-name: ${POD_NAME:emergency-ops}
   server-uid: ${$POD_UID:0}
+  quartz:
+    jobs:
+      updateWebSocketSessions:
+        cron: "0 */4 * * * ?"
+        description: "Update WebSocket sessions"
 
 springdoc:
   api-docs:

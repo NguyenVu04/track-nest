@@ -1,12 +1,11 @@
-package project.tracknest.usertracking.configuration.quartz;
+package project.tracknest.emergencyops.configuration.quartz;
 
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import project.tracknest.usertracking.domain.tracker.locationcommand.impl.DisconnectInactiveUsersJob;
-import project.tracknest.usertracking.domain.tracker.locationquery.impl.UpdateGrpcSessionsJob;
+import project.tracknest.emergencyops.configuration.websocket.UpdateWebSocketSessionsJob;
 
 @Configuration
 @EnableConfigurationProperties(QuartzJobsProperties.class)
@@ -39,49 +38,25 @@ public class QuartzConfig {
     // ---------- Jobs ----------
 
     @Bean
-    public JobDetail disconnectInactiveUsersJobDetail() {
-        var config = props.getJobs().get("disconnectInactiveUsers");
+    public JobDetail updateWebSocketSessionsJobDetail() {
+        var config = props.getJobs().get("updateWebSocketSessions");
 
         return buildJobDetail(
-                DisconnectInactiveUsersJob.class,
-                "disconnectInactiveUsersJob",
+                UpdateWebSocketSessionsJob.class,
+                "updateWebSocketSessionsJob",
                 config.getDescription()
         );
     }
 
     @Bean
-    public Trigger disconnectInactiveUsersTrigger(
-            @Qualifier("disconnectInactiveUsersJobDetail") JobDetail jobDetail
+    public Trigger updateWebSocketSessionsTrigger(
+            @Qualifier("updateWebSocketSessionsJobDetail") JobDetail jobDetail
     ) {
-        var config = props.getJobs().get("disconnectInactiveUsers");
+        var config = props.getJobs().get("updateWebSocketSessions");
 
         return buildCronTrigger(
                 jobDetail,
-                "disconnectInactiveUsersTrigger",
-                config.getCron()
-        );
-    }
-
-    @Bean
-    public JobDetail updateGrpcSessionsJobDetail() {
-        var config = props.getJobs().get("updateGrpcSessions");
-
-        return buildJobDetail(
-                UpdateGrpcSessionsJob.class,
-                "updateGrpcSessionsJob",
-                config.getDescription()
-        );
-    }
-
-    @Bean
-    public Trigger updateGrpcSessionsTrigger(
-            @Qualifier("updateGrpcSessionsJobDetail") JobDetail jobDetail
-    ) {
-        var config = props.getJobs().get("updateGrpcSessions");
-
-        return buildCronTrigger(
-                jobDetail,
-                "updateGrpcSessionsTrigger",
+                "updateWebSocketSessionsTrigger",
                 config.getCron()
         );
     }

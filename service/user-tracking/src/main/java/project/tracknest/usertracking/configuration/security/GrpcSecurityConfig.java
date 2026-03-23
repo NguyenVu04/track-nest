@@ -1,6 +1,7 @@
 package project.tracknest.usertracking.configuration.security;
 
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -9,6 +10,7 @@ import org.springframework.grpc.server.GlobalServerInterceptor;
 import project.tracknest.usertracking.controller.GrpcGlobalExceptionHandler;
 
 @Configuration
+@RequiredArgsConstructor
 public class GrpcSecurityConfig {
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)

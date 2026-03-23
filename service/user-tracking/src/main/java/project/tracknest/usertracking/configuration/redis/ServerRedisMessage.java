@@ -1,4 +1,4 @@
-package project.tracknest.emergencyops.configuration.cache;
+package project.tracknest.usertracking.configuration.redis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

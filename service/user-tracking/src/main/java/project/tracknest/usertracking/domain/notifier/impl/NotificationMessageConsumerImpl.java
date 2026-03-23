@@ -110,5 +110,15 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                 .toList();
 
         fcmService.sendToTokens(deviceTokens, message.title(), message.content());
+
+        RiskNotification riskNotification = RiskNotification
+                .builder()
+                .type(message.type())
+                .user(userOpt.get())
+                .title(message.title())
+                .content(message.content())
+                .build();
+
+        riskNotificationRepository.save(riskNotification);
     }
 }

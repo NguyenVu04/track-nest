@@ -2,8 +2,10 @@ package project.tracknest.usertracking.domain.tracker.locationquery.impl;
 
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import project.tracknest.usertracking.configuration.common.ServerIdProvider;
+import project.tracknest.usertracking.configuration.redis.GrpcSession;
+import project.tracknest.usertracking.configuration.redis.GrpcSessionService;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationStreamObserverRegistry;
 import project.tracknest.usertracking.proto.lib.FamilyMemberLocation;
@@ -17,63 +19,121 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @Slf4j
 class LocationObserverImpl implements LocationObserver, LocationStreamObserverRegistry {
-    private final StringRedisTemplate redisTemplate; //TODO: Use Redis for distributed observer management
-    private final ConcurrentHashMap<UUID, Set<StreamObserver<FamilyMemberLocation>>> observers;
+    private static final String SEPARATOR = ":";
 
-    public LocationObserverImpl(StringRedisTemplate redisTemplate) {
+    private final GrpcSessionService grpcSessionService;
+    private final ServerIdProvider serverIdProvider;
+    private final ConcurrentHashMap<String, Set<StreamObserver<FamilyMemberLocation>>> observers;
+
+    public LocationObserverImpl(
+            GrpcSessionService grpcSessionService,
+            ServerIdProvider serverIdProvider
+    ) {
         this.observers = new ConcurrentHashMap<>();
-        this.redisTemplate = redisTemplate;
+        this.grpcSessionService = grpcSessionService;
+        this.serverIdProvider = serverIdProvider;
     }
 
     @Override
     public void sendTargetLocation(UUID userId, LocationMessage message) {
+        List<String> sessionIds = listUserSessions(userId);
 
-        observers.computeIfPresent(userId, (_, observers) -> {
-            List<StreamObserver<FamilyMemberLocation>> failed = new ArrayList<>();
+        FamilyMemberLocation response = FamilyMemberLocation.newBuilder()
+                .setMemberId(message.userId().toString())
+                .setMemberUsername(message.username())
+                .setMemberAvatarUrl(message.avatarUrl() != null
+                        ? message.avatarUrl()
+                        : "")
+                .setTimestampMs(message.timestampMs())
+                .setLatitudeDeg(message.latitudeDeg())
+                .setLongitudeDeg(message.longitudeDeg())
+                .setAccuracyMeter(message.accuracyMeter())
+                .setVelocityMps(message.velocityMps())
+                .setOnline(true)
+                .setLastActiveMs(message.timestampMs())
+                .build();
 
-            FamilyMemberLocation response = FamilyMemberLocation.newBuilder()
-                    .setMemberId(message.userId().toString())
-                    .setMemberUsername(message.username())
-                    .setMemberAvatarUrl(message.avatarUrl())
-                    .setTimestampMs(message.timestampMs())
-                    .setLatitudeDeg(message.latitudeDeg())
-                    .setLongitudeDeg(message.longitudeDeg())
-                    .setAccuracyMeter(message.accuracyMeter())
-                    .setVelocityMps(message.velocityMps())
-                    .setOnline(true)
-                    .setLastActiveMs(message.timestampMs())
-                    .build();
+        for (String sessionId : sessionIds) {
+            observers.computeIfPresent(sessionId, (_, sessionObservers) -> {
+                List<StreamObserver<FamilyMemberLocation>> failed = new ArrayList<>();
 
-            for (var observer : observers) {
-                try {
-                    observer.onNext(response);
-                } catch (Exception e) {
-                    failed.add(observer);
+                for (var observer : sessionObservers) {
+                    try {
+                        observer.onNext(response);
+                    } catch (Exception e) {
+                        failed.add(observer);
+                    }
                 }
+
+                failed.forEach(observer -> unregister(sessionId, observer));
+                return sessionObservers;
+            });
+        }
+    }
+
+    private String generateSessionId(UUID userId, UUID circleId) {
+        return userId.toString() + SEPARATOR + circleId.toString();
+    }
+
+    private List<String> listUserSessions(UUID userId) {
+        String prefix = userId.toString() + SEPARATOR;
+        List<String> sessionIds = new ArrayList<>();
+
+        for (String sessionId : observers.keySet()) {
+            if (sessionId.startsWith(prefix)) {
+                sessionIds.add(sessionId);
             }
+        }
 
-            failed.forEach(observer -> unregister(userId, observer));
-
-            return observers;
-        });
+        return sessionIds;
     }
 
     @Override
-    public UUID register(UUID userId, StreamObserver<FamilyMemberLocation> observer) {
-        observers.computeIfAbsent(userId, _ -> ConcurrentHashMap.newKeySet())
+    public List<UUID> listConnectedUsers() {
+        List<UUID> userIds = new ArrayList<>();
+
+        for (String sessionId : observers.keySet()) {
+            String userIdStr = sessionId.split(SEPARATOR)[0];
+            try {
+                UUID userId = UUID.fromString(userIdStr);
+                if (!userIds.contains(userId)) {
+                    userIds.add(userId);
+                }
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid session ID format: {}", sessionId);
+            }
+        }
+
+        return userIds;
+    }
+
+    @Override
+    public String register(UUID userId, UUID circleId, StreamObserver<FamilyMemberLocation> observer) {
+        String sessionId = generateSessionId(userId, circleId);
+
+        observers.computeIfAbsent(sessionId, _ -> ConcurrentHashMap.newKeySet())
                 .add(observer);
+
+        GrpcSession session = grpcSessionService.getSession(userId);
+        if (session.serverIds().isEmpty()) {
+            log.info("No active servers for session {}. Adding current server: {}",
+                    sessionId, serverIdProvider.getServerId());
+        }
+        session.serverIds().add(serverIdProvider.getServerId());
+        grpcSessionService.updateSession(session);
+
         log.info("Observer registered for userId: {}", userId);
         log.info("Number of observers after registration {}", observers.size());
-        return userId;
+        return sessionId;
     }
 
     @Override
-    public void unregister(UUID userId, StreamObserver<FamilyMemberLocation> observer) {
-        observers.computeIfPresent(userId, (_, v) -> {
+    public void unregister(String sessionId, StreamObserver<FamilyMemberLocation> observer) {
+        observers.computeIfPresent(sessionId, (_, v) -> {
             v.remove(observer);
             return v.isEmpty() ? null : v;
         });
-        log.info("Observer unregistered for userId: {}", userId);
+        log.info("Observer unregistered with Session ID: {}", sessionId);
         log.info("Number of observers after unregistration {}", observers.size());
     }
 }

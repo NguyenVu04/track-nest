@@ -1,7 +1,5 @@
 package project.tracknest.usertracking.controller;
 
-import com.google.rpc.Code;
-import com.google.rpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +30,7 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
     ) {
 
         UUID userId = getCurrentUserId();
+        UUID circleId = UUID.fromString(request.getFamilyCircleId());
 
         ServerCallStreamObserver<FamilyMemberLocation> serverObserver =
                 (ServerCallStreamObserver<FamilyMemberLocation>) responseObserver;
@@ -44,7 +43,7 @@ public class TrackerController extends TrackerControllerGrpc.TrackerControllerIm
             serverObserver.onNext(location);
         }
 
-        UUID id = registry.register(userId, serverObserver);
+        String id = registry.register(userId, circleId, serverObserver);
 
         serverObserver.setOnCancelHandler(() -> {
             registry.unregister(id, serverObserver);

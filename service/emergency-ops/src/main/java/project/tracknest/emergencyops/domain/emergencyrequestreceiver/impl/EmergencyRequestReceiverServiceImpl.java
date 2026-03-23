@@ -83,7 +83,7 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 savedEmergencyRequest.getId(),
                 createdAtMs
         );
-        sendAssignedEmergencyRequest(service.getId(), userId, assignedMessage);
+        sendAssignedEmergencyRequest(service.getId(), assignedMessage);
 
         return new PostEmergencyRequestResponse(
                 createdAtMs,
@@ -91,19 +91,19 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
         );
     }
 
-    private void sendAssignedEmergencyRequest(UUID serviceId, UUID userId, AssignedEmergencyRequestMessage message) {
+    private void sendAssignedEmergencyRequest(UUID serviceId, AssignedEmergencyRequestMessage message) {
         ServerRedisMessage redisMessage = ServerRedisMessage
                 .builder()
                 .method("receiveEmergencyRequestMessage")
                 .receiverId(serviceId)
                 .payload(message)
                 .build();
-        redisPublisher.publishMessage(redisMessage, userId);
+        redisPublisher.publishMessage(redisMessage, redisMessage.getReceiverId());
         log.info("Published emergency request assignment to Redis for service {}: {}", serviceId, message);
     }
 
     @Override
-    public void receiveEmergencyRequestMessage(UUID receiverId, Object message) {
+    public void receiveEmergencyRequestMessage(UUID receiverId, AssignedEmergencyRequestMessage message) {
         messagingTemplate.convertAndSendToUser(
                 receiverId.toString(),
                 emergencyRequestQueue,

@@ -66,12 +66,12 @@ public class EmergencyResponderServiceImpl implements EmergencyResponderService,
                         .getId())
                 .build();
 
-        redisPublisher.publishMessage(redisMessage, message.userId());
+        redisPublisher.publishMessage(redisMessage, redisMessage.getReceiverId());
         log.info("Tracking location for user {}", emergencyServiceUser.getUserId());
     }
 
     @Override
-    public void receiveLocationMessage(UUID receiverId, Object message) {
+    public void receiveLocationMessage(UUID receiverId, LocationMessage message) {
         messagingTemplate.convertAndSendToUser(
                 receiverId.toString(),
                 userLocationQueue,

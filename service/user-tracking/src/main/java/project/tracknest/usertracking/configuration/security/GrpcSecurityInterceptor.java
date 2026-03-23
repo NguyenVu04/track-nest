@@ -56,6 +56,7 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(principal, authorizationHeader, roles);
                 authentication.setDetails(userDetails);
+
                 log.info("Setting gRPC security context with user: {}", principal.getName());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception ex) {
