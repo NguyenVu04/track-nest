@@ -349,9 +349,9 @@ services:
       KC_PROXY: edge
     command: start-dev --import-realm 
     volumes:
-    - ../keycloak/keycloak-themes:/opt/keycloak/themes
     - ../keycloak/public-dev.json:/opt/keycloak/data/import/public-dev.json
     - ../keycloak/restricted-dev.json:/opt/keycloak/data/import/restricted-dev.json
+    - ../keycloak/keycloakify/keycloakify-starter/dist_keycloak/keycloak-theme-for-kc-22-to-25.jar:/opt/keycloak/providers/tracknest-theme.jar
     networks:
       - track_nest
     expose:
