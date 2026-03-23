@@ -2,3 +2,5 @@ helm/charts
 helm/Chart.lock
 **/*/.idea
 **/*/.vscode
+**/*/node_modules
+**/*/dist
