@@ -12,8 +12,7 @@ CREATE TABLE location (
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
     PRIMARY KEY (user_id, "timestamp"),
     CHECK ( longitude >= -180 AND longitude <= 180 ),
-    CHECK ( latitude >= -90 AND latitude <= 90 ),
-    CHECK ( anomaly_score >= 0 AND anomaly_score <= 1 )
+    CHECK ( latitude >= -90 AND latitude <= 90 )
 );
 
 SELECT create_hypertable('location', 'timestamp',
@@ -47,12 +46,6 @@ CREATE TABLE poi_type_translation (
     PRIMARY KEY (type_name, language_code)
 );
 
-CREATE TABLE voice_record (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    user_id UUID NOT NULL
-);
-
 ALTER TABLE poi
     ADD FOREIGN KEY (type_name) REFERENCES poi_type(name);
 
@@ -62,5 +55,3 @@ ALTER TABLE poi_type_translation
 CREATE INDEX idx_poi_geom_gist ON poi USING GIST (geom);
 
 CREATE INDEX idx_poi_user ON poi (user_id);
-
-CREATE INDEX idx_voice_record_user ON voice_record (user_id);

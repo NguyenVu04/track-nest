@@ -1,8 +1,9 @@
 from pydantic import BaseModel
 from typing import Optional, List
+from uuid import UUID
 
 class SecurityContext(BaseModel):
-    sub: str
+    user_id: UUID
     roles: List[str] = []
-    email: Optional[str] = None
-    username: Optional[str] = None
+    email: str
+    username: str

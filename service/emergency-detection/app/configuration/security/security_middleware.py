@@ -1,3 +1,5 @@
+import logging
+
 import jwt
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -5,6 +7,7 @@ from starlette.responses import JSONResponse
 
 from configuration.security.security_context import SecurityContext
 
+logger = logging.getLogger(__name__)
 
 class SecurityMiddleware(BaseHTTPMiddleware):
 
@@ -27,12 +30,21 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 options={"verify_signature": False}
             )
 
-            user = SecurityContext(**payload)
+            user = SecurityContext(
+                user_id=payload["sub"],
+                email=payload.get("email"),
+                username=payload.get("preferred_username"),
+                roles=payload.get("realm_access", {}).get("roles", [])
+            )
 
             # attach to request
             request.state.user = user
 
-        except Exception:
+        except jwt.DecodeError:
+            logger.warning(f"Decoding failed for {token}")
             return JSONResponse(status_code=401, content={"detail": "Invalid token"})
+        except Exception:
+            logger.exception("Unexpected error in security middleware")
+            return JSONResponse(status_code=500, content={"detail": "Internal error"})
 
         return await call_next(request)

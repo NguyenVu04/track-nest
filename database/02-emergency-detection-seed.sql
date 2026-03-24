@@ -40,19 +40,6 @@ INSERT INTO poi (id, name, longitude, latitude, radius, created_at, user_id, typ
     ('a0000000-0000-4000-8000-00000000000a','Restaurant - User5', 151.210000, -33.869000, 35.0, NOW() - INTERVAL '75 minutes', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'RESTAURANT')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO voice_record (id, created_at, user_id) VALUES
-    ('c0000000-0000-4000-8000-000000000001', NOW() - INTERVAL '70 minutes', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
-    ('c0000000-0000-4000-8000-000000000002', NOW() - INTERVAL '65 minutes', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
-    ('c0000000-0000-4000-8000-000000000003', NOW() - INTERVAL '60 minutes', '8c52c01e-42a7-45cc-9254-db8a7601c764'),
-    ('c0000000-0000-4000-8000-000000000004', NOW() - INTERVAL '55 minutes', '8c52c01e-42a7-45cc-9254-db8a7601c764'),
-    ('c0000000-0000-4000-8000-000000000005', NOW() - INTERVAL '50 minutes', '4405a37d-bc86-403e-b605-bedd7db88d37'),
-    ('c0000000-0000-4000-8000-000000000006', NOW() - INTERVAL '45 minutes', '4405a37d-bc86-403e-b605-bedd7db88d37'),
-    ('c0000000-0000-4000-8000-000000000007', NOW() - INTERVAL '40 minutes', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
-    ('c0000000-0000-4000-8000-000000000008', NOW() - INTERVAL '35 minutes', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
-    ('c0000000-0000-4000-8000-000000000009', NOW() - INTERVAL '30 minutes', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
-    ('c0000000-0000-4000-8000-00000000000a', NOW() - INTERVAL '25 minutes', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b')
-ON CONFLICT (id) DO NOTHING;
-
 INSERT INTO location (longitude, latitude, "timestamp", user_id, anomaly) VALUES
     (-73.935242, 40.730610, NOW() - INTERVAL '1 minutes', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', FALSE),
     (-73.934900, 40.730900, NOW() - INTERVAL '2 minutes', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', FALSE),
