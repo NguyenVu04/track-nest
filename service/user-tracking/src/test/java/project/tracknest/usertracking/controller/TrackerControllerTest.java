@@ -461,12 +461,25 @@ class TrackerControllerTest {
 
             long currentTimestamp = System.currentTimeMillis();
 
-            UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+            UserLocation userLocation1 = UserLocation.newBuilder()
+                    .setLatitudeDeg(-33.868820)
+                    .setLongitudeDeg(151.209290)
+                    .setAccuracyMeter(5.0f)
+                    .setVelocityMps(1.5f)
+                    .setTimestampMs(currentTimestamp - 1000 * 60)  // 1 minute ago
+                    .build();
+
+            UserLocation userLocation2 = UserLocation.newBuilder()
                     .setLatitudeDeg(-33.868820)
                     .setLongitudeDeg(151.209290)
                     .setAccuracyMeter(5.0f)
                     .setVelocityMps(1.5f)
                     .setTimestampMs(currentTimestamp)
+                    .build();
+
+            UpdateUserLocationRequest request = UpdateUserLocationRequest
+                    .newBuilder()
+                    .addAllLocations(List.of(userLocation1, userLocation2))
                     .build();
 
             AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
@@ -510,12 +523,17 @@ class TrackerControllerTest {
 
             long currentTimestamp = System.currentTimeMillis();
 
-            UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+            UserLocation userLocation = UserLocation.newBuilder()
                     .setLatitudeDeg(40.730610)
                     .setLongitudeDeg(-73.935242)
                     .setAccuracyMeter(3.0f)
                     .setVelocityMps(0.0f)
                     .setTimestampMs(currentTimestamp)
+                    .build();
+
+            UpdateUserLocationRequest request = UpdateUserLocationRequest
+                    .newBuilder()
+                    .addAllLocations(List.of(userLocation))
                     .build();
 
             AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
@@ -557,12 +575,17 @@ class TrackerControllerTest {
 
             long currentTimestamp = System.currentTimeMillis();
 
-            UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+            UserLocation userLocation = UserLocation.newBuilder()
                     .setLatitudeDeg(51.507351)
                     .setLongitudeDeg(-0.127758)
                     .setAccuracyMeter(10.0f)
                     .setVelocityMps(0.0f)
                     .setTimestampMs(currentTimestamp)
+                    .build();
+
+            UpdateUserLocationRequest request = UpdateUserLocationRequest
+                    .newBuilder()
+                    .addAllLocations(List.of(userLocation))
                     .build();
 
             AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
@@ -605,12 +628,17 @@ class TrackerControllerTest {
 
             long currentTimestamp = System.currentTimeMillis();
 
-            UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+            UserLocation userLocation = UserLocation.newBuilder()
                     .setLatitudeDeg(35.689487)
                     .setLongitudeDeg(139.691711)
                     .setAccuracyMeter(2.0f)
                     .setVelocityMps(30.0f)  // 30 m/s ~ 108 km/h
                     .setTimestampMs(currentTimestamp)
+                    .build();
+
+            UpdateUserLocationRequest request = UpdateUserLocationRequest
+                    .newBuilder()
+                    .addAllLocations(List.of(userLocation))
                     .build();
 
             AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
@@ -653,12 +681,17 @@ class TrackerControllerTest {
 
             long currentTimestamp = System.currentTimeMillis();
 
-            UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+            UserLocation userLocation = UserLocation.newBuilder()
                     .setLatitudeDeg(48.856613)
                     .setLongitudeDeg(2.352222)
                     .setAccuracyMeter(7.5f)
                     .setVelocityMps(1.2f)
                     .setTimestampMs(currentTimestamp)
+                    .build();
+
+            UpdateUserLocationRequest request = UpdateUserLocationRequest
+                    .newBuilder()
+                    .addAllLocations(List.of(userLocation))
                     .build();
 
             AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
@@ -701,12 +734,17 @@ class TrackerControllerTest {
 
             long currentTimestamp = System.currentTimeMillis();
 
-            UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+            UserLocation userLocation = UserLocation.newBuilder()
                     .setLatitudeDeg(-33.868820)
                     .setLongitudeDeg(151.209290)
                     .setAccuracyMeter(0.1f)  // Very precise
                     .setVelocityMps(0.5f)
                     .setTimestampMs(currentTimestamp)
+                    .build();
+
+            UpdateUserLocationRequest request = UpdateUserLocationRequest
+                    .newBuilder()
+                    .addAllLocations(List.of(userLocation))
                     .build();
 
             AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
@@ -756,12 +794,17 @@ class TrackerControllerTest {
 
                 long currentTimestamp = System.currentTimeMillis();
 
-                UpdateUserLocationRequest updateRequest = UpdateUserLocationRequest.newBuilder()
+                UserLocation userLocation = UserLocation.newBuilder()
                         .setLatitudeDeg(40.750000)
                         .setLongitudeDeg(-73.950000)
                         .setAccuracyMeter(5.0f)
                         .setVelocityMps(2.0f)
                         .setTimestampMs(currentTimestamp)
+                        .build();
+
+                UpdateUserLocationRequest updateRequest = UpdateUserLocationRequest
+                        .newBuilder()
+                        .addAllLocations(List.of(userLocation))
                         .build();
 
                 CountDownLatch updateLatch = new CountDownLatch(1);
@@ -842,12 +885,17 @@ class TrackerControllerTest {
 
                 long currentTimestamp = System.currentTimeMillis();
 
-                UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+                UserLocation userLocation = UserLocation.newBuilder()
                         .setLatitudeDeg(40.730610)
                         .setLongitudeDeg(-73.935242)
                         .setAccuracyMeter(5.0f)
                         .setVelocityMps(1.0f)
                         .setTimestampMs(currentTimestamp)
+                        .build();
+
+                UpdateUserLocationRequest request = UpdateUserLocationRequest
+                        .newBuilder()
+                        .addAllLocations(List.of(userLocation))
                         .build();
 
                 @SuppressWarnings("unchecked")
@@ -1042,12 +1090,17 @@ class TrackerControllerTest {
                 long currentTimestamp = System.currentTimeMillis();
 
                 // Near North Pole
-                UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+                UserLocation userLocation = UserLocation.newBuilder()
                         .setLatitudeDeg(89.999)
                         .setLongitudeDeg(0.0)
                         .setAccuracyMeter(10.0f)
                         .setVelocityMps(0.0f)
                         .setTimestampMs(currentTimestamp)
+                        .build();
+
+                UpdateUserLocationRequest request = UpdateUserLocationRequest
+                        .newBuilder()
+                        .addAllLocations(List.of(userLocation))
                         .build();
 
                 AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
@@ -1094,12 +1147,17 @@ class TrackerControllerTest {
                 long currentTimestamp = System.currentTimeMillis();
 
                 // Near International Date Line
-                UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+                UserLocation userLocation = UserLocation.newBuilder()
                         .setLatitudeDeg(0.0)
                         .setLongitudeDeg(179.999)
                         .setAccuracyMeter(10.0f)
                         .setVelocityMps(0.0f)
                         .setTimestampMs(currentTimestamp)
+                        .build();
+
+                UpdateUserLocationRequest request = UpdateUserLocationRequest
+                        .newBuilder()
+                        .addAllLocations(List.of(userLocation))
                         .build();
 
                 AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
@@ -1141,12 +1199,17 @@ class TrackerControllerTest {
 
                 long currentTimestamp = System.currentTimeMillis();
 
-                UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+                UserLocation userLocation = UserLocation.newBuilder()
                         .setLatitudeDeg(40.730610)
                         .setLongitudeDeg(-73.935242)
                         .setAccuracyMeter(1000.0f)  // 1km accuracy (poor GPS)
                         .setVelocityMps(0.0f)
                         .setTimestampMs(currentTimestamp)
+                        .build();
+
+                UpdateUserLocationRequest request = UpdateUserLocationRequest
+                        .newBuilder()
+                        .addAllLocations(List.of(userLocation))
                         .build();
 
                 AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();

@@ -82,12 +82,16 @@ message ListFamilyMemberLocationHistoryResponse {
    repeated FamilyMemberLocation locations = 2;
 }
 
-message UpdateUserLocationRequest {
+message UserLocation {
    double latitude_deg = 1;
    double longitude_deg = 2;
    float accuracy_meter = 3;
    float velocity_mps = 4;
    uint64 timestamp_ms = 5;
+}
+
+message UpdateUserLocationRequest {
+   repeated UserLocation locations = 1;
 }
 
 message UpdateUserLocationResponse {

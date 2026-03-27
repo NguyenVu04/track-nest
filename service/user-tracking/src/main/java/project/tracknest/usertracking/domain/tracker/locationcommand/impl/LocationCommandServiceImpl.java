@@ -13,6 +13,7 @@ import project.tracknest.usertracking.domain.tracker.locationcommand.service.Loc
 import project.tracknest.usertracking.domain.tracker.locationcommand.service.LocationMessageProducer;
 import project.tracknest.usertracking.proto.lib.UpdateUserLocationRequest;
 import project.tracknest.usertracking.proto.lib.UpdateUserLocationResponse;
+import project.tracknest.usertracking.proto.lib.UserLocation;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -37,42 +38,43 @@ class LocationCommandServiceImpl implements LocationCommandService {
                 });
 
         OffsetDateTime timestamp = OffsetDateTime.ofInstant(
-                Instant.ofEpochMilli(
-                        request.getTimestampMs()),
+                Instant.now(),
                 ZoneOffset.UTC);
 
         user.setConnected(true);
         user.setLastActive(timestamp);
         userRepository.save(user);
 
-        Location location = Location.builder()
-                .latitude(request.getLatitudeDeg())
-                .longitude(request.getLongitudeDeg())
-                .accuracy(request.getAccuracyMeter())
-                .velocity(request.getVelocityMps())
-                .id(Location.LocationId
-                        .builder()
-                        .userId(userId)
-                        .timestamp(timestamp)
-                        .build())
-                .build();
+        for (UserLocation userLocation : request.getLocationsList()) {
+            Location location = Location.builder()
+                    .latitude(userLocation.getLatitudeDeg())
+                    .longitude(userLocation.getLongitudeDeg())
+                    .accuracy(userLocation.getAccuracyMeter())
+                    .velocity(userLocation.getVelocityMps())
+                    .id(Location.LocationId
+                            .builder()
+                            .userId(userId)
+                            .timestamp(timestamp)
+                            .build())
+                    .build();
 
-        locationRepository.saveAndFlush(location);
+            locationRepository.saveAndFlush(location);
 
-        LocationMessage message = LocationMessage.builder()
-                .userId(userId)
-                .username(user.getUsername())
-                .avatarUrl(user.getAvatarUrl())
-                .latitudeDeg(request.getLatitudeDeg())
-                .longitudeDeg(request.getLongitudeDeg())
-                .accuracyMeter(request.getAccuracyMeter())
-                .velocityMps(request.getVelocityMps())
-                .timestampMs(request.getTimestampMs())
-                .build();
+            LocationMessage message = LocationMessage.builder()
+                    .userId(userId)
+                    .username(user.getUsername())
+                    .avatarUrl(user.getAvatarUrl())
+                    .latitudeDeg(userLocation.getLatitudeDeg())
+                    .longitudeDeg(userLocation.getLongitudeDeg())
+                    .accuracyMeter(userLocation.getAccuracyMeter())
+                    .velocityMps(userLocation.getVelocityMps())
+                    .timestampMs(userLocation.getTimestampMs())
+                    .build();
 
-        messageProducer.produce(message);
+            messageProducer.produce(message);
 
-        log.info("Received request to update location command");
+            log.info("Received request to update location command");
+        }
 
         return UpdateUserLocationResponse.newBuilder()
                 .setStatus(Status.newBuilder()
