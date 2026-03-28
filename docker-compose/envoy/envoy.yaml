@@ -24,11 +24,6 @@ static_resources:
                   prefix_rewrite: "/api/v1"
                   upgrade_configs:
                   - upgrade_type: websocket
-              - match: { prefix: "/emergency-detection" }
-                route:
-                  cluster: emergency_detection_rest
-                  timeout: 0s
-                  prefix_rewrite: "/api/v1"
               - match: { prefix: "/" }
                 route:
                   cluster: user_tracking_grpc
@@ -72,10 +67,6 @@ static_resources:
                     - provider_name: keycloak_public
                     - provider_name: keycloak_restricted
               - match:
-                  prefix: "/emergency-detection"
-                requires:
-                  provider_name: keycloak_public
-              - match:
                   prefix: "/"
                 requires:
                   provider_name: keycloak_public
@@ -99,18 +90,6 @@ static_resources:
               socket_address:
                 address: emergency_ops
                 port_value: 28080
-  - name: emergency_detection_rest
-    connect_timeout: 5s
-    type: logical_dns
-    load_assignment:
-      cluster_name: emergency_detection_rest
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address:
-                address: emergency_detection
-                port_value: 48000
   - name: user_tracking_grpc
     connect_timeout: 5s
     type: logical_dns

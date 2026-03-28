@@ -222,33 +222,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-
-  emergency_detection:
-    build:
-      context: ../service/emergency-detection
-      dockerfile: Dockerfile
-    container_name: emergency_detection
-    ports:
-      - "48000:48000"
-    depends_on:
-      - emergency_detection_postgres
-      - redis
-      - broker-1
-      - broker-2
-      - broker-3
-    networks:
-      - track_nest
-    environment:
-      DATABASE_URL: postgresql+asyncpg://tracknestadmin:tracknestadmin@emergency_detection_postgres:5432/tracknest
-      REDIS_URL: redis://redis:6379
-      KAFKA_BOOTSTRAP_SERVERS: broker-1:19092,broker-2:19092,broker-3:19092
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:48000/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
+ 
   user_tracking_postgres:
     image: timescale/timescaledb-ha:pg17
     container_name: user_tracking_postgres
@@ -307,28 +281,6 @@ services:
       - criminal_reports_postgres_data:/var/lib/postgresql/data
       - ../database/01-criminal-reports-init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ../database/02-criminal-reports-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
-    networks:
-      - track_nest
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
-  emergency_detection_postgres:
-    image: timescale/timescaledb-ha:pg17
-    container_name: emergency_detection_postgres
-    environment:
-      POSTGRES_USER: tracknestadmin
-      POSTGRES_PASSWORD: tracknestadmin
-      POSTGRES_DB: tracknest
-    ports:
-      - "45432:5432"
-    volumes:
-      - emergency_detection_postgres_data:/var/lib/postgresql/data
-      - ../database/01-emergency-detection-init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ../database/02-emergency-detection-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     networks:
       - track_nest
     healthcheck:
