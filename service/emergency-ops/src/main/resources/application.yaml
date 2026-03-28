@@ -12,10 +12,12 @@ spring:
       group-id: user_tracking
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: project.tracknest.usertracking.core.datatype
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     listener:
       missing-topics-fatal: false
   data:
@@ -45,6 +47,7 @@ app:
   kafka:
     topics:
     - location_updated
+    - tracking-notification
     partitions: 3
     replication-factor: 1
   keycloak:

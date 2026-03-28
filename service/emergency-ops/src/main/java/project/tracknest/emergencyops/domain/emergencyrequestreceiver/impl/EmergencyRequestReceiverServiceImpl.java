@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import project.tracknest.emergencyops.configuration.cache.ServerRedisMessagePubl
 import project.tracknest.emergencyops.configuration.security.KeycloakService;
 import project.tracknest.emergencyops.configuration.security.datatype.KeycloakUserProfile;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
+import project.tracknest.emergencyops.core.datatype.TrackingNotificationMessage;
 import project.tracknest.emergencyops.core.entity.EmergencyRequest;
 import project.tracknest.emergencyops.core.entity.EmergencyRequestStatus;
 import project.tracknest.emergencyops.core.entity.EmergencyService;
@@ -29,8 +31,15 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverService, EmergencyRequestReceiverSubscriber {
+    private static final String TRACKING_NOTIFICATION_MESSAGE_TYPE = "EMERGENCY_REQUEST_ASSIGNED";
+    private static final String TRACKING_NOTIFICATION_TITLE = "New Emergency Request Assigned";
+    private static final String TRACKING_NOTIFICATION_CONTENT_TEMPLATE = "An emergency request for family member %s has been assigned to emergency service %s.";
+
     @Value("${app.stomp.queue.emergency-request}")
     private String emergencyRequestQueue;
+
+    @Value("${app.kafka.topics[1]}")
+    private String TOPIC;
 
     private final EmergencyRequestReceiverEmergencyRequestRepository emergencyRequestRepository;
     private final EmergencyRequestReceiverEmergencyRequestStatusRepository emergencyRequestStatusRepository;
@@ -38,6 +47,7 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
     private final KeycloakService keycloakService;
     private final ServerRedisMessagePublisher redisPublisher;
     private final SimpMessagingTemplate messagingTemplate;
+    private final KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
 
     @Override
     @Transactional
@@ -84,6 +94,21 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 createdAtMs
         );
         sendAssignedEmergencyRequest(service.getId(), assignedMessage);
+
+        KeycloakUserProfile profile = keycloakService.getUserProfile(emergencyRequest.getTargetId());
+        TrackingNotificationMessage trackingNotificationMessage = TrackingNotificationMessage
+                .builder()
+                .title(TRACKING_NOTIFICATION_TITLE)
+                .content(String.format(
+                        TRACKING_NOTIFICATION_CONTENT_TEMPLATE,
+                        profile.username(),
+                        service.getUsername()))
+                .type(TRACKING_NOTIFICATION_MESSAGE_TYPE)
+                .targetId(request.getTargetId())
+                .build();
+
+        kafkaTemplate.send(TOPIC, trackingNotificationMessage);
+        log.info("Sent tracking notification message to Kafka for emergency request {}: {}", savedEmergencyRequest.getId(), trackingNotificationMessage);
 
         return new PostEmergencyRequestResponse(
                 createdAtMs,

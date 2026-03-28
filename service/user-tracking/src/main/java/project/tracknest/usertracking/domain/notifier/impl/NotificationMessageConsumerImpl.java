@@ -5,12 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.configuration.firebase.FcmService;
+import project.tracknest.usertracking.core.datatype.NotificationSentMessage;
 import project.tracknest.usertracking.core.datatype.RiskNotificationMessage;
 import project.tracknest.usertracking.core.datatype.TrackingNotificationMessage;
-import project.tracknest.usertracking.core.entity.MobileDevice;
-import project.tracknest.usertracking.core.entity.RiskNotification;
-import project.tracknest.usertracking.core.entity.TrackingNotification;
-import project.tracknest.usertracking.core.entity.User;
+import project.tracknest.usertracking.core.entity.*;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -21,13 +19,17 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
-    private static final long INTERVAL_BETWEEN_NOTIFICATIONS_SECOND = 30 * 60; // 30 minutes
+    private static final long INTERVAL_BETWEEN_NOTIFICATIONS_SECOND = 5 * 60; // 30 minutes
+    private static final String RISK_NOTIFICATION_TYPE = "RISK";
+    private static final String TRACKING_NOTIFICATION_TYPE = "TRACKING";
 
     private final FcmService fcmService;
+    private final NotificationSentMessageProducer notificationSentMessageProducer;
     private final NotifierUserRepository userRepository;
     private final NotifierMobileDeviceRepository mobileRepository;
     private final NotifierRiskNotificationRepository riskNotificationRepository;
     private final NotifierTrackingNotificationRepository trackingNotificationRepository;
+    private final NotifierTrackerTrackingNotificationRepository trackerTrackingNotificationRepository;
 
     private boolean shouldNotSendNotification(OffsetDateTime lastNotificationTime) {
         if (lastNotificationTime == null) {
@@ -47,37 +49,68 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
             log.warn("User with id {} not found. Skipping tracking notification.", message.targetId());
             return;
         }
-
-        Optional<TrackingNotification> lastNotificationOpt =
-                trackingNotificationRepository
-                        .findTopByTarget_IdOrderByCreatedAt(message.targetId());
-        if (lastNotificationOpt.isPresent()) {
-            OffsetDateTime lastNotificationTime =
-                    lastNotificationOpt.get().getCreatedAt();
-            if (shouldNotSendNotification(lastNotificationTime)) {
-                log.info("Skipping tracking notification to user {} due to interval constraint.",
-                        message.targetId());
-                return;
-            }
-        }
-
-        List<MobileDevice> devices = mobileRepository
-                .findAllByUserId(message.targetId());
-
-        List<String> deviceTokens = devices.stream()
-                .map(MobileDevice::getDeviceToken)
-                .toList();
-
-        fcmService.sendToTokens(deviceTokens, message.title(), message.content());
+        User target = userOpt.get();
 
         TrackingNotification trackingNotification = TrackingNotification.builder()
-                .target(userOpt.get())
+                .target(target)
                 .title(message.title())
                 .content(message.content())
                 .type(message.type())
                 .build();
 
-        trackingNotificationRepository.save(trackingNotification);
+        TrackingNotification savedTrackingNotification = trackingNotificationRepository
+                .saveAndFlush(trackingNotification);
+
+        List<User> familyMembers = userRepository
+                .findAllUserFamilyMembers(target.getId());
+
+        for (User member : familyMembers) {
+
+            Optional<TrackingNotification> lastFamilyNotificationOpt =
+                    trackingNotificationRepository
+                            .findTopByTarget_IdOrderByCreatedAt(member.getId());
+            if (lastFamilyNotificationOpt.isPresent()) {
+                OffsetDateTime lastFamilyNotificationTime =
+                        lastFamilyNotificationOpt.get().getCreatedAt();
+                if (shouldNotSendNotification(lastFamilyNotificationTime)) {
+                    log.info("Skipping tracking notification to family member {} due to interval constraint.",
+                            member.getId());
+                    continue;
+                }
+            }
+
+            List<MobileDevice> devices = mobileRepository
+                    .findByTargetId(member.getId());
+            List<String> deviceTokens = devices.stream()
+                    .map(MobileDevice::getDeviceToken)
+                    .toList();
+            fcmService.sendToTokens(deviceTokens, message.title(), message.content());
+
+            TrackerTrackingNotification.TrackerTrackingNotificationId trackerTrackingNotificationId =
+                    TrackerTrackingNotification.TrackerTrackingNotificationId
+                            .builder()
+                            .trackerId(member.getId())
+                            .notificationId(savedTrackingNotification.getId())
+                            .build();
+            TrackerTrackingNotification trackerTrackingNotification = TrackerTrackingNotification
+                    .builder()
+                    .id(trackerTrackingNotificationId)
+                    .build();
+            trackerTrackingNotificationRepository.save(trackerTrackingNotification);
+
+        }
+
+        NotificationSentMessage sentMessage = NotificationSentMessage
+                .builder()
+                .notificationId(savedTrackingNotification.getId())
+                .type(TRACKING_NOTIFICATION_TYPE)
+                .sent_at_ms(savedTrackingNotification
+                        .getCreatedAt()
+                        .toInstant()
+                        .toEpochMilli())
+                .build();
+
+        notificationSentMessageProducer.produce(sentMessage);
     }
 
     @Override
@@ -119,6 +152,19 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                 .content(message.content())
                 .build();
 
-        riskNotificationRepository.save(riskNotification);
+        RiskNotification savedRiskNotification = riskNotificationRepository
+                .saveAndFlush(riskNotification);
+
+        NotificationSentMessage sentMessage = NotificationSentMessage
+                .builder()
+                .type(RISK_NOTIFICATION_TYPE)
+                .notificationId(savedRiskNotification.getId())
+                .sent_at_ms(savedRiskNotification
+                        .getCreatedAt()
+                        .toInstant()
+                        .toEpochMilli())
+                .build();
+
+        notificationSentMessageProducer.produce(sentMessage);
     }
 }

@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
-import project.tracknest.usertracking.domain.tracker.locationcommand.service.LocationMessageProducer;
 
 import java.util.concurrent.CompletableFuture;
 

@@ -10,7 +10,6 @@ import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.entity.Location;
 import project.tracknest.usertracking.core.entity.User;
 import project.tracknest.usertracking.domain.tracker.locationcommand.service.LocationCommandService;
-import project.tracknest.usertracking.domain.tracker.locationcommand.service.LocationMessageProducer;
 import project.tracknest.usertracking.proto.lib.UpdateUserLocationRequest;
 import project.tracknest.usertracking.proto.lib.UpdateUserLocationResponse;
 import project.tracknest.usertracking.proto.lib.UserLocation;
