@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Trash2, Shield } from "lucide-react";
+import { Eye, Trash2, Shield, CheckCircle, AlertTriangle, AlertCircle } from "lucide-react";
 import { useState, memo } from "react";
 import type { CrimeReport } from "@/types";
 import { ConfirmModal } from "../shared/ConfirmModal";
@@ -10,7 +10,7 @@ import { EmptyState } from "../shared/EmptyState";
 interface CrimeReportListProps {
   reports: CrimeReport[];
   onViewDetail: (report: CrimeReport) => void;
-  onEdit: (report: CrimeReport) => void;
+  onPublish: (id: string) => void;
   onDelete: (id: string) => void;
   userRole: string;
 }
@@ -18,41 +18,75 @@ interface CrimeReportListProps {
 export const CrimeReportList = memo(function CrimeReportList({
   reports,
   onViewDetail,
+  onPublish,
   onDelete,
   userRole,
 }: CrimeReportListProps) {
-  const [confirmDelete, setConfirmDelete] = useState<CrimeReport | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: "publish" | "delete";
+    report: CrimeReport;
+  } | null>(null);
+
+  const handleConfirmPublish = () => {
+    if (confirmAction) {
+      onPublish(confirmAction.report.id);
+      setConfirmAction(null);
+    }
+  };
 
   const handleConfirmDelete = () => {
-    if (confirmDelete) {
-      onDelete(confirmDelete.id);
-      setConfirmDelete(null);
+    if (confirmAction) {
+      onDelete(confirmAction.report.id);
+      setConfirmAction(null);
     }
   };
 
-  const getSeverityColor = (severity: string) => {
+  const getSeverityColor = (severity: number) => {
     switch (severity) {
-      case "Low":
+      case 1:
         return "bg-green-100 text-green-800";
-      case "Medium":
+      case 2:
+        return "bg-lime-100 text-lime-800";
+      case 3:
         return "bg-yellow-100 text-yellow-800";
-      case "High":
+      case 4:
+        return "bg-orange-100 text-orange-800";
+      case 5:
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "bg-red-100 text-red-800";
-      case "Under Investigation":
-        return "bg-blue-100 text-blue-800";
-      case "Resolved":
-        return "bg-green-100 text-green-800";
+  const getSeverityLabel = (severity: number) => {
+    switch (severity) {
+      case 1:
+        return "Very Low";
+      case 2:
+        return "Low";
+      case 3:
+        return "Medium";
+      case 4:
+        return "High";
+      case 5:
+        return "Very High";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "Unknown";
+    }
+  };
+
+  const getSeverityIcon = (severity: number) => {
+    switch (severity) {
+      case 1:
+      case 2:
+        return <AlertCircle className="w-4 h-4" />;
+      case 3:
+        return <AlertTriangle className="w-4 h-4" />;
+      case 4:
+      case 5:
+        return <Shield className="w-4 h-4" />;
+      default:
+        return null;
     }
   };
 
@@ -74,13 +108,11 @@ export const CrimeReportList = memo(function CrimeReportList({
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-gray-700">Title</th>
-                <th className="px-6 py-3 text-left text-gray-700">Type</th>
-                <th className="px-6 py-3 text-left text-gray-700">Location</th>
-                <th className="px-6 py-3 text-left text-gray-700">
-                  Incident Date
-                </th>
+                <th className="px-6 py-3 text-left text-gray-700">Date</th>
                 <th className="px-6 py-3 text-left text-gray-700">Severity</th>
-                <th className="px-6 py-3 text-left text-gray-700">Status</th>
+                <th className="px-6 py-3 text-left text-gray-700">Victims</th>
+                <th className="px-6 py-3 text-left text-gray-700">Offenders</th>
+                <th className="px-6 py-3 text-left text-gray-700">Arrested</th>
                 <th className="px-6 py-3 text-left text-gray-700">Actions</th>
               </tr>
             </thead>
@@ -88,30 +120,39 @@ export const CrimeReportList = memo(function CrimeReportList({
               {reports.map((report, index) => (
                 <AnimatedListItem key={report.id} index={index}>
                   <td className="px-6 py-4">
-                    <div className="text-gray-900">{report.title}</div>
+                    <div className="text-gray-900 font-medium">{report.title}</div>
+                    <div className="text-gray-500 text-sm truncate max-w-xs">
+                      {report.content.substring(0, 50)}...
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-900">{report.type}</td>
-                  <td className="px-6 py-4 text-gray-900">{report.location}</td>
                   <td className="px-6 py-4 text-gray-900">
-                    {new Date(report.incidentDate).toLocaleDateString()}
+                    {new Date(report.date).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-sm ${getSeverityColor(
+                      className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 w-fit ${getSeverityColor(
                         report.severity,
                       )}`}
                     >
-                      {report.severity}
+                      {getSeverityIcon(report.severity)}
+                      {getSeverityLabel(report.severity)}
                     </span>
                   </td>
+                  <td className="px-6 py-4 text-gray-900">
+                    {report.numberOfVictims}
+                  </td>
+                  <td className="px-6 py-4 text-gray-900">
+                    {report.numberOfOffenders}
+                  </td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
-                        report.status,
-                      )}`}
-                    >
-                      {report.status}
-                    </span>
+                    {report.arrested ? (
+                      <span className="flex items-center gap-1 text-green-600">
+                        <CheckCircle className="w-4 h-4" />
+                        Yes
+                      </span>
+                    ) : (
+                      <span className="text-gray-500">No</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
@@ -124,8 +165,27 @@ export const CrimeReportList = memo(function CrimeReportList({
                       </button>
                       {userRole === "Reporter" && (
                         <>
+                          {!report.isPublic && (
+                            <button
+                              onClick={() =>
+                                setConfirmAction({
+                                  type: "publish",
+                                  report,
+                                })
+                              }
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Publish Report"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
-                            onClick={() => setConfirmDelete(report)}
+                            onClick={() =>
+                              setConfirmAction({
+                                type: "delete",
+                                report,
+                              })
+                            }
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Delete Report"
                           >
@@ -142,12 +202,23 @@ export const CrimeReportList = memo(function CrimeReportList({
         </div>
       </div>
 
-      {confirmDelete && (
+      {confirmAction?.type === "publish" && (
+        <ConfirmModal
+          title="Publish Crime Report"
+          message={`Are you sure you want to publish this crime report? "${confirmAction.report.title}" will be visible to all users.`}
+          onConfirm={handleConfirmPublish}
+          onCancel={() => setConfirmAction(null)}
+          confirmText="Publish"
+          confirmStyle="primary"
+        />
+      )}
+
+      {confirmAction?.type === "delete" && (
         <ConfirmModal
           title="Delete Crime Report"
-          message={`Are you sure you want to delete this crime report? Title: ${confirmDelete.title}. Type: ${confirmDelete.type}. Location: ${confirmDelete.location}.`}
+          message={`Are you sure you want to delete this crime report? "${confirmAction.report.title}" will be permanently removed.`}
           onConfirm={handleConfirmDelete}
-          onCancel={() => setConfirmDelete(null)}
+          onCancel={() => setConfirmAction(null)}
           confirmText="Delete"
           confirmStyle="danger"
         />

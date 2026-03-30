@@ -1,35 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Trash2, Search, MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { SafeZone } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { MapView } from "@/components/shared/MapView";
 import { toast } from "sonner";
-
-const mockZones: SafeZone[] = [
-  {
-    id: "zone-001",
-    name: "Central Police Station",
-    type: "Police Station",
-    address: "12 Main Street, Central District",
-    coordinates: [40.7527, -73.9772],
-    createdAt: "2026-01-01T09:00:00Z",
-  },
-  {
-    id: "zone-002",
-    name: "City Hospital",
-    type: "Hospital",
-    address: "200 Health Ave, Downtown",
-    coordinates: [40.745, -73.99],
-    createdAt: "2026-01-02T11:30:00Z",
-  },
-];
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { emergencyOpsService, SafeZoneResponse, PageResponse, CreateSafeZoneRequest } from "@/services/emergencyOpsService";
+import { Loading } from "@/components/loading/Loading";
 
 export default function SafeZonesPage() {
   const { user } = useAuth();
-  const [zones, setZones] = useState<SafeZone[]>(mockZones);
+  const [zones, setZones] = useState<SafeZone[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<SafeZone | null>(null);
@@ -40,16 +25,63 @@ export default function SafeZonesPage() {
     address: "",
     latitude: "",
     longitude: "",
+    radius: "500",
   });
+
+  useEffect(() => {
+    const fetchZones = async () => {
+      if (!user || user.role !== "Emergency Services") {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response: PageResponse<SafeZoneResponse> = await emergencyOpsService.getSafeZones(
+          undefined,
+          0,
+          50
+        );
+        
+        const mappedZones: SafeZone[] = response.content.map((item) => ({
+          id: item.id,
+          name: item.name,
+          type: "Other",
+          address: "",
+          longitude: item.longitude,
+          latitude: item.latitude,
+          radius: item.radius,
+          createdAt: item.createdAt,
+          emergencyServiceId: item.emergencyServiceId,
+        }));
+        
+        setZones(mappedZones);
+      } catch (error) {
+        console.error("Error fetching safe zones:", error);
+        toast.error("Failed to load safe zones");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchZones();
+  }, [user]);
 
   if (!user) return null;
 
-  const mockRequest = async (shouldFail = false) => {
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    if (shouldFail) {
-      throw new Error("Mock server error");
-    }
-  };
+  if (user.role !== "Emergency Services") {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-900">Access Denied</h3>
+          <p className="text-gray-500">You need Emergency Services role to manage safe zones.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <Loading fullScreen />;
+  }
 
   const filteredZones = zones.filter((z) =>
     z.name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -57,18 +89,27 @@ export default function SafeZonesPage() {
 
   const handleCreate = async () => {
     try {
-      await mockRequest(false);
-      const newZone: SafeZone = {
-        id: `zone-${Date.now()}`,
+      const request: CreateSafeZoneRequest = {
         name: formData.name,
+        longitude: parseFloat(formData.longitude),
+        latitude: parseFloat(formData.latitude),
+        radius: parseFloat(formData.radius),
+      };
+      
+      const response = await emergencyOpsService.createSafeZone(request);
+      
+      const newZone: SafeZone = {
+        id: response.id,
+        name: response.name,
         type: formData.type as SafeZone["type"],
         address: formData.address,
-        coordinates: [
-          parseFloat(formData.latitude),
-          parseFloat(formData.longitude),
-        ],
-        createdAt: new Date().toISOString(),
+        longitude: response.longitude,
+        latitude: response.latitude,
+        radius: response.radius,
+        createdAt: response.createdAt,
+        emergencyServiceId: response.emergencyServiceId,
       };
+      
       setZones([newZone, ...zones]);
       setIsCreating(false);
       setFormData({
@@ -77,10 +118,11 @@ export default function SafeZonesPage() {
         address: "",
         latitude: "",
         longitude: "",
+        radius: "500",
       });
-      toast.success("Thêm mới thành công");
+      toast.success("Safe zone created successfully");
     } catch (error) {
-      toast.error("Lỗi khi thêm khu vực an toàn");
+      toast.error("Error creating safe zone");
       console.error(error);
     }
   };
@@ -88,18 +130,19 @@ export default function SafeZonesPage() {
   const handleDelete = async () => {
     if (!confirmDelete) return;
     try {
-      await mockRequest(false);
+      await emergencyOpsService.deleteSafeZone(confirmDelete.id);
       setZones(zones.filter((z) => z.id !== confirmDelete.id));
       setConfirmDelete(null);
-      toast.success("Xóa thành công");
+      toast.success("Safe zone deleted successfully");
     } catch (error) {
-      toast.error("Gặp lỗi khi xóa khu vực");
+      toast.error("Error deleting safe zone");
       console.error(error);
     }
   };
 
   return (
     <div>
+      <Breadcrumbs items={[{ label: "Safe Zones" }]} />
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-gray-900 text-xl font-semibold">Safe Zones</h2>
         <button
@@ -130,8 +173,9 @@ export default function SafeZonesPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-gray-700">Name</th>
-                <th className="px-6 py-3 text-left text-gray-700">Type</th>
-                <th className="px-6 py-3 text-left text-gray-700">Address</th>
+                <th className="px-6 py-3 text-left text-gray-700">Coordinates</th>
+                <th className="px-6 py-3 text-left text-gray-700">Radius (m)</th>
+                <th className="px-6 py-3 text-left text-gray-700">Created</th>
                 <th className="px-6 py-3 text-left text-gray-700">Actions</th>
               </tr>
             </thead>
@@ -150,8 +194,13 @@ export default function SafeZonesPage() {
                       {zone.name}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-900">{zone.type}</td>
-                  <td className="px-6 py-4 text-gray-900">{zone.address}</td>
+                  <td className="px-6 py-4 text-gray-900 font-mono text-sm">
+                    {zone.latitude.toFixed(4)}, {zone.longitude.toFixed(4)}
+                  </td>
+                  <td className="px-6 py-4 text-gray-900">{zone.radius}m</td>
+                  <td className="px-6 py-4 text-gray-900">
+                    {new Date(zone.createdAt).toLocaleDateString()}
+                  </td>
                   <td className="px-6 py-4">
                     <button
                       onClick={(e) => {
@@ -171,7 +220,6 @@ export default function SafeZonesPage() {
         </div>
       </div>
 
-      {/* Map Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mt-6">
         <div className="p-4 border-b border-gray-200">
           <h3 className="text-gray-900 font-semibold">
@@ -184,22 +232,20 @@ export default function SafeZonesPage() {
           <MapView
             center={
               selectedZone
-                ? (selectedZone.coordinates as [number, number])
-                : [40.7489, -73.968]
+                ? [selectedZone.latitude, selectedZone.longitude]
+                : [10.8231, 106.6297]
             }
             markers={
               selectedZone
                 ? [
                     {
-                      position: selectedZone.coordinates as [number, number],
+                      position: [selectedZone.latitude, selectedZone.longitude],
                       label: selectedZone.name,
-                      popup: `${selectedZone.name}\n${selectedZone.address}`,
                     },
                   ]
                 : zones.map((zone) => ({
-                    position: zone.coordinates as [number, number],
+                    position: [zone.latitude, zone.longitude],
                     label: zone.name,
-                    popup: `${zone.name}\n${zone.address}`,
                   }))
             }
           />
@@ -251,14 +297,13 @@ export default function SafeZonesPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-gray-700 mb-2">Address *</label>
+                <label className="block text-gray-700 mb-2">Address</label>
                 <input
                   value={formData.address}
                   onChange={(e) =>
                     setFormData({ ...formData, address: e.target.value })
                   }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-                  required
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -291,6 +336,19 @@ export default function SafeZonesPage() {
                   />
                 </div>
               </div>
+              <div>
+                <label className="block text-gray-700 mb-2">Radius (meters) *</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={formData.radius}
+                  onChange={(e) =>
+                    setFormData({ ...formData, radius: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+                  required
+                />
+              </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
               <button
@@ -303,9 +361,9 @@ export default function SafeZonesPage() {
                 onClick={handleCreate}
                 disabled={
                   !formData.name ||
-                  !formData.address ||
                   !formData.latitude ||
-                  !formData.longitude
+                  !formData.longitude ||
+                  !formData.radius
                 }
                 className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
               >
@@ -319,7 +377,7 @@ export default function SafeZonesPage() {
       {confirmDelete && (
         <ConfirmModal
           title="Delete Safe Zone"
-          message={`Are you sure you want to delete this safe zone?\n\nName: ${confirmDelete.name}\nAddress: ${confirmDelete.address}`}
+          message={`Are you sure you want to delete this safe zone?\n\nName: ${confirmDelete.name}`}
           onConfirm={handleDelete}
           onCancel={() => setConfirmDelete(null)}
           confirmText="Delete"

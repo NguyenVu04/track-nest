@@ -13,8 +13,8 @@ import { authService } from "@/services/authService";
 
 interface AuthContextType {
   user: User | null;
-  login: (user: User) => void;
-  logout: () => void;
+  login: (user: User) => Promise<void>;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -26,50 +26,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize from localStorage on mount
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem(STORAGE_KEY);
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
+    const initAuth = async () => {
+      try {
+        const storedUser = localStorage.getItem(STORAGE_KEY);
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          
+          const token = authService.getAccessToken();
+          if (token) {
+            try {
+              const userInfo = await authService.getUserInfo();
+              if (userInfo) {
+                setUser({
+                  ...parsedUser,
+                  email: userInfo.email || parsedUser.email,
+                });
+              }
+            } catch {
+              console.warn("Could not refresh user info");
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to restore user from localStorage:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to restore user from localStorage:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    initAuth();
   }, []);
 
   const login = useCallback(async (userData: User) => {
     setUser(userData);
-    // Store user data in localStorage
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
     } catch (error) {
       console.error("Failed to save user to localStorage:", error);
     }
-
-    try {
-      const res = await authService.login({
-        username: userData.username,
-        password: userData.password,
-      });
-
-      console.log("Login successful", res);
-    } catch (error) {
-      console.error("Login failed", error);
-      // ignore error in this mock
-    }
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    // Clear user data from localStorage
+  const logout = useCallback(async () => {
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      await authService.logout();
     } catch (error) {
-      console.error("Failed to clear user from localStorage:", error);
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (error) {
+        console.error("Failed to clear user from localStorage:", error);
+      }
     }
   }, []);
 

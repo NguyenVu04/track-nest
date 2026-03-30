@@ -1,87 +1,119 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, ClipboardCheck, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
 import type { EmergencyRequest } from "@/types";
 import { MapView } from "@/components/shared/MapView";
 import { toast } from "sonner";
-
-const mockRequests: EmergencyRequest[] = [
-  {
-    id: "req-001",
-    requesterName: "Alex Nguyen",
-    requesterContact: "+1 (555) 123-8899",
-    location: "Central Park, NYC",
-    coordinates: [40.7829, -73.9654],
-    createdAt: "2026-01-03T12:30:00Z",
-    status: "Pending",
-  },
-  {
-    id: "req-002",
-    requesterName: "Maria Lee",
-    requesterContact: "+1 (555) 333-2211",
-    location: "Downtown Metro Station",
-    coordinates: [40.758, -73.9855],
-    createdAt: "2026-01-02T18:20:00Z",
-    status: "Accepted",
-  },
-  {
-    id: "req-003",
-    requesterName: "John Park",
-    requesterContact: "+1 (555) 777-4488",
-    location: "Upper East Side",
-    coordinates: [40.7736, -73.9566],
-    createdAt: "2026-01-01T09:10:00Z",
-    status: "Rejected",
-    rejectReason: "Sai địa chỉ",
-  },
-];
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { emergencyOpsService, EmergencyRequestResponse, PageResponse } from "@/services/emergencyOpsService";
+import { Loading } from "@/components/loading/Loading";
 
 export default function EmergencyRequestsPage() {
   const { user } = useAuth();
   const { addNotification } = useNotification();
-  const [requests, setRequests] = useState<EmergencyRequest[]>(mockRequests);
+  const [requests, setRequests] = useState<EmergencyRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [rejecting, setRejecting] = useState<EmergencyRequest | null>(null);
   const [completing, setCompleting] = useState<EmergencyRequest | null>(null);
-  const [trackingRequest, setTrackingRequest] =
-    useState<EmergencyRequest | null>(null);
+  const [trackingRequest, setTrackingRequest] = useState<EmergencyRequest | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [completionNote, setCompletionNote] = useState("");
 
+  useEffect(() => {
+    const fetchRequests = async () => {
+      if (!user || user.role !== "Emergency Services") {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response: PageResponse<EmergencyRequestResponse> = await emergencyOpsService.getEmergencyRequests(
+          undefined,
+          0,
+          50
+        );
+        
+        const mappedRequests: EmergencyRequest[] = response.content.map((item) => ({
+          id: item.id,
+          openAt: item.openAt,
+          closeAt: item.closeAt,
+          senderId: item.senderId,
+          targetId: item.targetId,
+          emergencyServiceId: item.emergencyServiceId,
+          status: item.status as EmergencyRequest["status"],
+          longitude: item.longitude,
+          latitude: item.latitude,
+        }));
+        
+        setRequests(mappedRequests);
+      } catch (error) {
+        console.error("Error fetching emergency requests:", error);
+        toast.error("Failed to load emergency requests");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRequests();
+  }, [user]);
+
   if (!user) return null;
 
-  const mockRequest = async (shouldFail = false) => {
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    if (shouldFail) {
-      throw new Error("Mock server error");
+  if (user.role !== "Emergency Services") {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-900">Access Denied</h3>
+          <p className="text-gray-500">You need Emergency Services role to view this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <Loading fullScreen />;
+  }
+
+  const filteredRequests = requests.filter((r) =>
+    r.id.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-800";
+      case "ACCEPTED":
+        return "bg-blue-100 text-blue-800";
+      case "REJECTED":
+        return "bg-red-100 text-red-800";
+      case "COMPLETED":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
-  const filteredRequests = requests.filter((r) =>
-    r.requesterName.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
   const handleAccept = async (request: EmergencyRequest) => {
     try {
-      await mockRequest(false);
+      await emergencyOpsService.acceptEmergencyRequest(request.id);
       setRequests((prev) =>
         prev.map((r) =>
-          r.id === request.id ? { ...r, status: "Accepted" } : r,
+          r.id === request.id ? { ...r, status: "ACCEPTED" } : r,
         ),
       );
       setTrackingRequest(request);
-      toast.success("Thành công");
+      toast.success("Request accepted successfully");
       addNotification({
         type: "emergency",
         title: "Emergency request accepted",
-        description: `Request from ${request.requesterName} has been accepted`,
         reportId: request.id,
       });
     } catch (error) {
-      toast.error("Lỗi khi tiếp nhận yêu cầu");
+      toast.error("Error accepting request");
       console.error(error);
     }
   };
@@ -89,25 +121,19 @@ export default function EmergencyRequestsPage() {
   const handleReject = async () => {
     if (!rejecting || !rejectReason.trim()) return;
     try {
-      await mockRequest(false);
+      await emergencyOpsService.rejectEmergencyRequest(rejecting.id, rejectReason);
       setRequests((prev) =>
         prev.map((r) =>
           r.id === rejecting.id
-            ? { ...r, status: "Rejected", rejectReason }
+            ? { ...r, status: "REJECTED" }
             : r,
         ),
       );
-      toast.success("Thành công");
-      addNotification({
-        type: "emergency",
-        title: "Emergency request rejected",
-        description: `Request from ${rejecting.requesterName} was rejected`,
-        reportId: rejecting.id,
-      });
+      toast.success("Request rejected successfully");
       setRejecting(null);
       setRejectReason("");
     } catch (error) {
-      toast.error("Lỗi khi từ chối yêu cầu khẩn cấp");
+      toast.error("Error rejecting request");
       console.error(error);
     }
   };
@@ -115,34 +141,29 @@ export default function EmergencyRequestsPage() {
   const handleComplete = async () => {
     if (!completing || !completionNote.trim()) return;
     try {
-      await mockRequest(false);
+      await emergencyOpsService.completeEmergencyRequest(completing.id, completionNote);
       setRequests((prev) =>
         prev.map((r) =>
           r.id === completing.id
-            ? { ...r, status: "Completed", completionNote }
+            ? { ...r, status: "COMPLETED", closeAt: new Date().toISOString() }
             : r,
         ),
       );
       if (trackingRequest?.id === completing.id) {
         setTrackingRequest(null);
       }
-      toast.success("Thành công");
-      addNotification({
-        type: "emergency",
-        title: "Emergency request completed",
-        description: `Request from ${completing.requesterName} completed`,
-        reportId: completing.id,
-      });
+      toast.success("Request completed successfully");
       setCompleting(null);
       setCompletionNote("");
     } catch (error) {
-      toast.error("Lỗi khi hoàn thành yêu cầu khẩn cấp");
+      toast.error("Error completing request");
       console.error(error);
     }
   };
 
   return (
     <div>
+      <Breadcrumbs items={[{ label: "Emergency Requests" }]} />
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-gray-900 text-xl font-semibold">
           Emergency Requests
@@ -154,7 +175,7 @@ export default function EmergencyRequestsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by requester name..."
+            placeholder="Search by request ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
@@ -167,7 +188,7 @@ export default function EmergencyRequestsPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-gray-700">Requester</th>
+                <th className="px-6 py-3 text-left text-gray-700">Request ID</th>
                 <th className="px-6 py-3 text-left text-gray-700">Location</th>
                 <th className="px-6 py-3 text-left text-gray-700">Status</th>
                 <th className="px-6 py-3 text-left text-gray-700">Created</th>
@@ -178,25 +199,22 @@ export default function EmergencyRequestsPage() {
               {filteredRequests.map((request) => (
                 <tr key={request.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
-                    <div className="text-gray-900">{request.requesterName}</div>
-                    <div className="text-gray-500 text-sm">
-                      {request.requesterContact}
-                    </div>
+                    <div className="text-gray-900 font-mono text-sm">{request.id.substring(0, 8)}...</div>
                   </td>
                   <td className="px-6 py-4 text-gray-900">
-                    {request.location}
+                    {request.latitude.toFixed(4)}, {request.longitude.toFixed(4)}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800">
+                    <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(request.status)}`}>
                       {request.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-gray-900">
-                    {new Date(request.createdAt).toLocaleString()}
+                    {new Date(request.openAt).toLocaleString()}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      {request.status === "Pending" && (
+                      {request.status === "PENDING" && (
                         <>
                           <button
                             onClick={() => handleAccept(request)}
@@ -214,7 +232,7 @@ export default function EmergencyRequestsPage() {
                           </button>
                         </>
                       )}
-                      {request.status === "Accepted" && (
+                      {request.status === "ACCEPTED" && (
                         <button
                           onClick={() => setCompleting(request)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -235,14 +253,14 @@ export default function EmergencyRequestsPage() {
       {trackingRequest && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
           <h3 className="text-gray-900 mb-4">
-            Live Tracking - {trackingRequest.requesterName}
+            Live Tracking - Request {trackingRequest.id.substring(0, 8)}
           </h3>
           <MapView
-            center={trackingRequest.coordinates}
+            center={[trackingRequest.latitude, trackingRequest.longitude]}
             markers={[
               {
-                position: trackingRequest.coordinates,
-                label: trackingRequest.location,
+                position: [trackingRequest.latitude, trackingRequest.longitude],
+                label: "Emergency Location",
               },
             ]}
           />
@@ -265,7 +283,7 @@ export default function EmergencyRequestsPage() {
                 onChange={(e) => setRejectReason(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                 rows={4}
-                placeholder="Enter reason (e.g., Quá tải, Sai địa chỉ, Spam)"
+                placeholder="Enter reason for rejection"
                 required
               />
             </div>
@@ -298,7 +316,7 @@ export default function EmergencyRequestsPage() {
               <h3 className="text-gray-900">Complete Emergency Request</h3>
             </div>
             <div className="p-6 space-y-4">
-              <label className="block text-gray-700">Result *</label>
+              <label className="block text-gray-700">Completion Note *</label>
               <textarea
                 value={completionNote}
                 onChange={(e) => setCompletionNote(e.target.value)}

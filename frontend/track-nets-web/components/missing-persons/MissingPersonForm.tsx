@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { Save, X, MapPin } from "lucide-react";
+import { Save, X, MapPin, User, Calendar, FileText, Phone, Mail } from "lucide-react";
 import type { MissingPerson } from "@/types";
+import { criminalReportsService, CreateMissingPersonReportRequest } from "@/services/criminalReportsService";
 
-// Dynamically import LocationPicker to avoid SSR issues with Leaflet
 const LocationPicker = dynamic(
   () => import("../shared/LocationPicker").then((mod) => mod.LocationPicker),
   {
@@ -31,45 +31,74 @@ export function MissingPersonForm({
   onCancel,
   mode,
 }: MissingPersonFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<MissingPerson>>(
     person || {
-      name: "",
-      age: 0,
-      gender: "Male",
-      description: "",
-      lastSeenLocation: "",
-      lastSeenDate: new Date().toISOString().slice(0, 16),
-      coordinates: [40.7829, -73.9654],
-      status: "Unhandled",
-      reportedBy: "",
-      reportedDate: new Date().toISOString(),
-      contactInfo: "",
-    },
+      fullName: "",
+      personalId: "",
+      photo: "",
+      date: new Date().toISOString().slice(0, 10),
+      content: "",
+      contactEmail: "",
+      contactPhone: "",
+      title: "",
+      status: "PENDING",
+    }
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [coordinates, setCoordinates] = useState<[number, number]>(
+    person ? [10.8231, 106.6297] : [10.8231, 106.6297]
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newPerson: MissingPerson = {
-      id: person?.id || Date.now().toString(),
-      name: formData.name!,
-      age: formData.age!,
-      gender: formData.gender!,
-      description: formData.description!,
-      lastSeenLocation: formData.lastSeenLocation!,
-      lastSeenDate: formData.lastSeenDate!,
-      coordinates: formData.coordinates!,
-      status: formData.status!,
-      reportedBy: formData.reportedBy!,
-      reportedDate: formData.reportedDate!,
-      contactInfo: formData.contactInfo!,
-    };
-    onSave(newPerson);
+    setIsSubmitting(true);
+
+    try {
+      if (mode === "create") {
+        const request: CreateMissingPersonReportRequest = {
+          title: formData.title || formData.fullName || "Missing Person Report",
+          fullName: formData.fullName!,
+          personalId: formData.personalId!,
+          photo: formData.photo,
+          date: formData.date!,
+          content: formData.content!,
+          contactEmail: formData.contactEmail,
+          contactPhone: formData.contactPhone,
+        };
+
+        const response = await criminalReportsService.createMissingPersonReport(request);
+        const newPerson: MissingPerson = {
+          id: response.id,
+          title: response.title,
+          fullName: response.fullName,
+          personalId: response.personalId,
+          photo: response.photo,
+          date: response.date,
+          content: response.content,
+          contactEmail: response.contactEmail,
+          contactPhone: response.contactPhone,
+          createdAt: response.createdAt,
+          userId: response.userId,
+          status: response.status as MissingPerson["status"],
+          reporterId: response.reporterId,
+          isPublic: response.isPublic,
+        };
+        onSave(newPerson);
+      } else {
+        onSave(formData as MissingPerson);
+      }
+    } catch (error) {
+      console.error("Error saving missing person report:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="max-w-4xl">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-gray-900">
+        <h2 className="text-gray-900 text-2xl font-semibold">
           {mode === "create"
             ? "New Missing Person Report"
             : "Edit Missing Person Report"}
@@ -81,110 +110,108 @@ export function MissingPersonForm({
         className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="name" className="block text-gray-700 mb-2">
-              Full Name *
-            </label>
-            <input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="age" className="block text-gray-700 mb-2">
-              Age *
-            </label>
-            <input
-              id="age"
-              type="number"
-              value={formData.age}
-              onChange={(e) =>
-                setFormData({ ...formData, age: parseInt(e.target.value) })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="gender" className="block text-gray-700 mb-2">
-              Gender *
-            </label>
-            <select
-              id="gender"
-              value={formData.gender}
-              onChange={(e) =>
-                setFormData({ ...formData, gender: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="lastSeenDate" className="block text-gray-700 mb-2">
-              Last Seen Date *
-            </label>
-            <input
-              id="lastSeenDate"
-              type="datetime-local"
-              value={formData.lastSeenDate?.slice(0, 16)}
-              onChange={(e) =>
-                setFormData({ ...formData, lastSeenDate: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            />
-          </div>
-
           <div className="md:col-span-2">
-            <label
-              htmlFor="lastSeenLocation"
-              className="block text-gray-700 mb-2"
-            >
-              Last Seen Location *
+            <label htmlFor="title" className="block text-gray-700 mb-2">
+              <span className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Report Title *
+              </span>
             </label>
             <input
-              id="lastSeenLocation"
+              id="title"
               type="text"
-              value={formData.lastSeenLocation}
+              value={formData.title}
               onChange={(e) =>
-                setFormData({ ...formData, lastSeenLocation: e.target.value })
+                setFormData({ ...formData, title: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder="e.g., Central Park, New York"
+              placeholder="Enter a title for this report"
               required
             />
           </div>
 
-          {/* Location Picker Map */}
+          <div>
+            <label htmlFor="fullName" className="block text-gray-700 mb-2">
+              <span className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Full Name *
+              </span>
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              value={formData.fullName}
+              onChange={(e) =>
+                setFormData({ ...formData, fullName: e.target.value })
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+              placeholder="Missing person's full name"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="personalId" className="block text-gray-700 mb-2">
+              Personal ID *
+            </label>
+            <input
+              id="personalId"
+              type="text"
+              value={formData.personalId}
+              onChange={(e) =>
+                setFormData({ ...formData, personalId: e.target.value })
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+              placeholder="ID number"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="date" className="block text-gray-700 mb-2">
+              <span className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Date Missing *
+              </span>
+            </label>
+            <input
+              id="date"
+              type="date"
+              value={formData.date}
+              onChange={(e) =>
+                setFormData({ ...formData, date: e.target.value })
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="photo" className="block text-gray-700 mb-2">
+              Photo URL
+            </label>
+            <input
+              id="photo"
+              type="url"
+              value={formData.photo}
+              onChange={(e) =>
+                setFormData({ ...formData, photo: e.target.value })
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+              placeholder="https://example.com/photo.jpg"
+            />
+          </div>
+
           <div className="md:col-span-2">
             <label className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Last Seen Coordinates *
+                Location Coordinates *
               </span>
             </label>
             <LocationPicker
-              position={
-                (formData.coordinates as [number, number]) || [
-                  40.7829, -73.9654,
-                ]
-              }
-              onPositionChange={(position) =>
-                setFormData({ ...formData, coordinates: position })
-              }
+              position={coordinates}
+              onPositionChange={(position) => setCoordinates(position)}
             />
           </div>
 
@@ -196,15 +223,9 @@ export function MissingPersonForm({
               id="latitude"
               type="number"
               step="any"
-              value={formData.coordinates?.[0] || 0}
+              value={coordinates[0]}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  coordinates: [
-                    parseFloat(e.target.value),
-                    formData.coordinates?.[1] || 0,
-                  ],
-                })
+                setCoordinates([parseFloat(e.target.value), coordinates[1]])
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
@@ -219,15 +240,9 @@ export function MissingPersonForm({
               id="longitude"
               type="number"
               step="any"
-              value={formData.coordinates?.[1] || 0}
+              value={coordinates[1]}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  coordinates: [
-                    formData.coordinates?.[0] || 0,
-                    parseFloat(e.target.value),
-                  ],
-                })
+                setCoordinates([coordinates[0], parseFloat(e.target.value)])
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
@@ -235,14 +250,17 @@ export function MissingPersonForm({
           </div>
 
           <div className="md:col-span-2">
-            <label htmlFor="description" className="block text-gray-700 mb-2">
-              Description *
+            <label htmlFor="content" className="block text-gray-700 mb-2">
+              <span className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Description *
+              </span>
             </label>
             <textarea
-              id="description"
-              value={formData.description}
+              id="content"
+              value={formData.content}
               onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
+                setFormData({ ...formData, content: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               rows={4}
@@ -252,34 +270,40 @@ export function MissingPersonForm({
           </div>
 
           <div>
-            <label htmlFor="reportedBy" className="block text-gray-700 mb-2">
-              Reported By *
+            <label htmlFor="contactEmail" className="block text-gray-700 mb-2">
+              <span className="flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                Contact Email
+              </span>
             </label>
             <input
-              id="reportedBy"
-              type="text"
-              value={formData.reportedBy}
+              id="contactEmail"
+              type="email"
+              value={formData.contactEmail}
               onChange={(e) =>
-                setFormData({ ...formData, reportedBy: e.target.value })
+                setFormData({ ...formData, contactEmail: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
+              placeholder="email@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="contactInfo" className="block text-gray-700 mb-2">
-              Contact Information *
+            <label htmlFor="contactPhone" className="block text-gray-700 mb-2">
+              <span className="flex items-center gap-2">
+                <Phone className="w-4 h-4" />
+                Contact Phone *
+              </span>
             </label>
             <input
-              id="contactInfo"
-              type="text"
-              value={formData.contactInfo}
+              id="contactPhone"
+              type="tel"
+              value={formData.contactPhone}
               onChange={(e) =>
-                setFormData({ ...formData, contactInfo: e.target.value })
+                setFormData({ ...formData, contactPhone: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder="Phone number or email"
+              placeholder="+1 234 567 8900"
               required
             />
           </div>
@@ -288,10 +312,11 @@ export function MissingPersonForm({
         <div className="flex items-center gap-4 mt-6 pt-6 border-t border-gray-200">
           <button
             type="submit"
-            className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            {mode === "create" ? "Create Report" : "Save Changes"}
+            {isSubmitting ? "Saving..." : mode === "create" ? "Create Report" : "Save Changes"}
           </button>
           <button
             type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, CheckCircle, Trash2, Users } from "lucide-react";
+import { Eye, CheckCircle, Trash2, Users, Calendar, MapPin, Phone, Mail } from "lucide-react";
 import { useState, memo } from "react";
 import type { MissingPerson } from "@/types";
 import { ConfirmModal } from "../shared/ConfirmModal";
@@ -43,14 +43,31 @@ export const MissingPersonList = memo(function MissingPersonList({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Unhandled":
+      case "PENDING":
         return "bg-yellow-100 text-yellow-800";
-      case "Published":
+      case "PUBLISHED":
         return "bg-blue-100 text-blue-800";
-      case "Resolved":
+      case "RESOLVED":
         return "bg-green-100 text-green-800";
+      case "DELETED":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "Pending";
+      case "PUBLISHED":
+        return "Published";
+      case "RESOLVED":
+        return "Resolved";
+      case "DELETED":
+        return "Deleted";
+      default:
+        return status;
     }
   };
 
@@ -71,14 +88,10 @@ export const MissingPersonList = memo(function MissingPersonList({
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-gray-700">Name</th>
-                <th className="px-6 py-3 text-left text-gray-700">Age</th>
-                <th className="px-6 py-3 text-left text-gray-700">
-                  Last Seen Location
-                </th>
-                <th className="px-6 py-3 text-left text-gray-700">
-                  Last Seen Date
-                </th>
+                <th className="px-6 py-3 text-left text-gray-700">Title</th>
+                <th className="px-6 py-3 text-left text-gray-700">Full Name</th>
+                <th className="px-6 py-3 text-left text-gray-700">Date</th>
+                <th className="px-6 py-3 text-left text-gray-700">Contact</th>
                 <th className="px-6 py-3 text-left text-gray-700">Status</th>
                 <th className="px-6 py-3 text-left text-gray-700">Actions</th>
               </tr>
@@ -87,15 +100,33 @@ export const MissingPersonList = memo(function MissingPersonList({
               {persons.map((person, index) => (
                 <AnimatedListItem key={person.id} index={index}>
                   <td className="px-6 py-4">
-                    <div className="text-gray-900">{person.name}</div>
-                    <div className="text-gray-500 text-sm">{person.gender}</div>
+                    <div className="text-gray-900 font-medium">{person.title}</div>
+                    <div className="text-gray-500 text-sm truncate max-w-xs">
+                      {person.content.substring(0, 50)}...
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-900">{person.age}</td>
+                  <td className="px-6 py-4 text-gray-900">{person.fullName}</td>
                   <td className="px-6 py-4 text-gray-900">
-                    {person.lastSeenLocation}
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      {new Date(person.date).toLocaleDateString()}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {new Date(person.lastSeenDate).toLocaleDateString()}
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1 text-sm">
+                      {person.contactPhone && (
+                        <div className="flex items-center gap-1 text-gray-600">
+                          <Phone className="w-3 h-3" />
+                          {person.contactPhone}
+                        </div>
+                      )}
+                      {person.contactEmail && (
+                        <div className="flex items-center gap-1 text-gray-600">
+                          <Mail className="w-3 h-3" />
+                          {person.contactEmail}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span
@@ -103,7 +134,7 @@ export const MissingPersonList = memo(function MissingPersonList({
                         person.status,
                       )}`}
                     >
-                      {person.status}
+                      {getStatusLabel(person.status)}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -117,7 +148,7 @@ export const MissingPersonList = memo(function MissingPersonList({
                       </button>
                       {userRole === "Reporter" && (
                         <>
-                          {person.status === "Unhandled" && (
+                          {person.status === "PENDING" && (
                             <button
                               onClick={() =>
                                 setConfirmAction({

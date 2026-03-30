@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Plus, Search, Filter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,64 +11,17 @@ import { toast } from "sonner";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { useDebouncedCallback } from "use-debounce";
-
-// Mock data
-const mockMissingPersons: MissingPerson[] = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    age: 28,
-    gender: "Female",
-    description: "Brown hair, blue eyes, 5'6\" tall, wearing a red jacket",
-    lastSeenLocation: "Central Park, New York",
-    lastSeenDate: "2026-01-02T14:30:00Z",
-    coordinates: [40.7829, -73.9654],
-    status: "Unhandled",
-    reportedBy: "Mike Johnson",
-    reportedDate: "2026-01-02T16:00:00Z",
-    contactInfo: "+1 (555) 123-4567",
-  },
-  {
-    id: "2",
-    name: "David Martinez",
-    age: 16,
-    gender: "Male",
-    description: "Black hair, brown eyes, 5'8\" tall, wearing school uniform",
-    lastSeenLocation: "Downtown Metro Station",
-    lastSeenDate: "2026-01-03T08:15:00Z",
-    coordinates: [40.758, -73.9855],
-    status: "Published",
-    reportedBy: "Maria Martinez",
-    reportedDate: "2026-01-03T10:00:00Z",
-    contactInfo: "+1 (555) 987-6543",
-  },
-  {
-    id: "3",
-    name: "Emily Chen",
-    age: 35,
-    gender: "Female",
-    description:
-      "Long black hair, brown eyes, 5'4\" tall, last seen in business attire",
-    lastSeenLocation: "Financial District",
-    lastSeenDate: "2026-01-01T18:45:00Z",
-    coordinates: [40.7074, -74.0113],
-    status: "Published",
-    reportedBy: "James Chen",
-    reportedDate: "2026-01-02T09:00:00Z",
-    contactInfo: "+1 (555) 456-7890",
-  },
-];
+import { criminalReportsService, MissingPersonReportResponse, PageResponse } from "@/services/criminalReportsService";
+import { Loading } from "@/components/loading/Loading";
 
 export default function MissingPersonsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { addNotification } = useNotification();
-  const [missingPersons, setMissingPersons] =
-    useState<MissingPerson[]>(mockMissingPersons);
+  const [missingPersons, setMissingPersons] = useState<MissingPerson[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-
-  if (!user) return null;
 
   const debouncedSetSearch = useDebouncedCallback(
     (value: string) => setSearchQuery(value),
@@ -86,33 +39,26 @@ export default function MissingPersonsPage() {
     router.push("/dashboard/missing-persons/create");
   }, [router]);
 
-  const mockRequest = async (shouldFail = false) => {
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    if (shouldFail) {
-      throw new Error("Mock server error");
-    }
-  };
-
   const handlePublish = useCallback(
     async (id: string) => {
       const person = missingPersons.find((p) => p.id === id);
       if (!person) return;
       try {
-        await mockRequest(false);
+        await criminalReportsService.publishMissingPersonReport(id);
         setMissingPersons(
           missingPersons.map((p) =>
-            p.id === id ? { ...p, status: "Published" as const } : p,
+            p.id === id ? { ...p, status: "PUBLISHED" as const } : p,
           ),
         );
         toast.success("Report published successfully");
         addNotification({
           type: "missing-person",
           title: "Missing person report published",
-          description: `${person.name} is now public and visible to users`,
+          description: `${person.fullName} is now public and visible to users`,
           reportId: person.id,
         });
       } catch (error) {
-        toast.error("Lỗi khi đăng tải báo cáo");
+        toast.error("Error publishing report");
         console.error(error);
       }
     },
@@ -124,17 +70,17 @@ export default function MissingPersonsPage() {
       const person = missingPersons.find((p) => p.id === id);
       if (!person) return;
       try {
-        await mockRequest(false);
+        await criminalReportsService.deleteMissingPersonReport(id);
         setMissingPersons(missingPersons.filter((p) => p.id !== id));
-        toast.success("Thành công");
+        toast.success("Report deleted successfully");
         addNotification({
           type: "missing-person",
           title: "Missing person report deleted",
-          description: `${person.name} report has been removed`,
+          description: `${person.fullName} report has been removed`,
           reportId: person.id,
         });
       } catch (error) {
-        toast.error("Lỗi khi xóa báo cáo");
+        toast.error("Error deleting report");
         console.error(error);
       }
     },
@@ -144,15 +90,62 @@ export default function MissingPersonsPage() {
   const filteredPersons = useMemo(() => {
     return missingPersons.filter((person) => {
       const matchesSearch =
-        person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        person.lastSeenLocation
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+        person.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        person.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        person.content.toLowerCase().includes(searchQuery.toLowerCase());
+      
       const matchesStatus =
         statusFilter === "all" || person.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [missingPersons, searchQuery, statusFilter]);
+
+  useEffect(() => {
+    const fetchMissingPersons = async () => {
+      try {
+        setIsLoading(true);
+        const response: PageResponse<MissingPersonReportResponse> = await criminalReportsService.listMissingPersonReports({
+          isPublic: user?.role !== "Reporter",
+          page: 0,
+          size: 100,
+        });
+        
+        const mappedPersons: MissingPerson[] = response.content.map((item) => ({
+          id: item.id,
+          title: item.title,
+          fullName: item.fullName,
+          personalId: item.personalId,
+          photo: item.photo,
+          date: item.date,
+          content: item.content,
+          contactEmail: item.contactEmail,
+          contactPhone: item.contactPhone,
+          createdAt: item.createdAt,
+          userId: item.userId,
+          status: item.status as MissingPerson["status"],
+          reporterId: item.reporterId,
+          isPublic: item.isPublic,
+        }));
+        
+        setMissingPersons(mappedPersons);
+      } catch (error) {
+        console.error("Error fetching missing persons:", error);
+        toast.error("Failed to load missing person reports");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchMissingPersons();
+    }
+  }, [user]);
+
+  if (!user) return null;
+
+  if (isLoading) {
+    return <Loading fullScreen />;
+  }
 
   return (
     <PageTransition>
@@ -173,14 +166,13 @@ export default function MissingPersonsPage() {
           )}
         </div>
 
-        {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by name or location..."
+                placeholder="Search by name or title..."
                 defaultValue={searchQuery}
                 onChange={(e) => debouncedSetSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
@@ -194,9 +186,9 @@ export default function MissingPersonsPage() {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent appearance-none"
               >
                 <option value="all">All Statuses</option>
-                <option value="Unhandled">Unhandled</option>
-                <option value="Published">Published</option>
-                <option value="Resolved">Resolved</option>
+                <option value="PENDING">Pending</option>
+                <option value="PUBLISHED">Published</option>
+                <option value="RESOLVED">Resolved</option>
               </select>
             </div>
           </div>

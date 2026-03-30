@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, User as UserIcon } from "lucide-react";
+import { Lock, User as UserIcon, Shield, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { authService, UserRole } from "@/services/authService";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginRole, setLoginRole] = useState<UserRole>("user");
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
 
@@ -18,33 +22,73 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
-    // Mock authentication - in production, this would validate against a backend
-    if (username === "admin" && password === "admin") {
-      login({
-        id: "1",
-        username: "admin",
-        password: "admin",
-        email: "admin@track.com",
-        role: "Reporter",
-        fullName: "John Reporter",
-      });
+    try {
+      const response = await authService.login(
+        { username, password },
+        loginRole
+      );
+
+      const mockUser = {
+        id: response.access_token.substring(0, 8),
+        username,
+        password,
+        email: `${username}@track.com`,
+        role: loginRole === "user" ? "User" : 
+              loginRole === "reporter" ? "Reporter" : 
+              loginRole === "emergency_services" ? "Emergency Services" : "Admin",
+        fullName: username,
+      };
+
+      login(mockUser);
+      toast.success(`Welcome, ${username}!`);
       router.push("/dashboard/missing-persons");
-    } else if (username === "emergency" && password === "demo123") {
-      login({
-        id: "2",
-        username: "emergency",
-        password: "demo123",
-        email: "emergency@track.com",
-        role: "Emergency Services",
-        fullName: "Jane Emergency",
-      });
+    } catch (err: unknown) {
+      console.error("Login error:", err);
+      const errorMessage = err instanceof Error ? err.message : "Login failed";
+      setError(errorMessage || "Invalid username or password");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async (role: UserRole) => {
+    setIsLoading(true);
+    try {
+      const credentials = {
+        user: { username: "user", password: "user" },
+        reporter: { username: "reporter", password: "reporter" },
+        emergency_services: { username: "emergency", password: "emergency" },
+        admin: { username: "admin", password: "admin" },
+      };
+
+      const { username: demoUser, password: demoPass } = credentials[role];
+      
+      await authService.login({ username: demoUser, password: demoPass }, role);
+
+      const mockUser = {
+        id: "demo-" + role,
+        username: demoUser,
+        password: demoPass,
+        email: `${demoUser}@track.com`,
+        role: role === "user" ? "User" : 
+              role === "reporter" ? "Reporter" : 
+              role === "emergency_services" ? "Emergency Services" : "Admin",
+        fullName: demoUser.charAt(0).toUpperCase() + demoUser.slice(1) + " User",
+      };
+
+      login(mockUser);
+      toast.success(`Welcome, ${mockUser.fullName}!`);
       router.push("/dashboard/missing-persons");
-    } else {
-      setError("Invalid username or password");
+    } catch (err) {
+      console.error("Demo login error:", err);
+      setError("Demo login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,7 +100,7 @@ export default function LoginPage() {
             <Lock className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-indigo-900 mb-2 text-2xl font-bold">
-            TRACK System
+            TRACK Nest
           </h1>
           <p className="text-gray-600">Sign in to access the dashboard</p>
         </div>
@@ -100,26 +144,99 @@ export default function LoginPage() {
             </div>
           </div>
 
+          <div>
+            <label className="block text-gray-700 mb-2">Login as</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setLoginRole("user")}
+                className={`px-4 py-2 rounded-lg border transition-colors ${
+                  loginRole === "user"
+                    ? "bg-indigo-100 border-indigo-500 text-indigo-700"
+                    : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                User
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginRole("reporter")}
+                className={`px-4 py-2 rounded-lg border transition-colors ${
+                  loginRole === "reporter"
+                    ? "bg-indigo-100 border-indigo-500 text-indigo-700"
+                    : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                Reporter
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginRole("emergency_services")}
+                className={`px-4 py-2 rounded-lg border transition-colors ${
+                  loginRole === "emergency_services"
+                    ? "bg-indigo-100 border-indigo-500 text-indigo-700"
+                    : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                Emergency
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginRole("admin")}
+                className={`px-4 py-2 rounded-lg border transition-colors ${
+                  loginRole === "admin"
+                    ? "bg-indigo-100 border-indigo-500 text-indigo-700"
+                    : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                Admin
+              </button>
+            </div>
+          </div>
+
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
               {error}
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+            disabled={isLoading}
+            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
           >
-            Sign In
+            {isLoading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-gray-600 text-sm">Demo Credentials:</p>
-          <div className="mt-2 space-y-1 text-sm">
-            <p className="text-gray-500">
-              Reporter: <span className="font-mono">admin / admin</span>
-            </p>
+          <p className="text-gray-600 text-sm mb-3">Quick Demo Login:</p>
+          <div className="space-y-2">
+            <button
+              onClick={() => handleDemoLogin("user")}
+              disabled={isLoading}
+              className="w-full flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+            >
+              <UserIcon className="w-4 h-4" />
+              Login as User
+            </button>
+            <button
+              onClick={() => handleDemoLogin("reporter")}
+              disabled={isLoading}
+              className="w-full flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+            >
+              <Shield className="w-4 h-4" />
+              Login as Reporter
+            </button>
+            <button
+              onClick={() => handleDemoLogin("emergency_services")}
+              disabled={isLoading}
+              className="w-full flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm"
+            >
+              <AlertCircle className="w-4 h-4" />
+              Login as Emergency Services
+            </button>
           </div>
         </div>
       </div>
