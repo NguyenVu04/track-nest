@@ -20,9 +20,9 @@ public interface MissingPersonReportRepository extends JpaRepository<MissingPers
     @Query("SELECT m FROM MissingPersonReport m WHERE m.reporter.id = :reporterId AND m.id = :id")
     Optional<MissingPersonReport> findByReporterIdAndId(@Param("reporterId") UUID reporterId, @Param("id") UUID id);
     
-    @Query("SELECT m FROM MissingPersonReport m WHERE m.isPublic = true")
+    @Query("SELECT m FROM MissingPersonReport m")
     Page<MissingPersonReport> findAllPublic(Pageable pageable);
     
-    @Query("SELECT m FROM MissingPersonReport m WHERE m.isPublic = true AND m.status.name = :status")
+    @Query("SELECT m FROM MissingPersonReport m WHERE m.status.name = :status")
     Page<MissingPersonReport> findAllPublicByStatus(@Param("status") String status, Pageable pageable);
 }
