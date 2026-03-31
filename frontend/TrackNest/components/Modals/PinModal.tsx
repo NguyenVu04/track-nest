@@ -33,7 +33,7 @@ export const PinModal = ({
             {t.pinSubTitle} {pendingAction}
           </Text>
 
-          <PinInput length={4} autoFocus onFillEnded={handlePinSubmit} />
+          <PinInput inputStyle={styles.pinInput} length={4} autoFocus onFillEnded={handlePinSubmit} />
         </Pressable>
       </Pressable>
     </Modal>
@@ -76,5 +76,8 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 16,
     textAlign: "center",
+  },
+  pinInput: {
+    color: "#333",
   },
 });

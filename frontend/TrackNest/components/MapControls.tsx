@@ -1,4 +1,5 @@
 import Fab from "@/components/Fab";
+import SosFab from "@/components/SosFab";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { MapType } from "react-native-maps";
@@ -22,7 +23,15 @@ export default function MapControls({
   style,
   mapType = "standard",
 }: Props) {
-  const label = mapType === "standard" ? "S" : "H";
+  const labelByType: Partial<Record<MapType, string>> = {
+    standard: "S",
+    satellite: "Sa",
+    hybrid: "H",
+    terrain: "T",
+    satelliteFlyover: "SF",
+    hybridFlyover: "HF",
+  };
+  const label = labelByType[mapType] ?? "S";
 
   return (
     <View style={[styles.fabColumn, style]}>
@@ -33,6 +42,7 @@ export default function MapControls({
           <Text style={styles.mapTypeLabel}>{label}</Text>
         </Fab>
       )}
+      <SosFab />
       {onZoomIn && <Fab icon="add" onPress={onZoomIn} />}
       {onZoomOut && <Fab icon="remove" onPress={onZoomOut} />}
     </View>
@@ -40,7 +50,7 @@ export default function MapControls({
 }
 
 const styles = StyleSheet.create({
-  fabColumn: { position: "absolute", right: 12, bottom: 70, gap: 12 },
+  fabColumn: { position: "absolute", right: 12, bottom: 70, gap: 12, flexDirection: "column", alignItems: "flex-end" },
   mapTypeButton: {
     width: 36,
     height: 36,

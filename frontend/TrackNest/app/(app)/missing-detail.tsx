@@ -62,7 +62,7 @@ export default function MissingDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.push("/(tabs)/reports")}>
+          <Pressable onPress={() => router.push("/reports")}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </Pressable>
           <Text style={styles.headerTitle}>{t.pageTitle}</Text>

@@ -522,3 +522,96 @@ export namespace RemoveMemberFromFamilyCircleResponse {
   };
 }
 
+export class ListFamilyCircleMembersRequest extends jspb.Message {
+  getFamilyCircleId(): string;
+  setFamilyCircleId(value: string): ListFamilyCircleMembersRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListFamilyCircleMembersRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ListFamilyCircleMembersRequest): ListFamilyCircleMembersRequest.AsObject;
+  static serializeBinaryToWriter(message: ListFamilyCircleMembersRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListFamilyCircleMembersRequest;
+  static deserializeBinaryFromReader(message: ListFamilyCircleMembersRequest, reader: jspb.BinaryReader): ListFamilyCircleMembersRequest;
+}
+
+export namespace ListFamilyCircleMembersRequest {
+  export type AsObject = {
+    familyCircleId: string;
+  };
+}
+
+export class FamilyCircleMemberInfo extends jspb.Message {
+  getMemberId(): string;
+  setMemberId(value: string): FamilyCircleMemberInfo;
+
+  getMemberUsername(): string;
+  setMemberUsername(value: string): FamilyCircleMemberInfo;
+
+  getMemberAvatarUrl(): string;
+  setMemberAvatarUrl(value: string): FamilyCircleMemberInfo;
+  hasMemberAvatarUrl(): boolean;
+  clearMemberAvatarUrl(): FamilyCircleMemberInfo;
+
+  getFamilyRole(): string;
+  setFamilyRole(value: string): FamilyCircleMemberInfo;
+
+  getIsAdmin(): boolean;
+  setIsAdmin(value: boolean): FamilyCircleMemberInfo;
+
+  getOnline(): boolean;
+  setOnline(value: boolean): FamilyCircleMemberInfo;
+
+  getLastActiveMs(): number;
+  setLastActiveMs(value: number): FamilyCircleMemberInfo;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FamilyCircleMemberInfo.AsObject;
+  static toObject(includeInstance: boolean, msg: FamilyCircleMemberInfo): FamilyCircleMemberInfo.AsObject;
+  static serializeBinaryToWriter(message: FamilyCircleMemberInfo, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FamilyCircleMemberInfo;
+  static deserializeBinaryFromReader(message: FamilyCircleMemberInfo, reader: jspb.BinaryReader): FamilyCircleMemberInfo;
+}
+
+export namespace FamilyCircleMemberInfo {
+  export type AsObject = {
+    memberId: string;
+    memberUsername: string;
+    memberAvatarUrl?: string;
+    familyRole: string;
+    isAdmin: boolean;
+    online: boolean;
+    lastActiveMs: number;
+  };
+
+  export enum MemberAvatarUrlCase {
+    _MEMBER_AVATAR_URL_NOT_SET = 0,
+    MEMBER_AVATAR_URL = 3,
+  }
+}
+
+export class ListFamilyCircleMembersResponse extends jspb.Message {
+  getStatus(): google_rpc_status_pb.Status | undefined;
+  setStatus(value?: google_rpc_status_pb.Status): ListFamilyCircleMembersResponse;
+  hasStatus(): boolean;
+  clearStatus(): ListFamilyCircleMembersResponse;
+
+  getMembersList(): Array<FamilyCircleMemberInfo>;
+  setMembersList(value: Array<FamilyCircleMemberInfo>): ListFamilyCircleMembersResponse;
+  clearMembersList(): ListFamilyCircleMembersResponse;
+  addMembers(value?: FamilyCircleMemberInfo, index?: number): FamilyCircleMemberInfo;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListFamilyCircleMembersResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ListFamilyCircleMembersResponse): ListFamilyCircleMembersResponse.AsObject;
+  static serializeBinaryToWriter(message: ListFamilyCircleMembersResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListFamilyCircleMembersResponse;
+  static deserializeBinaryFromReader(message: ListFamilyCircleMembersResponse, reader: jspb.BinaryReader): ListFamilyCircleMembersResponse;
+}
+
+export namespace ListFamilyCircleMembersResponse {
+  export type AsObject = {
+    status?: google_rpc_status_pb.Status.AsObject;
+    membersList: Array<FamilyCircleMemberInfo.AsObject>;
+  };
+}
+

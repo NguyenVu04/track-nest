@@ -24,8 +24,18 @@ export const mockFamilyCircles: FamilyCircle[] = [
   },
 ];
 
-// Helper to generate random offset for mock locations
-const randomOffset = () => (Math.random() - 0.5) * 0.02;
+// Deterministic pseudo-random helper so mock markers stay stable across rerenders.
+const seededUnit = (seed: string) => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  // Convert to [0, 1)
+  return ((hash >>> 0) % 10000) / 10000;
+};
+
+const seededOffset = (seed: string, magnitude = 0.01) =>
+  (seededUnit(seed) - 0.5) * (magnitude * 2);
 
 // Mock followers for each family circle
 // Locations are relative offsets that will be applied to user's current location
@@ -222,12 +232,16 @@ export const getMockFollowersForCircle = (
   const followers = mockFollowersByCircle[circleId];
   if (!followers) return [];
 
-  // Apply random offsets to create locations around the base location
+  // Apply deterministic offsets to create stable mock locations around base location.
   return followers.map((follower, index) => ({
     ...follower,
     latitude:
-      baseLatitude + Math.sin(index * 1.5) * 0.008 + randomOffset() * 0.5,
+      baseLatitude +
+      Math.sin(index * 1.5) * 0.008 +
+      seededOffset(`${follower.id}-lat`, 0.004),
     longitude:
-      baseLongitude + Math.cos(index * 1.5) * 0.008 + randomOffset() * 0.5,
+      baseLongitude +
+      Math.cos(index * 1.5) * 0.008 +
+      seededOffset(`${follower.id}-lng`, 0.004),
   }));
 };

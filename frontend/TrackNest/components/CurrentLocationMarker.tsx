@@ -1,9 +1,9 @@
-import { CurrentLocationMarker as currentLocationMarkerLang } from "@/constant/languages";
+// import { CurrentLocationMarker as currentLocationMarkerLang } from "@/constant/languages";
 import useDeviceHeading from "@/hooks/useDeviceHeading";
-import { useTranslation } from "@/hooks/useTranslation";
-import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
-import { Marker } from "react-native-maps";
+// import { useTranslation } from "@/hooks/useTranslation";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, Platform, StyleSheet, Text, View } from "react-native";
+import { MapMarker, Marker } from "react-native-maps";
 
 type Props = {
   latitude: number;
@@ -12,19 +12,91 @@ type Props = {
   disabled?: boolean; // when true show subdued grey dot and pause pulse
 };
 
+const MIN_MARKER_MOVEMENT_DELTA = 0.00003;
+
 export default function CurrentLocationMarker({
   latitude,
   longitude,
   speed,
   disabled = false,
 }: Props) {
-  const t = useTranslation(currentLocationMarkerLang);
-  // Get heading from dedicated hook - updates only re-render this component
+  // const t = useTranslation(currentLocationMarkerLang);
   const { heading } = useDeviceHeading(!disabled);
 
   // Convert speed from m/s to km/h
   const speedKmh = speed != null ? Math.round(speed * 3.6) : null;
-  const hasMovementData = heading != null || speedKmh != null;
+  const hasSpeedData = speedKmh != null;
+
+  const [tracksViewChanges, setTracksViewChanges] = useState(false);
+  const [markerCoordinate, setMarkerCoordinate] = useState({
+    latitude,
+    longitude,
+  });
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const markerRef = useRef<MapMarker>(null);
+  const hasInitialCoordinateRef = useRef(false);
+  const lastAcceptedCoordinateRef = useRef<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const next = { latitude, longitude };
+
+    if (!hasInitialCoordinateRef.current) {
+      hasInitialCoordinateRef.current = true;
+      lastAcceptedCoordinateRef.current = next;
+      setMarkerCoordinate(next);
+      return;
+    }
+
+    const prev = lastAcceptedCoordinateRef.current;
+    if (prev) {
+      const latDiff = Math.abs(next.latitude - prev.latitude);
+      const lngDiff = Math.abs(next.longitude - prev.longitude);
+      if (
+        latDiff < MIN_MARKER_MOVEMENT_DELTA &&
+        lngDiff < MIN_MARKER_MOVEMENT_DELTA
+      ) {
+        return;
+      }
+    }
+
+    if (
+      Platform.OS === "android" &&
+      markerRef.current?.animateMarkerToCoordinate
+    ) {
+      markerRef.current.animateMarkerToCoordinate(next, 500);
+    }
+
+    lastAcceptedCoordinateRef.current = next;
+    setMarkerCoordinate(next);
+  }, [latitude, longitude]);
+
+  useEffect(() => {
+    setTracksViewChanges(true);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    timerRef.current = setTimeout(() => {
+      setTracksViewChanges(false);
+    }, 300);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [heading, speedKmh, disabled]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (markerRef.current && tracksViewChanges) {
+        markerRef.current.redraw();
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [tracksViewChanges]);
+
   const scale = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(0.6)).current;
   const animRef = useRef<any>(null);
@@ -60,23 +132,26 @@ export default function CurrentLocationMarker({
     return () => animRef.current?.stop?.();
   }, [scale, opacity, disabled]);
 
-  const pulseScale = scale.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.6, 2.2],
-  });
+  // const pulseScale = scale.interpolate({
+  //   inputRange: [0, 1],
+  //   outputRange: [0.6, 2.2],
+  // });
 
   const outerBorder = disabled ? "#bdbdbd" : "rgba(116,190,203,0.9)";
   const innerColor = disabled ? "#999" : "#74becb";
-  const pulseColor = disabled ? "rgba(0,0,0,0)" : "rgba(116,190,203,0.25)";
+  // const pulseColor = disabled ? "rgba(0,0,0,0)" : "rgba(116,190,203,0.25)";
+
+  console.log("HEading", heading, "Speed", speedKmh, "Disabled", disabled);
 
   return (
     <Marker
-      coordinate={{ latitude, longitude }}
-      tracksViewChanges={true}
+      ref={markerRef}
+      coordinate={markerCoordinate}
+      // tracksViewChanges={tracksViewChanges}
       anchor={{ x: 0.5, y: 0.5 }}
     >
       <View style={localStyles.wrapper}>
-        <Animated.View
+        {/* <Animated.View
           style={[
             localStyles.pulse,
             {
@@ -85,7 +160,7 @@ export default function CurrentLocationMarker({
               backgroundColor: pulseColor,
             },
           ]}
-        />
+        /> */}
 
         {heading != null && !disabled && (
           <View
@@ -102,11 +177,9 @@ export default function CurrentLocationMarker({
             style={[localStyles.dotInner, { backgroundColor: innerColor }]}
           />
         </View>
-        {hasMovementData && !disabled && (
+        {hasSpeedData && (
           <View style={localStyles.speedContainer}>
-            <Text style={localStyles.speedText}>
-              {speedKmh != null ? `${speedKmh} ${t.speedUnit}` : ""}
-            </Text>
+            <Text style={localStyles.speedText}>{`${speedKmh} km/h`}</Text>
           </View>
         )}
       </View>
@@ -118,7 +191,7 @@ const localStyles = StyleSheet.create({
   wrapper: {
     width: 60,
     height: 60,
-    alignItems: "center",
+  alignItems: "center",
     justifyContent: "center",
   },
   pulse: {

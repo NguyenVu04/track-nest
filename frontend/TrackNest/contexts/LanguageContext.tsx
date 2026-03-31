@@ -1,9 +1,14 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import type { AppLanguage } from "./language.types";
+import { loadSavedLanguage, saveLanguage } from "./languageStorage";
 
-const LANGUAGE_KEY = "@TrackNest:language";
-
-export type AppLanguage = "English" | "Vietnamese";
+export type { AppLanguage } from "./language.types";
 
 type LanguageContextType = {
   language: AppLanguage;
@@ -11,34 +16,25 @@ type LanguageContextType = {
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<AppLanguage>("English");
 
   // Load saved language preference on mount
-  React.useEffect(() => {
-    loadLanguage();
-  }, []);
-
-  const loadLanguage = async () => {
-    try {
-      const savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
-      if (savedLanguage === "Vietnamese" || savedLanguage === "English") {
+  useEffect(() => {
+    loadSavedLanguage().then((savedLanguage) => {
+      if (savedLanguage) {
         setLanguageState(savedLanguage);
       }
-    } catch (error) {
-      console.error("Failed to load language preference:", error);
-    }
-  };
+    });
+  }, []);
 
   const setLanguage = async (lang: AppLanguage) => {
-    try {
-      await AsyncStorage.setItem(LANGUAGE_KEY, lang);
+    const didSave = await saveLanguage(lang);
+    if (didSave) {
       setLanguageState(lang);
-    } catch (error) {
-      console.error("Failed to save language preference:", error);
     }
   };
 

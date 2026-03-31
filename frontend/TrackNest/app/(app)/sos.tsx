@@ -3,7 +3,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { colors } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import * as Notifications from "expo-notifications";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -32,11 +32,14 @@ Notifications.setNotificationHandler({
 
 export default function SosScreen() {
   const router = useRouter();
+  const { autoActivate } = useLocalSearchParams<{ autoActivate?: string }>();
   const t = useTranslation(sosLang);
   const [countdown, setCountdown] = useState(10);
   const [isCancelled, setIsCancelled] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const emergencyTriggeredRef = useRef(false);
+  const autoActivatedRef = useRef(false);
 
   // Setup notifications and prevent hardware back button
   useEffect(() => {
@@ -60,8 +63,11 @@ export default function SosScreen() {
   }, [t.sosNotificationChannel]);
 
   const triggerEmergency = useCallback(() => {
+    if (emergencyTriggeredRef.current) return;
+    emergencyTriggeredRef.current = true;
+
     // TODO: Implement actual emergency call logic
-    router.replace("/(tabs)/map");
+    router.replace("/map");
     Notifications.scheduleNotificationAsync({
       content: {
         title: t.emergencyActivatedTitle,
@@ -70,6 +76,17 @@ export default function SosScreen() {
       trigger: null,
     });
   }, [router, t]);
+
+  useEffect(() => {
+    const shouldAutoActivate = autoActivate === "1" || autoActivate === "true";
+    if (!shouldAutoActivate || autoActivatedRef.current) return;
+
+    autoActivatedRef.current = true;
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+    }
+    triggerEmergency();
+  }, [autoActivate, triggerEmergency]);
 
   // Countdown timer
   useEffect(() => {
@@ -104,7 +121,7 @@ export default function SosScreen() {
     if (countdownRef.current) {
       clearInterval(countdownRef.current);
     }
-    router.replace("/(tabs)/map");
+    router.replace("/map");
     Notifications.scheduleNotificationAsync({
       content: {
         title: t.emergencyCancelledTitle,

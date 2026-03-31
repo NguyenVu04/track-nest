@@ -40,7 +40,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
-    maxWidth: 200,
+    width: "100%",
+    textAlign: "center"
   },
   iconContainer: {
     width: 28,
@@ -55,5 +56,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#333",
     flex: 1,
+    textAlign: "center"
   },
 });

@@ -1,4 +1,4 @@
-import fetch from "cross-fetch"; // polyfill for RN
+﻿import fetch from "cross-fetch"; // polyfill for RN
 
 import type { ClientReadableStream } from "grpc-web";
 
@@ -9,17 +9,35 @@ import {
   StreamFamilyMemberLocationsRequest,
   UpdateUserLocationRequest,
   UpdateUserLocationResponse,
+  UserLocation,
 } from "@/proto/tracker_pb";
 import { TrackerControllerClient } from "@/proto/TrackerServiceClientPb";
 import { getAuthMetadata, getBaseUrl } from "@/utils";
+import { scheduleLocalNotification } from "@/utils/notifications";
 
 global.fetch = global.fetch || fetch;
 
-const baseUrl = getBaseUrl();
+let _client: TrackerControllerClient | null = null;
 
-const client = new TrackerControllerClient(`${baseUrl}:8800`, null, {
-  format: "text",
-});
+async function getClient(): Promise<TrackerControllerClient> {
+  if (!_client) {
+    const url = await getBaseUrl();
+
+    console.log(
+      "Creating TrackerControllerClient with URL:",
+      `${url}${__DEV__ ? ":8800" : "/grpc"}`,
+    );
+
+    _client = new TrackerControllerClient(
+      `${url}${__DEV__ ? ":8800" : "/grpc"}`,
+      null,
+      {
+        format: "text",
+      },
+    );
+  }
+  return _client;
+}
 
 /**
  * Streams live location updates for family members in a circle.
@@ -37,7 +55,10 @@ export const streamFamilyMemberLocations = async (
   console.log("Starting stream for family circle:", familyCircleId);
 
   const metadata = await getAuthMetadata();
-  const stream = client.streamFamilyMemberLocations(request, metadata);
+  const stream = (await getClient()).streamFamilyMemberLocations(
+    request,
+    metadata,
+  );
 
   stream.on("data", (msg: FamilyMemberLocation) => {
     const location = msg.toObject();
@@ -46,6 +67,10 @@ export const streamFamilyMemberLocations = async (
   });
 
   stream.on("error", (err: Error) => {
+    scheduleLocalNotification(
+      "Streaming Error",
+      `Location stream error: ${err.message}`,
+    );
     console.error("Stream error:", err);
     onError?.(err);
   });
@@ -55,6 +80,10 @@ export const streamFamilyMemberLocations = async (
     onEnd?.();
   });
 
+  scheduleLocalNotification(
+    "Location Streaming Started",
+    "Live family member locations are now being streamed.",
+  );
   return stream;
 };
 
@@ -65,9 +94,7 @@ export const streamFamilyMemberLocations = async (
 export const listFamilyMemberLocationHistory = async (
   familyCircleId: string,
   memberId: string,
-  memberUsername: string,
   options?: {
-    memberAvatarUrl?: string;
     centerLatitudeDeg?: number;
     centerLongitudeDeg?: number;
     radiusMeter?: number;
@@ -76,11 +103,7 @@ export const listFamilyMemberLocationHistory = async (
   const request = new ListFamilyMemberLocationHistoryRequest();
   request.setFamilyCircleId(familyCircleId);
   request.setMemberId(memberId);
-  request.setMemberUsername(memberUsername);
 
-  if (options?.memberAvatarUrl) {
-    request.setMemberAvatarUrl(options.memberAvatarUrl);
-  }
   if (options?.centerLatitudeDeg !== undefined) {
     request.setCenterLatitudeDeg(options.centerLatitudeDeg);
   }
@@ -95,19 +118,26 @@ export const listFamilyMemberLocationHistory = async (
 
   try {
     const metadata = await getAuthMetadata();
-    const response = await client.listFamilyMemberLocationHistory(
-      request,
-      metadata,
-    );
+    const response = await (
+      await getClient()
+    ).listFamilyMemberLocationHistory(request, metadata);
     const result = response.toObject();
     console.log(
       "Location history received:",
       result.locationsList.length,
       "locations",
     );
+    scheduleLocalNotification(
+      "Location History",
+      `Retrieved ${result.locationsList.length} location point(s) for ${memberId}.`,
+    );
     return result;
   } catch (error) {
     console.error("Failed to fetch location history:", error);
+    scheduleLocalNotification(
+      "History Failed",
+      `Could not fetch location history for ${memberId}.`,
+    );
     throw error;
   }
 };
@@ -116,22 +146,33 @@ export const listFamilyMemberLocationHistory = async (
  * Updates the current user's location.
  */
 export const updateUserLocation = async (
-  latitudeDeg: number,
-  longitudeDeg: number,
-  accuracyMeter: number,
-  velocityMps: number,
-  timestampMs?: number,
+  locations: {
+    latitudeDeg: number;
+    longitudeDeg: number;
+    accuracyMeter: number;
+    velocityMps: number;
+    timestampMs?: number;
+  }[],
 ): Promise<UpdateUserLocationResponse.AsObject> => {
   const request = new UpdateUserLocationRequest();
-  request.setLatitudeDeg(latitudeDeg);
-  request.setLongitudeDeg(longitudeDeg);
-  request.setAccuracyMeter(accuracyMeter);
-  request.setVelocityMps(velocityMps);
-  request.setTimestampMs(timestampMs ?? Date.now());
+
+  const userLocations = locations.map((loc) => {
+    const userLocation = new UserLocation();
+    userLocation.setLatitudeDeg(loc.latitudeDeg);
+    userLocation.setLongitudeDeg(loc.longitudeDeg);
+    userLocation.setAccuracyMeter(loc.accuracyMeter);
+    userLocation.setVelocityMps(loc.velocityMps);
+    userLocation.setTimestampMs(loc.timestampMs ?? Date.now());
+    return userLocation;
+  });
+
+  request.setLocationsList(userLocations);
 
   try {
     const metadata = await getAuthMetadata();
-    const response = await client.updateUserLocation(request, metadata);
+    const response = await (
+      await getClient()
+    ).updateUserLocation(request, metadata);
     const result = response.toObject();
     console.log("Location update response:", result);
     return result;

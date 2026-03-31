@@ -1,6 +1,7 @@
 import { LOCATION_STORAGE_KEY, LOCATION_UPDATE_EMIT_EVENT } from "@/constant";
 import { LocationState } from "@/constant/types";
 import {
+  flushNativeLocationBufferToStorage,
   loadSavedKey,
   requestPermissionsAndStart,
   stopBackgroundLocationTracking,
@@ -37,6 +38,8 @@ export default function useDeviceLocation(tracking: boolean) {
 
     const loadAndSetLocation = async () => {
       try {
+        await flushNativeLocationBufferToStorage();
+
         const saved = await loadSavedKey<LocationState>(
           LOCATION_STORAGE_KEY,
         ).catch(() => null);
@@ -48,6 +51,25 @@ export default function useDeviceLocation(tracking: boolean) {
         ) {
           locationRef.current = saved;
           setLocation(saved);
+        } else {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== "granted") {
+            setError("Location permission not granted");
+            return;
+          }
+
+          const { coords } = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Highest,
+          });
+
+          const localtionState: LocationState = {
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            speed: coords.speed,
+          };
+
+          locationRef.current = localtionState;
+          setLocation(localtionState);
         }
       } catch (err: any) {
         if (!cancelled) setError(err?.message ?? String(err));

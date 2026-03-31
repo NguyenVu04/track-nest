@@ -1,5 +1,5 @@
 import { getInitials } from "@/utils";
-import React, { useEffect, useState } from "react";
+import React, { memo, useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { Marker } from "react-native-maps";
 
@@ -11,12 +11,12 @@ type Props = {
   name: string;
   sharingActive?: boolean; // true = actively sharing location
   lastActive?: string | number | Date;
-  selectedFollowerId?: string | null;
   setSelectedFollowerId?: (id: string | null) => void;
   handlePresentModalPress?: () => void;
+  fetchHistoryForTarget?: (id: string) => void;
 };
 
-export default function FollowerMarker({
+function FollowerMarker({
   latitude,
   longitude,
   id,
@@ -25,6 +25,7 @@ export default function FollowerMarker({
   sharingActive = false,
   setSelectedFollowerId,
   handlePresentModalPress,
+  fetchHistoryForTarget,
 }: Props) {
   // Only let the native Marker track view changes while the avatar image is loading.
   // Leaving `tracksViewChanges` enabled continuously can cause heavy re-rendering
@@ -78,7 +79,9 @@ export default function FollowerMarker({
           handlePresentModalPress();
         }
 
-        // fetchHistoryForTarget(id || "");
+        if (fetchHistoryForTarget && id) {
+          fetchHistoryForTarget(id);
+        }
       }}
     >
       <View style={[styles.container]}>
@@ -96,6 +99,23 @@ export default function FollowerMarker({
     </Marker>
   );
 }
+
+function areEqual(prev: Props, next: Props) {
+  return (
+    prev.id === next.id &&
+    prev.latitude === next.latitude &&
+    prev.longitude === next.longitude &&
+    prev.avatar === next.avatar &&
+    prev.name === next.name &&
+    prev.sharingActive === next.sharingActive &&
+    prev.lastActive === next.lastActive &&
+    prev.setSelectedFollowerId === next.setSelectedFollowerId &&
+    prev.handlePresentModalPress === next.handlePresentModalPress &&
+    prev.fetchHistoryForTarget === next.fetchHistoryForTarget
+  );
+}
+
+export default memo(FollowerMarker, areEqual);
 
 const styles = StyleSheet.create({
   container: {

@@ -1,148 +1,69 @@
 import { MapHeader as mapHeaderLang } from "@/constant/languages";
+import { FamilyCircle } from "@/constant/types";
+import { AppNotification, useNotifications } from "@/hooks/useNotifications";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Modal,
   Pressable,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from "react-native";
 import { FamilyCircleSelector } from "./FamilyCircleSelector";
-import { FamilyCircle } from "@/constant/types";
 
-type Notification = {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  type: "alert" | "info" | "warning";
-  read: boolean;
-};
-
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    title: "Tracker Alert",
-    message: "Car Tracker went offline 15 minutes ago",
-    time: "15m ago",
-    type: "alert",
-    read: false,
-  },
-  {
-    id: "2",
-    title: "Location Update",
-    message: "Bike Tracker location updated successfully",
-    time: "1h ago",
-    type: "info",
-    read: false,
-  },
-  {
-    id: "3",
-    title: "Battery Warning",
-    message: "Backpack Tracker battery below 20%",
-    time: "2h ago",
-    type: "warning",
-    read: true,
-  },
-  {
-    id: "4",
-    title: "New Follower",
-    message: "John Doe started following your location",
-    time: "3h ago",
-    type: "info",
-    read: true,
-  },
-  {
-    id: "5",
-    title: "System Update",
-    message: "TrackNest app updated to version 1.0.1",
-    time: "1d ago",
-    type: "info",
-    read: true,
-  },
-  {
-    id: "6",
-    title: "Location Update",
-    message: "Bike Tracker location updated successfully",
-    time: "1h ago",
-    type: "info",
-    read: false,
-  },
-  {
-    id: "7",
-    title: "Battery Warning",
-    message: "Backpack Tracker battery below 20%",
-    time: "2h ago",
-    type: "warning",
-    read: true,
-  },
-  {
-    id: "8",
-    title: "New Follower",
-    message: "John Doe started following your location",
-    time: "3h ago",
-    type: "info",
-    read: true,
-  },
-  {
-    id: "9",
-    title: "System Update",
-    message: "TrackNest app updated to version 1.0.1",
-    time: "1d ago",
-    type: "info",
-    read: true,
-  },
-];
+function formatTimeAgo(ms: number): string {
+  const diffMin = Math.floor((Date.now() - ms) / 60000);
+  if (diffMin < 1) return "Just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  return `${Math.floor(diffHr / 24)}d ago`;
+}
 
 type Props = {
-  tracking: boolean;
-  setTracking: (v: boolean) => void;
-  onSearchPress?: () => void;
   selectedCircle: FamilyCircle | null;
   handleFamilyCircleModalPress: () => void;
 };
 
 export default function MapHeader({
-  tracking,
-  setTracking,
-  onSearchPress,
   selectedCircle,
   handleFamilyCircleModalPress,
 }: Props) {
   const t = useTranslation(mapHeaderLang);
   const [notificationsVisible, setNotificationsVisible] = useState(false);
+  const [notificationTab, setNotificationTab] = useState<"tracking" | "risk">(
+    "tracking",
+  );
+  const {
+    trackingNotifications,
+    riskNotifications,
+    totalCount,
+    loading,
+    fetchAll,
+    clearAll,
+    clearTrackingTab,
+    clearRiskTab,
+    deleteTracking,
+    deleteRisk,
+  } = useNotifications();
 
-  const getNotificationIcon = (type: Notification["type"]) => {
-    switch (type) {
-      case "alert":
-        return "alert-circle";
-      case "warning":
-        return "warning";
-      case "info":
-        return "information-circle";
-    }
+  const handleOpenNotifications = () => {
+    fetchAll();
+    setNotificationsVisible(true);
   };
 
-  const getNotificationColor = (type: Notification["type"]) => {
-    switch (type) {
-      case "alert":
-        return "#e74c3c";
-      case "warning":
-        return "#f39c12";
-      case "info":
-        return "#74becb";
-    }
-  };
+  const getNotificationIcon = (type: AppNotification["type"]) =>
+    type === "risk" ? "alert-circle" : "information-circle";
 
-  const renderNotification = ({ item }: { item: Notification }) => (
-    <Pressable
-      style={[styles.notificationItem, !item.read && styles.notificationUnread]}
-      android_ripple={{ color: "#e5e7eb" }}
-    >
+  const getNotificationColor = (type: AppNotification["type"]) =>
+    type === "risk" ? "#e74c3c" : "#74becb";
+
+  const renderNotification = ({ item }: { item: AppNotification }) => (
+    <View style={styles.notificationItem}>
       <View
         style={[
           styles.notificationIcon,
@@ -157,39 +78,35 @@ export default function MapHeader({
       </View>
       <View style={{ flex: 1 }}>
         <View style={styles.notificationHeader}>
-          <Text style={styles.notificationTitle}>{item.title}</Text>
-          <Text style={styles.notificationTime}>{item.time}</Text>
+          <Text style={styles.notificationTitle} numberOfLines={1}>
+            {item.title}
+          </Text>
+          <Text style={styles.notificationTime}>
+            {formatTimeAgo(item.createdAtMs)}
+          </Text>
         </View>
-        <Text style={styles.notificationMessage}>{item.message}</Text>
+        <Text style={styles.notificationMessage} numberOfLines={2}>
+          {item.content}
+        </Text>
       </View>
-    </Pressable>
+      <Pressable
+        onPress={() =>
+          item.type === "tracking"
+            ? deleteTracking(item.id)
+            : deleteRisk(item.id)
+        }
+        hitSlop={8}
+        style={{ padding: 4 }}
+      >
+        <Ionicons name="close" size={16} color="#9ca3af" />
+      </Pressable>
+    </View>
   );
 
   return (
     <>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Pressable
-            style={styles.iconButton}
-            onPress={() => {
-              onSearchPress?.();
-            }}
-          >
-            <Ionicons name="search" size={22} color="#757575" />
-          </Pressable>
-
-          <Pressable
-            style={styles.iconButton}
-            onPress={() => setNotificationsVisible(true)}
-          >
-            <Ionicons name="notifications" size={22} color="#757575" />
-            {mockNotifications.some((n) => !n.read) && (
-              <View style={styles.badge} />
-            )}
-          </Pressable>
-        </View>
-
-        <View style={styles.headerMid}>
           <FamilyCircleSelector
             selectedCircle={selectedCircle}
             onPress={handleFamilyCircleModalPress}
@@ -197,12 +114,13 @@ export default function MapHeader({
         </View>
 
         <View style={styles.headerRight}>
-          <View style={styles.switchRow}>
-            <Text style={[styles.trackLabel, { color: "#757575" }]}>
-              {t.tracking}
-            </Text>
-            <Switch value={tracking} onValueChange={setTracking} />
-          </View>
+          <Pressable
+            style={styles.iconButton}
+            onPress={handleOpenNotifications}
+          >
+            <Ionicons name="notifications" size={22} color="#757575" />
+            {totalCount > 0 && <View style={styles.badge} />}
+          </Pressable>
         </View>
       </View>
 
@@ -223,30 +141,110 @@ export default function MapHeader({
           >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t.notifications}</Text>
-              <Pressable
-                style={styles.closeButton}
-                onPress={() => setNotificationsVisible(false)}
+              <View
+                style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
               >
-                <Ionicons name="close" size={24} color="#6b7280" />
-              </Pressable>
+                <Pressable onPress={clearAll} hitSlop={8}>
+                  <Text style={{ color: "#74becb", fontSize: 13 }}>
+                    Clear All
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={styles.closeButton}
+                  onPress={() => setNotificationsVisible(false)}
+                >
+                  <Ionicons name="close" size={24} color="#6b7280" />
+                </Pressable>
+              </View>
             </View>
 
-            <FlatList
-              data={mockNotifications}
-              keyExtractor={(item) => item.id}
-              renderItem={renderNotification}
-              contentContainerStyle={{ paddingBottom: 16 }}
-              ListEmptyComponent={
-                <View style={styles.emptyState}>
-                  <Ionicons
-                    name="notifications-off"
-                    size={48}
-                    color="#d1d5db"
-                  />
-                  <Text style={styles.emptyText}>{t.noNotifications}</Text>
-                </View>
-              }
-            />
+            {/* Tabs */}
+            <View style={styles.tabRow}>
+              <Pressable
+                style={[
+                  styles.tabBtn,
+                  notificationTab === "tracking" && styles.tabBtnActive,
+                ]}
+                onPress={() => setNotificationTab("tracking")}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    notificationTab === "tracking" && styles.tabTextActive,
+                  ]}
+                >
+                  Tracking
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.tabBtn,
+                  notificationTab === "risk" && styles.tabBtnActive,
+                ]}
+                onPress={() => setNotificationTab("risk")}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    notificationTab === "risk" && styles.tabTextActive,
+                  ]}
+                >
+                  Risk
+                </Text>
+              </Pressable>
+              {notificationTab === "tracking" &&
+                trackingNotifications.length > 0 && (
+                  <Pressable
+                    hitSlop={8}
+                    onPress={() =>
+                      clearTrackingTab(trackingNotifications.map((n) => n.id))
+                    }
+                    style={{ marginLeft: "auto" }}
+                  >
+                    <Text style={{ color: "#f39c12", fontSize: 12 }}>
+                      Clear tab
+                    </Text>
+                  </Pressable>
+                )}
+              {notificationTab === "risk" && riskNotifications.length > 0 && (
+                <Pressable
+                  hitSlop={8}
+                  onPress={() =>
+                    clearRiskTab(riskNotifications.map((n) => n.id))
+                  }
+                  style={{ marginLeft: "auto" }}
+                >
+                  <Text style={{ color: "#f39c12", fontSize: 12 }}>
+                    Clear tab
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+
+            {loading ? (
+              <ActivityIndicator style={{ padding: 24 }} color="#74becb" />
+            ) : (
+              <FlatList
+                data={
+                  notificationTab === "tracking"
+                    ? trackingNotifications
+                    : riskNotifications
+                }
+                keyExtractor={(item) => item.id}
+                renderItem={renderNotification}
+                contentContainerStyle={{ paddingBottom: 16 }}
+                ListEmptyComponent={
+                  <View style={styles.emptyState}>
+                    <Ionicons
+                      name="notifications-off"
+                      size={48}
+                      color="#d1d5db"
+                    />
+                    <Text style={styles.emptyText}>{t.noNotifications}</Text>
+                  </View>
+                }
+              />
+            )}
           </Pressable>
         </Pressable>
       </Modal>
@@ -262,20 +260,14 @@ const styles = StyleSheet.create({
     right: 12,
     zIndex: 10,
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
-    padding: 8,
-    borderRadius: 12,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     gap: 8,
-    // elevation: 10,
   },
   headerLeft: {
-    flexDirection: "column",
-    gap: 8,
+    flex: 1,
   },
   iconButton: {
     width: 44,
@@ -302,21 +294,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerRight: {
-    flexDirection: "column",
     alignItems: "flex-end",
-    gap: 0,
-    paddingLeft: 8,
-    paddingRight: 8,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,1)",
   },
-  switchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-  },
-
-  trackLabel: { marginRight: 0 },
   modalOverlay: {
     position: "absolute",
     top: 0,
@@ -357,6 +336,7 @@ const styles = StyleSheet.create({
     gap: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
+    alignItems: "center",
   },
   notificationUnread: {
     backgroundColor: "#eff6ff",
@@ -397,4 +377,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#9ca3af",
   },
+  tabRow: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+    gap: 8,
+    alignItems: "center",
+  },
+  tabBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: "#f2f2f2",
+  },
+  tabBtnActive: {
+    backgroundColor: "#e0f2f5",
+  },
+  tabText: { color: "#666", fontSize: 13 },
+  tabTextActive: { color: "#74becb", fontWeight: "600", fontSize: 13 },
 });

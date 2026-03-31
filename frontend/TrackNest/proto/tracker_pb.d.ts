@@ -89,14 +89,6 @@ export class ListFamilyMemberLocationHistoryRequest extends jspb.Message {
   getMemberId(): string;
   setMemberId(value: string): ListFamilyMemberLocationHistoryRequest;
 
-  getMemberUsername(): string;
-  setMemberUsername(value: string): ListFamilyMemberLocationHistoryRequest;
-
-  getMemberAvatarUrl(): string;
-  setMemberAvatarUrl(value: string): ListFamilyMemberLocationHistoryRequest;
-  hasMemberAvatarUrl(): boolean;
-  clearMemberAvatarUrl(): ListFamilyMemberLocationHistoryRequest;
-
   getCenterLatitudeDeg(): number;
   setCenterLatitudeDeg(value: number): ListFamilyMemberLocationHistoryRequest;
   hasCenterLatitudeDeg(): boolean;
@@ -124,17 +116,10 @@ export namespace ListFamilyMemberLocationHistoryRequest {
   export type AsObject = {
     familyCircleId: string;
     memberId: string;
-    memberUsername: string;
-    memberAvatarUrl?: string;
     centerLatitudeDeg?: number;
     centerLongitudeDeg?: number;
     radiusMeter?: number;
   };
-
-  export enum MemberAvatarUrlCase {
-    _MEMBER_AVATAR_URL_NOT_SET = 0,
-    MEMBER_AVATAR_URL = 4,
-  }
 
   export enum CenterLatitudeDegCase {
     _CENTER_LATITUDE_DEG_NOT_SET = 0,
@@ -178,21 +163,45 @@ export namespace ListFamilyMemberLocationHistoryResponse {
   };
 }
 
-export class UpdateUserLocationRequest extends jspb.Message {
+export class UserLocation extends jspb.Message {
   getLatitudeDeg(): number;
-  setLatitudeDeg(value: number): UpdateUserLocationRequest;
+  setLatitudeDeg(value: number): UserLocation;
 
   getLongitudeDeg(): number;
-  setLongitudeDeg(value: number): UpdateUserLocationRequest;
+  setLongitudeDeg(value: number): UserLocation;
 
   getAccuracyMeter(): number;
-  setAccuracyMeter(value: number): UpdateUserLocationRequest;
+  setAccuracyMeter(value: number): UserLocation;
 
   getVelocityMps(): number;
-  setVelocityMps(value: number): UpdateUserLocationRequest;
+  setVelocityMps(value: number): UserLocation;
 
   getTimestampMs(): number;
-  setTimestampMs(value: number): UpdateUserLocationRequest;
+  setTimestampMs(value: number): UserLocation;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UserLocation.AsObject;
+  static toObject(includeInstance: boolean, msg: UserLocation): UserLocation.AsObject;
+  static serializeBinaryToWriter(message: UserLocation, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UserLocation;
+  static deserializeBinaryFromReader(message: UserLocation, reader: jspb.BinaryReader): UserLocation;
+}
+
+export namespace UserLocation {
+  export type AsObject = {
+    latitudeDeg: number;
+    longitudeDeg: number;
+    accuracyMeter: number;
+    velocityMps: number;
+    timestampMs: number;
+  };
+}
+
+export class UpdateUserLocationRequest extends jspb.Message {
+  getLocationsList(): Array<UserLocation>;
+  setLocationsList(value: Array<UserLocation>): UpdateUserLocationRequest;
+  clearLocationsList(): UpdateUserLocationRequest;
+  addLocations(value?: UserLocation, index?: number): UserLocation;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateUserLocationRequest.AsObject;
@@ -204,11 +213,7 @@ export class UpdateUserLocationRequest extends jspb.Message {
 
 export namespace UpdateUserLocationRequest {
   export type AsObject = {
-    latitudeDeg: number;
-    longitudeDeg: number;
-    accuracyMeter: number;
-    velocityMps: number;
-    timestampMs: number;
+    locationsList: Array<UserLocation.AsObject>;
   };
 }
 

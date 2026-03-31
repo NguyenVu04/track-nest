@@ -20,11 +20,11 @@ const MapContext = createContext<MapContextType | undefined>(undefined);
 const isValidMapType = (value: string): value is MapType => {
   return [
     "standard",
-    // "satellite",
+    "satellite",
     "hybrid",
-    // "terrain",
-    // "none",
-    // "mutedStandard",
+    "terrain",
+    "none",
+    "mutedStandard",
   ].includes(value);
 };
 

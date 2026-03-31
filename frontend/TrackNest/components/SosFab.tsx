@@ -1,10 +1,16 @@
 import { colors, shadows } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, View, ViewStyle } from "react-native";
+import {
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from "react-native";
 
 type SosFabProps = {
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 };
 
 export default function SosFab({ style }: SosFabProps) {
@@ -17,13 +23,14 @@ export default function SosFab({ style }: SosFabProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <Pressable
-        onPress={handlePress}
-        style={styles.button}
-      >
-
+      <Pressable onPress={handlePress} style={styles.button}>
         {/* Icon */}
-        <Ionicons name="warning" size={28} color="#fff" style={styles.icon} />
+        <Ionicons
+          name="alert-circle"
+          size={28}
+          color="#fff"
+          style={styles.icon}
+        />
       </Pressable>
     </View>
   );
@@ -32,6 +39,7 @@ export default function SosFab({ style }: SosFabProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
+    marginBottom: 16,
   },
   button: {
     width: 72,

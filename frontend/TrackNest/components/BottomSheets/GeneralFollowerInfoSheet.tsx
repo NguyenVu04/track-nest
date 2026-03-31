@@ -1,6 +1,6 @@
 import { BottomSheetFlatList, BottomSheetModal } from "@gorhom/bottom-sheet";
 import React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, useWindowDimensions } from "react-native";
 
 type GeneralFollowerInfoSheetProps = {
   generalInfoSheetRef: React.RefObject<BottomSheetModal | null>;
@@ -13,12 +13,14 @@ const GeneralFollowerInfoSheet = ({
   generalInfoListData,
   generalInfoRenderItem,
 }: GeneralFollowerInfoSheetProps) => {
+  const { height: screenHeight } = useWindowDimensions();
+
   return (
     <BottomSheetModal
       ref={generalInfoSheetRef}
       style={styles.generalInfoSheet}
-      snapPoints={["25%"]}
-      enableDynamicSizing={false}
+      enableDynamicSizing={true}
+      maxDynamicContentSize={Math.floor(screenHeight * 0.45)}
       index={0}
       enableContentPanningGesture={false}
     >

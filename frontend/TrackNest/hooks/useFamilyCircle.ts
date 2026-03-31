@@ -1,52 +1,77 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { mockFamilyCircles } from "@/constant/mockFamilyCircles";
 import { FamilyCircle } from "@/constant/types";
+import { listFamilyCircles } from "@/services/trackingManager";
 
 const STORAGE_KEY = "@tracknest/selected_family_circle";
+const CIRCLES_CACHE_KEY = "@tracknest/family_circles_cache";
+const PAGE_SIZE = 50;
 
 /**
- * Hook to manage the selected family circle with persistence to device storage
+ * Hook to manage family circles fetched from the server,
+ * with selected-circle persistence to device storage.
  */
 export const useFamilyCircle = () => {
+  const [circles, setCircles] = useState<FamilyCircle[]>([]);
   const [selectedCircle, setSelectedCircle] = useState<FamilyCircle | null>(
     null,
   );
   const [isLoading, setIsLoading] = useState(true);
+  const isMountedRef = useRef(false);
 
-  // Load saved circle from storage on mount
+  const fetchCircles = useCallback(async (): Promise<FamilyCircle[]> => {
+    try {
+      const response = await listFamilyCircles(PAGE_SIZE);
+      const fetched: FamilyCircle[] = response.familyCirclesList.map((c) => ({
+        familyCircleId: c.familyCircleId,
+        name: c.name,
+        createdAtMs: c.createdAtMs,
+      }));
+
+      await AsyncStorage.setItem(CIRCLES_CACHE_KEY, JSON.stringify(fetched));
+      setCircles(fetched);
+      return fetched;
+    } catch (error) {
+      console.error("Failed to fetch family circles:", error);
+
+      try {
+        const cached = await AsyncStorage.getItem(CIRCLES_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached) as FamilyCircle[];
+          setCircles(parsed);
+          return parsed;
+        }
+      } catch (cacheError) {
+        console.error("Failed to load cached circles:", cacheError);
+      }
+
+      setCircles([]);
+      return [];
+    }
+  }, []);
+
+  // Fetch circles and restore saved selection on mount
   useEffect(() => {
-    const loadSavedCircle = async () => {
+    const init = async () => {
+      const fetched = await fetchCircles();
       try {
         const savedCircleId = await AsyncStorage.getItem(STORAGE_KEY);
-
         if (savedCircleId) {
-          // Find the circle in our available circles
-          const circle = mockFamilyCircles.find(
-            (c) => c.familyCircleId === savedCircleId,
-          );
-          if (circle) {
-            setSelectedCircle(circle);
-          } else {
-            // Saved circle not found, use first available
-            setSelectedCircle(mockFamilyCircles[0] ?? null);
-          }
+          const match = fetched.find((c) => c.familyCircleId === savedCircleId);
+          setSelectedCircle(match ?? fetched[0] ?? null);
         } else {
-          // No saved circle, use first available
-          setSelectedCircle(mockFamilyCircles[0] ?? null);
+          setSelectedCircle(fetched[0] ?? null);
         }
-      } catch (error) {
-        console.error("Failed to load saved family circle:", error);
-        // Fallback to first circle
-        setSelectedCircle(mockFamilyCircles[0] ?? null);
+      } catch {
+        setSelectedCircle(fetched[0] ?? null);
       } finally {
         setIsLoading(false);
       }
     };
-
-    loadSavedCircle();
-  }, []);
+    init();
+  }, [fetchCircles]);
 
   // Save and update selected circle
   const selectCircle = useCallback(async (circle: FamilyCircle) => {
@@ -55,7 +80,6 @@ export const useFamilyCircle = () => {
       setSelectedCircle(circle);
     } catch (error) {
       console.error("Failed to save family circle:", error);
-      // Still update state even if storage fails
       setSelectedCircle(circle);
     }
   }, []);
@@ -70,10 +94,42 @@ export const useFamilyCircle = () => {
     }
   }, []);
 
+  // Refresh the circles list from the server
+  const refreshCircles = useCallback(async () => {
+    const fetched = await fetchCircles();
+    // Re-validate selected circle still exists
+    if (
+      selectedCircle &&
+      !fetched.find((c) => c.familyCircleId === selectedCircle.familyCircleId)
+    ) {
+      const next = fetched[0] ?? null;
+      setSelectedCircle(next);
+      if (next) {
+        await AsyncStorage.setItem(STORAGE_KEY, next.familyCircleId);
+      } else {
+        await AsyncStorage.removeItem(STORAGE_KEY);
+      }
+    }
+  }, [fetchCircles, selectedCircle]);
+
+  // Re-fetch whenever the screen comes back into focus (e.g. after creating a new circle)
+  useFocusEffect(
+    useCallback(() => {
+      if (!isMountedRef.current) {
+        // Skip — the initial load is handled by the useEffect above
+        isMountedRef.current = true;
+        return;
+      }
+      refreshCircles();
+    }, [refreshCircles]),
+  );
+
   return {
+    circles,
     selectedCircle,
     selectCircle,
     clearSavedCircle,
+    refreshCircles,
     isLoading,
   };
 };

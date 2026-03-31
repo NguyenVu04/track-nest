@@ -211,6 +211,49 @@ export class TrackingManagerControllerClient {
     this.methodDescriptorUpdateFamilyCircle);
   }
 
+  methodDescriptorListFamilyCircleMembers = new grpcWeb.MethodDescriptor(
+    '/project.tracknest.usertracking.proto.v1.TrackingManagerController/ListFamilyCircleMembers',
+    grpcWeb.MethodType.UNARY,
+    trackingmanager_pb.ListFamilyCircleMembersRequest,
+    trackingmanager_pb.ListFamilyCircleMembersResponse,
+    (request: trackingmanager_pb.ListFamilyCircleMembersRequest) => {
+      return request.serializeBinary();
+    },
+    trackingmanager_pb.ListFamilyCircleMembersResponse.deserializeBinary
+  );
+
+  listFamilyCircleMembers(
+    request: trackingmanager_pb.ListFamilyCircleMembersRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<trackingmanager_pb.ListFamilyCircleMembersResponse>;
+
+  listFamilyCircleMembers(
+    request: trackingmanager_pb.ListFamilyCircleMembersRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: trackingmanager_pb.ListFamilyCircleMembersResponse) => void): grpcWeb.ClientReadableStream<trackingmanager_pb.ListFamilyCircleMembersResponse>;
+
+  listFamilyCircleMembers(
+    request: trackingmanager_pb.ListFamilyCircleMembersRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: trackingmanager_pb.ListFamilyCircleMembersResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/project.tracknest.usertracking.proto.v1.TrackingManagerController/ListFamilyCircleMembers',
+        request,
+        metadata || {},
+        this.methodDescriptorListFamilyCircleMembers,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/project.tracknest.usertracking.proto.v1.TrackingManagerController/ListFamilyCircleMembers',
+    request,
+    metadata || {},
+    this.methodDescriptorListFamilyCircleMembers);
+  }
+
   methodDescriptorUpdateFamilyRole = new grpcWeb.MethodDescriptor(
     '/project.tracknest.usertracking.proto.v1.TrackingManagerController/UpdateFamilyRole',
     grpcWeb.MethodType.UNARY,

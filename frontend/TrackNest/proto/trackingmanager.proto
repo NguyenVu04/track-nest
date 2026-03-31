@@ -46,6 +46,13 @@ service TrackingManagerController {
   rpc UpdateFamilyCircle(UpdateFamilyCircleRequest)
       returns (UpdateFamilyCircleResponse);
 
+  // ListFamilyCircleMembers
+  // Retrieves a list of members in the specified family circle along with their
+  // roles and statuses. Errors such as "circle not found" or "not a member"
+  // will be reflected in the `status` field of the response.
+  rpc ListFamilyCircleMembers(ListFamilyCircleMembersRequest)
+      returns (ListFamilyCircleMembersResponse);
+
   // UpdateFamilyRole
   // Updates the caller's role within the specified family circle or updates a
   // member's role depending on authorization. Returns `updated_at_ms` on success.
@@ -189,4 +196,23 @@ message RemoveMemberFromFamilyCircleResponse {
   google.rpc.Status status = 1;
   string member_id = 2;
   uint64 removed_at_ms = 3;
+}
+
+message ListFamilyCircleMembersRequest {
+  string family_circle_id = 1;
+}
+
+message FamilyCircleMemberInfo {
+  string member_id = 1;
+  string member_username = 2;
+  optional string member_avatar_url = 3;
+  string family_role = 4;
+  bool is_admin = 5;
+  bool online = 6;
+  uint64 last_active_ms = 7;
+}
+
+message ListFamilyCircleMembersResponse {
+  google.rpc.Status status = 1;
+  repeated FamilyCircleMemberInfo members = 2;
 }

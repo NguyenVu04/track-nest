@@ -98,7 +98,7 @@ export default function ManageTrackersScreen() {
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Pressable
-          onPress={() => router.push("/(tabs)/settings")}
+          onPress={() => router.push("/settings")}
           style={styles.headerAction}
         >
           <Ionicons name="arrow-back" size={22} color="#111827" />

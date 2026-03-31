@@ -11,6 +11,28 @@ export const Vietnamese = {
   loginFailedMessage:
     "Thông tin đăng nhập không hợp lệ. Sử dụng admin/admin để đăng nhập.",
   okButton: "OK",
+  errorTitle: "Lỗi",
+  authNotReadyMessage: "Xác thực chưa sẵn sàng. Vui lòng thử lại.",
+  saveSuccessTitle: "Đã lưu",
+  saveSuccessMessage:
+    "Đã lưu cài đặt. Thay đổi URL máy chủ cần khởi động lại ứng dụng.",
+  saveError: "Lưu thất bại.",
+  footerVersion: "TrackNest v1.0.0",
+  footerHint: "Đăng nhập bảo mật với Keycloak",
+  developerOptionsTitle: "Tùy chọn nhà phát triển",
+  serverUrlLabel: "URL máy chủ",
+  serverUrlDescription:
+    "Ghi đè URL dịch vụ backend. Để trống để dùng giá trị mặc định từ môi trường.",
+  serverUrlPlaceholder: "https://your-service-url",
+  devModeLabel: "Chế độ dev",
+  enabled: "Đã bật",
+  disabled: "Đã tắt",
+  devModeDescription: "Mở khóa các màn hình kiểm thử ẩn trong thanh tab.",
+  saveButton: "Lưu",
+  continueWithoutLogin: "Tiếp tục không cần đăng nhập",
+  continueWithoutLoginHint:
+    "Bạn vẫn có thể dùng ứng dụng ở chế độ khách. Dữ liệu sẽ được lưu trên thiết bị và đồng bộ lại sau khi đăng nhập.",
+  guestModeErrorMessage: "Không thể bật chế độ khách. Vui lòng thử lại.",
 };
 
 export const English = {
@@ -25,4 +47,25 @@ export const English = {
   loginFailedTitle: "Login Failed",
   loginFailedMessage: "Invalid credentials. Use admin/admin to login.",
   okButton: "OK",
+  errorTitle: "Error",
+  authNotReadyMessage: "Authentication not ready. Please try again.",
+  saveSuccessTitle: "Saved",
+  saveSuccessMessage: "Settings saved. Server URL changes require app restart.",
+  saveError: "Failed to save.",
+  footerVersion: "TrackNest v1.0.0",
+  footerHint: "Secure login with Keycloak",
+  developerOptionsTitle: "Developer Options",
+  serverUrlLabel: "Server URL",
+  serverUrlDescription:
+    "Override the backend service URL. Leave blank to use the default from the environment.",
+  serverUrlPlaceholder: "https://your-service-url",
+  devModeLabel: "Dev Mode",
+  enabled: "Enabled",
+  disabled: "Disabled",
+  devModeDescription: "Unlocks hidden test screens in the tab bar.",
+  saveButton: "Save",
+  continueWithoutLogin: "Continue without login",
+  continueWithoutLoginHint:
+    "You can keep using the app in guest mode. Data will be saved on your device and synced after login.",
+  guestModeErrorMessage: "Unable to enable guest mode. Please try again.",
 };

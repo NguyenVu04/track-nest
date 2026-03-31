@@ -2,8 +2,8 @@ import type { ClientReadableStream } from "grpc-web";
 import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   Alert,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,6 +13,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { BACKGROUND_CIRCLE_LOCATION_TASK_NAME } from "@/constant";
+import { trackerTest as trackerTestLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import { FamilyMemberLocation } from "@/proto/tracker_pb";
 import {
   listFamilyMemberLocationHistory,
@@ -20,10 +23,13 @@ import {
   updateUserLocation,
 } from "@/services/tracker";
 import { colors, spacing } from "@/styles/styles";
-import { BACKGROUND_CIRCLE_LOCATION_TASK_NAME } from "@/constant";
-import { registerBackgroundTaskAsync, unregisterBackgroundTaskAsync } from "@/utils";
+import {
+  registerBackgroundTaskAsync,
+  unregisterBackgroundTaskAsync,
+} from "@/utils";
 
 export default function TrackerTestScreen() {
+  const t = useTranslation(trackerTestLang);
   // Stream state
   const [familyCircleId, setFamilyCircleId] = useState(
     "cccccccc-1000-4000-8000-cccccccccccc",
@@ -43,7 +49,6 @@ export default function TrackerTestScreen() {
   const [memberId, setMemberId] = useState(
     "2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5",
   );
-  const [memberUsername, setMemberUsername] = useState("user4");
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [historyLocations, setHistoryLocations] = useState<any[]>([]);
 
@@ -58,7 +63,7 @@ export default function TrackerTestScreen() {
   // Stream family member locations
   const handleStartStream = useCallback(async () => {
     if (!familyCircleId.trim()) {
-      Alert.alert("Error", "Please enter a Family Circle ID");
+      Alert.alert(t.errorTitle, t.enterFamilyCircleId);
       return;
     }
 
@@ -72,7 +77,7 @@ export default function TrackerTestScreen() {
           setStreamedLocations((prev) => [...prev, location]);
         },
         (err) => {
-          Alert.alert("Stream Error", err.message);
+          Alert.alert(t.streamErrorTitle, err.message);
           setIsStreaming(false);
         },
         () => {
@@ -82,10 +87,10 @@ export default function TrackerTestScreen() {
 
       streamRef.current = stream;
     } catch (error: any) {
-      Alert.alert("Error", error.message);
+      Alert.alert(t.errorTitle, error.message);
       setIsStreaming(false);
     }
-  }, [familyCircleId]);
+  }, [familyCircleId, t.enterFamilyCircleId, t.errorTitle, t.streamErrorTitle]);
 
   const handleStopStream = useCallback(() => {
     if (streamRef.current) {
@@ -97,8 +102,8 @@ export default function TrackerTestScreen() {
 
   // Fetch location history
   const handleFetchHistory = useCallback(async () => {
-    if (!historyCircleId.trim() || !memberId.trim() || !memberUsername.trim()) {
-      Alert.alert("Error", "Please fill in all required fields");
+    if (!historyCircleId.trim() || !memberId.trim()) {
+      Alert.alert(t.errorTitle, t.fillRequiredFields);
       return;
     }
 
@@ -109,16 +114,15 @@ export default function TrackerTestScreen() {
       const response = await listFamilyMemberLocationHistory(
         historyCircleId,
         memberId,
-        memberUsername,
       );
 
       setHistoryLocations(response.locationsList);
     } catch (error: any) {
-      Alert.alert("Error", error.message);
+      Alert.alert(t.errorTitle, error.message);
     } finally {
       setIsLoadingHistory(false);
     }
-  }, [historyCircleId, memberId, memberUsername]);
+  }, [historyCircleId, memberId, t.errorTitle, t.fillRequiredFields]);
 
   // Update user location
   const handleUpdateLocation = useCallback(async () => {
@@ -128,7 +132,7 @@ export default function TrackerTestScreen() {
     const vel = parseFloat(velocity);
 
     if (isNaN(lat) || isNaN(lng) || isNaN(acc) || isNaN(vel)) {
-      Alert.alert("Error", "Please enter valid numeric values");
+      Alert.alert(t.errorTitle, t.validNumericValues);
       return;
     }
 
@@ -136,19 +140,28 @@ export default function TrackerTestScreen() {
       setIsUpdating(true);
       setUpdateResult(null);
 
-      const response = await updateUserLocation(lat, lng, acc, vel);
+      const response = await updateUserLocation([
+        { latitudeDeg: lat, longitudeDeg: lng, accuracyMeter: acc, velocityMps: vel },
+      ]);
       setUpdateResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert("Error", error.message);
+      Alert.alert(t.errorTitle, error.message);
     } finally {
       setIsUpdating(false);
     }
-  }, [latitude, longitude, accuracy, velocity]);
+  }, [
+    latitude,
+    longitude,
+    accuracy,
+    velocity,
+    t.errorTitle,
+    t.validNumericValues,
+  ]);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>Tracker Service Test</Text>
+        <Text style={styles.title}>{t.title}</Text>
 
         <Pressable
           style={{ marginBottom: 20, padding: 10, backgroundColor: "#eee" }}
@@ -156,7 +169,7 @@ export default function TrackerTestScreen() {
             registerBackgroundTaskAsync(BACKGROUND_CIRCLE_LOCATION_TASK_NAME)
           }
         >
-          <Text>Start</Text>
+          <Text>{t.start}</Text>
         </Pressable>
 
         <Pressable
@@ -165,17 +178,15 @@ export default function TrackerTestScreen() {
             unregisterBackgroundTaskAsync(BACKGROUND_CIRCLE_LOCATION_TASK_NAME)
           }
         >
-          <Text>Stop</Text>
+          <Text>{t.stop}</Text>
         </Pressable>
 
         {/* Stream Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Stream Family Member Locations
-          </Text>
+          <Text style={styles.sectionTitle}>{t.streamSectionTitle}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Family Circle ID"
+            placeholder={t.familyCircleIdPlaceholder}
             placeholderTextColor={colors.textMuted}
             value={familyCircleId}
             onChangeText={setFamilyCircleId}
@@ -186,7 +197,7 @@ export default function TrackerTestScreen() {
               onPress={handleStartStream}
               disabled={isStreaming}
             >
-              <Text style={styles.buttonText}>Start Stream</Text>
+              <Text style={styles.buttonText}>{t.startStream}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -197,19 +208,19 @@ export default function TrackerTestScreen() {
               onPress={handleStopStream}
               disabled={!isStreaming}
             >
-              <Text style={styles.buttonText}>Stop Stream</Text>
+              <Text style={styles.buttonText}>{t.stopStream}</Text>
             </TouchableOpacity>
           </View>
           {isStreaming && (
             <View style={styles.statusRow}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={styles.statusText}>Streaming...</Text>
+              <Text style={styles.statusText}>{t.streaming}</Text>
             </View>
           )}
           {streamedLocations.length > 0 && (
             <View style={styles.resultBox}>
               <Text style={styles.resultTitle}>
-                Received Locations ({streamedLocations.length}):
+                {t.receivedLocations} ({streamedLocations.length}):
               </Text>
               {streamedLocations.slice(-5).map((loc, i) => (
                 <Text key={i} style={styles.resultText}>
@@ -222,27 +233,20 @@ export default function TrackerTestScreen() {
 
         {/* History Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Fetch Location History</Text>
+          <Text style={styles.sectionTitle}>{t.historySectionTitle}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Family Circle ID"
+            placeholder={t.familyCircleIdPlaceholder}
             placeholderTextColor={colors.textMuted}
             value={historyCircleId}
             onChangeText={setHistoryCircleId}
           />
           <TextInput
             style={styles.input}
-            placeholder="Member ID"
+            placeholder={t.memberIdPlaceholder}
             placeholderTextColor={colors.textMuted}
             value={memberId}
             onChangeText={setMemberId}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Member Username"
-            placeholderTextColor={colors.textMuted}
-            value={memberUsername}
-            onChangeText={setMemberUsername}
           />
           <TouchableOpacity
             style={[styles.button, isLoadingHistory && styles.buttonDisabled]}
@@ -252,13 +256,14 @@ export default function TrackerTestScreen() {
             {isLoadingHistory ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Fetch History</Text>
+              <Text style={styles.buttonText}>{t.fetchHistory}</Text>
             )}
           </TouchableOpacity>
           {historyLocations.length > 0 && (
             <View style={styles.resultBox}>
               <Text style={styles.resultTitle}>
-                History ({historyLocations.length} locations):
+                {t.historyTitle} ({historyLocations.length} {t.locationsSuffix}
+                ):
               </Text>
               {historyLocations.slice(0, 5).map((loc, i) => (
                 <Text key={i} style={styles.resultText}>
@@ -267,7 +272,10 @@ export default function TrackerTestScreen() {
               ))}
               {historyLocations.length > 5 && (
                 <Text style={styles.moreText}>
-                  ... and {historyLocations.length - 5} more
+                  {t.andMore.replace(
+                    "{{count}}",
+                    String(historyLocations.length - 5),
+                  )}
                 </Text>
               )}
             </View>
@@ -276,11 +284,11 @@ export default function TrackerTestScreen() {
 
         {/* Update Location Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Update User Location</Text>
+          <Text style={styles.sectionTitle}>{t.updateSectionTitle}</Text>
           <View style={styles.inputRow}>
             <TextInput
               style={[styles.input, styles.inputHalf]}
-              placeholder="Latitude"
+              placeholder={t.latitudePlaceholder}
               placeholderTextColor={colors.textMuted}
               value={latitude}
               onChangeText={setLatitude}
@@ -288,7 +296,7 @@ export default function TrackerTestScreen() {
             />
             <TextInput
               style={[styles.input, styles.inputHalf]}
-              placeholder="Longitude"
+              placeholder={t.longitudePlaceholder}
               placeholderTextColor={colors.textMuted}
               value={longitude}
               onChangeText={setLongitude}
@@ -298,7 +306,7 @@ export default function TrackerTestScreen() {
           <View style={styles.inputRow}>
             <TextInput
               style={[styles.input, styles.inputHalf]}
-              placeholder="Accuracy (m)"
+              placeholder={t.accuracyPlaceholder}
               placeholderTextColor={colors.textMuted}
               value={accuracy}
               onChangeText={setAccuracy}
@@ -306,7 +314,7 @@ export default function TrackerTestScreen() {
             />
             <TextInput
               style={[styles.input, styles.inputHalf]}
-              placeholder="Velocity (m/s)"
+              placeholder={t.velocityPlaceholder}
               placeholderTextColor={colors.textMuted}
               value={velocity}
               onChangeText={setVelocity}
@@ -325,12 +333,12 @@ export default function TrackerTestScreen() {
             {isUpdating ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Update Location</Text>
+              <Text style={styles.buttonText}>{t.updateLocation}</Text>
             )}
           </TouchableOpacity>
           {updateResult && (
             <View style={styles.resultBox}>
-              <Text style={styles.resultTitle}>Response:</Text>
+              <Text style={styles.resultTitle}>{t.response}</Text>
               <Text style={styles.resultText}>{updateResult}</Text>
             </View>
           )}

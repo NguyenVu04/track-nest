@@ -72,8 +72,6 @@ message FamilyMemberLocation {
 message ListFamilyMemberLocationHistoryRequest {
    string family_circle_id = 1;
    string member_id = 2;
-   string member_username = 3;
-   optional string member_avatar_url = 4;
    optional double center_latitude_deg = 5;
    optional double center_longitude_deg = 6;
    optional float radius_meter = 7;
@@ -84,12 +82,16 @@ message ListFamilyMemberLocationHistoryResponse {
    repeated FamilyMemberLocation locations = 2;
 }
 
-message UpdateUserLocationRequest {
+message UserLocation {
    double latitude_deg = 1;
    double longitude_deg = 2;
    float accuracy_meter = 3;
    float velocity_mps = 4;
    uint64 timestamp_ms = 5;
+}
+
+message UpdateUserLocationRequest {
+   repeated UserLocation locations = 1;
 }
 
 message UpdateUserLocationResponse {

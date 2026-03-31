@@ -1,4 +1,12 @@
-import { getBaseUrl } from "@/utils";
+import {
+  BACKGROUND_LOCATION_UPLOAD_TASK_NAME,
+  BACKGROUND_USER_LOCATION_TASK_NAME,
+} from "@/constant";
+import {
+  getBaseUrl,
+  stopBackgroundLocationTracking,
+  unregisterBackgroundTaskAsync,
+} from "@/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { makeRedirectUri, refreshAsync } from "expo-auth-session";
 import { useRouter } from "expo-router";
@@ -10,23 +18,27 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
 // Storage keys for tokens
 const TOKEN_STORAGE_KEY = "@TrackNest:tokens";
-
-const realmName = "public-dev";
+const GUEST_MODE_STORAGE_KEY = "@TrackNest:guest_mode";
 
 // Keycloak configuration
-const baseUrl = getBaseUrl();
-export const keycloakDiscovery = {
-  authorizationEndpoint: `${baseUrl}:80/auth/realms/${realmName}/protocol/openid-connect/auth`,
-  tokenEndpoint: `${baseUrl}:80/auth/realms/${realmName}/protocol/openid-connect/token`,
-  revocationEndpoint: `${baseUrl}:80/auth/realms/${realmName}/protocol/openid-connect/revoke`,
-};
+export const serviceUrl = process.env.EXPO_PUBLIC_SERVICE_URL;
+export const realmName = process.env.EXPO_PUBLIC_KEYCLOAK_REALM;
+export const clientId = process.env.EXPO_PUBLIC_KEYCLOAK_CLIENT_ID || "mobile";
 
-export const clientId = "mobile";
+export const getKeycloakDiscovery = async () => {
+  const base = await getBaseUrl();
+  return {
+    authorizationEndpoint: `${base}/auth/realms/${realmName}/protocol/openid-connect/auth`,
+    tokenEndpoint: `${base}/auth/realms/${realmName}/protocol/openid-connect/token`,
+    revocationEndpoint: `${base}/auth/realms/${realmName}/protocol/openid-connect/revoke`,
+  };
+};
 
 // Token storage interface
 export interface StoredTokens {
@@ -36,12 +48,26 @@ export interface StoredTokens {
   expiresAt: number; // Unix timestamp when token expires
 }
 
+export interface AuthUser {
+  sub?: string;
+  username?: string;
+  name?: string;
+  email?: string;
+  emailVerified?: boolean;
+  raw?: Record<string, unknown>;
+}
+
 interface AuthContextType {
   tokens: StoredTokens | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
+  isGuestMode: boolean;
+  canUseApp: boolean;
   isLoading: boolean;
   saveTokens: (tokens: StoredTokens) => Promise<void>;
   clearTokens: () => Promise<void>;
+  continueAsGuest: () => Promise<void>;
+  disableGuestMode: () => Promise<void>;
   getValidAccessToken: () => Promise<string | null>;
   refreshTokens: () => Promise<StoredTokens | null>;
   logout: (options?: { skipKeycloak?: boolean }) => Promise<void>;
@@ -55,23 +81,102 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [tokens, setTokens] = useState<StoredTokens | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isGuestMode, setIsGuestMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const lastBootstrappedAccessTokenRef = useRef<string | null>(null);
 
   // Check if token is expired (with 60-second buffer)
   const isTokenExpired = useCallback((storedTokens: StoredTokens): boolean => {
     return Date.now() >= storedTokens.expiresAt - 60000;
   }, []);
 
+  const decodeJwtClaims = useCallback((token?: string | null) => {
+    if (!token) return null;
+    try {
+      const payload = token.split(".")[1];
+      if (!payload) return null;
+      const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const padLength = (4 - (normalized.length % 4)) % 4;
+      const padded = normalized.padEnd(normalized.length + padLength, "=");
+      const json = decodeURIComponent(
+        atob(padded)
+          .split("")
+          .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
+          .join(""),
+      );
+      return JSON.parse(json) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const mapClaimsToUser = useCallback(
+    (claims: Record<string, unknown> | null): AuthUser | null => {
+      if (!claims) return null;
+      return {
+        sub: (claims.sub as string | undefined) ?? undefined,
+        username:
+          (claims.preferred_username as string | undefined) ??
+          (claims.username as string | undefined) ??
+          undefined,
+        name:
+          (claims.name as string | undefined) ??
+          (claims.given_name as string | undefined) ??
+          undefined,
+        email: (claims.email as string | undefined) ?? undefined,
+        emailVerified:
+          (claims.email_verified as boolean | undefined) ?? undefined,
+        raw: claims,
+      };
+    },
+    [],
+  );
+
+  const resolveUserInfo = useCallback(
+    async (activeTokens: StoredTokens): Promise<AuthUser | null> => {
+      try {
+        const base = await getBaseUrl();
+        const response = await fetch(
+          `${base}/auth/realms/${realmName}/protocol/openid-connect/userinfo`,
+          {
+            headers: {
+              Authorization: `Bearer ${activeTokens.accessToken}`,
+            },
+          },
+        );
+
+        if (response.ok) {
+          const userInfo = (await response.json()) as Record<string, unknown>;
+          return mapClaimsToUser(userInfo);
+        }
+      } catch (error) {
+        console.warn("Failed to fetch userinfo endpoint:", error);
+      }
+
+      return (
+        mapClaimsToUser(decodeJwtClaims(activeTokens.idToken)) ??
+        mapClaimsToUser(decodeJwtClaims(activeTokens.accessToken))
+      );
+    },
+    [decodeJwtClaims, mapClaimsToUser],
+  );
+
   // Load tokens from storage on mount
   useEffect(() => {
     const loadTokens = async () => {
       try {
-        const tokensJson = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+        const [tokensJson, guestModeRaw] = await Promise.all([
+          AsyncStorage.getItem(TOKEN_STORAGE_KEY),
+          AsyncStorage.getItem(GUEST_MODE_STORAGE_KEY),
+        ]);
+
         if (tokensJson) {
           const storedTokens: StoredTokens = JSON.parse(tokensJson);
           setTokens(storedTokens);
         }
+
+        setIsGuestMode(guestModeRaw === "true");
       } catch (error) {
         console.error("Failed to load tokens:", error);
       } finally {
@@ -86,11 +191,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const saveTokensHandler = useCallback(
     async (newTokens: StoredTokens): Promise<void> => {
       try {
-        await AsyncStorage.setItem(
-          TOKEN_STORAGE_KEY,
-          JSON.stringify(newTokens),
-        );
+        await Promise.all([
+          AsyncStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(newTokens)),
+          AsyncStorage.removeItem(GUEST_MODE_STORAGE_KEY),
+        ]);
         setTokens(newTokens);
+        setIsGuestMode(false);
       } catch (error) {
         console.error("Failed to save tokens:", error);
         throw error;
@@ -104,8 +210,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
       setTokens(null);
+      setUser(null);
     } catch (error) {
       console.error("Failed to clear tokens:", error);
+    }
+  }, []);
+
+  const continueAsGuestHandler = useCallback(async (): Promise<void> => {
+    try {
+      await AsyncStorage.setItem(GUEST_MODE_STORAGE_KEY, "true");
+      setIsGuestMode(true);
+    } catch (error) {
+      console.error("Failed to enable guest mode:", error);
+      throw error;
+    }
+  }, []);
+
+  const disableGuestModeHandler = useCallback(async (): Promise<void> => {
+    try {
+      await AsyncStorage.removeItem(GUEST_MODE_STORAGE_KEY);
+      setIsGuestMode(false);
+    } catch (error) {
+      console.error("Failed to disable guest mode:", error);
+      throw error;
     }
   }, []);
 
@@ -117,27 +244,48 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // If we have an idToken and should not skip Keycloak logout, do full OIDC logout
         if (idToken && !options?.skipKeycloak) {
-          const redirectUri = makeRedirectUri({ scheme: "tracknest" });
-          const logoutUrl = `${baseUrl}:80/auth/realms/${realmName}/protocol/openid-connect/logout?id_token_hint=${idToken}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
+          const redirectUri = makeRedirectUri({
+            scheme: "tracknest",
+            path: "auth/login",
+          });
+          const base = await getBaseUrl();
+          const logoutUrl = `${base}/auth/realms/${realmName}/protocol/openid-connect/logout?id_token_hint=${idToken}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
 
           await WebBrowser.openAuthSessionAsync(logoutUrl, redirectUri);
         }
 
-        // Clear tokens from storage and state
+        // Clear tokens — useRequireAuth will handle redirecting to /auth/login
+        // once the state update propagates, avoiding a race condition where the
+        // login screen sees stale isAuthenticated=true and redirects back to /map.
         await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
         setTokens(null);
+        setUser(null);
 
-        // Navigate to login
-        router.replace("/login");
+        // Stop background location and upload tasks so they don't persist
+        // after the user has signed out.
+        await stopBackgroundLocationTracking().catch(() => {});
+        await unregisterBackgroundTaskAsync(
+          BACKGROUND_USER_LOCATION_TASK_NAME,
+        ).catch(() => {});
+        await unregisterBackgroundTaskAsync(
+          BACKGROUND_LOCATION_UPLOAD_TASK_NAME,
+        ).catch(() => {});
       } catch (error) {
         console.error("Logout error:", error);
-        // Even if Keycloak logout fails, clear local tokens and redirect
+        // Even if Keycloak logout fails, clear local tokens
         await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
         setTokens(null);
-        router.replace("/login");
+        setUser(null);
+        await stopBackgroundLocationTracking().catch(() => {});
+        await unregisterBackgroundTaskAsync(
+          BACKGROUND_USER_LOCATION_TASK_NAME,
+        ).catch(() => {});
+        await unregisterBackgroundTaskAsync(
+          BACKGROUND_LOCATION_UPLOAD_TASK_NAME,
+        ).catch(() => {});
       }
     },
-    [tokens?.idToken, router],
+    [tokens?.idToken],
   );
 
   // Refresh tokens using refresh token
@@ -150,10 +298,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const tokenResult = await refreshAsync(
           {
-            clientId: "tracknest-mobile",
+            clientId: clientId,
             refreshToken: tokens.refreshToken,
           },
-          keycloakDiscovery,
+          await getKeycloakDiscovery(),
         );
 
         const newTokens: StoredTokens = {
@@ -172,11 +320,64 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     }, [tokens?.refreshToken, saveTokensHandler, clearTokensHandler]);
 
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!tokens) {
+      setUser(null);
+      lastBootstrappedAccessTokenRef.current = null;
+      return;
+    }
+
+    if (lastBootstrappedAccessTokenRef.current === tokens.accessToken) {
+      return;
+    }
+
+    lastBootstrappedAccessTokenRef.current = tokens.accessToken;
+
+    let cancelled = false;
+
+    const bootstrapAuthState = async () => {
+      try {
+        const activeTokens = isTokenExpired(tokens)
+          ? await refreshTokensHandler()
+          : tokens;
+
+        if (!activeTokens) {
+          if (!cancelled) {
+            setUser(null);
+          }
+          return;
+        }
+
+        const resolvedUser = await resolveUserInfo(activeTokens);
+        if (!cancelled) {
+          setUser(resolvedUser);
+        }
+      } catch (error) {
+        console.error("Failed to bootstrap auth state:", error);
+        if (!cancelled) {
+          setUser(null);
+        }
+      }
+    };
+
+    bootstrapAuthState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isLoading,
+    tokens,
+    isTokenExpired,
+    refreshTokensHandler,
+    resolveUserInfo,
+  ]);
+
   // Get a valid access token, refreshing if necessary
   const getValidAccessToken = useCallback(async (): Promise<string | null> => {
     if (!tokens) {
-      // No tokens, redirect to login
-      router.replace("/login");
       return null;
     }
 
@@ -192,29 +393,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Refresh failed, logout will handle redirect
     return null;
-  }, [tokens, isTokenExpired, refreshTokensHandler, router]);
+  }, [tokens, isTokenExpired, refreshTokensHandler]);
 
   const isAuthenticated = useMemo(() => {
     return tokens !== null && !isTokenExpired(tokens);
   }, [tokens, isTokenExpired]);
 
+  const canUseApp = useMemo(() => {
+    return isAuthenticated || isGuestMode;
+  }, [isAuthenticated, isGuestMode]);
+
   const value = useMemo(
     () => ({
       tokens,
+      user,
       isAuthenticated,
+      isGuestMode,
+      canUseApp,
       isLoading,
       saveTokens: saveTokensHandler,
       clearTokens: clearTokensHandler,
+      continueAsGuest: continueAsGuestHandler,
+      disableGuestMode: disableGuestModeHandler,
       getValidAccessToken,
       refreshTokens: refreshTokensHandler,
       logout: logoutHandler,
     }),
     [
       tokens,
+      user,
       isAuthenticated,
+      isGuestMode,
+      canUseApp,
       isLoading,
       saveTokensHandler,
       clearTokensHandler,
+      continueAsGuestHandler,
+      disableGuestModeHandler,
       getValidAccessToken,
       refreshTokensHandler,
       logoutHandler,
@@ -242,13 +457,13 @@ export function useRequireAuth(): AuthContextType & { isReady: boolean } {
 
   useEffect(() => {
     // Wait until loading is complete before checking auth
-    if (!auth.isLoading && !auth.isAuthenticated && !__DEV__) {
-      router.replace("/login");
+    if (!auth.isLoading && !auth.isAuthenticated && !auth.isGuestMode) {
+      router.replace("/auth/login");
     }
-  }, [auth.isLoading, auth.isAuthenticated, router]);
+  }, [auth.isLoading, auth.isAuthenticated, auth.isGuestMode, router]);
 
   return {
     ...auth,
-    isReady: !auth.isLoading && auth.isAuthenticated,
+    isReady: !auth.isLoading && (auth.isAuthenticated || auth.isGuestMode),
   };
 }

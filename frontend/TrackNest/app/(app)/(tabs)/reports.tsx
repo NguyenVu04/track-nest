@@ -59,7 +59,17 @@ function ReportCard({ item }: { item: Report }) {
   );
 }
 
-function MissingPersonCard({ item }: { item: MissingPerson }) {
+function MissingPersonCard({
+  item,
+  ageLabel,
+  yearsOldLabel,
+  lastSeenLabel,
+}: {
+  item: MissingPerson;
+  ageLabel: string;
+  yearsOldLabel: string;
+  lastSeenLabel: string;
+}) {
   const router = useRouter();
 
   return (
@@ -83,15 +93,25 @@ function MissingPersonCard({ item }: { item: MissingPerson }) {
             <Text style={styles.severityText}>{item.severity}</Text>
           </View>
         </View>
-        <Text style={styles.cardMeta}>👤 Age: {item.age} years old</Text>
-        <Text style={styles.cardMeta}>📍 Last Seen: {item.lastSeen}</Text>
+        <Text style={styles.cardMeta}>
+          👤 {ageLabel}: {item.age} {yearsOldLabel}
+        </Text>
+        <Text style={styles.cardMeta}>
+          📍 {lastSeenLabel}: {item.lastSeen}
+        </Text>
         <Text style={styles.cardDesc}>{item.description}</Text>
       </Card>
     </Pressable>
   );
 }
 
-function GuideCard({ item }: { item: Guide }) {
+function GuideCard({
+  item,
+  categoryLabel,
+}: {
+  item: Guide;
+  categoryLabel: string;
+}) {
   return (
     <Card style={styles.card}>
       <View style={styles.cardHeaderRow}>
@@ -104,7 +124,9 @@ function GuideCard({ item }: { item: Guide }) {
           <Text style={styles.cardTitle}>{item.title}</Text>
         </View>
       </View>
-      <Text style={styles.cardMeta}>📚 {item.category}</Text>
+      <Text style={styles.cardMeta}>
+        📚 {categoryLabel}: {item.category}
+      </Text>
       <Text style={styles.cardDesc}>{item.content}</Text>
     </Card>
   );
@@ -215,13 +237,22 @@ export default function ReportsScreen() {
   const renderItem = ({ item }: { item: DataItem }) => {
     if (tab === "Crime Reports") return <ReportCard item={item as Report} />;
     if (tab === "Missing")
-      return <MissingPersonCard item={item as MissingPerson} />;
-    if (tab === "Guide") return <GuideCard item={item as Guide} />;
+      return (
+        <MissingPersonCard
+          item={item as MissingPerson}
+          ageLabel={t.age}
+          yearsOldLabel={t.yearsOld}
+          lastSeenLabel={t.lastSeen}
+        />
+      );
+    if (tab === "Guide") {
+      return <GuideCard item={item as Guide} categoryLabel={t.category} />;
+    }
     return null;
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f5f7fa" }}>
       <View style={styles.container}>
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>{t.title}</Text>
@@ -273,9 +304,9 @@ export default function ReportsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#f5f7fa" },
   headerRow: {
-    height: 72,
+    marginBottom: 12,
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "center",

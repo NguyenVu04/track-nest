@@ -4,6 +4,17 @@ export const Vietnamese = {
   reportMissing: "Báo cáo mất tích",
   reportSubmitted: "Báo cáo đã được gửi",
   thankYou: "Cảm ơn bạn đã báo cáo.",
+  historyTitleWithName: "{{name}} — Lịch sử vị trí",
+  noLocationHistoryAvailable: "Không có lịch sử vị trí",
+  filterHistoryTitle: "Lọc lịch sử vị trí",
+  filterHistoryButton: "Lọc lịch sử vị trí",
+  refreshHistoryButton: "Làm mới lịch sử vị trí",
+  closeHistoryButton: "Đóng lịch sử vị trí",
+  dayLabel: "Ngày",
+  fromLabel: "Từ",
+  centerOnStart: "Về điểm đầu",
+  pointSingular: "điểm",
+  pointPlural: "điểm",
 };
 
 export const English = {
@@ -12,4 +23,15 @@ export const English = {
   reportMissing: "Report missing",
   reportSubmitted: "Report submitted",
   thankYou: "Thank you for your report.",
+  historyTitleWithName: "{{name}} — Location History",
+  noLocationHistoryAvailable: "No location history available",
+  filterHistoryTitle: "Filter Location History",
+  filterHistoryButton: "Filter location history",
+  refreshHistoryButton: "Refresh location history",
+  closeHistoryButton: "Close location history",
+  dayLabel: "Day",
+  fromLabel: "From",
+  centerOnStart: "Center start",
+  pointSingular: "point",
+  pointPlural: "points",
 };

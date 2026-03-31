@@ -8,31 +8,63 @@ import { MapType } from "react-native-maps";
 
 type MapTypeOption = {
   type: MapType;
-  labelKey: "standard" | "hybrid";
-  descriptionKey: "standardDescription" | "hybridDescription";
+  label: string;
   previewColors: {
     background: string;
     roads: string;
   };
+  isSatelliteLike?: boolean;
 };
 
 const MAP_TYPE_OPTIONS: MapTypeOption[] = [
   {
     type: "standard",
-    labelKey: "standard",
-    descriptionKey: "standardDescription",
+    label: "Standard",
     previewColors: {
       background: "#E8E4D8",
       roads: "#FFFFFF",
     },
   },
   {
+    type: "satellite",
+    label: "Satellite",
+    previewColors: {
+      background: "#304530",
+      roads: "#7fbf7f",
+    },
+    isSatelliteLike: true,
+  },
+  {
     type: "hybrid",
-    labelKey: "hybrid",
-    descriptionKey: "hybridDescription",
+    label: "Hybrid",
     previewColors: {
       background: "#3D5A3D",
       roads: "#FFD700",
+    },
+    isSatelliteLike: true,
+  },
+  {
+    type: "terrain",
+    label: "Terrain",
+    previewColors: {
+      background: "#95b37c",
+      roads: "#f8f8e8",
+    },
+  },
+  {
+    type: "mutedStandard",
+    label: "Muted",
+    previewColors: {
+      background: "#d5dde5",
+      roads: "#f5f7fa",
+    },
+  },
+  {
+    type: "none",
+    label: "None",
+    previewColors: {
+      background: "#111827",
+      roads: "#374151",
     },
   },
 ];
@@ -116,7 +148,7 @@ export const MapTypeBottomSheet = ({
             >
               <MapPreview
                 colors={option.previewColors}
-                isHybrid={option.type === "hybrid"}
+                isHybrid={option.isSatelliteLike === true}
               />
               <Text
                 style={[
@@ -124,7 +156,7 @@ export const MapTypeBottomSheet = ({
                   isSelected && styles.optionLabelSelected,
                 ]}
               >
-                {t[option.labelKey]}
+                {option.label}
               </Text>
               {isSelected && (
                 <View style={styles.checkmark}>
@@ -153,8 +185,9 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "center",
-    gap: 16,
+    gap: 12,
   },
   optionCard: {
     alignItems: "center",

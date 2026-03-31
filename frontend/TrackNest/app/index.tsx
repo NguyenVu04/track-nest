@@ -1,89 +1,80 @@
-import {
-  BACKGROUND_CIRCLE_LOCATION_TASK_NAME,
-  BACKGROUND_USER_LOCATION_TASK_NAME,
-  LOCATION_STORAGE_KEY,
-  LOCATION_UPDATE_EMIT_EVENT,
-} from "@/constant";
-import { LocationState } from "@/constant/types";
+import { BACKGROUND_LOCATION_UPLOAD_TASK_NAME } from "@/constant";
 import { useAuth } from "@/contexts/AuthContext";
-import { updateUserLocation } from "@/services/tracker";
-import { saveKey } from "@/utils";
-import * as BackgroundTask from "expo-background-task";
+import { registerBackgroundTaskAsync } from "@/utils";
+import {
+  registerForPushNotificationsAsync,
+  setupUploadNotificationChannel,
+} from "@/utils/notifications";
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import { Redirect } from "expo-router";
-import * as TaskManager from "expo-task-manager";
-import { ActivityIndicator, DeviceEventEmitter, View } from "react-native";
+import { useEffect } from "react";
+import { ActivityIndicator, Platform, View } from "react-native";
 
-// Background location task definition
-TaskManager.defineTask(
-  BACKGROUND_USER_LOCATION_TASK_NAME,
-  async ({ data, error }) => {
-    if (error) {
-      // check `error.message` for more details.
-
-      return BackgroundTask.BackgroundTaskResult.Failed;
-    }
-
-    const locations = (data as { locations?: Location.LocationObject[] })
-      ?.locations;
-    console.log("Received new locations", locations, locations?.length);
-    if (locations && locations.length > 0 && locations[0]?.timestamp) {
-      console.log(
-        "Timestamp:",
-        new Date(locations[0].timestamp).toLocaleString(),
-      );
-    }
-
-    if (locations && locations.length > 0) {
-      const {
-        latitude: lat,
-        longitude: lng,
-        accuracy: acc,
-        speed: vel,
-      } = locations[0].coords;
-
-      try {
-        await saveKey<LocationState>(LOCATION_STORAGE_KEY, {
-          latitude: lat,
-          longitude: lng,
-          speed: vel,
-        });
-        DeviceEventEmitter.emit(LOCATION_UPDATE_EMIT_EVENT, {
-          latitude: lat,
-          longitude: lng,
-          speed: vel,
-        });
-        const response = await updateUserLocation(lat, lng, acc || 0, vel || 0);
-
-        console.log(JSON.stringify(response, null, 2));
-
-        return BackgroundTask.BackgroundTaskResult.Success;
-      } catch (error: any) {
-        console.error("Error updating location in background:", error.message);
-        return BackgroundTask.BackgroundTaskResult.Failed;
-      } finally {
-        console.log("Location updated in background.");
-      }
-    }
-  },
-);
-
-// Background circle location task definition
-TaskManager.defineTask(BACKGROUND_CIRCLE_LOCATION_TASK_NAME, async () => {
-  try {
-    const now = Date.now();
-    console.log(
-      `Got background task call at date: ${new Date(now).toISOString()}`,
-    );
-  } catch (error) {
-    console.error("Failed to execute the background task:", error);
-    return BackgroundTask.BackgroundTaskResult.Failed;
-  }
-  return BackgroundTask.BackgroundTaskResult.Success;
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
 });
 
 export default function Index() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isGuestMode, isLoading } = useAuth();
+
+  const requestBackgroundLocationPermission = async () => {
+    const { status: foregroundStatus } =
+      await Location.requestForegroundPermissionsAsync();
+    if (foregroundStatus !== "granted") {
+      console.warn("Foreground location permission not granted");
+      return;
+    }
+
+    const { status } = await Location.requestBackgroundPermissionsAsync();
+    if (status !== "granted") {
+      console.warn("Background location permission not granted");
+    }
+  };
+
+  useEffect(() => {
+    requestBackgroundLocationPermission();
+    // Register the background upload task so expo-background-task can invoke it
+    // periodically while the app is backgrounded.
+    registerBackgroundTaskAsync(BACKGROUND_LOCATION_UPLOAD_TASK_NAME).catch(
+      (err) => console.warn("Failed to register upload task:", err.message),
+    );
+    setupUploadNotificationChannel().catch((err) =>
+      console.warn("Failed to set up upload notification channel:", err),
+    );
+  }, []);
+
+  useEffect(() => {
+    registerForPushNotificationsAsync().then((token) =>
+      console.log("Push notification token:", token),
+    );
+
+    if (Platform.OS === "android") {
+      Notifications.getNotificationChannelsAsync().then((value) =>
+        console.log("Notification channels:", value),
+      );
+    }
+    const notificationListener = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        console.log("Notification received:", notification);
+      },
+    );
+
+    const responseListener =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        console.log(response);
+      });
+
+    return () => {
+      notificationListener.remove();
+      responseListener.remove();
+    };
+  }, []);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -95,9 +86,9 @@ export default function Index() {
   }
 
   // Redirect based on authentication status
-  return isAuthenticated || __DEV__ ? (
-    <Redirect href="/(tabs)/map" />
+  return ((isAuthenticated || isGuestMode) && !isLoading) || __DEV__ ? (
+    <Redirect href="/map" />
   ) : (
-    <Redirect href="/login" />
+    <Redirect href="/auth/login" />
   );
 }
