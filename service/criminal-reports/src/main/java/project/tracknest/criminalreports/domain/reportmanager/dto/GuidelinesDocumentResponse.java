@@ -1,5 +1,6 @@
 package project.tracknest.criminalreports.domain.reportmanager.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,5 +20,6 @@ public class GuidelinesDocumentResponse {
     private String content;
     private OffsetDateTime createdAt;
     private UUID reporterId;
-    private boolean isPublic;
+    @JsonProperty("isPublic")
+    private boolean publicFlag;
 }

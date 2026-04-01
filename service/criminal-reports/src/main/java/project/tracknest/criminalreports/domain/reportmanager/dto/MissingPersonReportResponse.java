@@ -1,5 +1,6 @@
 package project.tracknest.criminalreports.domain.reportmanager.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,5 +28,6 @@ public class MissingPersonReportResponse {
     private UUID userId;
     private String status;
     private UUID reporterId;
-    private boolean isPublic;
+    @JsonProperty("isPublic")
+    private boolean publicFlag;
 }

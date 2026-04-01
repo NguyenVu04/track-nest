@@ -208,7 +208,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
     
     @Override
     public PageResponse<CrimeReportResponse> listCrimeReportsWithinRadius(double longitude, double latitude, double radius, int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        PageRequest pageRequest = PageRequest.of(page, size);
         Page<CrimeReport> reports = crimeReportRepository.findAllPublicWithinRadius(longitude, latitude, radius, pageRequest);
         return mapToPageResponse(reports.map(this::mapToCrimeReportResponse));
     }
@@ -303,7 +303,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .userId(report.getUserId())
                 .status(statusName)
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
-                .isPublic(isPublished)
+                .publicFlag(isPublished)
                 .build();
     }
     
@@ -322,7 +322,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
-                .isPublic(report.isPublic())
+                .publicFlag(report.isPublic())
                 .build();
     }
     
@@ -334,7 +334,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .content(document.getContent())
                 .createdAt(document.getCreatedAt())
                 .reporterId(document.getReporter() != null ? document.getReporter().getId() : null)
-                .isPublic(document.isPublic())
+                .publicFlag(document.isPublic())
                 .build();
     }
     

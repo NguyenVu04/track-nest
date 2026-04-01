@@ -113,7 +113,7 @@ class ReportViewerServiceImpl implements ReportViewerService {
                 .userId(report.getUserId())
                 .status(report.getStatus() != null ? report.getStatus().getName() : null)
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
-                .isPublic(false)
+                .publicFlag(false)
                 .build();
     }
 
@@ -132,7 +132,7 @@ class ReportViewerServiceImpl implements ReportViewerService {
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
-                .isPublic(report.isPublic())
+                .publicFlag(report.isPublic())
                 .build();
     }
 
@@ -144,7 +144,7 @@ class ReportViewerServiceImpl implements ReportViewerService {
                 .content(document.getContent())
                 .createdAt(document.getCreatedAt())
                 .reporterId(document.getReporter() != null ? document.getReporter().getId() : null)
-                .isPublic(document.isPublic())
+                .publicFlag(document.isPublic())
                 .build();
     }
 
