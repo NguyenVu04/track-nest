@@ -110,6 +110,7 @@ export default function EmergencyRequestsPage() {
       addNotification({
         type: "emergency",
         title: "Emergency request accepted",
+        description: `Emergency request #${request.id} has been accepted`,
         reportId: request.id,
       });
     } catch (error) {

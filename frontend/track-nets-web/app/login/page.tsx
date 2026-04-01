@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, User as UserIcon, Shield, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { authService, UserRole } from "@/services/authService";
+import { authService, UserRole as AuthUserRole } from "@/services/authService";
+import type { User, UserRole } from "@/types";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -12,7 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [loginRole, setLoginRole] = useState<UserRole>("user");
+  const [loginRole, setLoginRole] = useState<AuthUserRole>("user");
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
 
@@ -33,14 +34,14 @@ export default function LoginPage() {
         loginRole
       );
 
-      const mockUser = {
+      const mockUser: User = {
         id: response.access_token.substring(0, 8),
         username,
         password,
         email: `${username}@track.com`,
-        role: loginRole === "user" ? "User" : 
+        role: (loginRole === "user" ? "User" : 
               loginRole === "reporter" ? "Reporter" : 
-              loginRole === "emergency_services" ? "Emergency Services" : "Admin",
+              loginRole === "emergency_services" ? "Emergency Services" : "Admin") as UserRole,
         fullName: username,
       };
 
@@ -56,7 +57,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoLogin = async (role: UserRole) => {
+  const handleDemoLogin = async (role: AuthUserRole) => {
     setIsLoading(true);
     try {
       const credentials = {
@@ -70,7 +71,7 @@ export default function LoginPage() {
       
       await authService.login({ username: demoUser, password: demoPass }, role);
 
-      const mockUser = {
+      const mockUser: User = {
         id: "demo-" + role,
         username: demoUser,
         password: demoPass,

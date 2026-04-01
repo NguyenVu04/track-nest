@@ -13,11 +13,11 @@ const mockGuidelines: Guideline[] = [
   {
     id: "1",
     title: "Missing Person Report Guidelines",
-    description:
+    abstractText:
       "Step-by-step guide for filing and managing missing person reports",
-    category: "Missing Persons",
-    uploadedBy: "Admin",
-    uploadedDate: "2025-12-15T10:00:00Z",
+    createdAt: "2025-12-15T10:00:00Z",
+    reporterId: "admin-1",
+    isPublic: true,
     content: `# Missing Person Report Guidelines
 
 ## Overview
@@ -46,10 +46,10 @@ This document provides comprehensive guidelines for handling missing person repo
   {
     id: "2",
     title: "Crime Reporting Procedures",
-    description: "Protocols for documenting and reporting criminal incidents",
-    category: "Crime Reports",
-    uploadedBy: "Admin",
-    uploadedDate: "2025-12-20T14:30:00Z",
+    abstractText: "Protocols for documenting and reporting criminal incidents",
+    createdAt: "2025-12-20T14:30:00Z",
+    reporterId: "admin-1",
+    isPublic: true,
     content: `# Crime Reporting Procedures
 
 ## Purpose
@@ -77,10 +77,10 @@ To establish standardized procedures for documenting and reporting criminal inci
   {
     id: "3",
     title: "System Access and Security",
-    description: "User authentication and security best practices",
-    category: "System Administration",
-    uploadedBy: "Admin",
-    uploadedDate: "2026-01-01T09:00:00Z",
+    abstractText: "User authentication and security best practices",
+    createdAt: "2026-01-01T09:00:00Z",
+    reporterId: "admin-1",
+    isPublic: true,
     content: `# System Access and Security
 
 ## Account Security
@@ -117,7 +117,6 @@ export default function GuidelinesPage() {
   const { user } = useAuth();
   const [guidelines, setGuidelines] = useState<Guideline[]>(mockGuidelines);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   if (!user) return null;
@@ -152,10 +151,8 @@ export default function GuidelinesPage() {
   const filteredGuidelines = guidelines.filter((guideline) => {
     const matchesSearch =
       guideline.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      guideline.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      categoryFilter === "all" || guideline.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+      guideline.abstractText.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
   // List mode - showing all guidelines
@@ -178,33 +175,15 @@ export default function GuidelinesPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search guidelines..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-            />
-          </div>
-          <div className="relative">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent appearance-none"
-            >
-              <option value="all">All Categories</option>
-              <option value="Missing Persons">Missing Persons</option>
-              <option value="Crime Reports">Crime Reports</option>
-              <option value="System Administration">
-                System Administration
-              </option>
-              <option value="Emergency Procedures">Emergency Procedures</option>
-              <option value="General">General</option>
-            </select>
-          </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search guidelines..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+          />
         </div>
       </div>
 
@@ -228,14 +207,10 @@ export default function GuidelinesPage() {
                       {guideline.title}
                     </h3>
                   </div>
-                  <p className="text-gray-600 mb-4">{guideline.description}</p>
+                  <p className="text-gray-600 mb-4">{guideline.abstractText}</p>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full">
-                      {guideline.category}
-                    </span>
-                    <span>By {guideline.uploadedBy}</span>
                     <span>
-                      {new Date(guideline.uploadedDate).toLocaleDateString()}
+                      {new Date(guideline.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>

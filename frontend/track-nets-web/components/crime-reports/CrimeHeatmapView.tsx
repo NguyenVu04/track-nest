@@ -12,10 +12,7 @@ interface CrimeHeatmapViewProps {
 }
 
 export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
-  const [selectedArea, setSelectedArea] = useState<string>("");
-  const [selectedType, setSelectedType] = useState<string>("all");
-  const [fromDate, setFromDate] = useState<string>("");
-  const [toDate, setToDate] = useState<string>("");
+  const [selectedArea, setSelectedArea] = useState<string>("all");
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -27,9 +24,10 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
   };
 
   const getArea = (report: CrimeReport) => {
-    if (report.location.includes("Downtown")) return "Downtown";
-    if (report.location.includes("Central")) return "Central";
-    if (report.location.includes("Upper")) return "Uptown";
+    const title = report.title.toLowerCase();
+    if (title.includes("downtown")) return "Downtown";
+    if (title.includes("central")) return "Central";
+    if (title.includes("upper")) return "Uptown";
     return "Other";
   };
 
@@ -50,10 +48,9 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
   const generateHeatmapData = (): [number, number, number][] => {
     // Convert reports to heatmap data points
     return reportsForView.map((report) => {
-      // Intensity based on severity
-      const intensity =
-        report.severity === "High" ? 10 : report.severity === "Medium" ? 6 : 3;
-      return [report.coordinates[0], report.coordinates[1], intensity];
+      // Intensity based on severity (1-5 scale)
+      const intensity = report.severity * 2;
+      return [report.latitude, report.longitude, intensity];
     });
   };
 
@@ -62,14 +59,7 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
       !selectedArea ||
       selectedArea === getArea(report) ||
       selectedArea === "all";
-    const matchesType = selectedType === "all" || report.type === selectedType;
-    const matchesFrom = fromDate
-      ? new Date(report.incidentDate) >= new Date(fromDate)
-      : true;
-    const matchesTo = toDate
-      ? new Date(report.incidentDate) <= new Date(toDate)
-      : true;
-    return matchesArea && matchesType && matchesFrom && matchesTo;
+    return matchesArea;
   });
 
   const reportsForView = hasGenerated ? filteredReports : [];
@@ -78,18 +68,18 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
 
   // Get all markers from reports
   const markers = reportsForView.map((report) => ({
-    position: report.coordinates as [number, number],
+    position: [report.latitude, report.longitude] as [number, number],
     label: report.title,
-    popup: `${report.title}<br/>Type: ${report.type}<br/>Severity: ${report.severity}`,
+    popup: `${report.title}<br/>Severity: ${report.severity}/5`,
   }));
 
   // Calculate center from all reports
   const center: [number, number] =
     reportsForView.length > 0
       ? [
-          reportsForView.reduce((sum, r) => sum + r.coordinates[0], 0) /
+          reportsForView.reduce((sum, r) => sum + r.latitude, 0) /
             reportsForView.length,
-          reportsForView.reduce((sum, r) => sum + r.coordinates[1], 0) /
+          reportsForView.reduce((sum, r) => sum + r.longitude, 0) /
             reportsForView.length,
         ]
       : [40.7829, -73.9654];
@@ -100,21 +90,17 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
     const csvContent = [
       [
         "Title",
-        "Type",
         "Severity",
-        "Location",
         "Date",
         "Latitude",
         "Longitude",
       ],
       ...reportsForView.map((r) => [
         r.title,
-        r.type,
-        r.severity,
-        r.location,
-        new Date(r.incidentDate).toLocaleDateString(),
-        r.coordinates[0].toString(),
-        r.coordinates[1].toString(),
+        r.severity.toString(),
+        new Date(r.date).toLocaleDateString(),
+        r.latitude.toString(),
+        r.longitude.toString(),
       ]),
     ]
       .map((row) => row.join(","))
@@ -131,13 +117,11 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
     URL.revokeObjectURL(url);
   };
 
-  // Get statistics
   const stats = {
     total: reportsForView.length,
-    high: reportsForView.filter((r) => r.severity === "High").length,
-    medium: reportsForView.filter((r) => r.severity === "Medium").length,
-    low: reportsForView.filter((r) => r.severity === "Low").length,
-    active: reportsForView.filter((r) => r.status === "Active").length,
+    high: reportsForView.filter((r) => r.severity >= 4).length,
+    medium: reportsForView.filter((r) => r.severity === 3).length,
+    low: reportsForView.filter((r) => r.severity <= 2).length,
   };
 
   return (
@@ -165,52 +149,10 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
               onChange={(e) => setSelectedArea(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
-              <option value="">Select Area</option>
+              <option value="all">All Areas</option>
               <option value="Downtown">Downtown</option>
               <option value="Central">Central</option>
               <option value="Uptown">Uptown</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="fromDate" className="block text-gray-700 mb-2">
-              From *
-            </label>
-            <input
-              id="fromDate"
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label htmlFor="toDate" className="block text-gray-700 mb-2">
-              To *
-            </label>
-            <input
-              id="toDate"
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label htmlFor="typeFilter" className="block text-gray-700 mb-2">
-              Crime Type
-            </label>
-            <select
-              id="typeFilter"
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              <option value="all">All Types</option>
-              <option value="Theft">Theft</option>
-              <option value="Assault">Assault</option>
-              <option value="Burglary">Burglary</option>
-              <option value="Vandalism">Vandalism</option>
               <option value="Other">Other</option>
             </select>
           </div>
@@ -218,7 +160,7 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
         <div className="flex flex-col md:flex-row md:items-center gap-4 mt-4">
           <button
             onClick={handleGenerate}
-            disabled={!selectedArea || !fromDate || !toDate || isGenerating}
+            disabled={isGenerating}
             className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
           >
             {isGenerating ? "Generating..." : "Tạo báo cáo tổng hợp"}
@@ -261,10 +203,6 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <p className="text-gray-600 text-sm">Low Severity</p>
             <p className="text-green-600 mt-1">{stats.low}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <p className="text-gray-600 text-sm">Active Cases</p>
-            <p className="text-gray-900 mt-1">{stats.active}</p>
           </div>
         </div>
       )}

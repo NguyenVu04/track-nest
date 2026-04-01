@@ -14,11 +14,11 @@ const mockGuidelines: Guideline[] = [
   {
     id: "1",
     title: "Missing Person Report Guidelines",
-    description:
+    abstractText:
       "Step-by-step guide for filing and managing missing person reports",
-    category: "Missing Persons",
-    uploadedBy: "Admin",
-    uploadedDate: "2025-12-15T10:00:00Z",
+    createdAt: "2025-12-15T10:00:00Z",
+    reporterId: "admin-1",
+    isPublic: true,
     content: `# Missing Person Report Guidelines
 
 ## Overview
@@ -47,10 +47,10 @@ This document provides comprehensive guidelines for handling missing person repo
   {
     id: "2",
     title: "Crime Reporting Procedures",
-    description: "Protocols for documenting and reporting criminal incidents",
-    category: "Crime Reports",
-    uploadedBy: "Admin",
-    uploadedDate: "2025-12-20T14:30:00Z",
+    abstractText: "Protocols for documenting and reporting criminal incidents",
+    createdAt: "2025-12-20T14:30:00Z",
+    reporterId: "admin-1",
+    isPublic: true,
     content: `# Crime Reporting Procedures
 
 ## Purpose
@@ -78,10 +78,10 @@ To establish standardized procedures for documenting and reporting criminal inci
   {
     id: "3",
     title: "System Access and Security",
-    description: "User authentication and security best practices",
-    category: "System Administration",
-    uploadedBy: "Admin",
-    uploadedDate: "2026-01-01T09:00:00Z",
+    abstractText: "User authentication and security best practices",
+    createdAt: "2026-01-01T09:00:00Z",
+    reporterId: "admin-1",
+    isPublic: true,
     content: `# System Access and Security
 
 ## Account Security
@@ -187,7 +187,7 @@ export default function GuidelineDetailPage() {
             <h2 className="text-gray-900 mb-2 text-xl font-semibold">
               {selectedGuideline.title}
             </h2>
-            <p className="text-gray-600">{selectedGuideline.description}</p>
+            <p className="text-gray-600">{selectedGuideline.abstractText}</p>
           </div>
           {user.role === "Reporter" && (
             <button
@@ -200,13 +200,7 @@ export default function GuidelineDetailPage() {
           )}
         </div>
         <div className="flex items-center gap-4 text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">
-          <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full">
-            {selectedGuideline.category}
-          </span>
-          <span>Uploaded by {selectedGuideline.uploadedBy}</span>
-          <span>
-            {new Date(selectedGuideline.uploadedDate).toLocaleDateString()}
-          </span>
+          <span>Created at {new Date(selectedGuideline.createdAt).toLocaleDateString()}</span>
         </div>
         <div className="prose max-w-none">
           <div className="whitespace-pre-wrap text-gray-900">

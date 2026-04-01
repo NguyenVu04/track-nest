@@ -34,17 +34,18 @@ export function CrimeReportForm({
   const [formData, setFormData] = useState<Partial<CrimeReport>>(
     report || {
       title: "",
-      type: "Theft",
-      description: "",
-      location: "",
-      incidentDate: new Date().toISOString().slice(0, 16),
-      coordinates: [40.7829, -73.9654],
-      zoneType: "circle",
-      zoneRadius: 300,
-      reportedBy: "",
-      reportedDate: new Date().toISOString(),
-      severity: "Medium",
-      status: "Active",
+      content: "",
+      severity: 3,
+      date: new Date().toISOString().slice(0, 16),
+      longitude: -73.9654,
+      latitude: 40.7829,
+      numberOfVictims: 0,
+      numberOfOffenders: 0,
+      arrested: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      reporterId: "",
+      isPublic: true,
     },
   );
   const [showReview, setShowReview] = useState(false);
@@ -53,18 +54,18 @@ export function CrimeReportForm({
   const buildReport = (): CrimeReport => ({
     id: report?.id || Date.now().toString(),
     title: formData.title!,
-    type: formData.type!,
-    description: formData.description!,
-    location: formData.location!,
-    incidentDate: formData.incidentDate!,
-    coordinates: formData.coordinates!,
-    zoneType: formData.zoneType!,
-    zoneRadius: formData.zoneRadius,
-    zoneBounds: formData.zoneBounds,
-    reportedBy: formData.reportedBy!,
-    reportedDate: formData.reportedDate!,
+    content: formData.content!,
     severity: formData.severity!,
-    status: formData.status!,
+    date: formData.date!,
+    longitude: formData.longitude!,
+    latitude: formData.latitude!,
+    numberOfVictims: formData.numberOfVictims!,
+    numberOfOffenders: formData.numberOfOffenders!,
+    arrested: formData.arrested!,
+    createdAt: formData.createdAt!,
+    updatedAt: formData.updatedAt!,
+    reporterId: formData.reporterId!,
+    isPublic: formData.isPublic!,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -113,27 +114,6 @@ export function CrimeReportForm({
           </div>
 
           <div>
-            <label htmlFor="type" className="block text-gray-700 mb-2">
-              Crime Type *
-            </label>
-            <select
-              id="type"
-              value={formData.type}
-              onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            >
-              <option value="Theft">Theft</option>
-              <option value="Assault">Assault</option>
-              <option value="Burglary">Burglary</option>
-              <option value="Vandalism">Vandalism</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          <div>
             <label htmlFor="severity" className="block text-gray-700 mb-2">
               Severity *
             </label>
@@ -141,46 +121,29 @@ export function CrimeReportForm({
               id="severity"
               value={formData.severity}
               onChange={(e) =>
-                setFormData({ ...formData, severity: e.target.value as any })
+                setFormData({ ...formData, severity: Number(e.target.value) as any })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
+              <option value={1}>Low (1)</option>
+              <option value={2}>Low-Medium (2)</option>
+              <option value={3}>Medium (3)</option>
+              <option value={4}>High (4)</option>
+              <option value={5}>Critical (5)</option>
             </select>
           </div>
 
           <div>
-            <label htmlFor="status" className="block text-gray-700 mb-2">
-              Status *
-            </label>
-            <select
-              id="status"
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({ ...formData, status: e.target.value as any })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            >
-              <option value="Active">Active</option>
-              <option value="Under Investigation">Under Investigation</option>
-              <option value="Resolved">Resolved</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="incidentDate" className="block text-gray-700 mb-2">
+            <label htmlFor="date" className="block text-gray-700 mb-2">
               Incident Date *
             </label>
             <input
-              id="incidentDate"
+              id="date"
               type="datetime-local"
-              value={formData.incidentDate?.slice(0, 16)}
+              value={formData.date?.slice(0, 16)}
               onChange={(e) =>
-                setFormData({ ...formData, incidentDate: e.target.value })
+                setFormData({ ...formData, date: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
@@ -188,18 +151,18 @@ export function CrimeReportForm({
           </div>
 
           <div className="md:col-span-2">
-            <label htmlFor="location" className="block text-gray-700 mb-2">
-              Location *
+            <label htmlFor="content" className="block text-gray-700 mb-2">
+              Description *
             </label>
-            <input
-              id="location"
-              type="text"
-              value={formData.location}
+            <textarea
+              id="content"
+              value={formData.content}
               onChange={(e) =>
-                setFormData({ ...formData, location: e.target.value })
+                setFormData({ ...formData, content: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder="e.g., Parking Garage, 5th Avenue"
+              rows={4}
+              placeholder="Describe the incident in detail..."
               required
             />
           </div>
@@ -209,17 +172,19 @@ export function CrimeReportForm({
             <label className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Incident Coordinates *
+                Incident Location on Map *
               </span>
             </label>
             <LocationPicker
               position={
-                (formData.coordinates as [number, number]) || [
-                  40.7829, -73.9654,
-                ]
+                [formData.latitude || 40.7829, formData.longitude || -73.9654]
               }
               onPositionChange={(position) =>
-                setFormData({ ...formData, coordinates: position })
+                setFormData({ 
+                  ...formData, 
+                  latitude: position[0],
+                  longitude: position[1]
+                })
               }
             />
           </div>
@@ -232,14 +197,11 @@ export function CrimeReportForm({
               id="latitude"
               type="number"
               step="any"
-              value={formData.coordinates?.[0] || 0}
+              value={formData.latitude ?? 40.7829}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  coordinates: [
-                    parseFloat(e.target.value),
-                    formData.coordinates?.[1] || 0,
-                  ],
+                  latitude: parseFloat(e.target.value),
                 })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
@@ -255,224 +217,72 @@ export function CrimeReportForm({
               id="longitude"
               type="number"
               step="any"
-              value={formData.coordinates?.[1] || 0}
+              value={formData.longitude ?? -73.9654}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  coordinates: [
-                    formData.coordinates?.[0] || 0,
-                    parseFloat(e.target.value),
-                  ],
+                  longitude: parseFloat(e.target.value),
                 })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label htmlFor="zoneType" className="block text-gray-700 mb-2">
-              Zone Type *
-            </label>
-            <select
-              id="zoneType"
-              value={formData.zoneType}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  zoneType: e.target.value as "circle" | "rectangle",
-                })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            >
-              <option value="circle">Circular Zone</option>
-              <option value="rectangle">Rectangular Zone</option>
-            </select>
-          </div>
-
-          {formData.zoneType === "circle" ? (
-            <div className="md:col-span-2">
-              <label htmlFor="zoneRadius" className="block text-gray-700 mb-2">
-                Zone Radius (meters) *
-              </label>
-              <input
-                id="zoneRadius"
-                type="number"
-                value={formData.zoneRadius || 300}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    zoneRadius: parseInt(e.target.value),
-                  })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-                required
-              />
-            </div>
-          ) : (
-            <>
-              <div>
-                <label
-                  htmlFor="boundsLat1"
-                  className="block text-gray-700 mb-2"
-                >
-                  Bounds - Latitude 1 *
-                </label>
-                <input
-                  id="boundsLat1"
-                  type="number"
-                  step="any"
-                  value={formData.zoneBounds?.[0][0] || 0}
-                  onChange={(e) => {
-                    const bounds = formData.zoneBounds || [
-                      [0, 0],
-                      [0, 0],
-                    ];
-                    bounds[0][0] = parseFloat(e.target.value);
-                    setFormData({
-                      ...formData,
-                      zoneBounds: [...bounds] as any,
-                    });
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="boundsLng1"
-                  className="block text-gray-700 mb-2"
-                >
-                  Bounds - Longitude 1 *
-                </label>
-                <input
-                  id="boundsLng1"
-                  type="number"
-                  step="any"
-                  value={formData.zoneBounds?.[0][1] || 0}
-                  onChange={(e) => {
-                    const bounds = formData.zoneBounds || [
-                      [0, 0],
-                      [0, 0],
-                    ];
-                    bounds[0][1] = parseFloat(e.target.value);
-                    setFormData({
-                      ...formData,
-                      zoneBounds: [...bounds] as any,
-                    });
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="boundsLat2"
-                  className="block text-gray-700 mb-2"
-                >
-                  Bounds - Latitude 2 *
-                </label>
-                <input
-                  id="boundsLat2"
-                  type="number"
-                  step="any"
-                  value={formData.zoneBounds?.[1][0] || 0}
-                  onChange={(e) => {
-                    const bounds = formData.zoneBounds || [
-                      [0, 0],
-                      [0, 0],
-                    ];
-                    bounds[1][0] = parseFloat(e.target.value);
-                    setFormData({
-                      ...formData,
-                      zoneBounds: [...bounds] as any,
-                    });
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="boundsLng2"
-                  className="block text-gray-700 mb-2"
-                >
-                  Bounds - Longitude 2 *
-                </label>
-                <input
-                  id="boundsLng2"
-                  type="number"
-                  step="any"
-                  value={formData.zoneBounds?.[1][1] || 0}
-                  onChange={(e) => {
-                    const bounds = formData.zoneBounds || [
-                      [0, 0],
-                      [0, 0],
-                    ];
-                    bounds[1][1] = parseFloat(e.target.value);
-                    setFormData({
-                      ...formData,
-                      zoneBounds: [...bounds] as any,
-                    });
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-                  required
-                />
-              </div>
-            </>
-          )}
-
-          <div className="md:col-span-2">
-            <label htmlFor="description" className="block text-gray-700 mb-2">
-              Description *
-            </label>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              rows={4}
-              placeholder="Detailed description of the incident..."
               required
             />
           </div>
 
           <div>
-            <label htmlFor="reportedBy" className="block text-gray-700 mb-2">
-              Reported By *
+            <label htmlFor="numberOfVictims" className="block text-gray-700 mb-2">
+              Number of Victims
             </label>
             <input
-              id="reportedBy"
-              type="text"
-              value={formData.reportedBy}
+              id="numberOfVictims"
+              type="number"
+              min="0"
+              value={formData.numberOfVictims ?? 0}
               onChange={(e) =>
-                setFormData({ ...formData, reportedBy: e.target.value })
+                setFormData({
+                  ...formData,
+                  numberOfVictims: parseInt(e.target.value),
+                })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
             />
           </div>
-        </div>
 
-        <div className="flex items-center gap-4 mt-6 pt-6 border-t border-gray-200">
-          <button
-            type="submit"
-            className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            <Save className="w-4 h-4" />
-            {mode === "create" ? "Create Report" : "Save Changes"}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex items-center gap-2 px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <X className="w-4 h-4" />
-            Cancel
-          </button>
+          <div>
+            <label htmlFor="numberOfOffenders" className="block text-gray-700 mb-2">
+              Number of Offenders
+            </label>
+            <input
+              id="numberOfOffenders"
+              type="number"
+              min="0"
+              value={formData.numberOfOffenders ?? 0}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  numberOfOffenders: parseInt(e.target.value),
+                })
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.arrested ?? false}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    arrested: e.target.checked,
+                  })
+                }
+                className="w-4 h-4"
+              />
+              <span className="text-gray-700">Arrests made</span>
+            </label>
+          </div>
         </div>
       </form>
 
@@ -495,39 +305,41 @@ export function CrimeReportForm({
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-gray-600 text-sm">Type</p>
-                  <p className="text-gray-900">{formData.type}</p>
+                  <p className="text-gray-600 text-sm">Severity</p>
+                  <p className="text-gray-900">{formData.severity}/5</p>
                 </div>
                 <div>
-                  <p className="text-gray-600 text-sm">Severity</p>
-                  <p className="text-gray-900">{formData.severity}</p>
+                  <p className="text-gray-600 text-sm">Number of Victims</p>
+                  <p className="text-gray-900">{formData.numberOfVictims ?? 0}</p>
                 </div>
               </div>
               <div>
                 <p className="text-gray-600 text-sm">Location</p>
-                <p className="text-gray-900">{formData.location}</p>
+                <p className="text-gray-900">
+                  {formData.latitude?.toFixed(4)}, {formData.longitude?.toFixed(4)}
+                </p>
               </div>
               <div>
                 <p className="text-gray-600 text-sm">Incident Date</p>
                 <p className="text-gray-900">
-                  {formData.incidentDate
-                    ? new Date(formData.incidentDate).toLocaleString()
+                  {formData.date
+                    ? new Date(formData.date).toLocaleString()
                     : ""}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">Zone</p>
-                <p className="text-gray-900">
-                  {formData.zoneType === "circle"
-                    ? `Circular (Radius: ${formData.zoneRadius}m)`
-                    : "Rectangular"}
                 </p>
               </div>
               <div>
                 <p className="text-gray-600 text-sm">Description</p>
                 <p className="text-gray-900 whitespace-pre-wrap">
-                  {formData.description}
+                  {formData.content}
                 </p>
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm">Number of Offenders</p>
+                <p className="text-gray-900">{formData.numberOfOffenders ?? 0}</p>
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm">Arrests Made</p>
+                <p className="text-gray-900">{formData.arrested ? "Yes" : "No"}</p>
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
