@@ -26,8 +26,8 @@ public interface CrimeReportRepository extends JpaRepository<CrimeReport, UUID> 
     @Query("SELECT c FROM CrimeReport c WHERE c.isPublic = true AND c.severity >= :minSeverity")
     Page<CrimeReport> findAllPublicByMinSeverity(@Param("minSeverity") int minSeverity, Pageable pageable);
     
-    @Query(value = "SELECT * FROM crime_report c WHERE c.is_public = true AND ST_DWithin(c.geom, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), :radius)", 
-           countQuery = "SELECT count(*) FROM crime_report c WHERE c.is_public = true AND ST_DWithin(c.geom, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), :radius)",
+    @Query(value = "SELECT * FROM crime_report c WHERE c.public = true AND ST_DWithin(c.geom, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), :radius) ORDER BY c.created_at DESC", 
+           countQuery = "SELECT count(*) FROM crime_report c WHERE c.public = true AND ST_DWithin(c.geom, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326), :radius)",
            nativeQuery = true)
     Page<CrimeReport> findAllPublicWithinRadius(
             @Param("longitude") double longitude, 

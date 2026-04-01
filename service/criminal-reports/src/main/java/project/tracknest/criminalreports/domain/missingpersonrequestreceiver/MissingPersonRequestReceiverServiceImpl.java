@@ -76,7 +76,7 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
                 .userId(report.getUserId())
                 .status(report.getStatus() != null ? report.getStatus().getName() : null)
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
-                .isPublic(false)
+                .publicFlag(false)
                 .build();
     }
 }

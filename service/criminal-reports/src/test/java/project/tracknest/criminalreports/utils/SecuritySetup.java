@@ -3,8 +3,8 @@ package project.tracknest.criminalreports.utils;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import project.tracknest.criminalreports.configuration.security.datatype.KeycloakAuthorizationHeader;
-import project.tracknest.criminalreports.configuration.security.datatype.KeycloakAuthorizationHeaderRealmAccess;
+import project.tracknest.criminalreports.configuration.security.KeycloakAuthorizationHeader;
+import project.tracknest.criminalreports.configuration.security.KeycloakAuthorizationHeaderRealmAccess;
 import project.tracknest.criminalreports.core.datatype.KeycloakPrincipal;
 import project.tracknest.criminalreports.core.datatype.KeycloakUserDetails;
 

@@ -60,7 +60,7 @@ class CrimeLocatorServiceImpl implements CrimeLocatorService {
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
-                .isPublic(report.isPublic())
+                .publicFlag(report.isPublic())
                 .build();
     }
 

@@ -7,7 +7,6 @@ import {
   Trash2,
   MapPin,
   Calendar,
-  Phone,
   User,
 } from "lucide-react";
 import { useState } from "react";
@@ -48,11 +47,11 @@ export function MissingPersonDetail({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Unhandled":
+      case "PENDING":
         return "bg-yellow-100 text-yellow-800";
-      case "Published":
+      case "PUBLISHED":
         return "bg-blue-100 text-blue-800";
-      case "Resolved":
+      case "RESOLVED":
         return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -77,7 +76,7 @@ export function MissingPersonDetail({
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h3 className="text-gray-900 mb-2">{person.name}</h3>
+                <h3 className="text-gray-900 mb-2">{person.fullName}</h3>
                 <span
                   className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
                     person.status,
@@ -95,7 +94,7 @@ export function MissingPersonDetail({
                   >
                     <Edit className="w-4 h-4" />
                   </button>
-                  {person.status === "Unhandled" && (
+                  {person.status === "PENDING" && (
                     <button
                       onClick={() => setConfirmAction("publish")}
                       className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
@@ -119,56 +118,44 @@ export function MissingPersonDetail({
               <div className="flex items-start gap-3">
                 <User className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
-                  <p className="text-gray-700">Personal Information</p>
-                  <p className="text-gray-900 mt-1">
-                    Age: {person.age} • Gender: {person.gender}
-                  </p>
+                  <p className="text-gray-700">Name</p>
+                  <p className="text-gray-900 mt-1">{person.fullName}</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
-                  <p className="text-gray-700">Last Known Location</p>
-                  <p className="text-gray-900 mt-1">
-                    {person.lastSeenLocation}
-                  </p>
+                  <p className="text-gray-700">Personal ID</p>
+                  <p className="text-gray-900 mt-1">{person.personalId}</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
                 <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
-                  <p className="text-gray-700">Last Seen Date</p>
+                  <p className="text-gray-700">Date</p>
                   <p className="text-gray-900 mt-1">
-                    {new Date(person.lastSeenDate).toLocaleString()}
+                    {new Date(person.date).toLocaleString()}
                   </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <User className="w-5 h-5 text-gray-400 mt-0.5" />
-                <div>
-                  <p className="text-gray-700">Reported By</p>
-                  <p className="text-gray-900 mt-1">{person.reportedBy}</p>
-                  <p className="text-gray-600 text-sm mt-1">
-                    {new Date(person.reportedDate).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
-                <div>
-                  <p className="text-gray-700">Contact Information</p>
-                  <p className="text-gray-900 mt-1">{person.contactInfo}</p>
                 </div>
               </div>
 
               <div className="pt-4 border-t border-gray-200">
                 <p className="text-gray-700 mb-2">Description</p>
-                <p className="text-gray-900">{person.description}</p>
+                <p className="text-gray-900">{person.content}</p>
               </div>
+
+              {person.photo && (
+                <div className="pt-4 border-t border-gray-200">
+                  <p className="text-gray-700 mb-2">Photo</p>
+                  <img
+                    src={person.photo}
+                    alt={person.fullName}
+                    className="w-full max-w-xs rounded-lg"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -176,11 +163,11 @@ export function MissingPersonDetail({
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col">
             <h3 className="text-gray-900 mb-4">Last Known Location Map</h3>
             <MapView
-              center={person.coordinates}
+              center={[40.7829, -73.9654]}
               markers={[
                 {
-                  position: person.coordinates,
-                  label: person.lastSeenLocation,
+                  position: [40.7829, -73.9654] as [number, number],
+                  label: person.fullName,
                 },
               ]}
             />

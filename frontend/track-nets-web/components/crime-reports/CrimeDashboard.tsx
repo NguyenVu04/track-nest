@@ -1,26 +1,10 @@
 import { useState } from "react";
-import { Plus, Search, Filter, BarChart3 } from "lucide-react";
+import { Plus, Search, BarChart3 } from "lucide-react";
+import type { CrimeReport } from "@/types";
 import { CrimeReportList } from "./CrimeReportList";
 import { CrimeReportDetail } from "./CrimeReportDetail";
 import { CrimeReportForm } from "./CrimeReportForm";
 import { CrimeHeatmapView } from "./CrimeHeatmapView";
-
-export interface CrimeReport {
-  id: string;
-  title: string;
-  type: string;
-  description: string;
-  location: string;
-  incidentDate: string;
-  coordinates: [number, number];
-  zoneType: "circle" | "rectangle";
-  zoneRadius?: number;
-  zoneBounds?: [[number, number], [number, number]];
-  reportedBy: string;
-  reportedDate: string;
-  severity: "Low" | "Medium" | "High";
-  status: "Active" | "Under Investigation" | "Resolved";
-}
 
 interface CrimeDashboardProps {
   user: {
@@ -38,68 +22,66 @@ const mockCrimeReports: CrimeReport[] = [
   {
     id: "1",
     title: "Theft - Vehicle Break-in",
-    type: "Theft",
-    description: "Car window smashed, items stolen from vehicle",
-    location: "Parking Garage, 5th Avenue",
-    incidentDate: "2026-01-03T22:30:00Z",
-    coordinates: [40.7614, -73.9776],
-    zoneType: "circle",
-    zoneRadius: 300,
-    reportedBy: "NYPD Officer J. Smith",
-    reportedDate: "2026-01-04T08:00:00Z",
-    severity: "Medium",
-    status: "Under Investigation",
+    content: "Car window smashed, items stolen from vehicle",
+    severity: 3,
+    date: "2026-01-03T22:30:00Z",
+    longitude: -73.9776,
+    latitude: 40.7614,
+    numberOfVictims: 1,
+    numberOfOffenders: 1,
+    arrested: false,
+    createdAt: "2026-01-04T08:00:00Z",
+    updatedAt: "2026-01-04T08:00:00Z",
+    reporterId: "user-1",
+    isPublic: true,
   },
   {
     id: "2",
     title: "Assault - Street Altercation",
-    type: "Assault",
-    description: "Physical altercation between two individuals",
-    location: "Broadway & 42nd Street",
-    incidentDate: "2026-01-02T19:15:00Z",
-    coordinates: [40.758, -73.9855],
-    zoneType: "rectangle",
-    zoneBounds: [
-      [40.757, -73.9865],
-      [40.759, -73.9845],
-    ],
-    reportedBy: "Witness Report",
-    reportedDate: "2026-01-02T19:30:00Z",
-    severity: "High",
-    status: "Active",
+    content: "Physical altercation between two individuals",
+    severity: 5,
+    date: "2026-01-02T19:15:00Z",
+    longitude: -73.9855,
+    latitude: 40.758,
+    numberOfVictims: 1,
+    numberOfOffenders: 1,
+    arrested: false,
+    createdAt: "2026-01-02T19:30:00Z",
+    updatedAt: "2026-01-02T19:30:00Z",
+    reporterId: "user-2",
+    isPublic: true,
   },
   {
     id: "3",
     title: "Burglary - Residential",
-    type: "Burglary",
-    description: "Break-in at residential apartment, valuables stolen",
-    location: "Upper East Side Apartment Complex",
-    incidentDate: "2026-01-01T03:00:00Z",
-    coordinates: [40.7736, -73.9566],
-    zoneType: "circle",
-    zoneRadius: 250,
-    reportedBy: "NYPD Officer M. Johnson",
-    reportedDate: "2026-01-01T09:00:00Z",
-    severity: "High",
-    status: "Resolved",
+    content: "Break-in at residential apartment, valuables stolen",
+    severity: 4,
+    date: "2026-01-01T03:00:00Z",
+    longitude: -73.9566,
+    latitude: 40.7736,
+    numberOfVictims: 1,
+    numberOfOffenders: 2,
+    arrested: false,
+    createdAt: "2026-01-01T09:00:00Z",
+    updatedAt: "2026-01-01T09:00:00Z",
+    reporterId: "user-3",
+    isPublic: true,
   },
   {
     id: "4",
     title: "Vandalism - Public Property",
-    type: "Vandalism",
-    description: "Graffiti on public building",
-    location: "City Hall Area",
-    incidentDate: "2026-01-03T02:00:00Z",
-    coordinates: [40.7128, -74.006],
-    zoneType: "rectangle",
-    zoneBounds: [
-      [40.7118, -74.007],
-      [40.7138, -74.005],
-    ],
-    reportedBy: "City Services",
-    reportedDate: "2026-01-03T08:00:00Z",
-    severity: "Low",
-    status: "Active",
+    content: "Graffiti on public building",
+    severity: 1,
+    date: "2026-01-03T02:00:00Z",
+    longitude: -74.006,
+    latitude: 40.7128,
+    numberOfVictims: 0,
+    numberOfOffenders: 1,
+    arrested: false,
+    createdAt: "2026-01-03T08:00:00Z",
+    updatedAt: "2026-01-03T08:00:00Z",
+    reporterId: "user-4",
+    isPublic: true,
   },
 ];
 
@@ -111,8 +93,6 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
     null,
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [severityFilter, setSeverityFilter] = useState<string>("all");
 
   const handleViewDetail = (report: CrimeReport) => {
     setSelectedReport(report);
@@ -122,6 +102,11 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
   const handleCreateNew = () => {
     setSelectedReport(null);
     setViewMode("create");
+  };
+
+  const handlePublish = (id: string) => {
+    const report = crimeReports.find((r) => r.id === id);
+    if (report) handleEdit(report);
   };
 
   const handleEdit = (report: CrimeReport) => {
@@ -159,12 +144,8 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
   const filteredReports = crimeReports.filter((report) => {
     const matchesSearch =
       report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.type.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === "all" || report.type === typeFilter;
-    const matchesSeverity =
-      severityFilter === "all" || report.severity === severityFilter;
-    return matchesSearch && matchesType && matchesSeverity;
+      report.content.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
   if (viewMode === "heatmap") {
@@ -229,39 +210,11 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by title, location, or type..."
+              placeholder="Search by title..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
-          </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none"
-            >
-              <option value="all">All Types</option>
-              <option value="Theft">Theft</option>
-              <option value="Assault">Assault</option>
-              <option value="Burglary">Burglary</option>
-              <option value="Vandalism">Vandalism</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <select
-              value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none"
-            >
-              <option value="all">All Severities</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-            </select>
           </div>
         </div>
       </div>
@@ -269,7 +222,7 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
       <CrimeReportList
         reports={filteredReports}
         onViewDetail={handleViewDetail}
-        onEdit={handleEdit}
+        onPublish={handlePublish}
         onDelete={handleDelete}
         userRole={user.role}
       />

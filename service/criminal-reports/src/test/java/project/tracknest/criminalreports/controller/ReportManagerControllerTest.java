@@ -98,7 +98,8 @@ class ReportManagerControllerTest {
                     .fullName("Jane Doe")
                     .personalId("987654321")
                     .date(LocalDate.now())
-                    .content("Missing person report")
+                    .content("https://example.com/reports/missing-person.pdf")
+                    .contactPhone("+1234567890")
                     .build();
 
             String response = mockMvc.perform(post(BASE_URL + "/missing-person-reports")
@@ -159,7 +160,8 @@ class ReportManagerControllerTest {
                     .fullName("Alice Smith")
                     .personalId("111222333")
                     .date(LocalDate.now())
-                    .content("Please help find this person")
+                    .content("https://example.com/reports/urgent-missing.pdf")
+                    .contactPhone("+1234567890")
                     .build();
 
             String response = mockMvc.perform(post(BASE_URL + "/missing-person-reports")
@@ -192,7 +194,8 @@ class ReportManagerControllerTest {
                     .fullName("Test Person")
                     .personalId("444555666")
                     .date(LocalDate.now())
-                    .content("Test content")
+                    .content("https://example.com/reports/delete-test.pdf")
+                    .contactPhone("+1234567890")
                     .build();
 
             String response = mockMvc.perform(post(BASE_URL + "/missing-person-reports")
@@ -220,7 +223,7 @@ class ReportManagerControllerTest {
         void testCreateCrimeReport_success() throws Exception {
             CreateCrimeReportRequest request = CreateCrimeReportRequest.builder()
                     .title("Burglary Report")
-                    .content("Home burglary incident")
+                    .content("https://example.com/reports/burglary.pdf")
                     .severity(3)
                     .date(LocalDate.now())
                     .longitude(106.7018)
@@ -250,7 +253,7 @@ class ReportManagerControllerTest {
         void testGetCrimeReport_success() throws Exception {
             CreateCrimeReportRequest createRequest = CreateCrimeReportRequest.builder()
                     .title("Theft Report")
-                    .content("Vehicle theft")
+                    .content("https://example.com/reports/theft.pdf")
                     .severity(4)
                     .date(LocalDate.now())
                     .longitude(106.7018)
@@ -326,7 +329,7 @@ class ReportManagerControllerTest {
         void testPublishCrimeReport_success() throws Exception {
             CreateCrimeReportRequest createRequest = CreateCrimeReportRequest.builder()
                     .title("Public Crime")
-                    .content("Crime to be published")
+                    .content("https://example.com/reports/public-crime.pdf")
                     .severity(2)
                     .date(LocalDate.now())
                     .longitude(106.7018)
@@ -363,7 +366,7 @@ class ReportManagerControllerTest {
         void testDeleteCrimeReport_success() throws Exception {
             CreateCrimeReportRequest createRequest = CreateCrimeReportRequest.builder()
                     .title("Test Crime Delete")
-                    .content("Test content")
+                    .content("https://example.com/reports/delete-test.pdf")
                     .severity(1)
                     .date(LocalDate.now())
                     .longitude(106.7018)
@@ -399,7 +402,7 @@ class ReportManagerControllerTest {
             CreateGuidelinesDocumentRequest request = CreateGuidelinesDocumentRequest.builder()
                     .title("Safety Guidelines")
                     .abstractText("General safety tips")
-                    .content("Detailed safety guidelines content")
+                    .content("https://example.com/guidelines/safety.pdf")
                     .isPublic(true)
                     .build();
 
@@ -424,7 +427,7 @@ class ReportManagerControllerTest {
             CreateGuidelinesDocumentRequest createRequest = CreateGuidelinesDocumentRequest.builder()
                     .title("Emergency Procedures")
                     .abstractText("Emergency procedures overview")
-                    .content("Detailed emergency procedures")
+                    .content("https://example.com/guidelines/emergency.pdf")
                     .isPublic(false)
                     .build();
 
@@ -482,7 +485,7 @@ class ReportManagerControllerTest {
             CreateGuidelinesDocumentRequest createRequest = CreateGuidelinesDocumentRequest.builder()
                     .title("Public Guidelines")
                     .abstractText("To be published")
-                    .content("Content to be made public")
+                    .content("https://example.com/guidelines/public.pdf")
                     .isPublic(false)
                     .build();
 
@@ -514,7 +517,7 @@ class ReportManagerControllerTest {
             CreateGuidelinesDocumentRequest createRequest = CreateGuidelinesDocumentRequest.builder()
                     .title("Test Guidelines Delete")
                     .abstractText("Test")
-                    .content("Test content")
+                    .content("https://example.com/guidelines/delete-test.pdf")
                     .isPublic(false)
                     .build();
 

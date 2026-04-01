@@ -35,7 +35,7 @@ public class MissingPersonReport {
     private String personalId;
 
     @URL(message = "Invalid URL format")
-    @Column(name = "photo", nullable = false)
+    @Column(name = "photo")
     private String photo;
 
     @Column(name = "date", nullable = false)
@@ -49,8 +49,8 @@ public class MissingPersonReport {
     @Column(name = "contact_email")
     private String contactEmail;
 
-    @Pattern(regexp = "^\\\\+?[0-9 .\\-()]{7,25}$", message = "Invalid phone number")
-    @Column(name = "contact_phone")
+    @Pattern(regexp = "^\\+?[0-9 .\\-()]{7,25}$", message = "Invalid phone number")
+    @Column(name = "contact_phone", nullable = false)
     private String contactPhone;
 
     @Column(name = "created_at", nullable = false, updatable = false)
