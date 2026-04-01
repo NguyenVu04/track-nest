@@ -1,0 +1,383 @@
+/* TrackNest Custom Keycloak Theme */
+/* Based on the color palette from frontend/TrackNest/styles/styles.ts */
+
+:root {
+  /* Primary colors from TrackNest palette */
+  --tracknest-primary: #74becb;
+  --tracknest-primary-dark: #5aa8b5;
+  --tracknest-primary-light: #a8d8e0;
+  --tracknest-primary-muted: #e0f2f5;
+  
+  /* Secondary/accent colors */
+  --tracknest-secondary: #5b9aa6;
+  --tracknest-accent: #4a8a96;
+  
+  /* Semantic colors */
+  --tracknest-danger: #e74c3c;
+  --tracknest-danger-light: #fdeaea;
+  --tracknest-warn: #f39c12;
+  --tracknest-warn-light: #fef5e7;
+  --tracknest-success: #27ae60;
+  --tracknest-success-light: #e8f8ef;
+  --tracknest-info: #74becb;
+  --tracknest-info-light: #e0f2f5;
+  
+  /* Neutral colors */
+  --tracknest-muted: #666;
+  --tracknest-text-primary: #1a1a1a;
+  --tracknest-text-secondary: #6b7280;
+  --tracknest-text-muted: #9ca3af;
+  
+  /* Background colors */
+  --tracknest-bg: #fff;
+  --tracknest-bg-secondary: #f8fafa;
+  --tracknest-surface: #f2f2f2;
+  --tracknest-surface-light: #fafafa;
+  
+  /* Border colors */
+  --tracknest-border: #e5e7eb;
+  --tracknest-border-light: #f3f4f6;
+  
+  /* Spacing */
+  --tracknest-spacing-xs: 6px;
+  --tracknest-spacing-sm: 8px;
+  --tracknest-spacing-md: 12px;
+  --tracknest-spacing-lg: 16px;
+  --tracknest-spacing-xl: 24px;
+  
+  /* Border radius */
+  --tracknest-radius-sm: 8px;
+  --tracknest-radius-md: 12px;
+  --tracknest-radius-lg: 18px;
+}
+
+/* Global body styles */
+body {
+  background: linear-gradient(135deg, var(--tracknest-primary-muted) 0%, var(--tracknest-bg) 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--tracknest-text-primary);
+  min-height: 100vh;
+}
+
+/* Main login container */
+.kc-loginContainer,
+#kc-content {
+  background: transparent;
+}
+
+/* Login form wrapper */
+#kc-content-wrapper {
+  background: var(--tracknest-bg);
+  border-radius: var(--tracknest-radius-lg);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: var(--tracknest-spacing-xl);
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* Header styling */
+#kc-header {
+  text-align: center;
+  margin-bottom: var(--tracknest-spacing-xl);
+}
+
+#kc-header-wrapper {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--tracknest-text-primary);
+  margin-bottom: var(--tracknest-spacing-md);
+}
+
+/* Logo/Icon container */
+.kc-logo-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tracknest-spacing-md);
+  margin-bottom: var(--tracknest-spacing-lg);
+}
+
+.tracknest-logo {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--tracknest-primary) 0%, var(--tracknest-primary-dark) 100%);
+  border-radius: var(--tracknest-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.tracknest-logo-img {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--tracknest-radius-md);
+  object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Form styling */
+#kc-form {
+  margin-top: var(--tracknest-spacing-lg);
+}
+
+#kc-form-wrapper {
+  background: transparent;
+}
+
+/* Input fields */
+.pf-c-form-control,
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  border: 2px solid var(--tracknest-border);
+  border-radius: var(--tracknest-radius-sm);
+  padding: var(--tracknest-spacing-md) var(--tracknest-spacing-lg);
+  font-size: 16px;
+  background: var(--tracknest-bg);
+  transition: all 0.2s ease-in-out;
+  color: var(--tracknest-text-primary);
+}
+
+.pf-c-form-control:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+  outline: none;
+  border-color: var(--tracknest-primary);
+  box-shadow: 0 0 0 3px var(--tracknest-primary-muted);
+}
+
+.pf-c-form-control:hover,
+input[type="text"]:hover,
+input[type="password"]:hover,
+input[type="email"]:hover {
+  border-color: var(--tracknest-primary-light);
+}
+
+/* Labels */
+label,
+.pf-c-form__label {
+  color: var(--tracknest-text-primary);
+  font-weight: 500;
+  margin-bottom: var(--tracknest-spacing-sm);
+  font-size: 14px;
+}
+
+/* Primary button (Login, Register, etc.) */
+.pf-c-button.pf-m-primary,
+input[type="submit"].pf-c-button.pf-m-primary,
+.btn-primary {
+  background: linear-gradient(135deg, var(--tracknest-primary) 0%, var(--tracknest-primary-dark) 100%);
+  border: none;
+  color: white;
+  padding: var(--tracknest-spacing-md) var(--tracknest-spacing-xl);
+  border-radius: var(--tracknest-radius-sm);
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  width: 100%;
+  margin-top: var(--tracknest-spacing-lg);
+}
+
+.pf-c-button.pf-m-primary:hover,
+input[type="submit"].pf-c-button.pf-m-primary:hover,
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--tracknest-primary-dark) 0%, var(--tracknest-accent) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--tracknest-primary-muted);
+}
+
+.pf-c-button.pf-m-primary:active,
+input[type="submit"].pf-c-button.pf-m-primary:active,
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Secondary button styling */
+.pf-c-button.pf-m-link,
+.pf-c-button.pf-m-secondary {
+  color: var(--tracknest-primary);
+  background: transparent;
+  border: 2px solid var(--tracknest-primary);
+  border-radius: var(--tracknest-radius-sm);
+  padding: var(--tracknest-spacing-sm) var(--tracknest-spacing-lg);
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.pf-c-button.pf-m-link:hover,
+.pf-c-button.pf-m-secondary:hover {
+  background: var(--tracknest-primary-muted);
+  color: var(--tracknest-primary-dark);
+}
+
+/* Links */
+a {
+  color: var(--tracknest-primary);
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+a:hover {
+  color: var(--tracknest-primary-dark);
+  text-decoration: underline;
+}
+
+/* Alert messages */
+.pf-c-alert,
+.alert {
+  border-radius: var(--tracknest-radius-sm);
+  padding: var(--tracknest-spacing-md) var(--tracknest-spacing-lg);
+  margin-bottom: var(--tracknest-spacing-lg);
+  border: none;
+}
+
+.pf-c-alert.pf-m-success,
+.alert-success {
+  background: var(--tracknest-success-light);
+  color: var(--tracknest-success);
+}
+
+.pf-c-alert.pf-m-danger,
+.alert-error {
+  background: var(--tracknest-danger-light);
+  color: var(--tracknest-danger);
+}
+
+.pf-c-alert.pf-m-warning,
+.alert-warning {
+  background: var(--tracknest-warn-light);
+  color: var(--tracknest-warn);
+}
+
+.pf-c-alert.pf-m-info,
+.alert-info {
+  background: var(--tracknest-info-light);
+  color: var(--tracknest-info);
+}
+
+/* Form groups */
+.pf-c-form__group {
+  margin-bottom: var(--tracknest-spacing-lg);
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  accent-color: var(--tracknest-primary);
+}
+
+/* Remember me section */
+#kc-form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--tracknest-spacing-lg);
+  font-size: 14px;
+}
+
+/* Registration and forgot password links */
+#kc-registration {
+  text-align: center;
+  margin-top: var(--tracknest-spacing-xl);
+  padding-top: var(--tracknest-spacing-lg);
+  border-top: 1px solid var(--tracknest-border-light);
+}
+
+/* Social login buttons */
+.kc-social-providers {
+  margin-top: var(--tracknest-spacing-xl);
+  padding-top: var(--tracknest-spacing-lg);
+  border-top: 1px solid var(--tracknest-border-light);
+}
+
+.kc-social-providers ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.kc-social-providers li {
+  margin-bottom: var(--tracknest-spacing-sm);
+}
+
+.kc-social-providers a {
+  display: block;
+  width: 100%;
+  padding: var(--tracknest-spacing-md);
+  border: 2px solid var(--tracknest-border);
+  border-radius: var(--tracknest-radius-sm);
+  text-align: center;
+  background: var(--tracknest-bg);
+  color: var(--tracknest-text-primary);
+  transition: all 0.2s ease-in-out;
+}
+
+.kc-social-providers a:hover {
+  border-color: var(--tracknest-primary);
+  background: var(--tracknest-primary-muted);
+}
+
+/* Info section styling */
+#kc-info {
+  background: var(--tracknest-surface-light);
+  border-radius: var(--tracknest-radius-sm);
+  padding: var(--tracknest-spacing-lg);
+  margin-top: var(--tracknest-spacing-xl);
+}
+
+#kc-info-wrapper {
+  color: var(--tracknest-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Loading state */
+.pf-c-spinner {
+  color: var(--tracknest-primary);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  #kc-content-wrapper {
+    margin: var(--tracknest-spacing-lg);
+    padding: var(--tracknest-spacing-lg);
+  }
+  
+  #kc-header-wrapper {
+    font-size: 24px;
+  }
+  
+  .tracknest-logo {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+}
+
+/* Custom utilities */
+.text-center {
+  text-align: center;
+}
+
+.mt-lg {
+  margin-top: var(--tracknest-spacing-lg);
+}
+
+.mb-lg {
+  margin-bottom: var(--tracknest-spacing-lg);
+}
+
+/* Animation for smooth transitions */
+* {
+  transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--tracknest-primary);
+  outline-offset: 2px;
+}
