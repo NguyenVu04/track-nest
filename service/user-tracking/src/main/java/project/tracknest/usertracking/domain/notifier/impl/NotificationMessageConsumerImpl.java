@@ -104,8 +104,7 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                 .builder()
                 .notificationId(savedTrackingNotification.getId())
                 .type(TRACKING_NOTIFICATION_TYPE)
-                .sent_at_ms(savedTrackingNotification
-                        .getCreatedAt()
+                .sent_at_ms(OffsetDateTime.now()
                         .toInstant()
                         .toEpochMilli())
                 .build();
@@ -159,8 +158,7 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                 .builder()
                 .type(RISK_NOTIFICATION_TYPE)
                 .notificationId(savedRiskNotification.getId())
-                .sent_at_ms(savedRiskNotification
-                        .getCreatedAt()
+                .sent_at_ms(OffsetDateTime.now()
                         .toInstant()
                         .toEpochMilli())
                 .build();
