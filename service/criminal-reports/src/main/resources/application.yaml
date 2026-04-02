@@ -7,21 +7,22 @@ spring:
       password: admin
       roles: ADMIN
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:127.0.0.1:29092}
+    bootstrap-servers: ${KAFKA_SERVER:127.0.0.1:29092}
     consumer:
-      group-id: user_tracking
+      group-id: criminal_reports
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: project.tracknest.usertracking.core.datatype
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     listener:
       missing-topics-fatal: false
   data:
     redis:
-      host: ${REDIS_HOST:127.0.0.1}
-      port: ${REDIS_PORT:6379}
+      url: ${REDIS_URL:redis://127.0.0.1:6379}
   datasource:
     url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:35432}/${DB_NAME:tracknest}
     username: ${DB_USERNAME:tracknestadmin}
@@ -45,7 +46,7 @@ server:
 app:
   kafka:
     topics:
-      - user_location
+      - location_updated
     partitions: 3
     replication-factor: 1
   minio:
@@ -53,7 +54,7 @@ app:
     credentials:
       access-key: ${MINIO_ACCESS_KEY:minioadmin}
       secret-key: ${MINIO_SECRET_KEY:minioadmin}
-  server-name: ${POD_NAME:user-tracking}
+  server-name: ${POD_NAME:criminal-reports}
   server-uid: ${$POD_UID:0}
 
 springdoc:

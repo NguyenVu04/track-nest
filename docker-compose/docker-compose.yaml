@@ -7,6 +7,8 @@ x-minio-common: &minio-common
   environment:
     MINIO_ROOT_USER: minioadmin
     MINIO_ROOT_PASSWORD: minioadmin
+  networks:
+    - track_nest
   healthcheck:
     test: ["CMD", "mc", "ready", "local"]
     interval: 5s
@@ -165,6 +167,37 @@ services:
       - keycloak
       - web
 
+  criminal_reports:
+    build:
+      context: ../service/criminal-reports
+      dockerfile: Dockerfile
+    container_name: criminal_reports
+    ports:
+      - "38080:38080"
+    environment:
+      KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
+      REDIS_URL: "redis://redis:6379"
+      DB_HOST: "criminal_reports_postgres"
+      DB_PORT: 5432
+      DB_NAME: "tracknest"
+      DB_USER: "tracknestadmin"
+      DB_PASSWORD: "tracknestadmin"
+      MINIO_ENDPOINT: "http://minio:9000"
+      MINIO_ACCESS_KEY: "minioadmin"
+      MINIO_SECRET_KEY: "minioadmin"
+    networks:
+      - track_nest
+      - default
+    depends_on:
+      - criminal_reports_postgres
+      - minio
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:38080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   emergency_ops:
     build:
       context: ../service/emergency-ops
@@ -174,8 +207,7 @@ services:
       - "28080:28080"
     environment:
       KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
-      REDIS_HOST: "redis"
-      REDIS_PORT: 6379
+      REDIS_URL: "redis://redis:6379"
       DB_HOST: "emergency_ops_postgres"
       DB_PORT: 5432
       DB_NAME: "tracknest"
@@ -205,8 +237,7 @@ services:
       - "19090:19090"
     environment:
       KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
-      REDIS_HOST: "redis"
-      REDIS_PORT: 6379
+      REDIS_URL: "redis://redis:6379"
       DB_HOST: "user_tracking_postgres"
       DB_PORT: 5432
       DB_NAME: "tracknest"
