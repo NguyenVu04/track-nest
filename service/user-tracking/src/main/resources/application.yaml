@@ -67,7 +67,7 @@ server:
 app:
   kafka:
     topics:
-    - location_updated
+    - location-updated
     - notification-sent
     - tracking-notification
     - risk-notification

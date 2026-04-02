@@ -45,7 +45,7 @@ server:
 app:
   kafka:
     topics:
-    - location_updated
+    - location-updated
     - tracking-notification
     partitions: 3
     replication-factor: 1
