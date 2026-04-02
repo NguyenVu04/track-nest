@@ -4,3 +4,4 @@ helm/Chart.lock
 .vscode/
 certs/
 /**/*/*.prod.*
+/**/*/secrets.yaml
