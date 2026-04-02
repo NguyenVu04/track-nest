@@ -1,5 +1,6 @@
 helm/charts
 helm/Chart.lock
-**/*/.idea
-**/*/.vscode
-
+.idea/
+.vscode/
+certs/
+/**/*/*.prod.*
