@@ -1,0 +1,172 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: envoy-config
+data:
+  envoy.yaml: |
+    static_resources:
+      listeners:
+        - name: grpc_web_listener
+          address:
+            socket_address:
+              address: 0.0.0.0
+              port_value: 8800
+          filter_chains:
+            - filters:
+                - name: envoy.filters.network.http_connection_manager
+                  typed_config:
+                    "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                    stat_prefix: ingress_http
+
+                    route_config:
+                      name: local_route
+                      virtual_hosts:
+                        - name: backend_services
+                          domains: ["*"]
+                          routes:
+                            - match:
+                                prefix: "/emergency-ops"
+                              route:
+                                cluster: emergency_ops_rest
+                                timeout: 0s
+                                prefix_rewrite: "/api/v1"
+                                upgrade_configs:
+                                  - upgrade_type: websocket
+
+                            - match:
+                                prefix: "/criminal-reports"
+                              route:
+                                cluster: criminal_reports_rest
+                                timeout: 0s
+                                prefix_rewrite: "/api/v1"
+
+                            - match:
+                                prefix: "/"
+                              route:
+                                cluster: user_tracking_grpc
+                                timeout: 0s
+
+                    http_filters:
+                      - name: envoy.filters.http.cors
+                        typed_config:
+                          "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
+
+                      - name: envoy.filters.http.jwt_authn
+                        typed_config:
+                          "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+                          providers:
+                            keycloak_public:
+                              audiences: ["account"]
+                              remote_jwks:
+                                http_uri:
+                                  uri: "http://keycloak:8080/auth/realms/public-dev/protocol/openid-connect/certs"
+                                  cluster: keycloak_jwks
+                                  timeout: 5s
+                                cache_duration: 600s
+                              forward: true
+                              payload_in_metadata: jwt_payload
+
+                            keycloak_restricted:
+                              audiences: ["account"]
+                              remote_jwks:
+                                http_uri:
+                                  uri: "http://keycloak:8080/auth/realms/restricted-dev/protocol/openid-connect/certs"
+                                  cluster: keycloak_jwks
+                                  timeout: 5s
+                                cache_duration: 600s
+                              forward: true
+                              payload_in_metadata: jwt_payload
+
+                          rules:
+                            - match:
+                                prefix: "/emergency-ops"
+                              requires:
+                                requires_any:
+                                  requirements:
+                                    - provider_name: keycloak_public
+                                    - provider_name: keycloak_restricted
+
+                            - match:
+                                prefix: "/criminal-reports"
+                              requires:
+                                requires_any:
+                                  requirements:
+                                    - provider_name: keycloak_public
+                                    - provider_name: keycloak_restricted
+
+                            - match:
+                                prefix: "/"
+                              requires:
+                                provider_name: keycloak_public
+
+                      - name: envoy.filters.http.grpc_web
+                        typed_config:
+                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
+
+                      - name: envoy.filters.http.router
+                        typed_config:
+                          "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+      clusters:
+        - name: emergency_ops_rest
+          connect_timeout: 5s
+          type: logical_dns
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: emergency_ops_rest
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: emergency-ops
+                          port_value: 28080
+
+        - name: criminal_reports_rest
+          connect_timeout: 5s
+          type: logical_dns
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: criminal_reports_rest
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: criminal-reports
+                          port_value: 38080
+
+        - name: user_tracking_grpc
+          connect_timeout: 5s
+          type: logical_dns
+          http2_protocol_options: {}
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: user_tracking_grpc
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: user-tracking
+                          port_value: 19090
+
+        - name: keycloak_jwks
+          connect_timeout: 5s
+          type: logical_dns
+          lb_policy: round_robin
+          load_assignment:
+            cluster_name: keycloak_jwks
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: keycloak
+                          port_value: 8080
+
+    admin:
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 9901

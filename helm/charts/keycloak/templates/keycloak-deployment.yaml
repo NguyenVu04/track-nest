@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-keycloak
+  labels:
+    app: keycloak
+spec:
+  replicas: {{ .Values.keycloak.replicaCount }}
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"
+          imagePullPolicy: IfNotPresent
+
+          args:
+            - "start-dev"
+            - "--import-realm"
+
+          ports:
+            - containerPort: {{ .Values.keycloak.port }}
+            - containerPort: {{ .Values.keycloak.managementPort }}
+
+          env:
+            # --- Admin ---
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: "admin"
+
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KEYCLOAK_ADMIN_PASSWORD
+
+            # --- Database ---
+            - name: KC_DB
+              value: "postgres"
+
+            - name: KC_DB_URL
+              value: "{{ .Values.keycloak.database.url }}"
+
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KEYCLOAK_DB_USERNAME
+
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KEYCLOAK_DB_PASSWORD
+
+            # --- Settings ---
+            - name: KC_HOSTNAME_STRICT_HTTPS
+              value: "false"
+
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+
+            - name: KC_METRICS_ENABLED
+              value: "true"
+
+            - name: KC_HTTP_RELATIVE_PATH
+              value: "/auth"
+
+            - name: KC_PROXY
+              value: "edge"
+
+          volumeMounts:
+            - name: realm-config
+              mountPath: /opt/keycloak/data/import
+              readOnly: true
+
+          readinessProbe:
+            httpGet:
+                path: /auth/health/ready
+                port: {{ .Values.keycloak.managementPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 15
+
+          livenessProbe:
+            httpGet:
+              path: /auth/health/live
+              port: {{ .Values.keycloak.managementPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+
+      volumes:
+        - name: realm-config
+          configMap:
+            name: keycloak-realm-config

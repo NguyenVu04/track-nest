@@ -1,0 +1,12 @@
+envoy:
+  image:
+    repository: envoyproxy/envoy
+    tag: v1.36-latest
+  port: 8800
+  adminPort: 9901
+
+nginx:
+  image:
+    repository: nginx
+    tag: stable-alpine
+  port: 80

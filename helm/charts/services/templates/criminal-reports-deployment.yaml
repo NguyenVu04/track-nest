@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-criminal-reports
+  labels:
+    app: criminal-reports
+spec:
+  replicas: {{ .Values.criminalReports.replicaCount }}
+  selector:
+    matchLabels:
+      app: criminal-reports
+  template:
+    metadata:
+      labels:
+        app: criminal-reports
+    spec:
+      containers:
+        - name: criminal-reports
+          image: "{{ .Values.criminalReports.image.repository }}:{{ .Values.criminalReports.image.tag }}"
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: {{ .Values.criminalReports.port }}
+
+          env:
+            # --- Pod identity ---
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+
+            # --- Kafka ---
+            - name: KAFKA_SERVER
+              value: "{{ .Values.kafka.server }}"
+
+            - name: KAFKA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KAFKA_USERNAME
+
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KAFKA_PASSWORD
+
+            - name: KAFKA_SSL_TRUSTSTORE_LOCATION
+              value: /app/certs/truststore.jks
+
+            - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KAFKA_SSL_TRUSTSTORE_PASSWORD
+
+            # --- Redis ---
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: REDIS_URL
+
+            # --- Database ---
+            - name: DB_HOST
+              value: "{{ .Values.criminalReports.database.host }}"
+
+            - name: DB_PORT
+              value: "{{ .Values.criminalReports.database.port }}"
+
+            - name: DB_NAME
+              value: "{{ .Values.criminalReports.database.name }}"
+
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_DB_USERNAME
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_DB_PASSWORD
+
+            # --- MinIO (from your compose) ---
+            - name: MINIO_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: MINIO_ENDPOINT
+
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: MINIO_ACCESS_KEY
+
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: MINIO_SECRET_KEY
+
+          volumeMounts:
+            - name: truststore
+              mountPath: /app/certs
+              readOnly: true
+
+          livenessProbe:
+            httpGet:
+              path: /api/v1/actuator/health
+              port: {{ .Values.criminalReports.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 30
+
+          readinessProbe:
+            httpGet:
+              path: /api/v1/actuator/health
+              port: {{ .Values.criminalReports.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 15
+
+      volumes:
+        - name: truststore
+          secret:
+            secretName: {{ .Release.Name }}-certs

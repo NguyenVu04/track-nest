@@ -1,0 +1,46 @@
+userTracking:
+  replicaCount: 1
+  port: 19090
+
+  image:
+    repository: nguyenvu04/tracknest-usertracking
+    tag: "v0.1"
+
+  database:
+    host: ep-falling-snow-a1msncjz-pooler.ap-southeast-1.aws.neon.tech
+    port: 5432
+    name: neondb
+
+criminalReports:
+  replicaCount: 1
+  port: 38080
+
+  image:
+    repository: nguyenvu04/tracknest-criminalreports
+    tag: "v0.1"
+
+  database:
+    host: ep-wispy-math-a1wxwifi-pooler.ap-southeast-1.aws.neon.tech
+    port: 5432
+    name: neondb
+
+emergencyOps:
+  replicaCount: 1
+  port: 28080
+
+  image:
+    repository: nguyenvu04/tracknest-emergencyops
+    tag: "v0.1"
+
+  database:
+    host: ep-curly-shadow-a14usu28-pooler.ap-southeast-1.aws.neon.tech
+    port: 5432
+    name: neondb
+
+  keycloak:
+    authServerUrl: http://keycloak:8080
+    clientId: emergency-operations
+    realm: public-dev
+
+kafka:
+  server: kafka-ab0708-tracknest.j.aivencloud.com:25187

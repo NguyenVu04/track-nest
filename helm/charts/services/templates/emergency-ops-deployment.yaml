@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-emergency-ops
+  labels:
+    app: emergency-ops
+spec:
+  replicas: {{ .Values.emergencyOps.replicaCount }}
+  selector:
+    matchLabels:
+      app: emergency-ops
+  template:
+    metadata:
+      labels:
+        app: emergency-ops
+    spec:
+      containers:
+        - name: emergency-ops
+          image: "{{ .Values.emergencyOps.image.repository }}:{{ .Values.emergencyOps.image.tag }}"
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: {{ .Values.emergencyOps.port }}
+
+          env:
+            # --- Pod identity ---
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+
+            # --- Kafka ---
+            - name: KAFKA_SERVER
+              value: "{{ .Values.kafka.server }}"
+
+            - name: KAFKA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KAFKA_USERNAME
+
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KAFKA_PASSWORD
+
+            - name: KAFKA_SSL_TRUSTSTORE_LOCATION
+              value: /app/certs/truststore.jks
+
+            - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KAFKA_SSL_TRUSTSTORE_PASSWORD
+
+            # --- Redis ---
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: REDIS_URL
+
+            # --- Database ---
+            - name: DB_HOST
+              value: "{{ .Values.emergencyOps.database.host }}"
+
+            - name: DB_PORT
+              value: "{{ .Values.emergencyOps.database.port }}"
+
+            - name: DB_NAME
+              value: "{{ .Values.emergencyOps.database.name }}"
+
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: EMERGENCY_OPS_DB_USERNAME
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: EMERGENCY_OPS_DB_PASSWORD
+
+            # --- Keycloak ---
+            - name: KEYCLOAK_AUTH_SERVER_URL
+              value: "{{ .Values.emergencyOps.keycloak.authServerUrl }}"
+
+            - name: KEYCLOAK_CLIENT_ID
+              value: "{{ .Values.emergencyOps.keycloak.clientId }}"
+
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KEYCLOAK_CLIENT_SECRET
+
+            - name: KEYCLOAK_PUBLIC_REALM
+              value: "{{ .Values.emergencyOps.keycloak.realm }}"
+
+          volumeMounts:
+            - name: truststore
+              mountPath: /app/certs
+              readOnly: true
+
+          livenessProbe:
+            httpGet:
+              path: /api/v1/actuator/health
+              port: {{ .Values.emergencyOps.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 30
+
+          readinessProbe:
+            httpGet:
+              path: /api/v1/actuator/health
+              port: {{ .Values.emergencyOps.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 15
+
+      volumes:
+        - name: truststore
+          secret:
+            secretName: {{ .Release.Name }}-certs

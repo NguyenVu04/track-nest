@@ -1,0 +1,15 @@
+keycloak:
+  replicaCount: 1
+  port: 8080
+  managementPort: 9000
+
+  image:
+    repository: nguyenvu04/tracknest-keycloak
+    tag: "v0.1"
+
+  database:
+    url: jdbc:postgresql://ep-frosty-thunder-a16w6tab-pooler.ap-southeast-1.aws.neon.tech:5432/neondb
+
+  realmFiles:
+    public: public-dev.json
+    restricted: restricted-dev.json

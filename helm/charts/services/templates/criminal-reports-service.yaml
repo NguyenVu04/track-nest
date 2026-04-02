@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: criminal-reports
+  labels:
+    app: criminal-reports
+spec:
+  type: ClusterIP
+  selector:
+    app: criminal-reports
+  ports:
+    - name: http
+      port: {{ .Values.criminalReports.port }}
+      targetPort: {{ .Values.criminalReports.port }}

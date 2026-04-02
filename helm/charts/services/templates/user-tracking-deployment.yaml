@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-user-tracking
+  labels:
+    app: user-tracking
+spec:
+  replicas: {{ .Values.userTracking.replicaCount }}
+  selector:
+    matchLabels:
+      app: user-tracking
+  template:
+    metadata:
+      labels:
+        app: user-tracking
+    spec:
+      containers:
+        - name: user-tracking
+          image: "{{ .Values.userTracking.image.repository }}:{{ .Values.userTracking.image.tag }}"
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: {{ .Values.userTracking.port }}
+
+          env:
+            # --- Pod identity ---
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+
+            # --- Kafka ---
+            - name: KAFKA_SERVER
+              value: "{{ .Values.kafka.server }}"
+
+            - name: KAFKA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KAFKA_USERNAME
+
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KAFKA_PASSWORD
+
+            - name: KAFKA_SSL_TRUSTSTORE_LOCATION
+              value: /app/certs/truststore.jks
+
+            - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KAFKA_SSL_TRUSTSTORE_PASSWORD
+
+            # --- Redis ---
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: REDIS_URL
+
+            # --- Database (UPDATED ✅) ---
+            - name: DB_HOST
+              value: "{{ .Values.userTracking.database.host }}"
+
+            - name: DB_PORT
+              value: "{{ .Values.userTracking.database.port }}"
+
+            - name: DB_NAME
+              value: "{{ .Values.userTracking.database.name }}"
+
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: USER_TRACKING_DB_USERNAME
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: USER_TRACKING_DB_PASSWORD
+
+          volumeMounts:
+            - name: truststore
+              mountPath: /app/certs
+              readOnly: true
+
+          livenessProbe:
+            httpGet:
+              path: /api/v1/actuator/health
+              port: {{ .Values.userTracking.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 30
+
+          readinessProbe:
+            httpGet:
+              path: /api/v1/actuator/health
+              port: {{ .Values.userTracking.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 15
+
+      volumes:
+        - name: truststore
+          secret:
+            secretName: {{ .Release.Name }}-certs

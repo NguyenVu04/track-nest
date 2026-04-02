@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realm-config
+data:
+  public-dev.json: |
+    {{ .Files.Get "realms/public-dev.json" | nindent 4 }}
+
+  restricted-dev.json: |
+    {{ .Files.Get "realms/restricted-dev.json" | nindent 4 }}

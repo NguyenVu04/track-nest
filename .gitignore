@@ -1,6 +1,5 @@
-helm/charts
-helm/Chart.lock
 .idea/
 .vscode/
 certs/
 /**/*/*.prod.*
+/**/*/secrets.yaml
