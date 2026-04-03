@@ -23,6 +23,8 @@ spec:
             - containerPort: {{ .Values.emergencyOps.port }}
 
           env:
+            - name: ALLOWED_ORIGINS
+              value: "{{ .Values.origins }}"
             # --- Pod identity ---
             - name: POD_NAME
               valueFrom:
@@ -111,15 +113,15 @@ spec:
 
           livenessProbe:
             httpGet:
-              path: /api/v1/actuator/health
-              port: {{ .Values.emergencyOps.port }}
+              path: /actuator/health/liveness
+              port: 8081
             initialDelaySeconds: 15
             periodSeconds: 30
 
           readinessProbe:
             httpGet:
-              path: /api/v1/actuator/health
-              port: {{ .Values.emergencyOps.port }}
+              path: /actuator/health/readiness
+              port: 8081
             initialDelaySeconds: 10
             periodSeconds: 15
 
