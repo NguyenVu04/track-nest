@@ -38,7 +38,7 @@ emergencyOps:
     name: neondb
 
   keycloak:
-    authServerUrl: http://keycloak:8080
+    authServerUrl: http://{{ .Release.Name }}-keycloak:8080/auth
     clientId: emergency-operations
     realm: public-dev
 
