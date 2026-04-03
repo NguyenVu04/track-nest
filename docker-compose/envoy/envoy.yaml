@@ -21,14 +21,14 @@ static_resources:
                 route:
                   cluster: emergency_ops_rest
                   timeout: 0s
-                  prefix_rewrite: "/api/v1"
+                  prefix_rewrite: "/"
                   upgrade_configs:
                   - upgrade_type: websocket
               - match: { prefix: "/criminal-reports" }
                 route:
                   cluster: criminal_reports_rest
                   timeout: 0s
-                  prefix_rewrite: "/api/v1"
+                  prefix_rewrite: "/"
               - match: { prefix: "/" }
                 route:
                   cluster: user_tracking_grpc

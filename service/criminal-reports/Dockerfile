@@ -9,7 +9,7 @@ RUN gradle build --no-daemon -x test
 FROM eclipse-temurin:25-jre-jammy
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -17,5 +17,7 @@ WORKDIR /app
 COPY --from=builder /app/build/libs/criminal-reports-1.0.0.jar app.jar
 
 EXPOSE 38080
+
+EXPOSE 8081
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
