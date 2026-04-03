@@ -3,14 +3,10 @@ kind: Service
 metadata:
   name: envoy
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: envoy
   ports:
     - name: api
-      port: 8800
+      port: 80
       targetPort: {{ .Values.envoy.port }}
-
-    - name: admin
-      port: 9901
-      targetPort: {{ .Values.envoy.adminPort }}

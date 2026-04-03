@@ -30,12 +30,12 @@ spec:
             httpGet:
               path: /
               port: {{ .Values.web.port }}
-            initialDelaySeconds: 15
+            initialDelaySeconds: 60
             periodSeconds: 30
 
           readinessProbe:
             httpGet:
               path: /
               port: {{ .Values.web.port }}
-            initialDelaySeconds: 10
-            periodSeconds: 15
+            initialDelaySeconds: 60
+            periodSeconds: 30

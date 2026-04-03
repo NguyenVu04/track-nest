@@ -82,14 +82,14 @@ spec:
             httpGet:
                 path: /auth/health/ready
                 port: {{ .Values.keycloak.managementPort }}
-            initialDelaySeconds: 30
-            periodSeconds: 15
+            initialDelaySeconds: 60
+            periodSeconds: 30
 
           livenessProbe:
             httpGet:
               path: /auth/health/live
               port: {{ .Values.keycloak.managementPort }}
-            initialDelaySeconds: 30
+            initialDelaySeconds: 60
             periodSeconds: 30
 
       volumes:
