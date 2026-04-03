@@ -153,6 +153,13 @@ services:
       - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
     networks:
       - track_nest
+    depends_on:
+      criminal_reports:
+        condition: service_healthy
+      emergency_ops:
+        condition: service_healthy
+      user_tracking:
+        condition: service_healthy
 
   nginx:
     image: nginx:stable-alpine
@@ -180,11 +187,12 @@ services:
       DB_HOST: "criminal_reports_postgres"
       DB_PORT: 5432
       DB_NAME: "tracknest"
-      DB_USER: "tracknestadmin"
+      DB_USERNAME: "tracknestadmin"
       DB_PASSWORD: "tracknestadmin"
       MINIO_ENDPOINT: "http://minio:9000"
       MINIO_ACCESS_KEY: "minioadmin"
       MINIO_SECRET_KEY: "minioadmin"
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:38080"
     networks:
       - track_nest
       - default
@@ -192,8 +200,8 @@ services:
       - criminal_reports_postgres
       - minio
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health/readiness || exit 1"]
+      interval: 20s
       timeout: 10s
       retries: 3
       start_period: 10s
@@ -211,19 +219,20 @@ services:
       DB_HOST: "emergency_ops_postgres"
       DB_PORT: 5432
       DB_NAME: "tracknest"
-      DB_USER: "tracknestadmin"
+      DB_USERNAME: "tracknestadmin"
       DB_PASSWORD: "tracknestadmin"
-      KEYCLOAK_AUTH_SERVER_URL: "http://keycloak:8080"
+      KEYCLOAK_AUTH_SERVER_URL: "http://keycloak:8080/auth"
       KEYCLOAK_CLIENT_ID: "emergency-operations"
       KEYCLOAK_CLIENT_SECRET: "2Bu3haFOwsOW7ONprnSGnmVoU8SvHLmy"
       KEYCLOAK_PUBLIC_REALM: "public-dev"
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:28080"
     networks:
       - track_nest
     depends_on:
       - emergency_ops_postgres
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health/readiness || exit 1"]
+      interval: 20s
       timeout: 10s
       retries: 3
       start_period: 10s
@@ -241,15 +250,16 @@ services:
       DB_HOST: "user_tracking_postgres"
       DB_PORT: 5432
       DB_NAME: "tracknest"
-      DB_USER: "tracknestadmin"
+      DB_USERNAME: "tracknestadmin"
       DB_PASSWORD: "tracknestadmin"
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:18080"
     networks:
       - track_nest
     depends_on:
       - user_tracking_postgres
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health/readiness || exit 1"]
+      interval: 20s
       timeout: 10s
       retries: 3
       start_period: 10s
@@ -275,7 +285,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 30s
 
   emergency_ops_postgres:
     image: timescale/timescaledb-ha:pg17

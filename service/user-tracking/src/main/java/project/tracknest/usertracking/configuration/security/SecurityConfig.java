@@ -1,4 +1,4 @@
-package project.tracknest.emergencyops.configuration.security;
+package project.tracknest.usertracking.configuration.security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -21,27 +21,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final SecurityProperties securityProperties;
-    private final SecurityEmergencyServiceRepository serviceRepository;
+    private final SecurityUserRepository userRepository;
 
     @Bean
     protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .addFilterAfter(new KeycloakFilter(serviceRepository), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new KeycloakFilter(userRepository), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**")
-                        .permitAll()
-                        .requestMatchers("/emergency-request-manager/**")
-                        .hasRole("EMERGENCY-SERVICE")
-                        .requestMatchers("/emergency-request-receiver/**")
-                        .hasRole("USER")
-                        .requestMatchers("/emergency-responder/**")
-                        .hasRole("EMERGENCY-SERVICE")
-                        .requestMatchers("/safe-zone-manager/**")
-                        .hasRole("EMERGENCY-SERVICE")
-                        .requestMatchers("/safe-zone-locator/**")
-                        .hasRole("USER")
-                        .requestMatchers("/ws/**")
-                        .hasRole("EMERGENCY-SERVICE")
                         .requestMatchers("/actuator/**")
                         .permitAll()
                         .anyRequest()
