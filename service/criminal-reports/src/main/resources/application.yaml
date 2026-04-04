@@ -71,6 +71,7 @@ app:
       - POST
       - PUT
       - DELETE
+      - OPTIONS
   minio:
     endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
     credentials:
