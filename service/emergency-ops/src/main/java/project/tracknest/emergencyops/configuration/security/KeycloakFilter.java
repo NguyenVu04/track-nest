@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.filter.OncePerRequestFilter;
 import project.tracknest.emergencyops.configuration.security.datatype.KeycloakAuthorizationHeader;
 import project.tracknest.emergencyops.core.datatype.KeycloakPrincipal;
@@ -36,6 +37,7 @@ public class KeycloakFilter extends OncePerRequestFilter {
     }
 
     @Override
+    @Transactional
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -68,26 +70,33 @@ public class KeycloakFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(principal, authorizationHeader, roles);
                 authentication.setDetails(userDetails);
 
-                Optional<EmergencyService> serviceOpt = serviceRepository.findById(decoded.getUserId());
-                if (serviceOpt.isEmpty()) {
-                    log.warn("No emergency service found for ID: {}", decoded.getUserId());
+                if (decoded.getRealmAccess()
+                        .getRoles()
+                        .contains("EMERGENCY-SERVICE")
+                ) {
 
-                    EmergencyService service = EmergencyService
-                            .builder()
-                            .id(decoded.getUserId())
-                            .username(decoded.getUsername())
-                            .phoneNumber(decoded.getPhoneNumber())
-                            .build();
-                    serviceRepository.save(service);
-                } else {
-                    EmergencyService service = serviceOpt.get();
-                    if (!service.getUsername().equals(decoded.getUsername()) ||
-                            !service.getPhoneNumber().equals(decoded.getPhoneNumber())) {
-                        log.info("Updating emergency service info for ID: {}", decoded.getUserId());
+                    Optional<EmergencyService> serviceOpt = serviceRepository
+                            .findById(decoded.getUserId());
+                    if (serviceOpt.isEmpty()) {
+                        log.warn("No emergency service found for ID: {}", decoded.getUserId());
 
-                        service.setUsername(decoded.getUsername());
-                        service.setPhoneNumber(decoded.getPhoneNumber());
+                        EmergencyService service = EmergencyService
+                                .builder()
+                                .id(decoded.getUserId())
+                                .username(decoded.getUsername())
+                                .phoneNumber(decoded.getPhoneNumber())
+                                .build();
                         serviceRepository.save(service);
+                    } else {
+                        EmergencyService service = serviceOpt.get();
+                        if (!service.getUsername().equals(decoded.getUsername()) ||
+                                !service.getPhoneNumber().equals(decoded.getPhoneNumber())) {
+                            log.info("Updating emergency service info for ID: {}", decoded.getUserId());
+
+                            service.setUsername(decoded.getUsername());
+                            service.setPhoneNumber(decoded.getPhoneNumber());
+                            serviceRepository.save(service);
+                        }
                     }
                 }
 
