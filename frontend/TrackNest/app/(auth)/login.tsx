@@ -1,6 +1,6 @@
 import { login as loginLang } from "@/constant/languages";
 import {
-  keycloakDiscovery,
+  getKeycloakDiscovery,
   StoredTokens,
   useAuth,
   clientId,
@@ -31,8 +31,22 @@ export default function LoginScreen() {
   const { isAuthenticated, isLoading: isCheckingAuth, saveTokens } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [discovery, setDiscovery] = useState<{
+    authorizationEndpoint: string;
+    tokenEndpoint: string;
+    revocationEndpoint: string;
+  } | null>(null);
 
   const redirectUri = makeRedirectUri({ scheme: "tracknest" });
+
+  // Initialize Keycloak discovery
+  useEffect(() => {
+    const initDiscovery = async () => {
+      const discoveryResult = await getKeycloakDiscovery();
+      setDiscovery(discoveryResult);
+    };
+    initDiscovery();
+  }, []);
 
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -42,13 +56,13 @@ export default function LoginScreen() {
       responseType: ResponseType.Code,
       usePKCE: true,
     },
-    keycloakDiscovery,
+    discovery,
   );
 
   // Redirect to map if already authenticated
   useEffect(() => {
     if (!isCheckingAuth && isAuthenticated) {
-      router.replace("/(tabs)/map");
+      router.replace("/map");
     }
   }, [isCheckingAuth, isAuthenticated, router]);
 
@@ -56,6 +70,7 @@ export default function LoginScreen() {
     async (code: string) => {
       setIsLoading(true);
       try {
+        const discoveryConfig = await getKeycloakDiscovery();
         const tokenResult = await exchangeCodeAsync(
           {
             clientId: clientId,
@@ -65,7 +80,7 @@ export default function LoginScreen() {
               code_verifier: request?.codeVerifier || "",
             },
           },
-          keycloakDiscovery,
+          discoveryConfig,
         );
 
         console.log("Token exchange successful");
@@ -84,7 +99,7 @@ export default function LoginScreen() {
         await saveTokens(tokens);
 
         // Navigate to the map screen
-        router.replace("/(tabs)/map");
+        router.replace("/map");
       } catch (error) {
         console.error("Token exchange error:", error);
         Alert.alert(t.loginFailedTitle, t.loginFailedMessage, [

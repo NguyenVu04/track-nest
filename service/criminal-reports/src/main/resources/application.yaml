@@ -67,9 +67,12 @@ app:
       - DELETE
   minio:
     endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
+    public-url: ${MINIO_PUBLIC_URL:http://localhost:9000}
     credentials:
       access-key: ${MINIO_ACCESS_KEY:minioadmin}
       secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    buckets:
+      criminal-reports: criminal-reports
   server-name: ${POD_NAME:criminal-reports}
   server-uid: ${$POD_UID:0}
 
