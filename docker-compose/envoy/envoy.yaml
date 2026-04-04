@@ -74,16 +74,16 @@ static_resources:
                     - provider_name: keycloak_public
                     - provider_name: keycloak_restricted
               - match:
+                  prefix: "/criminal-reports/swagger-ui"
+              - match:
+                  prefix: "/criminal-reports/api-docs"
+              - match:
                   prefix: "/criminal-reports/"
                 requires:
                   requires_any:
                     requirements:
                     - provider_name: keycloak_public
                     - provider_name: keycloak_restricted
-              - match:
-                  prefix: "/criminal-reports/swagger-ui"
-              - match:
-                  prefix: "/criminal-reports/api-docs"
               - match:
                   prefix: "/"
                 requires:

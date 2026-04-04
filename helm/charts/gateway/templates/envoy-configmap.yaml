@@ -29,7 +29,6 @@ data:
                               route:
                                 cluster: emergency_ops_rest
                                 timeout: 0s
-                                prefix_rewrite: "/"
                                 upgrade_configs:
                                   - upgrade_type: websocket
 
@@ -38,7 +37,6 @@ data:
                               route:
                                 cluster: criminal_reports_rest
                                 timeout: 0s
-                                prefix_rewrite: "/"
 
                             - match:
                                 prefix: "/"
