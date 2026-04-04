@@ -81,6 +81,46 @@ const getRealm = (role: UserRole): string => {
 };
 
 export const authService = {
+  /**
+   * Exchange authorization code for tokens using OAuth 2.0 Authorization Code flow
+   */
+  exchangeCodeForToken: async (
+    code: string,
+    redirectUri: string
+  ): Promise<LoginResponse> => {
+    const realm = USER_REALM;
+    const clientId = "tracknest";
+    const clientSecret = getClientSecret("user");
+
+    const params = new URLSearchParams({
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: redirectUri,
+      client_id: clientId,
+      client_secret: clientSecret,
+    });
+
+    const response = await axios.post<LoginResponse>(
+      getTokenUrl(realm),
+      params,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("access_token", response.data.access_token);
+      localStorage.setItem("refresh_token", response.data.refresh_token);
+      localStorage.setItem("token_type", response.data.token_type);
+      localStorage.setItem("user_role", "user");
+      localStorage.setItem("user_realm", realm);
+    }
+
+    return response.data;
+  },
+
   login: async (
     credentials: LoginCredentials,
     role: UserRole = "user"
@@ -116,14 +156,21 @@ export const authService = {
   },
 
   loginWithToken: async (
-    accessToken: string,
+    accessToken?: string,
     role: UserRole = "user"
   ): Promise<KeycloakUserInfo> => {
-    const realm = getRealm(role);
+    const token = accessToken || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
+    if (!token) {
+      throw new Error("No access token available");
+    }
+    
+    const realm = typeof window !== "undefined" 
+      ? localStorage.getItem("user_realm") || getRealm(role)
+      : getRealm(role);
     
     const response = await axios.get<KeycloakUserInfo>(getUserInfoUrl(realm), {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -218,10 +265,6 @@ export const authService = {
   },
 
   getUserInfo: async (): Promise<KeycloakUserInfo | null> => {
-    const token = authService.getAccessToken();
-    if (!token) return null;
-
-    const role = authService.getUserRole() || "user";
-    return authService.loginWithToken(token, role);
+    return authService.loginWithToken(undefined, "user");
   },
 };
