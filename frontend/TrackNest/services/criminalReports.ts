@@ -1,6 +1,7 @@
 import { getBaseUrl } from "@/utils";
 import { getAuthMetadata } from "@/utils/auth";
 import axios from "axios";
+import { minioService } from "./mediaUpload";
 
 // Crime Report Types (matching backend Java models)
 export interface Location {
@@ -310,4 +311,74 @@ export function getSeverityColor(severity: number): string {
   if (severity >= 4) return "#e74c3c"; // danger
   if (severity >= 2) return "#f39c12"; // warn
   return "#27ae60"; // success
+}
+
+/**
+ * Convert UI severity string to number (1-5)
+ */
+export function severityToNumber(severity: "Low" | "Medium" | "High"): number {
+  switch (severity) {
+    case "High": return 5;
+    case "Medium": return 3;
+    case "Low": return 1;
+    default: return 3;
+  }
+}
+
+/**
+ * Create a crime report from UI form
+ * Handles image uploads to MinIO first, then creates the report
+ */
+export async function createCrimeReport(data: {
+  title: string;
+  description: string;
+  address: string;
+  severity: "Low" | "Medium" | "High";
+  latitude: number;
+  longitude: number;
+  images: string[];
+}): Promise<CrimeReport> {
+  // Upload images first if any
+  let contentWithImages = data.description;
+  
+  if (data.images && data.images.length > 0) {
+    const uploadedUrls: string[] = [];
+    
+    for (const imageUri of data.images) {
+      try {
+        const filename = `crime_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+        const result = await minioService.uploadFile({
+          uri: imageUri,
+          filename,
+          type: "image/jpeg",
+        });
+        uploadedUrls.push(result.url);
+      } catch (error) {
+        console.warn("Failed to upload image:", error);
+      }
+    }
+    
+    // Append image URLs to content
+    if (uploadedUrls.length > 0) {
+      contentWithImages = `${data.description}\n\nImages: ${uploadedUrls.join(", ")}`;
+    }
+  }
+  
+  // Create the report
+  const reportData: CreateCrimeReportInput = {
+    title: data.title,
+    content: contentWithImages,
+    severity: severityToNumber(data.severity),
+    latitude: data.latitude,
+    longitude: data.longitude,
+    numberOfVictims: 1,
+    numberOfOffenders: 1,
+  };
+  
+  const createdReport = await criminalReportsService.createCrimeReport(reportData);
+  
+  // Optionally publish immediately (depends on requirements)
+  // await criminalReportsService.publishCrimeReport(createdReport.id);
+  
+  return createdReport;
 }

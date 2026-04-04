@@ -10,8 +10,12 @@ type Props = {
   onZoomOut?: (() => void) | null;
   onGeneralModalPress?: (() => void) | null;
   onMapTypePress?: (() => void) | null;
+  onToggleHeatmap?: (() => void) | null;
+  onTogglePOIs?: (() => void) | null;
   style?: object;
   mapType?: MapType;
+  showHeatmap?: boolean;
+  showPOIs?: boolean;
 };
 
 export default function MapControls({
@@ -20,8 +24,12 @@ export default function MapControls({
   onZoomOut,
   onGeneralModalPress,
   onMapTypePress,
+  onToggleHeatmap,
+  onTogglePOIs,
   style,
   mapType = "standard",
+  showHeatmap = false,
+  showPOIs = true,
 }: Props) {
   const labelByType: Partial<Record<MapType, string>> = {
     standard: "S",
@@ -36,6 +44,20 @@ export default function MapControls({
   return (
     <View style={[styles.fabColumn, style]}>
       {onGeneralModalPress && <Fab icon="menu" onPress={onGeneralModalPress} />}
+      {onToggleHeatmap && (
+        <Fab 
+          icon={showHeatmap ? "flame" : "flame-outline"} 
+          onPress={onToggleHeatmap}
+          color={showHeatmap ? "#e74c3c" : "#757575"}
+        />
+      )}
+      {onTogglePOIs && (
+        <Fab 
+          icon={showPOIs ? "business" : "business-outline"} 
+          onPress={onTogglePOIs}
+          color={showPOIs ? "#74becb" : "#757575"}
+        />
+      )}
       {onCenter && <Fab icon="navigate-outline" onPress={onCenter} />}
       {onMapTypePress && (
         <Fab onPress={onMapTypePress}>
