@@ -17,13 +17,15 @@ spring:
         spring:
           json:
             trusted:
-              packages: project.tracknest.usertracking.core.datatype
-          use:
-            type:
-              headers: false
+              packages: project.tracknest.*
+            use:
+              type:
+                headers: false
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
     listener:
       missing-topics-fatal: false
   data:
