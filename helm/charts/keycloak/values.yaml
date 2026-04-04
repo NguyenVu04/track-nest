@@ -5,7 +5,7 @@ keycloak:
 
   image:
     repository: nguyenvu04/tracknest-keycloak
-    tag: "v1.0"
+    tag: "v1.1"
 
   database:
     url: jdbc:postgresql://ep-frosty-thunder-a16w6tab-pooler.ap-southeast-1.aws.neon.tech:5432/neondb

@@ -4,4 +4,4 @@ web:
 
   image:
     repository: nguyenvu04/tracknest-web
-    tag: "v1.0"
+    tag: "v1.1"

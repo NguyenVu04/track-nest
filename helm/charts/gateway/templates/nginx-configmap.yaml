@@ -25,10 +25,6 @@ data:
             server keycloak:8080;
         }
 
-        upstream envoy {
-            server envoy:8800;
-        }
-
         server {
             listen 80;
             server_name _;
@@ -58,13 +54,5 @@ data:
                 proxy_set_header X-Forwarded-Port $server_port;
             }
 
-            # gRPC / API via Envoy
-            location /grpc/ {
-                proxy_pass http://envoy/;
-                proxy_http_version 1.1;
-
-                proxy_set_header Host $host;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            }
         }
     }

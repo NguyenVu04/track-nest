@@ -25,7 +25,7 @@ data:
                           domains: ["*"]
                           routes:
                             - match:
-                                prefix: "/emergency-ops"
+                                prefix: "/emergency-ops/"
                               route:
                                 cluster: emergency_ops_rest
                                 timeout: 0s
@@ -34,7 +34,7 @@ data:
                                   - upgrade_type: websocket
 
                             - match:
-                                prefix: "/criminal-reports"
+                                prefix: "/criminal-reports/"
                               route:
                                 cluster: criminal_reports_rest
                                 timeout: 0s
@@ -59,7 +59,7 @@ data:
                               audiences: ["account"]
                               remote_jwks:
                                 http_uri:
-                                  uri: "http://{{ .Release.Name }}-keycloak:8080/auth/realms/public-dev/protocol/openid-connect/certs"
+                                  uri: "http://keycloak:8080/auth/realms/public-dev/protocol/openid-connect/certs"
                                   cluster: keycloak_jwks
                                   timeout: 5s
                                 cache_duration: 600s
@@ -70,7 +70,7 @@ data:
                               audiences: ["account"]
                               remote_jwks:
                                 http_uri:
-                                  uri: "http://{{ .Release.Name }}-keycloak:8080/auth/realms/restricted-dev/protocol/openid-connect/certs"
+                                  uri: "http://keycloak:8080/auth/realms/restricted-dev/protocol/openid-connect/certs"
                                   cluster: keycloak_jwks
                                   timeout: 5s
                                 cache_duration: 600s
@@ -79,7 +79,13 @@ data:
 
                           rules:
                             - match:
-                                prefix: "/emergency-ops"
+                                prefix: "/emergency-ops/swagger-ui"
+
+                            - match:
+                                prefix: "/emergency-ops/api-docs"
+                                
+                            - match:
+                                prefix: "/emergency-ops/"
                               requires:
                                 requires_any:
                                   requirements:
@@ -87,7 +93,13 @@ data:
                                     - provider_name: keycloak_restricted
 
                             - match:
-                                prefix: "/criminal-reports"
+                                prefix: "/criminal-reports/swagger-ui"
+
+                            - match:
+                                prefix: "/criminal-reports/api-docs"
+
+                            - match:
+                                prefix: "/criminal-reports/"
                               requires:
                                 requires_any:
                                   requirements:
