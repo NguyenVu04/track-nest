@@ -28,11 +28,19 @@ function formatTimeAgo(ms: number): string {
 type Props = {
   selectedCircle: FamilyCircle | null;
   handleFamilyCircleModalPress: () => void;
+  onToggleHeatmap?: () => void;
+  onTogglePOIs?: () => void;
+  showHeatmap?: boolean;
+  showPOIs?: boolean;
 };
 
 export default function MapHeader({
   selectedCircle,
   handleFamilyCircleModalPress,
+  onToggleHeatmap,
+  onTogglePOIs,
+  showHeatmap = false,
+  showPOIs = true,
 }: Props) {
   const t = useTranslation(mapHeaderLang);
   const { riskLevel, crimeCount, isHighRiskZone } = usePOIAnalytics();
@@ -132,6 +140,31 @@ export default function MapHeader({
               </Text>
             </View>
           )}
+          
+          {/* Toggle Crime Heatmap */}
+          <Pressable
+            style={[styles.iconButton, showHeatmap && { backgroundColor: "#e74c3c20" }]}
+            onPress={onToggleHeatmap}
+          >
+            <Ionicons 
+              name={showHeatmap ? "flame" : "flame-outline"} 
+              size={22} 
+              color={showHeatmap ? "#e74c3c" : "#757575"} 
+            />
+          </Pressable>
+          
+          {/* Toggle POIs */}
+          <Pressable
+            style={[styles.iconButton, !showPOIs && { backgroundColor: "#75757520" }]}
+            onPress={onTogglePOIs}
+          >
+            <Ionicons 
+              name={showPOIs ? "business" : "business-outline"} 
+              size={22} 
+              color={showPOIs ? "#74becb" : "#757575"} 
+            />
+          </Pressable>
+          
           <Pressable
             style={styles.iconButton}
             onPress={handleOpenNotifications}

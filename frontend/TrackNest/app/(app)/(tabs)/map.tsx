@@ -38,6 +38,7 @@ import { getMockFollowersForCircle } from "@/constant/mockFamilyCircles";
 import { MOCK_SAFE_ZONES } from "@/constant/mockSafeZones";
 import { FamilyCircle, Follower } from "@/constant/types";
 import { useMapContext } from "@/contexts/MapContext";
+import { usePOIAnalytics } from "@/contexts/POIAnalyticsContext";
 import { useTracking } from "@/contexts/TrackingContext";
 import { useAddressFromLocation } from "@/hooks/useAddressFromLocation";
 import useDeviceLocation from "@/hooks/useDeviceLocation";
@@ -66,6 +67,8 @@ export default function MapScreen() {
   // State declarations
   // ====================
   const [isMapReady, setIsMapReady] = useState(false);
+  const [showCrimeHeatmap, setShowCrimeHeatmap] = useState(false);
+  const [showPOIs, setShowPOIs] = useState(true);
 
   // ====================
   // Ref declarations
@@ -86,6 +89,7 @@ export default function MapScreen() {
   const { height: screenHeight } = useWindowDimensions();
   const { mapType, setMapType } = useMapContext();
   const { tracking, shareLocation } = useTracking();
+  const { crimeHeatmapPoints, loadCrimeHeatmap, nearbyPOIs, getPOIColor } = usePOIAnalytics();
   const { circles, selectedCircle, selectCircle, refreshCircles } =
     useFamilyCircle();
   const t = useTranslation(mapLang);
@@ -258,6 +262,13 @@ export default function MapScreen() {
     }, 500);
   }, [fadeAnim]);
 
+  // Load crime heatmap when toggled on
+  useEffect(() => {
+    if (showCrimeHeatmap && location) {
+      loadCrimeHeatmap(location.latitude, location.longitude);
+    }
+  }, [showCrimeHeatmap, location, loadCrimeHeatmap]);
+
   const generalInfoRenderItem = useCallback(
     ({ item }: { item: Follower }) => (
       <Pressable
@@ -329,6 +340,10 @@ export default function MapScreen() {
         <MapHeader
           selectedCircle={selectedCircle}
           handleFamilyCircleModalPress={handleFamilyCircleModalPress}
+          onToggleHeatmap={() => setShowCrimeHeatmap(!showCrimeHeatmap)}
+          onTogglePOIs={() => setShowPOIs(!showPOIs)}
+          showHeatmap={showCrimeHeatmap}
+          showPOIs={showPOIs}
         />
 
         <MapView
@@ -374,6 +389,41 @@ export default function MapScreen() {
               title={zone.name}
               description={`Safe radius: ${zone.radiusMeters}m`}
               pinColor="#2ecc71"
+            />
+          ))}
+
+          {/* POI Markers */}
+          {showPOIs && nearbyPOIs.map((poi) => (
+            <Marker
+              key={`poi-${poi.id}`}
+              coordinate={{
+                latitude: poi.latitude,
+                longitude: poi.longitude,
+              }}
+              title={poi.name}
+              description={poi.description || poi.category}
+              pinColor={getPOIColor(poi.category)}
+            />
+          ))}
+
+          {/* Crime Heatmap Circles */}
+          {showCrimeHeatmap && crimeHeatmapPoints.map((crime) => (
+            <Circle
+              key={`crime-${crime.id}`}
+              center={{
+                latitude: crime.latitude,
+                longitude: crime.longitude,
+              }}
+              radius={100 + (crime.severity * 30)}
+              strokeColor={crime.severity >= 4 ? "#e74c3c" : crime.severity >= 2 ? "#f39c12" : "#27ae60"}
+              fillColor={
+                crime.severity >= 4 
+                  ? "rgba(231, 76, 60, 0.3)" 
+                  : crime.severity >= 2 
+                    ? "rgba(243, 156, 18, 0.2)" 
+                    : "rgba(39, 174, 96, 0.15)"
+              }
+              strokeWidth={2}
             />
           ))}
 
