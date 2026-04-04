@@ -1102,7 +1102,7 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
-    "redirectUris" : [ "tracknest://*", "exp://*" ],
+    "redirectUris" : [ "tracknest://*", "exp://*", "http://tracknestapp.org/*", "http://api.tracknestapp.org/*", "https://tracknestapp.org/*", "https://api.tracknestapp.org/*" ],
     "webOrigins" : [ "+" ],
     "notBefore" : 0,
     "bearerOnly" : false,
