@@ -1,9 +1,12 @@
 import axios from "axios";
 
-const KEYCLOAK_BASE_URL = process.env.NEXT_PUBLIC_KEYCLOAK_URL || "http://localhost:8080";
-const USER_REALM = process.env.NEXT_PUBLIC_USER_REALM || "tracknest-user";
-const REPORTER_REALM = process.env.NEXT_PUBLIC_REPORTER_REALM || "tracknest-reporter";
-const EMERGENCY_REALM = process.env.NEXT_PUBLIC_EMERGENCY_REALM || "tracknest-emergency";
+const KEYCLOAK_BASE_URL =
+  process.env.NEXT_PUBLIC_KEYCLOAK_URL || "http://localhost/auth";
+const USER_REALM = process.env.NEXT_PUBLIC_USER_REALM || "public-dev";
+const REPORTER_REALM =
+  process.env.NEXT_PUBLIC_REPORTER_REALM || "tracknest-reporter";
+const EMERGENCY_REALM =
+  process.env.NEXT_PUBLIC_EMERGENCY_REALM || "tracknest-emergency";
 
 export interface LoginResponse {
   access_token: string;
@@ -34,13 +37,13 @@ export interface KeycloakUserInfo {
   };
 }
 
-const getTokenUrl = (realm: string) => 
+const getTokenUrl = (realm: string) =>
   `${KEYCLOAK_BASE_URL}/realms/${realm}/protocol/openid-connect/token`;
 
-const getLogoutUrl = (realm: string) => 
+const getLogoutUrl = (realm: string) =>
   `${KEYCLOAK_BASE_URL}/realms/${realm}/protocol/openid-connect/logout`;
 
-const getUserInfoUrl = (realm: string) => 
+const getUserInfoUrl = (realm: string) =>
   `${KEYCLOAK_BASE_URL}/realms/${realm}/protocol/openid-connect/userinfo`;
 
 const getClientId = (role: UserRole): string => {
@@ -59,13 +62,20 @@ const getClientId = (role: UserRole): string => {
 const getClientSecret = (role: UserRole): string => {
   switch (role) {
     case "reporter":
-      return process.env.NEXT_PUBLIC_REPORTER_CLIENT_SECRET || "reporter-secret";
+      return (
+        process.env.NEXT_PUBLIC_REPORTER_CLIENT_SECRET || "reporter-secret"
+      );
     case "emergency_services":
-      return process.env.NEXT_PUBLIC_EMERGENCY_CLIENT_SECRET || "emergency-secret";
+      return (
+        process.env.NEXT_PUBLIC_EMERGENCY_CLIENT_SECRET || "emergency-secret"
+      );
     case "admin":
       return process.env.NEXT_PUBLIC_ADMIN_CLIENT_SECRET || "admin-secret";
     default:
-      return process.env.NEXT_PUBLIC_CLIENT_SECRET || "5YgzCDGJLO0uXBhkGMyeJjHE1CKUt4fJ";
+      return (
+        process.env.NEXT_PUBLIC_CLIENT_SECRET ||
+        "5YgzCDGJLO0uXBhkGMyeJjHE1CKUt4fJ"
+      );
   }
 };
 
@@ -86,7 +96,7 @@ export const authService = {
    */
   exchangeCodeForToken: async (
     code: string,
-    redirectUri: string
+    redirectUri: string,
   ): Promise<LoginResponse> => {
     const realm = USER_REALM;
     const clientId = "tracknest";
@@ -107,7 +117,7 @@ export const authService = {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-      }
+      },
     );
 
     if (typeof window !== "undefined") {
@@ -123,7 +133,7 @@ export const authService = {
 
   login: async (
     credentials: LoginCredentials,
-    role: UserRole = "user"
+    role: UserRole = "user",
   ): Promise<LoginResponse> => {
     const realm = getRealm(role);
     const clientId = getClientId(role);
@@ -138,11 +148,15 @@ export const authService = {
       scope: "openid profile email",
     });
 
-    const response = await axios.post<LoginResponse>(getTokenUrl(realm), params, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+    const response = await axios.post<LoginResponse>(
+      getTokenUrl(realm),
+      params,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
       },
-    });
+    );
 
     if (typeof window !== "undefined") {
       localStorage.setItem("access_token", response.data.access_token);
@@ -157,17 +171,22 @@ export const authService = {
 
   loginWithToken: async (
     accessToken?: string,
-    role: UserRole = "user"
+    role: UserRole = "user",
   ): Promise<KeycloakUserInfo> => {
-    const token = accessToken || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
+    const token =
+      accessToken ||
+      (typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null);
     if (!token) {
       throw new Error("No access token available");
     }
-    
-    const realm = typeof window !== "undefined" 
-      ? localStorage.getItem("user_realm") || getRealm(role)
-      : getRealm(role);
-    
+
+    const realm =
+      typeof window !== "undefined"
+        ? localStorage.getItem("user_realm") || getRealm(role)
+        : getRealm(role);
+
     const response = await axios.get<KeycloakUserInfo>(getUserInfoUrl(realm), {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -178,14 +197,20 @@ export const authService = {
   },
 
   refreshToken: async (refreshToken?: string): Promise<LoginResponse> => {
-    const storedRefreshToken = refreshToken || 
-      (typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null);
-    
+    const storedRefreshToken =
+      refreshToken ||
+      (typeof window !== "undefined"
+        ? localStorage.getItem("refresh_token")
+        : null);
+
     if (!storedRefreshToken) {
       throw new Error("No refresh token available");
     }
 
-    const role = (typeof window !== "undefined" ? localStorage.getItem("user_role") : "user") as UserRole || "user";
+    const role =
+      ((typeof window !== "undefined"
+        ? localStorage.getItem("user_role")
+        : "user") as UserRole) || "user";
     const clientId = getClientId(role);
     const clientSecret = getClientSecret(role);
 
@@ -196,11 +221,15 @@ export const authService = {
       client_secret: clientSecret,
     });
 
-    const response = await axios.post<LoginResponse>(getTokenUrl(getRealm(role)), params, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+    const response = await axios.post<LoginResponse>(
+      getTokenUrl(getRealm(role)),
+      params,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
       },
-    });
+    );
 
     if (typeof window !== "undefined") {
       localStorage.setItem("access_token", response.data.access_token);
@@ -211,8 +240,14 @@ export const authService = {
   },
 
   logout: async (): Promise<void> => {
-    const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null;
-    const role = (typeof window !== "undefined" ? localStorage.getItem("user_role") : "user") as UserRole || "user";
+    const refreshToken =
+      typeof window !== "undefined"
+        ? localStorage.getItem("refresh_token")
+        : null;
+    const role =
+      ((typeof window !== "undefined"
+        ? localStorage.getItem("user_role")
+        : "user") as UserRole) || "user";
     const clientId = getClientId(role);
     const clientSecret = getClientSecret(role);
 
