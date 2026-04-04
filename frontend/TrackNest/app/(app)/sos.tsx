@@ -1,4 +1,5 @@
 import { sos as sosLang } from "@/constant/languages";
+import { useEmergency } from "@/contexts/EmergencyContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { colors } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
@@ -34,6 +35,7 @@ export default function SosScreen() {
   const router = useRouter();
   const { autoActivate } = useLocalSearchParams<{ autoActivate?: string }>();
   const t = useTranslation(sosLang);
+  const { createEmergencyRequest } = useEmergency();
   const [countdown, setCountdown] = useState(10);
   const [isCancelled, setIsCancelled] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
@@ -62,20 +64,48 @@ export default function SosScreen() {
     return () => backHandler.remove();
   }, [t.sosNotificationChannel]);
 
-  const triggerEmergency = useCallback(() => {
+  const getTargetId = useCallback(() => {
+    // For now, use a default target ID
+    // In a full implementation, this would be selected from available family members
+    return "default-target-id";
+  }, []);
+
+  const triggerEmergency = useCallback(async () => {
     if (emergencyTriggeredRef.current) return;
     emergencyTriggeredRef.current = true;
 
-    // TODO: Implement actual emergency call logic
-    router.replace("/map");
-    Notifications.scheduleNotificationAsync({
-      content: {
-        title: t.emergencyActivatedTitle,
-        body: t.emergencyActivatedBody,
-      },
-      trigger: null,
-    });
-  }, [router, t]);
+    try {
+      // Create emergency request via backend API
+      const targetId = getTargetId();
+      await createEmergencyRequest(targetId);
+      
+      // Show success notification
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: t.emergencyActivatedTitle,
+          body: t.emergencyActivatedBody,
+        },
+        trigger: null,
+      });
+      
+      // Navigate back to map - emergency status will be visible
+      router.replace("/map");
+    } catch (error) {
+      console.error("Emergency request failed:", error);
+      
+      // Show error notification
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Emergency Request Failed",
+          body: "Please try again or call emergency services directly",
+        },
+        trigger: null,
+      });
+      
+      // Navigate back to map on error
+      router.replace("/map");
+    }
+  }, [router, t, createEmergencyRequest, getTargetId]);
 
   useEffect(() => {
     const shouldAutoActivate = autoActivate === "1" || autoActivate === "true";
