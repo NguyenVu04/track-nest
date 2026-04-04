@@ -70,7 +70,6 @@ public class KeycloakFilter extends OncePerRequestFilter {
 
     private KeycloakAuthorizationHeader decodeKeycloakauthorizationHeader(String authorizationHeader) {
         if (authorizationHeader == null || authorizationHeader.trim().isEmpty()) {
-            log.warn("Authorization header is missing or empty");
             return null;
         }
 
