@@ -66,6 +66,8 @@ management:
 
 server:
   port: 28080
+  servlet:
+    context-path: /emergency-ops
 
 app:
   kafka:

@@ -17,18 +17,16 @@ static_resources:
             - name: user_tracking_service
               domains: ["*"]
               routes:
-              - match: { prefix: "/emergency-ops" }
+              - match: { prefix: "/emergency-ops/" }
                 route:
                   cluster: emergency_ops_rest
                   timeout: 0s
-                  prefix_rewrite: "/"
                   upgrade_configs:
                   - upgrade_type: websocket
-              - match: { prefix: "/criminal-reports" }
+              - match: { prefix: "/criminal-reports/" }
                 route:
                   cluster: criminal_reports_rest
                   timeout: 0s
-                  prefix_rewrite: "/"
               - match: { prefix: "/" }
                 route:
                   cluster: user_tracking_grpc
@@ -65,19 +63,27 @@ static_resources:
                   payload_in_metadata: jwt_payload
               rules:
               - match:
-                  prefix: "/emergency-ops"
+                  prefix: "/emergency-ops/swagger-ui"
+              - match:
+                  prefix: "/emergency-ops/api-docs"
+              - match:
+                  prefix: "/emergency-ops/"
                 requires:
                   requires_any:
                     requirements:
                     - provider_name: keycloak_public
                     - provider_name: keycloak_restricted
               - match:
-                  prefix: "/criminal-reports"
+                  prefix: "/criminal-reports/"
                 requires:
                   requires_any:
                     requirements:
                     - provider_name: keycloak_public
                     - provider_name: keycloak_restricted
+              - match:
+                  prefix: "/criminal-reports/swagger-ui"
+              - match:
+                  prefix: "/criminal-reports/api-docs"
               - match:
                   prefix: "/"
                 requires:
