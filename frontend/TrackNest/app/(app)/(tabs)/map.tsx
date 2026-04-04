@@ -340,10 +340,6 @@ export default function MapScreen() {
         <MapHeader
           selectedCircle={selectedCircle}
           handleFamilyCircleModalPress={handleFamilyCircleModalPress}
-          onToggleHeatmap={() => setShowCrimeHeatmap(!showCrimeHeatmap)}
-          onTogglePOIs={() => setShowPOIs(!showPOIs)}
-          showHeatmap={showCrimeHeatmap}
-          showPOIs={showPOIs}
         />
 
         <MapView
@@ -460,7 +456,11 @@ export default function MapScreen() {
           onZoomOut={null}
           onGeneralModalPress={handleGeneralInfoModalPress}
           onMapTypePress={handleMapTypeModalPress}
+          onToggleHeatmap={() => setShowCrimeHeatmap(!showCrimeHeatmap)}
+          onTogglePOIs={() => setShowPOIs(!showPOIs)}
           mapType={mapType}
+          showHeatmap={showCrimeHeatmap}
+          showPOIs={showPOIs}
         />
       </View>
 

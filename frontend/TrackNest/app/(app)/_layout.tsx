@@ -92,6 +92,7 @@ export default function AppLayout() {
           <Stack.Screen name="crime-heatmap" />
           <Stack.Screen name="missing-detail" />
           <Stack.Screen name="report-detail" />
+          <Stack.Screen name="create-report" />
           <Stack.Screen
             name="sos"
             options={{
