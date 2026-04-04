@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import project.tracknest.usertracking.core.datatype.RiskNotificationMessage;
 import project.tracknest.usertracking.core.datatype.TrackingNotificationMessage;
 
+import java.util.Map;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -14,12 +16,14 @@ class NotificationTrigger {
     private final NotificationMessageConsumer service;
 
     @KafkaListener(topics = "${app.kafka.topics[2]}")
-    private void consumeTrackingNotificationMessage(TrackingNotificationMessage message) {
+    private void consumeTrackingNotificationMessage(Map<String, Object> messageMap) {
+        TrackingNotificationMessage message = TrackingNotificationMessage.from(messageMap);
         service.sendTrackingNotification(message);
     }
 
     @KafkaListener(topics = "${app.kafka.topics[3]}")
-    private void consumeRiskNotificationMessage(RiskNotificationMessage message) {
+    private void consumeRiskNotificationMessage(Map<String, Object> messageMap) {
+        RiskNotificationMessage message = RiskNotificationMessage.from(messageMap);
         service.sendRiskNotification(message);
     }
 }
