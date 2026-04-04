@@ -10,6 +10,7 @@ import { useDevMode } from "@/contexts/DevModeContext";
 import type { AppLanguage } from "@/contexts/LanguageContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useTracking } from "@/contexts/TrackingContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { uploadPendingLocations } from "@/services/locationUpload";
@@ -58,7 +59,8 @@ export default function SettingsScreen() {
   const { language, setLanguage } = useLanguage();
   const { logout, isGuestMode } = useAuth();
   const { tracking, shareLocation, setShareLocation } = useTracking();
-  const { profile, exportUserData } = useProfile();
+  const { profile, exportUserData, privacySettings, updatePrivacySetting } = useProfile();
+  const { guardians, voiceSettings, setVoiceEnabled, toggleCommand } = useSettings();
   const router = useRouter();
   const t = useTranslation(settingsLang);
 
@@ -388,6 +390,40 @@ export default function SettingsScreen() {
       onPress: handleDeleteAccount,
       disabled: isGuestMode,
     },
+    {
+      key: "guardianSettings",
+      title: "Guardian Settings",
+      subtitle: `${guardians.length} guardian(s) configured`,
+      icon: "people-outline",
+      onPress: () => {
+        const guardianList = guardians.map(g => `${g.name} (${g.role})`).join('\n');
+        Alert.alert(
+          "Guardian Settings",
+          guardians.length > 0 
+            ? `Configured Guardians:\n${guardianList}\n\nTo manage guardians, use the Family Circles feature in the app.`
+            : "No guardians configured.\n\nGuardians can be added through Family Circle management."
+        );
+      },
+    },
+    {
+      key: "voiceCommands",
+      title: "Voice Commands",
+      subtitle: voiceSettings.enabled ? "Enabled" : "Disabled",
+      icon: "mic-outline",
+      onPress: () => {
+        const enabledCommands = voiceSettings.commands.filter(c => c.enabled).map(c => c.command).join('\n');
+        Alert.alert(
+          "Voice Commands",
+          `Status: ${voiceSettings.enabled ? "Enabled" : "Disabled"}\n\nEnabled Commands:\n${enabledCommands || "None"}`,
+          [
+            { text: voiceSettings.enabled ? "Disable" : "Enable", onPress: () => setVoiceEnabled(!voiceSettings.enabled) },
+            { text: "OK" }
+          ]
+        );
+      },
+      switchValue: voiceSettings.enabled,
+      onSwitchValueChange: setVoiceEnabled,
+    },
   ];
 
   const mapsAndSafetyItems: SettingItem[] = [
@@ -433,7 +469,63 @@ export default function SettingsScreen() {
       title: t.privacyTitle,
       subtitle: t.privacySubtitle,
       icon: "shield-checkmark",
-      onPress: () => setShowPrivacyModal(true),
+      onPress: () => {
+        Alert.alert(
+          "Privacy Settings",
+          "Location Sharing:\n" +
+          `• Share with Family: ${privacySettings.shareLocationWithFamily ? "ON" : "OFF"}\n` +
+          `• Real-time Sharing: ${privacySettings.shareLocationInRealTime ? "ON" : "OFF"}\n` +
+          `• Location History: ${privacySettings.allowLocationHistory ? "ON" : "OFF"}\n\n` +
+          "Notifications:\n" +
+          `• Crime Alerts: ${privacySettings.allowCrimeNotifications ? "ON" : "OFF"}\n` +
+          `• Emergency Alerts: ${privacySettings.allowEmergencyAlerts ? "ON" : "OFF"}`
+        );
+      },
+    },
+    {
+      key: "shareLocationWithFamily",
+      title: "Share Location with Family",
+      subtitle: "Allow family members to see your location",
+      icon: "people",
+      onPress: () => {},
+      switchValue: privacySettings.shareLocationWithFamily,
+      onSwitchValueChange: (value: boolean) => updatePrivacySetting("shareLocationWithFamily", value),
+    },
+    {
+      key: "shareLocationInRealTime",
+      title: "Real-time Location",
+      subtitle: "Share location in real-time",
+      icon: "locate",
+      onPress: () => {},
+      switchValue: privacySettings.shareLocationInRealTime,
+      onSwitchValueChange: (value: boolean) => updatePrivacySetting("shareLocationInRealTime", value),
+    },
+    {
+      key: "allowLocationHistory",
+      title: "Location History",
+      subtitle: "Store location history data",
+      icon: "time-outline",
+      onPress: () => {},
+      switchValue: privacySettings.allowLocationHistory,
+      onSwitchValueChange: (value: boolean) => updatePrivacySetting("allowLocationHistory", value),
+    },
+    {
+      key: "allowCrimeNotifications",
+      title: "Crime Notifications",
+      subtitle: "Get alerts about nearby crimes",
+      icon: "warning-outline",
+      onPress: () => {},
+      switchValue: privacySettings.allowCrimeNotifications,
+      onSwitchValueChange: (value: boolean) => updatePrivacySetting("allowCrimeNotifications", value),
+    },
+    {
+      key: "allowEmergencyAlerts",
+      title: "Emergency Alerts",
+      subtitle: "Receive emergency notifications",
+      icon: "alert-circle-outline",
+      onPress: () => {},
+      switchValue: privacySettings.allowEmergencyAlerts,
+      onSwitchValueChange: (value: boolean) => updatePrivacySetting("allowEmergencyAlerts", value),
     },
     {
       key: "developerOptions",
