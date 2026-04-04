@@ -109,6 +109,7 @@ app:
       - POST
       - PUT
       - DELETE
+      - OPTIONS
   quartz:
     jobs:
       disconnectInactiveUsers:
