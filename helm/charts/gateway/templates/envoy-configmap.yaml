@@ -59,7 +59,7 @@ data:
                               audiences: ["account"]
                               remote_jwks:
                                 http_uri:
-                                  uri: "http://keycloak:8080/auth/realms/public-dev/protocol/openid-connect/certs"
+                                  uri: "http://{{ .Release.Name }}-keycloak:8080/auth/realms/public-dev/protocol/openid-connect/certs"
                                   cluster: keycloak_jwks
                                   timeout: 5s
                                 cache_duration: 600s
@@ -70,7 +70,7 @@ data:
                               audiences: ["account"]
                               remote_jwks:
                                 http_uri:
-                                  uri: "http://keycloak:8080/auth/realms/restricted-dev/protocol/openid-connect/certs"
+                                  uri: "http://{{ .Release.Name }}-keycloak:8080/auth/realms/restricted-dev/protocol/openid-connect/certs"
                                   cluster: keycloak_jwks
                                   timeout: 5s
                                 cache_duration: 600s

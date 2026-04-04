@@ -92,7 +92,7 @@ spec:
 
             # --- Keycloak ---
             - name: KEYCLOAK_AUTH_SERVER_URL
-              value: "{{ .Values.emergencyOps.keycloak.authServerUrl }}"
+              value: "http://{{ .Release.Name }}-keycloak:8080/auth"
 
             - name: KEYCLOAK_CLIENT_ID
               value: "{{ .Values.emergencyOps.keycloak.clientId }}"
