@@ -55,6 +55,8 @@ management:
 
 server:
   port: 38080
+  servlet:
+    context-path: /criminal-reports
 
 app:
   kafka:
