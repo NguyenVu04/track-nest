@@ -23,8 +23,14 @@ spec:
             - name: envoy-config
               mountPath: /etc/envoy
               readOnly: true
+            - name: cf-cert
+              mountPath: /etc/ssl
+              readOnly: true
 
       volumes:
         - name: envoy-config
           configMap:
             name: envoy-config
+        - name: cf-cert
+          secret:
+            secretName: cf-cert

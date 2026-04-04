@@ -22,8 +22,14 @@ spec:
             - name: nginx-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+            - name: cf-cert
+              mountPath: /etc/nginx/ssl
+              readOnly: true
 
       volumes:
         - name: nginx-config
           configMap:
             name: nginx-config
+        - name: cf-cert
+          secret:
+            secretName: cf-cert

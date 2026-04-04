@@ -6,13 +6,16 @@ metadata:
     app: keycloak
 spec:
   replicas: {{ .Values.keycloak.replicaCount }}
+
   selector:
     matchLabels:
       app: keycloak
+
   template:
     metadata:
       labels:
         app: keycloak
+
     spec:
       containers:
         - name: keycloak
@@ -20,15 +23,20 @@ spec:
           imagePullPolicy: IfNotPresent
 
           args:
-            - "start-dev"
+            - "start"
             - "--import-realm"
 
           ports:
-            - containerPort: {{ .Values.keycloak.port }}
-            - containerPort: {{ .Values.keycloak.managementPort }}
+            - name: http
+              containerPort: {{ .Values.keycloak.port }}
+
+            - name: management
+              containerPort: {{ .Values.keycloak.managementPort }}
 
           env:
-            # --- Admin ---
+            # ========================
+            # ADMIN
+            # ========================
             - name: KC_BOOTSTRAP_ADMIN_USERNAME
               value: "admin"
 
@@ -38,7 +46,9 @@ spec:
                   name: {{ .Release.Name }}-secrets
                   key: KEYCLOAK_ADMIN_PASSWORD
 
-            # --- Database ---
+            # ========================
+            # DATABASE
+            # ========================
             - name: KC_DB
               value: "postgres"
 
@@ -57,21 +67,44 @@ spec:
                   name: {{ .Release.Name }}-secrets
                   key: KEYCLOAK_DB_PASSWORD
 
-            # --- Settings ---
-            - name: KC_HOSTNAME_STRICT_HTTPS
+            # ========================
+            # 🔥 CRITICAL: HTTP MODE
+            # ========================
+            - name: KC_HTTP_ENABLED
+              value: "true"
+
+            # ========================
+            # 🔥 PROXY / HTTPS FIX
+            # ========================
+            - name: KC_PROXY
+              value: "edge"
+
+            - name: KC_PROXY_HEADERS
+              value: "xforwarded"
+
+            - name: KC_HOSTNAME
+              value: "tracknestapp.org"
+
+            - name: KC_HOSTNAME_STRICT
               value: "false"
 
+            - name: KC_HOSTNAME_STRICT_HTTPS
+              value: "true"
+
+            # ========================
+            # PATH
+            # ========================
+            - name: KC_HTTP_RELATIVE_PATH
+              value: "/auth"
+
+            # ========================
+            # OBSERVABILITY
+            # ========================
             - name: KC_HEALTH_ENABLED
               value: "true"
 
             - name: KC_METRICS_ENABLED
               value: "true"
-
-            - name: KC_HTTP_RELATIVE_PATH
-              value: "/auth"
-
-            - name: KC_PROXY
-              value: "edge"
 
           volumeMounts:
             - name: realm-config
@@ -80,17 +113,29 @@ spec:
 
           readinessProbe:
             httpGet:
-                path: /auth/health/ready
-                port: {{ .Values.keycloak.managementPort }}
+              path: /auth/health/ready
+              port: management
             initialDelaySeconds: 60
-            periodSeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
 
           livenessProbe:
             httpGet:
               path: /auth/health/live
-              port: {{ .Values.keycloak.managementPort }}
+              port: management
             initialDelaySeconds: 60
-            periodSeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
 
       volumes:
         - name: realm-config

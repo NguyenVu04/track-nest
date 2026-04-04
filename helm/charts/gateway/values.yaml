@@ -9,4 +9,4 @@ nginx:
   image:
     repository: nginx
     tag: stable-alpine
-  port: 80
+  port: 443
