@@ -22,6 +22,13 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const STORAGE_KEY = "auth_user";
 
+const mapRole = (role: string) => {
+  if (role === "reporter") return "Reporter" as const;
+  if (role === "emergency_services") return "Emergency Services" as const;
+  if (role === "admin") return "Admin" as const;
+  return "User" as const;
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,26 +36,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const storedUser = localStorage.getItem(STORAGE_KEY);
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-          
-          const token = authService.getAccessToken();
-          if (token) {
-            try {
-              const userInfo = await authService.getUserInfo();
-              if (userInfo) {
-                setUser({
-                  ...parsedUser,
-                  email: userInfo.email || parsedUser.email,
-                });
-              }
-            } catch {
-              console.warn("Could not refresh user info");
-            }
+        const authenticated = await authService.initKeycloak();
+
+        if (authenticated) {
+          const userInfo = await authService.getUserInfo();
+          if (userInfo) {
+            const role = authService.getUserRole() || "user";
+            const mappedUser = {
+              id: userInfo.sub,
+              username: userInfo.preferred_username || userInfo.name || "",
+              email: userInfo.email || "",
+              role: mapRole(role),
+              fullName: userInfo.name || userInfo.preferred_username || "",
+            };
+
+            setUser(mappedUser);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(mappedUser));
+            return;
           }
         }
+
+        setUser(null);
+        localStorage.removeItem(STORAGE_KEY);
       } catch (error) {
         console.error("Failed to restore user from localStorage:", error);
       } finally {
