@@ -65,11 +65,17 @@ const navigation = [
 
 interface AppSidebarProps {
   pathname: string;
+  userRole: string;
 }
 
 export const AppSidebar = memo(function AppSidebar({
   pathname,
+  userRole,
 }: AppSidebarProps) {
+  const visibleNavigation = navigation.filter(
+    (item) => !item.roles || item.roles.includes(userRole),
+  );
+
   return (
     <SidebarPrimitive collapsible="offcanvas">
       <SidebarHeader>
@@ -85,7 +91,7 @@ export const AppSidebar = memo(function AppSidebar({
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigation.map((item) => {
+              {visibleNavigation.map((item) => {
                 const Icon = item.icon;
                 const isActive =
                   pathname === item.href ||

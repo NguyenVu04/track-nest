@@ -1,6 +1,8 @@
 import axios from "axios";
+import { authService } from "./authService";
 
-const API_URL = process.env.NEXT_PUBLIC_EMERGENCY_OPS_API_URL || "http://localhost:28080";
+const API_URL =
+  process.env.NEXT_PUBLIC_EMERGENCY_OPS_API_URL || "http://localhost:28080";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -9,9 +11,16 @@ const api = axios.create({
   },
 });
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("access_token");
+    try {
+      await authService.refreshToken();
+    } catch {
+      // Keep fallback behavior for unauthenticated/public requests.
+    }
+
+    const token =
+      authService.getAccessToken() || localStorage.getItem("access_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -88,22 +97,22 @@ export interface PageResponse<T> {
 
 export const emergencyOpsService = {
   createEmergencyRequest: async (
-    data: CreateEmergencyRequestRequest
+    data: CreateEmergencyRequestRequest,
   ): Promise<EmergencyRequestResponse> => {
     const response = await api.post<EmergencyRequestResponse>(
       "/emergency-request-receiver/request",
-      data
+      data,
     );
     return response.data;
   },
 
   getUserEmergencyRequests: async (
     page: number = 0,
-    size: number = 10
+    size: number = 10,
   ): Promise<PageResponse<EmergencyRequestResponse>> => {
     const response = await api.get<PageResponse<EmergencyRequestResponse>>(
       "/emergency-request-receiver/requests",
-      { params: { page, size } }
+      { params: { page, size } },
     );
     return response.data;
   },
@@ -111,62 +120,62 @@ export const emergencyOpsService = {
   getEmergencyRequests: async (
     status?: string,
     page: number = 0,
-    size: number = 10
+    size: number = 10,
   ): Promise<PageResponse<EmergencyRequestResponse>> => {
     const response = await api.get<PageResponse<EmergencyRequestResponse>>(
       "/emergency-request-manager/requests",
-      { params: { status, page, size } }
+      { params: { status, page, size } },
     );
     return response.data;
   },
 
   acceptEmergencyRequest: async (
-    requestId: string
+    requestId: string,
   ): Promise<EmergencyRequestResponse> => {
     const response = await api.post<EmergencyRequestResponse>(
-      `/emergency-request-manager/requests/${requestId}/accept`
+      `/emergency-request-manager/requests/${requestId}/accept`,
     );
     return response.data;
   },
 
   rejectEmergencyRequest: async (
     requestId: string,
-    reason?: string
+    reason?: string,
   ): Promise<EmergencyRequestResponse> => {
     const response = await api.post<EmergencyRequestResponse>(
       `/emergency-request-manager/requests/${requestId}/reject`,
-      { reason }
+      { reason },
     );
     return response.data;
   },
 
   completeEmergencyRequest: async (
     requestId: string,
-    note?: string
+    note?: string,
   ): Promise<EmergencyRequestResponse> => {
     const response = await api.post<EmergencyRequestResponse>(
       `/emergency-request-manager/requests/${requestId}/complete`,
-      { note }
+      { note },
     );
     return response.data;
   },
 
   getEmergencyRequestCount: async (
-    status?: string
+    status?: string,
   ): Promise<EmergencyRequestCountResponse> => {
     const response = await api.get<EmergencyRequestCountResponse>(
       "/emergency-request-manager/requests/count",
-      { params: { status } }
+      { params: { status } },
     );
     return response.data;
   },
 
   createSafeZone: async (
-    data: CreateSafeZoneRequest
+    data: CreateSafeZoneRequest,
   ): Promise<SafeZoneResponse> => {
     const response = await api.post<SafeZoneResponse>(
       "/safe-zone-manager/zones",
-      data
+      data,
     );
     return response.data;
   },
@@ -174,22 +183,22 @@ export const emergencyOpsService = {
   getSafeZones: async (
     nameFilter?: string,
     page: number = 0,
-    size: number = 10
+    size: number = 10,
   ): Promise<PageResponse<SafeZoneResponse>> => {
     const response = await api.get<PageResponse<SafeZoneResponse>>(
       "/safe-zone-manager/zones",
-      { params: { nameFilter, page, size } }
+      { params: { nameFilter, page, size } },
     );
     return response.data;
   },
 
   updateSafeZone: async (
     zoneId: string,
-    data: CreateSafeZoneRequest
+    data: CreateSafeZoneRequest,
   ): Promise<SafeZoneResponse> => {
     const response = await api.put<SafeZoneResponse>(
       `/safe-zone-manager/zones/${zoneId}`,
-      data
+      data,
     );
     return response.data;
   },
@@ -202,41 +211,41 @@ export const emergencyOpsService = {
     longitude: number,
     latitude: number,
     page: number = 0,
-    size: number = 10
+    size: number = 10,
   ): Promise<PageResponse<SafeZoneResponse>> => {
     const response = await api.get<PageResponse<SafeZoneResponse>>(
       "/safe-zone-locator/zones/nearest",
-      { params: { longitude, latitude, page, size } }
+      { params: { longitude, latitude, page, size } },
     );
     return response.data;
   },
 
   updateEmergencyServiceLocation: async (
     longitude: number,
-    latitude: number
+    latitude: number,
   ): Promise<EmergencyServiceLocationResponse> => {
     const response = await api.patch<EmergencyServiceLocationResponse>(
       "/emergency-request-manager/location",
-      { longitude, latitude }
+      { longitude, latitude },
     );
     return response.data;
   },
 
-  getEmergencyServiceLocation: async (): Promise<EmergencyServiceLocationResponse> => {
-    const response = await api.get<EmergencyServiceLocationResponse>(
-      "/emergency-request-manager/location"
-    );
-    return response.data;
-  },
+  getEmergencyServiceLocation:
+    async (): Promise<EmergencyServiceLocationResponse> => {
+      const response = await api.get<EmergencyServiceLocationResponse>(
+        "/emergency-request-manager/location",
+      );
+      return response.data;
+    },
 
   getEmergencyServiceTargets: async (
     page: number = 0,
-    size: number = 10
+    size: number = 10,
   ): Promise<PageResponse<EmergencyServiceTargetsResponse>> => {
-    const response = await api.get<PageResponse<EmergencyServiceTargetsResponse>>(
-      "/emergency-responder/targets",
-      { params: { page, size } }
-    );
+    const response = await api.get<
+      PageResponse<EmergencyServiceTargetsResponse>
+    >("/emergency-responder/targets", { params: { page, size } });
     return response.data;
   },
 };

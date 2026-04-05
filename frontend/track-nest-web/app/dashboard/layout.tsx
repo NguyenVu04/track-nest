@@ -40,7 +40,7 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <AppSidebar pathname={pathname} />
+      <AppSidebar pathname={pathname} userRole={user.role} />
       <SidebarInset>
         <Header user={user} onLogout={handleLogout} />
         <main className="flex flex-1 flex-col gap-4 p-4">{children}</main>

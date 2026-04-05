@@ -1,6 +1,8 @@
 import axios from "axios";
+import { authService } from "./authService";
 
-const API_URL = process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL || "http://localhost:28080";
+const API_URL =
+  process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL || "http://localhost:28080";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -9,9 +11,16 @@ const api = axios.create({
   },
 });
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("access_token");
+    try {
+      await authService.refreshToken();
+    } catch {
+      // Keep fallback behavior for unauthenticated/public requests.
+    }
+
+    const token =
+      authService.getAccessToken() || localStorage.getItem("access_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -105,20 +114,20 @@ export interface PageResponse<T> {
 
 export const criminalReportsService = {
   createMissingPersonReport: async (
-    data: CreateMissingPersonReportRequest
+    data: CreateMissingPersonReportRequest,
   ): Promise<MissingPersonReportResponse> => {
     const response = await api.post<MissingPersonReportResponse>(
       "/report-manager/missing-person-reports",
-      data
+      data,
     );
     return response.data;
   },
 
   getMissingPersonReport: async (
-    reportId: string
+    reportId: string,
   ): Promise<MissingPersonReportResponse> => {
     const response = await api.get<MissingPersonReportResponse>(
-      `/report-manager/missing-person-reports/${reportId}`
+      `/report-manager/missing-person-reports/${reportId}`,
     );
     return response.data;
   },
@@ -128,54 +137,50 @@ export const criminalReportsService = {
   },
 
   publishMissingPersonReport: async (
-    reportId: string
+    reportId: string,
   ): Promise<MissingPersonReportResponse> => {
     const response = await api.post<MissingPersonReportResponse>(
-      `/report-manager/missing-person-reports/${reportId}/publish`
+      `/report-manager/missing-person-reports/${reportId}/publish`,
     );
     return response.data;
   },
 
-  listMissingPersonReports: async (
-    params?: {
-      reporterId?: string;
-      status?: string;
-      isPublic?: boolean;
-      page?: number;
-      size?: number;
-    }
-  ): Promise<PageResponse<MissingPersonReportResponse>> => {
+  listMissingPersonReports: async (params?: {
+    reporterId?: string;
+    status?: string;
+    isPublic?: boolean;
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<MissingPersonReportResponse>> => {
     const response = await api.get<PageResponse<MissingPersonReportResponse>>(
       "/report-manager/missing-person-reports",
-      { params }
+      { params },
     );
     return response.data;
   },
 
   createCrimeReport: async (
-    data: CreateCrimeReportRequest
+    data: CreateCrimeReportRequest,
   ): Promise<CrimeReportResponse> => {
     const response = await api.post<CrimeReportResponse>(
       "/report-manager/crime-reports",
-      data
+      data,
     );
     return response.data;
   },
 
-  getCrimeReport: async (
-    reportId: string
-  ): Promise<CrimeReportResponse> => {
+  getCrimeReport: async (reportId: string): Promise<CrimeReportResponse> => {
     const response = await api.get<CrimeReportResponse>(
-      `/report-manager/crime-reports/${reportId}`
+      `/report-manager/crime-reports/${reportId}`,
     );
     return response.data;
   },
 
   publishCrimeReport: async (
-    reportId: string
+    reportId: string,
   ): Promise<CrimeReportResponse> => {
     const response = await api.post<CrimeReportResponse>(
-      `/report-manager/crime-reports/${reportId}/publish`
+      `/report-manager/crime-reports/${reportId}/publish`,
     );
     return response.data;
   },
@@ -184,18 +189,16 @@ export const criminalReportsService = {
     await api.delete(`/report-manager/crime-reports/${reportId}`);
   },
 
-  listCrimeReports: async (
-    params?: {
-      reporterId?: string;
-      minSeverity?: number;
-      isPublic?: boolean;
-      page?: number;
-      size?: number;
-    }
-  ): Promise<PageResponse<CrimeReportResponse>> => {
+  listCrimeReports: async (params?: {
+    reporterId?: string;
+    minSeverity?: number;
+    isPublic?: boolean;
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<CrimeReportResponse>> => {
     const response = await api.get<PageResponse<CrimeReportResponse>>(
       "/report-manager/crime-reports",
-      { params }
+      { params },
     );
     return response.data;
   },
@@ -205,41 +208,41 @@ export const criminalReportsService = {
     latitude: number,
     radius?: number,
     page?: number,
-    size?: number
+    size?: number,
   ): Promise<PageResponse<CrimeReportResponse>> => {
     const response = await api.get<PageResponse<CrimeReportResponse>>(
       "/report-manager/crime-reports/nearby",
       {
         params: { longitude, latitude, radius: radius || 5000, page, size },
-      }
+      },
     );
     return response.data;
   },
 
   createGuidelinesDocument: async (
-    data: CreateGuidelinesDocumentRequest
+    data: CreateGuidelinesDocumentRequest,
   ): Promise<GuidelinesDocumentResponse> => {
     const response = await api.post<GuidelinesDocumentResponse>(
       "/report-manager/guidelines",
-      data
+      data,
     );
     return response.data;
   },
 
   getGuidelinesDocument: async (
-    documentId: string
+    documentId: string,
   ): Promise<GuidelinesDocumentResponse> => {
     const response = await api.get<GuidelinesDocumentResponse>(
-      `/report-manager/guidelines/${documentId}`
+      `/report-manager/guidelines/${documentId}`,
     );
     return response.data;
   },
 
   publishGuidelinesDocument: async (
-    documentId: string
+    documentId: string,
   ): Promise<GuidelinesDocumentResponse> => {
     const response = await api.post<GuidelinesDocumentResponse>(
-      `/report-manager/guidelines/${documentId}/publish`
+      `/report-manager/guidelines/${documentId}/publish`,
     );
     return response.data;
   },
@@ -248,45 +251,41 @@ export const criminalReportsService = {
     await api.delete(`/report-manager/guidelines/${documentId}`);
   },
 
-  listGuidelinesDocuments: async (
-    params?: {
-      reporterId?: string;
-      isPublic?: boolean;
-      page?: number;
-      size?: number;
-    }
-  ): Promise<PageResponse<GuidelinesDocumentResponse>> => {
+  listGuidelinesDocuments: async (params?: {
+    reporterId?: string;
+    isPublic?: boolean;
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<GuidelinesDocumentResponse>> => {
     const response = await api.get<PageResponse<GuidelinesDocumentResponse>>(
       "/report-manager/guidelines",
-      { params }
+      { params },
     );
     return response.data;
   },
 
   // ReportViewer endpoints
   viewMissingPersonReport: async (
-    reportId: string
+    reportId: string,
   ): Promise<MissingPersonReportResponse> => {
     const response = await api.get<MissingPersonReportResponse>(
-      `/report-viewer/missing-person-reports/${reportId}`
+      `/report-viewer/missing-person-reports/${reportId}`,
     );
     return response.data;
   },
 
-  viewCrimeReport: async (
-    reportId: string
-  ): Promise<CrimeReportResponse> => {
+  viewCrimeReport: async (reportId: string): Promise<CrimeReportResponse> => {
     const response = await api.get<CrimeReportResponse>(
-      `/report-viewer/crime-reports/${reportId}`
+      `/report-viewer/crime-reports/${reportId}`,
     );
     return response.data;
   },
 
   viewGuidelinesDocument: async (
-    documentId: string
+    documentId: string,
   ): Promise<GuidelinesDocumentResponse> => {
     const response = await api.get<GuidelinesDocumentResponse>(
-      `/report-viewer/guidelines/${documentId}`
+      `/report-viewer/guidelines/${documentId}`,
     );
     return response.data;
   },
@@ -300,18 +299,20 @@ export const criminalReportsService = {
     await api.delete(`/report-admin/crime-reports/${reportId}`);
   },
 
-  deleteGuidelinesDocumentAsAdmin: async (documentId: string): Promise<void> => {
+  deleteGuidelinesDocumentAsAdmin: async (
+    documentId: string,
+  ): Promise<void> => {
     await api.delete(`/report-admin/guidelines/${documentId}`);
   },
 
   // CriminalAnalyzer endpoints
   generateCrimeAnalysisReport: async (
     startDate: string,
-    endDate: string
+    endDate: string,
   ): Promise<CrimeAnalysisReportResponse> => {
     const response = await api.get<CrimeAnalysisReportResponse>(
       "/criminal-analyzer/crime-analysis",
-      { params: { startDate, endDate } }
+      { params: { startDate, endDate } },
     );
     return response.data;
   },
@@ -322,25 +323,24 @@ export const criminalReportsService = {
     latitude: number,
     radius?: number,
     page?: number,
-    size?: number
+    size?: number,
   ): Promise<PageResponse<CrimeReportResponse>> => {
     const response = await api.get<PageResponse<CrimeReportResponse>>(
       "/crime-locator/heatmap",
       {
         params: { longitude, latitude, radius: radius || 5000, page, size },
-      }
+      },
     );
     return response.data;
   },
 
   checkIfInsideHighRiskCrimeZone: async (
     longitude: number,
-    latitude: number
+    latitude: number,
   ): Promise<boolean> => {
-    const response = await api.get<boolean>(
-      "/crime-locator/high-risk-check",
-      { params: { longitude, latitude } }
-    );
+    const response = await api.get<boolean>("/crime-locator/high-risk-check", {
+      params: { longitude, latitude },
+    });
     return response.data;
   },
 };
