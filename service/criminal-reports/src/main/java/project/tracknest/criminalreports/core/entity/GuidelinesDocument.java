@@ -5,8 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.URL;
-
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -28,7 +26,6 @@ public class GuidelinesDocument {
     @Column(name = "abstract", nullable = false, length = 500)
     private String abstractText;
 
-    @URL(message = "Invalid URL format")
     @Column(name = "content", nullable = false)
     private String content;
 

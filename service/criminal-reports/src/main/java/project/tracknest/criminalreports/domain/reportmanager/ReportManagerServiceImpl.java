@@ -65,12 +65,30 @@ class ReportManagerServiceImpl implements ReportManagerService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public MissingPersonReportResponse getMissingPersonReport(UUID reporterId, UUID reportId) {
         MissingPersonReport report = missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
                 .orElseThrow(() -> new RuntimeException("Missing person report not found"));
         return mapToMissingPersonReportResponse(report);
     }
     
+    @Override
+    @Transactional
+    public MissingPersonReportResponse updateMissingPersonReport(UUID reporterId, UUID reportId, UpdateMissingPersonReportRequest request) {
+        MissingPersonReport report = missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
+                .orElseThrow(() -> new RuntimeException("Missing person report not found"));
+        report.setTitle(request.getTitle());
+        report.setFullName(request.getFullName());
+        report.setPersonalId(request.getPersonalId());
+        report.setPhoto(request.getPhoto() != null ? request.getPhoto() : report.getPhoto());
+        report.setDate(request.getDate());
+        report.setContent(request.getContent());
+        report.setContactEmail(request.getContactEmail());
+        report.setContactPhone(request.getContactPhone());
+        MissingPersonReport saved = missingPersonReportRepository.save(report);
+        return mapToMissingPersonReportResponse(saved);
+    }
+
     @Override
     @Transactional
     public void deleteMissingPersonReport(UUID reporterId, UUID reportId) {
@@ -95,6 +113,18 @@ class ReportManagerServiceImpl implements ReportManagerService {
     
     @Override
     @Transactional
+    public MissingPersonReportResponse rejectMissingPersonReport(UUID reporterId, UUID reportId) {
+        MissingPersonReport report = missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
+                .orElseThrow(() -> new RuntimeException("Missing person report not found"));
+        MissingPersonReportStatus rejectedStatus = statusRepository.findByName("REJECTED")
+                .orElseThrow(() -> new RuntimeException("REJECTED status not found"));
+        report.setStatus(rejectedStatus);
+        MissingPersonReport saved = missingPersonReportRepository.save(report);
+        return mapToMissingPersonReportResponse(saved);
+    }
+
+    @Override
+    @Transactional
     public void deleteMissingPersonReportAsAdmin(UUID reportId) {
         MissingPersonReport report = missingPersonReportRepository.findById(reportId)
                 .orElseThrow(() -> new RuntimeException("Missing person report not found"));
@@ -102,18 +132,21 @@ class ReportManagerServiceImpl implements ReportManagerService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<MissingPersonReportResponse> listMissingPersonReports(UUID reporterId, String status, boolean isPublic, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<MissingPersonReport> reports;
         
         if (reporterId != null) {
             if (status != null && !status.isEmpty()) {
-                reports = missingPersonReportRepository.findAllPublicByStatus(status, pageRequest);
+                reports = missingPersonReportRepository.findByReporterIdAndStatus(reporterId, status, pageRequest);
             } else if (isPublic) {
                 reports = missingPersonReportRepository.findAllPublic(pageRequest);
             } else {
                 reports = missingPersonReportRepository.findByReporterId(reporterId, pageRequest);
             }
+        } else if (status != null && !status.isEmpty()) {
+            reports = missingPersonReportRepository.findAllPublicByStatus(status, pageRequest);
         } else if (isPublic) {
             reports = missingPersonReportRepository.findAllPublic(pageRequest);
         } else {
@@ -150,12 +183,30 @@ class ReportManagerServiceImpl implements ReportManagerService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public CrimeReportResponse getCrimeReport(UUID reporterId, UUID reportId) {
         CrimeReport report = crimeReportRepository.findByReporterIdAndId(reporterId, reportId)
                 .orElseThrow(() -> new RuntimeException("Crime report not found"));
         return mapToCrimeReportResponse(report);
     }
-    
+
+    @Override
+    @Transactional
+    public CrimeReportResponse updateCrimeReport(UUID reporterId, UUID reportId, UpdateCrimeReportRequest request) {
+        CrimeReport report = crimeReportRepository.findByReporterIdAndId(reporterId, reportId)
+                .orElseThrow(() -> new RuntimeException("Crime report not found"));
+        report.setTitle(request.getTitle());
+        report.setContent(request.getContent());
+        report.setSeverity(request.getSeverity());
+        report.setDate(request.getDate());
+        report.setNumberOfVictims(request.getNumberOfVictims());
+        report.setNumberOfOffenders(request.getNumberOfOffenders());
+        report.setArrested(request.isArrested());
+        report.setUpdatedAt(OffsetDateTime.now());
+        CrimeReport saved = crimeReportRepository.save(report);
+        return mapToCrimeReportResponse(saved);
+    }
+
     @Override
     @Transactional
     public CrimeReportResponse publishCrimeReport(UUID reporterId, UUID reportId) {
@@ -183,18 +234,21 @@ class ReportManagerServiceImpl implements ReportManagerService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<CrimeReportResponse> listCrimeReports(UUID reporterId, Integer minSeverity, boolean isPublic, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<CrimeReport> reports;
         
         if (reporterId != null) {
             if (minSeverity != null) {
-                reports = crimeReportRepository.findAllPublicByMinSeverity(minSeverity, pageRequest);
+                reports = crimeReportRepository.findByReporterIdAndMinSeverity(reporterId, minSeverity, pageRequest);
             } else if (isPublic) {
                 reports = crimeReportRepository.findAllPublic(pageRequest);
             } else {
                 reports = crimeReportRepository.findByReporterId(reporterId, pageRequest);
             }
+        } else if (isPublic && minSeverity != null) {
+            reports = crimeReportRepository.findAllPublicByMinSeverity(minSeverity, pageRequest);
         } else if (isPublic) {
             reports = crimeReportRepository.findAllPublic(pageRequest);
         } else if (minSeverity != null) {
@@ -207,6 +261,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<CrimeReportResponse> listCrimeReportsWithinRadius(double longitude, double latitude, double radius, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<CrimeReport> reports = crimeReportRepository.findAllPublicWithinRadius(longitude, latitude, radius, pageRequest);
@@ -233,12 +288,25 @@ class ReportManagerServiceImpl implements ReportManagerService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public GuidelinesDocumentResponse getGuidelinesDocument(UUID reporterId, UUID documentId) {
         GuidelinesDocument document = guidelinesDocumentRepository.findByReporterIdAndId(reporterId, documentId)
                 .orElseThrow(() -> new RuntimeException("Guidelines document not found"));
         return mapToGuidelinesDocumentResponse(document);
     }
     
+    @Override
+    @Transactional
+    public GuidelinesDocumentResponse updateGuidelinesDocument(UUID reporterId, UUID documentId, UpdateGuidelinesDocumentRequest request) {
+        GuidelinesDocument document = guidelinesDocumentRepository.findByReporterIdAndId(reporterId, documentId)
+                .orElseThrow(() -> new RuntimeException("Guidelines document not found"));
+        document.setTitle(request.getTitle());
+        document.setAbstractText(request.getAbstractText());
+        document.setContent(request.getContent());
+        GuidelinesDocument saved = guidelinesDocumentRepository.save(document);
+        return mapToGuidelinesDocumentResponse(saved);
+    }
+
     @Override
     @Transactional
     public GuidelinesDocumentResponse publishGuidelinesDocument(UUID reporterId, UUID documentId) {
@@ -266,6 +334,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<GuidelinesDocumentResponse> listGuidelinesDocuments(UUID reporterId, boolean isPublic, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<GuidelinesDocument> documents;
