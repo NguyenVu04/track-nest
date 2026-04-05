@@ -35,6 +35,15 @@ public class ReportManagerController {
         return ResponseEntity.ok(response);
     }
     
+    @PutMapping("/missing-person-reports/{reportId}")
+    public ResponseEntity<MissingPersonReportResponse> updateMissingPersonReport(
+            @PathVariable UUID reportId,
+            @Valid @RequestBody UpdateMissingPersonReportRequest request,
+            @RequestHeader("X-User-Id") UUID userId) {
+        MissingPersonReportResponse response = service.updateMissingPersonReport(userId, reportId, request);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/missing-person-reports/{reportId}")
     public ResponseEntity<Void> deleteMissingPersonReport(
             @PathVariable UUID reportId,
@@ -51,6 +60,14 @@ public class ReportManagerController {
         return ResponseEntity.ok(response);
     }
     
+    @PostMapping("/missing-person-reports/{reportId}/reject")
+    public ResponseEntity<MissingPersonReportResponse> rejectMissingPersonReport(
+            @PathVariable UUID reportId,
+            @RequestHeader("X-User-Id") UUID userId) {
+        MissingPersonReportResponse response = service.rejectMissingPersonReport(userId, reportId);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/admin/missing-person-reports/{reportId}")
     public ResponseEntity<Void> deleteMissingPersonReportAsAdmin(
             @PathVariable UUID reportId) {
@@ -85,6 +102,15 @@ public class ReportManagerController {
         return ResponseEntity.ok(response);
     }
     
+    @PutMapping("/crime-reports/{reportId}")
+    public ResponseEntity<CrimeReportResponse> updateCrimeReport(
+            @PathVariable UUID reportId,
+            @Valid @RequestBody UpdateCrimeReportRequest request,
+            @RequestHeader("X-User-Id") UUID userId) {
+        CrimeReportResponse response = service.updateCrimeReport(userId, reportId, request);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/crime-reports/{reportId}/publish")
     public ResponseEntity<CrimeReportResponse> publishCrimeReport(
             @PathVariable UUID reportId,
@@ -146,6 +172,15 @@ public class ReportManagerController {
         return ResponseEntity.ok(response);
     }
     
+    @PutMapping("/guidelines/{documentId}")
+    public ResponseEntity<GuidelinesDocumentResponse> updateGuidelinesDocument(
+            @PathVariable UUID documentId,
+            @Valid @RequestBody UpdateGuidelinesDocumentRequest request,
+            @RequestHeader("X-User-Id") UUID userId) {
+        GuidelinesDocumentResponse response = service.updateGuidelinesDocument(userId, documentId, request);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/guidelines/{documentId}/publish")
     public ResponseEntity<GuidelinesDocumentResponse> publishGuidelinesDocument(
             @PathVariable UUID documentId,

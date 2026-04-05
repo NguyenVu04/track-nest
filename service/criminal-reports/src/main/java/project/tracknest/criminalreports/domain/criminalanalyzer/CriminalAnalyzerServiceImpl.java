@@ -9,6 +9,8 @@ import project.tracknest.criminalreports.domain.repository.CrimeReportRepository
 import project.tracknest.criminalreports.domain.repository.MissingPersonReportRepository;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,17 +29,13 @@ class CriminalAnalyzerServiceImpl implements CriminalAnalyzerService {
     public CrimeAnalysisReportResponse generateCrimeAnalysisReport(LocalDate startDate, LocalDate endDate) {
         log.info("Generating crime analysis report from {} to {}", startDate, endDate);
 
-        List<project.tracknest.criminalreports.core.entity.CrimeReport> crimeReports = 
-                crimeReportRepository.findAll().stream()
-                        .filter(r -> !r.getDate().isBefore(startDate) && !r.getDate().isAfter(endDate))
-                        .toList();
+        List<project.tracknest.criminalreports.core.entity.CrimeReport> crimeReports =
+                crimeReportRepository.findByDateBetween(startDate, endDate);
 
+        OffsetDateTime startDateTime = startDate.atStartOfDay().atOffset(ZoneOffset.UTC);
+        OffsetDateTime endDateTime = endDate.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
         List<project.tracknest.criminalreports.core.entity.MissingPersonReport> missingPersonReports =
-                missingPersonReportRepository.findAll().stream()
-                        .filter(r -> r.getCreatedAt() != null && 
-                                    !r.getCreatedAt().toLocalDate().isBefore(startDate) && 
-                                    !r.getCreatedAt().toLocalDate().isAfter(endDate))
-                        .toList();
+                missingPersonReportRepository.findByCreatedAtBetween(startDateTime, endDateTime);
 
         Map<Integer, Long> crimesBySeverity = new HashMap<>();
         long totalArrests = 0;
@@ -114,27 +112,29 @@ class CriminalAnalyzerServiceImpl implements CriminalAnalyzerService {
 
     private List<CrimeAnalysisReportResponse.HotspotArea> generateHotspots(
             List<project.tracknest.criminalreports.core.entity.CrimeReport> reports) {
-        
-        Map<String, CrimeAnalysisReportResponse.HotspotArea> hotspotMap = new HashMap<>();
-        
+
+        // Track running totals (severitySum, count) per location key
+        Map<String, long[]> totals = new HashMap<>();
+        Map<String, double[]> coords = new HashMap<>();
+
         for (var report : reports) {
             String key = String.format("%.3f,%.3f", report.getLongitude(), report.getLatitude());
-            hotspotMap.merge(key, 
-                    CrimeAnalysisReportResponse.HotspotArea.builder()
-                            .longitude(report.getLongitude())
-                            .latitude(report.getLatitude())
-                            .incidentCount(1L)
-                            .averageSeverity(report.getSeverity())
-                            .build(),
-                    (existing, newEntry) -> CrimeAnalysisReportResponse.HotspotArea.builder()
-                            .longitude(existing.getLongitude())
-                            .latitude(existing.getLatitude())
-                            .incidentCount(existing.getIncidentCount() + 1)
-                            .averageSeverity((existing.getAverageSeverity() + newEntry.getAverageSeverity()) / 2)
-                            .build());
+            totals.merge(key, new long[]{report.getSeverity(), 1},
+                    (existing, inc) -> new long[]{existing[0] + inc[0], existing[1] + inc[1]});
+            coords.putIfAbsent(key, new double[]{report.getLongitude(), report.getLatitude()});
         }
 
-        return hotspotMap.values().stream()
+        return totals.entrySet().stream()
+                .map(e -> {
+                    long[] sums = e.getValue();
+                    double[] xy = coords.get(e.getKey());
+                    return CrimeAnalysisReportResponse.HotspotArea.builder()
+                            .longitude(xy[0])
+                            .latitude(xy[1])
+                            .incidentCount(sums[1])
+                            .averageSeverity((double) sums[0] / sums[1])
+                            .build();
+                })
                 .sorted((a, b) -> Long.compare(b.getIncidentCount(), a.getIncidentCount()))
                 .limit(10)
                 .toList();

@@ -113,7 +113,7 @@ class ReportViewerServiceImpl implements ReportViewerService {
                 .userId(report.getUserId())
                 .status(report.getStatus() != null ? report.getStatus().getName() : null)
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
-                .publicFlag(false)
+                .publicFlag(report.getStatus() != null && "PUBLISHED".equals(report.getStatus().getName()))
                 .build();
     }
 

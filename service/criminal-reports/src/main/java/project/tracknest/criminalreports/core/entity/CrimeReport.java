@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Generated;
 import org.hibernate.validator.constraints.Range;
-import org.hibernate.validator.constraints.URL;
 import org.locationtech.jts.geom.Point;
 
 import java.time.LocalDate;
@@ -30,7 +29,6 @@ public class CrimeReport {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @URL(message = "Invalid URL format")
     @Column(name = "content", nullable = false)
     private String content;
 
