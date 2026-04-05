@@ -1,6 +1,8 @@
 import axios from "axios";
+import { authService } from "./authService";
 
-const API_URL = process.env.NEXT_PUBLIC_USER_TRACKING_API_URL || "http://localhost:38080";
+const API_URL =
+  process.env.NEXT_PUBLIC_USER_TRACKING_API_URL || "http://localhost:38080";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -9,9 +11,16 @@ const api = axios.create({
   },
 });
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("access_token");
+    try {
+      await authService.refreshToken();
+    } catch {
+      // Keep fallback behavior for unauthenticated/public requests.
+    }
+
+    const token =
+      authService.getAccessToken() || localStorage.getItem("access_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -110,41 +119,39 @@ export interface PageResponse<T> {
 
 export const userTrackingService = {
   familyCircle: {
-    create: async (
-      data: CreateFamilyCircleRequest
-    ): Promise<FamilyCircle> => {
+    create: async (data: CreateFamilyCircleRequest): Promise<FamilyCircle> => {
       const response = await api.post<FamilyCircle>(
         "/tracking-manager/family-circles",
-        data
+        data,
       );
       return response.data;
     },
 
     list: async (
       page: number = 0,
-      size: number = 10
+      size: number = 10,
     ): Promise<PageResponse<FamilyCircle>> => {
       const response = await api.get<PageResponse<FamilyCircle>>(
         "/tracking-manager/family-circles",
-        { params: { page, size } }
+        { params: { page, size } },
       );
       return response.data;
     },
 
     get: async (circleId: string): Promise<FamilyCircle> => {
       const response = await api.get<FamilyCircle>(
-        `/tracking-manager/family-circles/${circleId}`
+        `/tracking-manager/family-circles/${circleId}`,
       );
       return response.data;
     },
 
     update: async (
       circleId: string,
-      data: UpdateFamilyCircleRequest
+      data: UpdateFamilyCircleRequest,
     ): Promise<FamilyCircle> => {
       const response = await api.put<FamilyCircle>(
         `/tracking-manager/family-circles/${circleId}`,
-        data
+        data,
       );
       return response.data;
     },
@@ -156,43 +163,40 @@ export const userTrackingService = {
     listMembers: async (
       circleId: string,
       page: number = 0,
-      size: number = 10
+      size: number = 10,
     ): Promise<PageResponse<FamilyCircleMember>> => {
       const response = await api.get<PageResponse<FamilyCircleMember>>(
         `/tracking-manager/family-circles/${circleId}/members`,
-        { params: { page, size } }
+        { params: { page, size } },
       );
       return response.data;
     },
 
     addMember: async (
       circleId: string,
-      userId: string
+      userId: string,
     ): Promise<FamilyCircleMember> => {
       const response = await api.post<FamilyCircleMember>(
         `/tracking-manager/family-circles/${circleId}/members`,
-        { userId }
+        { userId },
       );
       return response.data;
     },
 
-    removeMember: async (
-      circleId: string,
-      memberId: string
-    ): Promise<void> => {
+    removeMember: async (circleId: string, memberId: string): Promise<void> => {
       await api.delete(
-        `/tracking-manager/family-circles/${circleId}/members/${memberId}`
+        `/tracking-manager/family-circles/${circleId}/members/${memberId}`,
       );
     },
 
     updateMemberRole: async (
       circleId: string,
       memberId: string,
-      role: "MEMBER" | "ADMIN"
+      role: "MEMBER" | "ADMIN",
     ): Promise<FamilyCircleMember> => {
       const response = await api.patch<FamilyCircleMember>(
         `/tracking-manager/family-circles/${circleId}/members/${memberId}/role`,
-        { role }
+        { role },
       );
       return response.data;
     },
@@ -206,11 +210,11 @@ export const userTrackingService = {
     },
 
     createPermission: async (
-      data: CreateParticipationPermissionRequest
+      data: CreateParticipationPermissionRequest,
     ): Promise<{ permissionId: string; code: string }> => {
       const response = await api.post<{ permissionId: string; code: string }>(
         "/tracking-manager/permissions",
-        data
+        data,
       );
       return response.data;
     },
@@ -218,7 +222,7 @@ export const userTrackingService = {
     joinWithCode: async (code: string): Promise<FamilyCircle> => {
       const response = await api.post<FamilyCircle>(
         "/tracking-manager/permissions/join",
-        { code }
+        { code },
       );
       return response.data;
     },
@@ -235,19 +239,21 @@ export const userTrackingService = {
 
     getStatus: async (): Promise<{ enabled: boolean }> => {
       const response = await api.get<{ enabled: boolean }>(
-        "/tracking-manager/tracking/status"
+        "/tracking-manager/tracking/status",
       );
       return response.data;
     },
 
     getCurrentLocation: async (): Promise<Location> => {
-      const response = await api.get<Location>("/tracking-manager/location/current");
+      const response = await api.get<Location>(
+        "/tracking-manager/location/current",
+      );
       return response.data;
     },
 
     getTargetLocation: async (targetId: string): Promise<Location> => {
       const response = await api.get<Location>(
-        `/tracking-manager/location/target/${targetId}`
+        `/tracking-manager/location/target/${targetId}`,
       );
       return response.data;
     },
@@ -255,11 +261,11 @@ export const userTrackingService = {
     getLocationHistory: async (
       targetId: string,
       startTime: string,
-      endTime: string
+      endTime: string,
     ): Promise<Location[]> => {
       const response = await api.get<Location[]>(
         `/tracking-manager/location/history/${targetId}`,
-        { params: { startTime, endTime } }
+        { params: { startTime, endTime } },
       );
       return response.data;
     },
@@ -268,27 +274,29 @@ export const userTrackingService = {
   notifications: {
     listTracking: async (
       page: number = 0,
-      size: number = 10
+      size: number = 10,
     ): Promise<PageResponse<TrackingNotification>> => {
       const response = await api.get<PageResponse<TrackingNotification>>(
         "/notifier/tracking-notifications",
-        { params: { page, size } }
+        { params: { page, size } },
       );
       return response.data;
     },
 
     listRisk: async (
       page: number = 0,
-      size: number = 10
+      size: number = 10,
     ): Promise<PageResponse<RiskNotification>> => {
       const response = await api.get<PageResponse<RiskNotification>>(
         "/notifier/risk-notifications",
-        { params: { page, size } }
+        { params: { page, size } },
       );
       return response.data;
     },
 
-    deleteTrackingNotification: async (notificationId: string): Promise<void> => {
+    deleteTrackingNotification: async (
+      notificationId: string,
+    ): Promise<void> => {
       await api.delete(`/notifier/tracking-notifications/${notificationId}`);
     },
 
@@ -306,14 +314,14 @@ export const userTrackingService = {
 
     countTracking: async (): Promise<{ count: number }> => {
       const response = await api.get<{ count: number }>(
-        "/notifier/tracking-notifications/count"
+        "/notifier/tracking-notifications/count",
       );
       return response.data;
     },
 
     countRisk: async (): Promise<{ count: number }> => {
       const response = await api.get<{ count: number }>(
-        "/notifier/risk-notifications/count"
+        "/notifier/risk-notifications/count",
       );
       return response.data;
     },
@@ -321,12 +329,9 @@ export const userTrackingService = {
 
   mobileDevice: {
     register: async (
-      data: RegisterMobileDeviceRequest
+      data: RegisterMobileDeviceRequest,
     ): Promise<MobileDevice> => {
-      const response = await api.post<MobileDevice>(
-        "/notifier/devices",
-        data
-      );
+      const response = await api.post<MobileDevice>("/notifier/devices", data);
       return response.data;
     },
 
@@ -337,7 +342,7 @@ export const userTrackingService = {
     update: async (data: UpdateMobileDeviceRequest): Promise<MobileDevice> => {
       const response = await api.patch<MobileDevice>(
         `/notifier/devices/${data.deviceId}`,
-        { enabled: data.enabled }
+        { enabled: data.enabled },
       );
       return response.data;
     },

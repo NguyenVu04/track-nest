@@ -2,13 +2,18 @@ import Keycloak, { type KeycloakInitOptions } from "keycloak-js";
 
 const KEYCLOAK_BASE_URL =
   process.env.NEXT_PUBLIC_KEYCLOAK_URL || "http://localhost/auth";
-const USER_REALM = process.env.NEXT_PUBLIC_USER_REALM || "public-dev";
+const USER_REALM = process.env.NEXT_PUBLIC_USER_REALM || "restricted-dev";
 const REPORTER_REALM =
   process.env.NEXT_PUBLIC_REPORTER_REALM || "restricted-dev";
 const EMERGENCY_REALM =
-  process.env.NEXT_PUBLIC_EMERGENCY_REALM || "tracknest-emergency";
-const USER_CLIENT_ID =
-  process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID || "tracknest";
+  process.env.NEXT_PUBLIC_EMERGENCY_REALM || "restricted-dev";
+const USER_CLIENT_ID = process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID || "web";
+const KEYCLOAK_FLOW =
+  (process.env.NEXT_PUBLIC_KEYCLOAK_FLOW as
+    | "standard"
+    | "implicit"
+    | "hybrid"
+    | undefined) || "standard";
 
 export interface LoginResponse {
   access_token: string;
@@ -146,37 +151,38 @@ export const authService = {
     }
 
     if (!keycloakInitPromise) {
-      keycloakInitPromise = keycloak
-        .init({
-          onLoad: "check-sso",
-          pkceMethod: "S256",
-          checkLoginIframe: false,
-          ...options,
-        })
-        .then((authenticated) => {
-          keycloakInitialized = true;
+      const initOptions: KeycloakInitOptions = {
+        onLoad: "check-sso",
+        checkLoginIframe: false,
+        flow: KEYCLOAK_FLOW,
+        ...options,
+      };
 
-          if (authenticated) {
+      if (KEYCLOAK_FLOW === "standard") {
+        initOptions.pkceMethod = "S256";
+      }
+
+      keycloakInitPromise = keycloak.init(initOptions).then((authenticated) => {
+        keycloakInitialized = true;
+
+        if (authenticated) {
+          persistKeycloakAuth();
+        } else {
+          clearStoredAuth();
+        }
+
+        keycloak.onTokenExpired = async () => {
+          try {
+            await keycloak.updateToken(30);
             persistKeycloakAuth();
-          } else {
+          } catch (error) {
+            console.error("Failed to refresh Keycloak token:", error);
             clearStoredAuth();
           }
+        };
 
-          keycloak.onTokenExpired = async () => {
-            try {
-              await keycloak.updateToken(30);
-              persistKeycloakAuth();
-            } catch (error) {
-              console.error("Failed to refresh Keycloak token:", error);
-              clearStoredAuth();
-            }
-          };
-
-          return authenticated;
-        })
-        .finally(() => {
-          keycloakInitPromise = null;
-        });
+        return authenticated;
+      });
     }
 
     return keycloakInitPromise;
