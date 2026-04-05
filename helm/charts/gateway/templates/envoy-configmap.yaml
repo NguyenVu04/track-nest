@@ -36,7 +36,8 @@ data:
                           cors:
                             allow_origin_string_match:
                               - prefix: "http://localhost"
-                              - prefix: "https://localhost"
+                              - prefix: "http://localhost:3000"
+                              - prefix: "http://localhost:8800"
                               - prefix: "http://tracknestapp.org"
                               - prefix: "https://tracknestapp.org"
                               - prefix: "http://api.tracknestapp.org"
