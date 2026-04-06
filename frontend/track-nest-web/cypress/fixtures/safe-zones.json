@@ -1,0 +1,37 @@
+{
+  "content": [
+    {
+      "id": "sz-001",
+      "name": "District 1 Police Station",
+      "latitude": 10.7769,
+      "longitude": 106.7009,
+      "radius": 200,
+      "createdAt": "2026-01-10T08:00:00Z",
+      "emergencyServiceId": "emergency-001"
+    },
+    {
+      "id": "sz-002",
+      "name": "Cho Ray Hospital",
+      "latitude": 10.7548,
+      "longitude": 106.6686,
+      "radius": 500,
+      "createdAt": "2026-01-12T09:00:00Z",
+      "emergencyServiceId": "emergency-001"
+    },
+    {
+      "id": "sz-003",
+      "name": "City Shelter – North",
+      "latitude": 10.8500,
+      "longitude": 106.7100,
+      "radius": 150,
+      "createdAt": "2026-02-01T11:00:00Z",
+      "emergencyServiceId": "emergency-001"
+    }
+  ],
+  "page": 0,
+  "size": 50,
+  "totalElements": 3,
+  "totalPages": 1,
+  "first": true,
+  "last": true
+}
