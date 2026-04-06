@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.criminalreports.core.datatype.PageResponse;
+import project.tracknest.criminalreports.core.datatype.ReportStatusConstants;
 import project.tracknest.criminalreports.core.entity.CrimeReport;
 import project.tracknest.criminalreports.core.entity.GuidelinesDocument;
 import project.tracknest.criminalreports.core.entity.MissingPersonReport;
@@ -34,7 +35,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
     private final ReporterRepository reporterRepository;
     private final MissingPersonReportStatusRepository statusRepository;
     
-    private static final String DEFAULT_STATUS = "PENDING";
+    private static final String DEFAULT_STATUS = ReportStatusConstants.PENDING;
     
     @Override
     @Transactional
@@ -103,7 +104,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
         MissingPersonReport report = missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
                 .orElseThrow(() -> new RuntimeException("Missing person report not found"));
         
-        MissingPersonReportStatus publishedStatus = statusRepository.findByName("PUBLISHED")
+        MissingPersonReportStatus publishedStatus = statusRepository.findByName(ReportStatusConstants.PUBLISHED)
                 .orElseThrow(() -> new RuntimeException("PUBLISHED status not found"));
         report.setStatus(publishedStatus);
         
@@ -116,7 +117,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
     public MissingPersonReportResponse rejectMissingPersonReport(UUID reporterId, UUID reportId) {
         MissingPersonReport report = missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
                 .orElseThrow(() -> new RuntimeException("Missing person report not found"));
-        MissingPersonReportStatus rejectedStatus = statusRepository.findByName("REJECTED")
+        MissingPersonReportStatus rejectedStatus = statusRepository.findByName(ReportStatusConstants.REJECTED)
                 .orElseThrow(() -> new RuntimeException("REJECTED status not found"));
         report.setStatus(rejectedStatus);
         MissingPersonReport saved = missingPersonReportRepository.save(report);
@@ -247,12 +248,12 @@ class ReportManagerServiceImpl implements ReportManagerService {
             } else {
                 reports = crimeReportRepository.findByReporterId(reporterId, pageRequest);
             }
-        } else if (isPublic && minSeverity != null) {
-            reports = crimeReportRepository.findAllPublicByMinSeverity(minSeverity, pageRequest);
         } else if (isPublic) {
-            reports = crimeReportRepository.findAllPublic(pageRequest);
+            reports = minSeverity != null
+                    ? crimeReportRepository.findAllPublicByMinSeverity(minSeverity, pageRequest)
+                    : crimeReportRepository.findAllPublic(pageRequest);
         } else if (minSeverity != null) {
-            reports = crimeReportRepository.findAllPublicByMinSeverity(minSeverity, pageRequest);
+            reports = crimeReportRepository.findAllByMinSeverity(minSeverity, pageRequest);
         } else {
             reports = crimeReportRepository.findAll(pageRequest);
         }
@@ -356,7 +357,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
     
     private MissingPersonReportResponse mapToMissingPersonReportResponse(MissingPersonReport report) {
         String statusName = report.getStatus() != null ? report.getStatus().getName() : null;
-        boolean isPublished = "PUBLISHED".equals(statusName);
+        boolean isPublished = ReportStatusConstants.PUBLISHED.equals(statusName);
         
         return MissingPersonReportResponse.builder()
                 .id(report.getId())

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, CheckCircle, Trash2, Users, Calendar, MapPin, Phone, Mail } from "lucide-react";
+import { Eye, CheckCircle, Trash2, Users, Calendar, Phone, Mail, XCircle } from "lucide-react";
 import { useState, memo } from "react";
 import type { MissingPerson } from "@/types";
 import { ConfirmModal } from "../shared/ConfirmModal";
@@ -15,6 +15,24 @@ interface MissingPersonListProps {
   userRole: string;
 }
 
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string }> = {
+  PENDING:   { label: "Pending",   bg: "bg-amber-50",  text: "text-amber-700",  dot: "bg-amber-400"  },
+  PUBLISHED: { label: "Published", bg: "bg-brand-50",  text: "text-brand-700",  dot: "bg-brand-500"  },
+  RESOLVED:  { label: "Resolved",  bg: "bg-green-50",  text: "text-green-700",  dot: "bg-green-500"  },
+  REJECTED:  { label: "Rejected",  bg: "bg-red-50",    text: "text-red-700",    dot: "bg-red-500"    },
+  DELETED:   { label: "Deleted",   bg: "bg-slate-50",  text: "text-slate-500",  dot: "bg-slate-400"  },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] ?? { label: status, bg: "bg-slate-50", text: "text-slate-600", dot: "bg-slate-400" };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+      {cfg.label}
+    </span>
+  );
+}
+
 export const MissingPersonList = memo(function MissingPersonList({
   persons,
   onViewDetail,
@@ -25,51 +43,8 @@ export const MissingPersonList = memo(function MissingPersonList({
   const [confirmAction, setConfirmAction] = useState<{
     type: "publish" | "delete";
     id: string;
+    title: string;
   } | null>(null);
-
-  const handleConfirmPublish = () => {
-    if (confirmAction) {
-      onPublish(confirmAction.id);
-      setConfirmAction(null);
-    }
-  };
-
-  const handleConfirmDelete = () => {
-    if (confirmAction) {
-      onDelete(confirmAction.id);
-      setConfirmAction(null);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-800";
-      case "PUBLISHED":
-        return "bg-blue-100 text-blue-800";
-      case "RESOLVED":
-        return "bg-green-100 text-green-800";
-      case "DELETED":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "Pending";
-      case "PUBLISHED":
-        return "Published";
-      case "RESOLVED":
-        return "Resolved";
-      case "DELETED":
-        return "Deleted";
-      default:
-        return status;
-    }
-  };
 
   if (persons.length === 0) {
     return (
@@ -83,65 +58,59 @@ export const MissingPersonList = memo(function MissingPersonList({
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-gray-700">Title</th>
-                <th className="px-6 py-3 text-left text-gray-700">Full Name</th>
-                <th className="px-6 py-3 text-left text-gray-700">Date</th>
-                <th className="px-6 py-3 text-left text-gray-700">Contact</th>
-                <th className="px-6 py-3 text-left text-gray-700">Status</th>
-                <th className="px-6 py-3 text-left text-gray-700">Actions</th>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/60">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Report</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Full Name</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Contact</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-slate-100">
               {persons.map((person, index) => (
                 <AnimatedListItem key={person.id} index={index}>
-                  <td className="px-6 py-4">
-                    <div className="text-gray-900 font-medium">{person.title}</div>
-                    <div className="text-gray-500 text-sm truncate max-w-xs">
-                      {person.content.substring(0, 50)}...
-                    </div>
+                  <td className="px-5 py-4">
+                    <p className="font-medium text-slate-900 leading-tight">{person.title}</p>
+                    <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">
+                      {person.content.substring(0, 60)}…
+                    </p>
                   </td>
-                  <td className="px-6 py-4 text-gray-900">{person.fullName}</td>
-                  <td className="px-6 py-4 text-gray-900">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4 text-gray-400" />
+                  <td className="px-5 py-4 font-medium text-slate-800 whitespace-nowrap">
+                    {person.fullName}
+                  </td>
+                  <td className="px-5 py-4 text-slate-600 whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       {new Date(person.date).toLocaleDateString()}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1 text-sm">
+                  <td className="px-5 py-4">
+                    <div className="flex flex-col gap-1 text-xs text-slate-500">
                       {person.contactPhone && (
-                        <div className="flex items-center gap-1 text-gray-600">
-                          <Phone className="w-3 h-3" />
-                          {person.contactPhone}
-                        </div>
+                        <span className="flex items-center gap-1">
+                          <Phone className="w-3 h-3 shrink-0" /> {person.contactPhone}
+                        </span>
                       )}
                       {person.contactEmail && (
-                        <div className="flex items-center gap-1 text-gray-600">
-                          <Mail className="w-3 h-3" />
-                          {person.contactEmail}
-                        </div>
+                        <span className="flex items-center gap-1">
+                          <Mail className="w-3 h-3 shrink-0" /> {person.contactEmail}
+                        </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
-                        person.status,
-                      )}`}
-                    >
-                      {getStatusLabel(person.status)}
-                    </span>
+                  <td className="px-5 py-4">
+                    <StatusBadge status={person.status} />
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => onViewDetail(person)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50 transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
@@ -150,27 +119,17 @@ export const MissingPersonList = memo(function MissingPersonList({
                         <>
                           {person.status === "PENDING" && (
                             <button
-                              onClick={() =>
-                                setConfirmAction({
-                                  type: "publish",
-                                  id: person.id,
-                                })
-                              }
-                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                              title="Publish Report"
+                              onClick={() => setConfirmAction({ type: "publish", id: person.id, title: person.title })}
+                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                              title="Publish"
                             >
                               <CheckCircle className="w-4 h-4" />
                             </button>
                           )}
                           <button
-                            onClick={() =>
-                              setConfirmAction({
-                                type: "delete",
-                                id: person.id,
-                              })
-                            }
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete Report"
+                            onClick={() => setConfirmAction({ type: "delete", id: person.id, title: person.title })}
+                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                            title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -188,19 +147,18 @@ export const MissingPersonList = memo(function MissingPersonList({
       {confirmAction?.type === "publish" && (
         <ConfirmModal
           title="Publish Missing Person Report"
-          message="Are you sure you want to publish this report? This will notify Emergency Services and the reported user."
-          onConfirm={handleConfirmPublish}
+          message={`"${confirmAction.title}" will be visible to Emergency Services and the public.`}
+          onConfirm={() => { onPublish(confirmAction.id); setConfirmAction(null); }}
           onCancel={() => setConfirmAction(null)}
           confirmText="Publish"
           confirmStyle="primary"
         />
       )}
-
       {confirmAction?.type === "delete" && (
         <ConfirmModal
           title="Delete Missing Person Report"
-          message="Are you sure you want to delete this report? This action cannot be undone."
-          onConfirm={handleConfirmDelete}
+          message={`"${confirmAction.title}" will be permanently removed. This action cannot be undone.`}
+          onConfirm={() => { onDelete(confirmAction.id); setConfirmAction(null); }}
           onCancel={() => setConfirmAction(null)}
           confirmText="Delete"
           confirmStyle="danger"

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Loader2 } from "lucide-react";
+import { Loader2, Radar, ArrowRight, ShieldCheck, MapPin, Users } from "lucide-react";
 import { authService } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -24,7 +24,6 @@ function LoginContentInner() {
     const bootstrapAuth = async () => {
       try {
         const authenticated = await authService.initKeycloak();
-
         if (authenticated || isAuthenticated) {
           router.push("/dashboard/missing-persons");
           return;
@@ -36,48 +35,87 @@ function LoginContentInner() {
         setIsLoading(false);
       }
     };
-
     bootstrapAuth();
   }, [isAuthenticated, router]);
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md text-center">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+      <div className="flex flex-col items-center justify-center gap-4 p-10 bg-white rounded-2xl shadow-xl w-full max-w-sm">
+        <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+        <p className="text-sm text-slate-500">Initialising session…</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md text-center">
-      <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4">
-        <Lock className="w-8 h-8 text-white" />
-      </div>
-      <h1 className="text-indigo-900 mb-2 text-2xl font-bold">TRACK Nest</h1>
-      <p className="text-gray-600 mb-6">Sign in to access the dashboard</p>
+    <div className="bg-white rounded-2xl shadow-2xl shadow-brand-900/10 w-full max-w-sm overflow-hidden">
+      {/* Top teal accent bar */}
+      <div className="h-1 w-full bg-linear-to-r from-brand-400 via-brand-500 to-brand-600" />
 
-      <button
-        onClick={redirectToKeycloak}
-        className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors"
-      >
-        Sign In with Keycloak
-      </button>
+      <div className="px-8 py-10 text-center">
+        {/* Logo */}
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-50 ring-1 ring-brand-200 mb-6">
+          <Radar className="w-8 h-8 text-brand-600" />
+        </div>
+
+        <h1 className="text-2xl font-bold text-slate-900 mb-1">TrackNest</h1>
+        <p className="text-sm text-slate-500 mb-8">
+          Smart city safety &amp; abduction prevention platform
+        </p>
+
+        <button
+          onClick={redirectToKeycloak}
+          className="w-full flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-150 group"
+        >
+          Sign in with Keycloak
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+
+        <p className="mt-6 text-xs text-slate-400">
+          Secured by Keycloak · OAuth 2.0 / OIDC
+        </p>
+      </div>
+
+      {/* Feature pills */}
+      <div className="border-t border-slate-100 px-8 py-5 grid grid-cols-3 gap-3">
+        {[
+          { icon: ShieldCheck, label: "Crime Reports" },
+          { icon: Users,       label: "Missing Persons" },
+          { icon: MapPin,      label: "Safe Zones" },
+        ].map(({ icon: Icon, label }) => (
+          <div key={label} className="flex flex-col items-center gap-1.5">
+            <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-brand-50">
+              <Icon className="w-4 h-4 text-brand-600" />
+            </span>
+            <span className="text-[10px] font-medium text-slate-500 text-center leading-tight">
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 export function LoginContent() {
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Suspense
-        fallback={
-          <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md text-center">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
-          </div>
-        }
-      >
-        <LoginContentInner />
-      </Suspense>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+         style={{ background: "linear-gradient(135deg, #0d1e2b 0%, #1a3347 50%, #253f47 100%)" }}>
+      {/* Decorative circles */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-brand-500/5 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-brand-400/5 blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 w-full max-w-sm">
+        <Suspense
+          fallback={
+            <div className="flex flex-col items-center justify-center gap-4 p-10 bg-white rounded-2xl shadow-xl">
+              <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+            </div>
+          }
+        >
+          <LoginContentInner />
+        </Suspense>
+      </div>
     </div>
   );
 }
