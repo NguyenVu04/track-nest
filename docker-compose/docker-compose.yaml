@@ -372,7 +372,7 @@ services:
 
   web:
     build:
-      context: ../frontend/track-nets-web
+      context: ../frontend/track-nest-web
       dockerfile: Dockerfile
     container_name: web
     environment:
