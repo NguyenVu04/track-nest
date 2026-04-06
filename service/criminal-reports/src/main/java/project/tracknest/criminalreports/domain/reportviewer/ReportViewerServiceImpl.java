@@ -16,6 +16,7 @@ import project.tracknest.criminalreports.domain.reportmanager.dto.GuidelinesDocu
 import project.tracknest.criminalreports.domain.reportmanager.dto.MissingPersonReportResponse;
 import project.tracknest.criminalreports.domain.repository.CrimeReportRepository;
 import project.tracknest.criminalreports.domain.repository.GuidelinesDocumentRepository;
+import project.tracknest.criminalreports.core.datatype.ReportStatusConstants;
 import project.tracknest.criminalreports.domain.repository.MissingPersonReportRepository;
 
 import java.util.UUID;
@@ -113,7 +114,7 @@ class ReportViewerServiceImpl implements ReportViewerService {
                 .userId(report.getUserId())
                 .status(report.getStatus() != null ? report.getStatus().getName() : null)
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
-                .publicFlag(report.getStatus() != null && "PUBLISHED".equals(report.getStatus().getName()))
+                .publicFlag(report.getStatus() != null && ReportStatusConstants.PUBLISHED.equals(report.getStatus().getName()))
                 .build();
     }
 

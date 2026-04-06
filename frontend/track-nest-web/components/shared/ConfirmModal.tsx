@@ -19,49 +19,50 @@ export function ConfirmModal({
   confirmText = "Confirm",
   confirmStyle = "primary",
 }: ConfirmModalProps) {
-  const confirmButtonClass =
-    confirmStyle === "danger"
-      ? "bg-red-600 hover:bg-red-700 text-white"
-      : "bg-indigo-600 hover:bg-indigo-700 text-white";
+  const isDanger = confirmStyle === "danger";
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-        <div className="flex items-start justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl shadow-slate-900/20 max-w-md w-full overflow-hidden">
+        {/* Top accent bar */}
+        <div className={`h-1 w-full ${isDanger ? "bg-red-500" : "bg-brand-500"}`} />
+
+        {/* Header */}
+        <div className="flex items-start justify-between px-6 pt-5 pb-4">
           <div className="flex items-center gap-3">
-            <div
-              className={`p-2 rounded-lg ${
-                confirmStyle === "danger" ? "bg-red-100" : "bg-indigo-100"
-              }`}
-            >
-              <AlertTriangle
-                className={`w-5 h-5 ${
-                  confirmStyle === "danger" ? "text-red-600" : "text-indigo-600"
-                }`}
-              />
+            <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${isDanger ? "bg-red-50" : "bg-brand-50"}`}>
+              <AlertTriangle className={`w-5 h-5 ${isDanger ? "text-red-500" : "text-brand-600"}`} />
             </div>
-            <h3 className="text-gray-900">{title}</h3>
+            <h3 className="font-semibold text-slate-900">{title}</h3>
           </div>
           <button
             onClick={onCancel}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-6">
-          <p className="text-gray-700">{message}</p>
+
+        {/* Body */}
+        <div className="px-6 pb-4">
+          <p className="text-sm text-slate-600 leading-relaxed">{message}</p>
         </div>
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
           <button
             onClick={onCancel}
-            className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className={`px-6 py-2 rounded-lg transition-colors ${confirmButtonClass}`}
+            className={`px-5 py-2 text-sm font-semibold rounded-xl text-white transition-colors ${
+              isDanger
+                ? "bg-red-500 hover:bg-red-600"
+                : "bg-brand-500 hover:bg-brand-600"
+            }`}
           >
             {confirmText}
           </button>

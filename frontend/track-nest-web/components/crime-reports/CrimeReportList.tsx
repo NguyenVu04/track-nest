@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Trash2, Shield, CheckCircle, AlertTriangle, AlertCircle } from "lucide-react";
+import { Eye, Trash2, Shield, CheckCircle, AlertTriangle, AlertCircle, Globe } from "lucide-react";
 import { useState, memo } from "react";
 import type { CrimeReport } from "@/types";
 import { ConfirmModal } from "../shared/ConfirmModal";
@@ -15,6 +15,24 @@ interface CrimeReportListProps {
   userRole: string;
 }
 
+const SEVERITY_CONFIG: Record<number, { label: string; bg: string; text: string; dot: string }> = {
+  1: { label: "Very Low", bg: "bg-green-50",  text: "text-green-700",  dot: "bg-green-400"  },
+  2: { label: "Low",      bg: "bg-teal-50",   text: "text-teal-700",   dot: "bg-teal-400"   },
+  3: { label: "Medium",   bg: "bg-amber-50",  text: "text-amber-700",  dot: "bg-amber-400"  },
+  4: { label: "High",     bg: "bg-orange-50", text: "text-orange-700", dot: "bg-orange-400" },
+  5: { label: "Very High",bg: "bg-red-50",    text: "text-red-700",    dot: "bg-red-500"    },
+};
+
+function SeverityBadge({ severity }: { severity: number }) {
+  const cfg = SEVERITY_CONFIG[severity] ?? { label: "Unknown", bg: "bg-slate-50", text: "text-slate-600", dot: "bg-slate-400" };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+      {cfg.label}
+    </span>
+  );
+}
+
 export const CrimeReportList = memo(function CrimeReportList({
   reports,
   onViewDetail,
@@ -26,69 +44,6 @@ export const CrimeReportList = memo(function CrimeReportList({
     type: "publish" | "delete";
     report: CrimeReport;
   } | null>(null);
-
-  const handleConfirmPublish = () => {
-    if (confirmAction) {
-      onPublish(confirmAction.report.id);
-      setConfirmAction(null);
-    }
-  };
-
-  const handleConfirmDelete = () => {
-    if (confirmAction) {
-      onDelete(confirmAction.report.id);
-      setConfirmAction(null);
-    }
-  };
-
-  const getSeverityColor = (severity: number) => {
-    switch (severity) {
-      case 1:
-        return "bg-green-100 text-green-800";
-      case 2:
-        return "bg-lime-100 text-lime-800";
-      case 3:
-        return "bg-yellow-100 text-yellow-800";
-      case 4:
-        return "bg-orange-100 text-orange-800";
-      case 5:
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getSeverityLabel = (severity: number) => {
-    switch (severity) {
-      case 1:
-        return "Very Low";
-      case 2:
-        return "Low";
-      case 3:
-        return "Medium";
-      case 4:
-        return "High";
-      case 5:
-        return "Very High";
-      default:
-        return "Unknown";
-    }
-  };
-
-  const getSeverityIcon = (severity: number) => {
-    switch (severity) {
-      case 1:
-      case 2:
-        return <AlertCircle className="w-4 h-4" />;
-      case 3:
-        return <AlertTriangle className="w-4 h-4" />;
-      case 4:
-      case 5:
-        return <Shield className="w-4 h-4" />;
-      default:
-        return null;
-    }
-  };
 
   if (reports.length === 0) {
     return (
@@ -102,63 +57,56 @@ export const CrimeReportList = memo(function CrimeReportList({
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-gray-700">Title</th>
-                <th className="px-6 py-3 text-left text-gray-700">Date</th>
-                <th className="px-6 py-3 text-left text-gray-700">Severity</th>
-                <th className="px-6 py-3 text-left text-gray-700">Victims</th>
-                <th className="px-6 py-3 text-left text-gray-700">Offenders</th>
-                <th className="px-6 py-3 text-left text-gray-700">Arrested</th>
-                <th className="px-6 py-3 text-left text-gray-700">Actions</th>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/60">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Report</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Severity</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Victims</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Offenders</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Arrested</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-slate-100">
               {reports.map((report, index) => (
                 <AnimatedListItem key={report.id} index={index}>
-                  <td className="px-6 py-4">
-                    <div className="text-gray-900 font-medium">{report.title}</div>
-                    <div className="text-gray-500 text-sm truncate max-w-xs">
-                      {report.content.substring(0, 50)}...
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-slate-900 leading-tight">{report.title}</p>
+                      {report.isPublic && (
+                        <Globe className="w-3.5 h-3.5 text-brand-500 shrink-0" title="Public" />
+                      )}
                     </div>
+                    <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">
+                      {report.content.substring(0, 60)}…
+                    </p>
                   </td>
-                  <td className="px-6 py-4 text-gray-900">
+                  <td className="px-5 py-4 text-slate-600 whitespace-nowrap">
                     {new Date(report.date).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 w-fit ${getSeverityColor(
-                        report.severity,
-                      )}`}
-                    >
-                      {getSeverityIcon(report.severity)}
-                      {getSeverityLabel(report.severity)}
-                    </span>
+                  <td className="px-5 py-4">
+                    <SeverityBadge severity={report.severity} />
                   </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {report.numberOfVictims}
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    {report.numberOfOffenders}
-                  </td>
-                  <td className="px-6 py-4">
+                  <td className="px-5 py-4 text-slate-700 font-medium">{report.numberOfVictims}</td>
+                  <td className="px-5 py-4 text-slate-700 font-medium">{report.numberOfOffenders}</td>
+                  <td className="px-5 py-4">
                     {report.arrested ? (
-                      <span className="flex items-center gap-1 text-green-600">
-                        <CheckCircle className="w-4 h-4" />
-                        Yes
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
+                        <CheckCircle className="w-3.5 h-3.5" /> Yes
                       </span>
                     ) : (
-                      <span className="text-gray-500">No</span>
+                      <span className="text-xs text-slate-400">No</span>
                     )}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => onViewDetail(report)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50 transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
@@ -167,27 +115,17 @@ export const CrimeReportList = memo(function CrimeReportList({
                         <>
                           {!report.isPublic && (
                             <button
-                              onClick={() =>
-                                setConfirmAction({
-                                  type: "publish",
-                                  report,
-                                })
-                              }
-                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                              title="Publish Report"
+                              onClick={() => setConfirmAction({ type: "publish", report })}
+                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                              title="Publish"
                             >
-                              <CheckCircle className="w-4 h-4" />
+                              <Globe className="w-4 h-4" />
                             </button>
                           )}
                           <button
-                            onClick={() =>
-                              setConfirmAction({
-                                type: "delete",
-                                report,
-                              })
-                            }
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete Report"
+                            onClick={() => setConfirmAction({ type: "delete", report })}
+                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                            title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -205,19 +143,18 @@ export const CrimeReportList = memo(function CrimeReportList({
       {confirmAction?.type === "publish" && (
         <ConfirmModal
           title="Publish Crime Report"
-          message={`Are you sure you want to publish this crime report? "${confirmAction.report.title}" will be visible to all users.`}
-          onConfirm={handleConfirmPublish}
+          message={`"${confirmAction.report.title}" will be visible to all users.`}
+          onConfirm={() => { onPublish(confirmAction.report.id); setConfirmAction(null); }}
           onCancel={() => setConfirmAction(null)}
           confirmText="Publish"
           confirmStyle="primary"
         />
       )}
-
       {confirmAction?.type === "delete" && (
         <ConfirmModal
           title="Delete Crime Report"
-          message={`Are you sure you want to delete this crime report? "${confirmAction.report.title}" will be permanently removed.`}
-          onConfirm={handleConfirmDelete}
+          message={`"${confirmAction.report.title}" will be permanently removed. This cannot be undone.`}
+          onConfirm={() => { onDelete(confirmAction.report.id); setConfirmAction(null); }}
           onCancel={() => setConfirmAction(null)}
           confirmText="Delete"
           confirmStyle="danger"
