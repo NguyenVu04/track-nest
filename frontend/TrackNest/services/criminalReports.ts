@@ -1,4 +1,4 @@
-import { getBaseUrl } from "@/utils";
+import { getCriminalUrl } from "@/utils";
 import { getAuthMetadata } from "@/utils/auth";
 import axios from "axios";
 import { minioService } from "./mediaUpload";
@@ -94,7 +94,7 @@ class CriminalReportsService {
 
   private async getApiClient() {
     if (!this.baseUrl) {
-      this.baseUrl = await getBaseUrl();
+      this.baseUrl = await getCriminalUrl();
     }
     
     const authMetadata = await getAuthMetadata();

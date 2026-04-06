@@ -1,4 +1,4 @@
-import { getBaseUrl } from "@/utils";
+import { getEmergencyUrl } from "@/utils";
 import { getAuthMetadata } from "@/utils/auth";
 import axios from "axios";
 
@@ -60,7 +60,7 @@ class EmergencyOperationsService {
 
   private async getApiClient() {
     if (!this.baseUrl) {
-      this.baseUrl = await getBaseUrl();
+      this.baseUrl = await getEmergencyUrl();
     }
     
     const authMetadata = await getAuthMetadata();
