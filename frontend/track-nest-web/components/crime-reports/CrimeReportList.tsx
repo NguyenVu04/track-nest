@@ -78,7 +78,7 @@ export const CrimeReportList = memo(function CrimeReportList({
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-slate-900 leading-tight">{report.title}</p>
                       {report.isPublic && (
-                        <Globe className="w-3.5 h-3.5 text-brand-500 shrink-0" title="Public" />
+                        <Globe className="w-3.5 h-3.5 text-brand-500 shrink-0" />
                       )}
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">
