@@ -5,6 +5,7 @@ import { CrimeReportList } from "./CrimeReportList";
 import { CrimeReportDetail } from "./CrimeReportDetail";
 import { CrimeReportForm } from "./CrimeReportForm";
 import { CrimeHeatmapView } from "./CrimeHeatmapView";
+import { useTranslations } from "next-intl";
 
 interface CrimeDashboardProps {
   user: {
@@ -86,12 +87,12 @@ const mockCrimeReports: CrimeReport[] = [
 ];
 
 export function CrimeDashboard({ user }: CrimeDashboardProps) {
-  const [crimeReports, setCrimeReports] =
-    useState<CrimeReport[]>(mockCrimeReports);
+  const t = useTranslations("crimeReports");
+  const tCommon = useTranslations("common");
+
+  const [crimeReports, setCrimeReports] = useState<CrimeReport[]>(mockCrimeReports);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [selectedReport, setSelectedReport] = useState<CrimeReport | null>(
-    null,
-  );
+  const [selectedReport, setSelectedReport] = useState<CrimeReport | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleViewDetail = (report: CrimeReport) => {
@@ -180,7 +181,7 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h2 className="text-gray-900">Crime Reports</h2>
+        <h2 className="text-gray-900">{t("pageTitle")}</h2>
         <div className="flex items-center gap-2">
           {user.role === "Emergency Services" && (
             <button
@@ -188,7 +189,7 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               <BarChart3 className="w-4 h-4" />
-              Crime Heatmap
+              {t("heatmap")}
             </button>
           )}
           {user.role === "Reporter" && (
@@ -197,7 +198,7 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              New Report
+              {t("newReport")}
             </button>
           )}
         </div>
@@ -210,7 +211,7 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by title..."
+              placeholder={t("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"

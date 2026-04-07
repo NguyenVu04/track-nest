@@ -10,17 +10,20 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { useTranslations } from "next-intl";
 
-interface BreadcrumbItem {
+interface BreadcrumbItemDef {
   label: string;
   href?: string;
 }
 
 interface BreadcrumbsProps {
-  items: BreadcrumbItem[];
+  items: BreadcrumbItemDef[];
 }
 
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
+  const t = useTranslations("nav");
+
   return (
     <Breadcrumb className="mb-4">
       <BreadcrumbList>
@@ -28,7 +31,7 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
           <BreadcrumbLink asChild>
             <Link href="/dashboard" className="flex items-center gap-1">
               <Home className="w-4 h-4" />
-              Dashboard
+              {t("dashboard")}
             </Link>
           </BreadcrumbLink>
         </BreadcrumbItem>

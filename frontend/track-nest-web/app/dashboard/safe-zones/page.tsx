@@ -10,9 +10,13 @@ import { toast } from "sonner";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { emergencyOpsService, SafeZoneResponse, PageResponse, CreateSafeZoneRequest } from "@/services/emergencyOpsService";
 import { Loading } from "@/components/loading/Loading";
+import { useTranslations } from "next-intl";
 
 export default function SafeZonesPage() {
   const { user } = useAuth();
+  const t = useTranslations("safeZones");
+  const tCommon = useTranslations("common");
+
   const [zones, setZones] = useState<SafeZone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,7 +45,7 @@ export default function SafeZonesPage() {
           0,
           50
         );
-        
+
         const mappedZones: SafeZone[] = response.content.map((item) => ({
           id: item.id,
           name: item.name,
@@ -53,18 +57,18 @@ export default function SafeZonesPage() {
           createdAt: item.createdAt,
           emergencyServiceId: item.emergencyServiceId,
         }));
-        
+
         setZones(mappedZones);
       } catch (error) {
         console.error("Error fetching safe zones:", error);
-        toast.error("Failed to load safe zones");
+        toast.error(t("toastLoadError") || "Failed to load safe zones");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchZones();
-  }, [user]);
+  }, [user, t]);
 
   if (!user) return null;
 
@@ -72,8 +76,8 @@ export default function SafeZonesPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900">Access Denied</h3>
-          <p className="text-gray-500">You need Emergency Services role to manage safe zones.</p>
+          <h3 className="text-lg font-semibold text-gray-900">{tCommon("accessDenied")}</h3>
+          <p className="text-gray-500">{t("accessDeniedMessage")}</p>
         </div>
       </div>
     );
@@ -95,9 +99,9 @@ export default function SafeZonesPage() {
         latitude: parseFloat(formData.latitude),
         radius: parseFloat(formData.radius),
       };
-      
+
       const response = await emergencyOpsService.createSafeZone(request);
-      
+
       const newZone: SafeZone = {
         id: response.id,
         name: response.name,
@@ -109,7 +113,7 @@ export default function SafeZonesPage() {
         createdAt: response.createdAt,
         emergencyServiceId: response.emergencyServiceId,
       };
-      
+
       setZones([newZone, ...zones]);
       setIsCreating(false);
       setFormData({
@@ -120,9 +124,9 @@ export default function SafeZonesPage() {
         longitude: "",
         radius: "500",
       });
-      toast.success("Safe zone created successfully");
+      toast.success(t("toastCreated"));
     } catch (error) {
-      toast.error("Error creating safe zone");
+      toast.error(t("toastCreateError"));
       console.error(error);
     }
   };
@@ -133,24 +137,24 @@ export default function SafeZonesPage() {
       await emergencyOpsService.deleteSafeZone(confirmDelete.id);
       setZones(zones.filter((z) => z.id !== confirmDelete.id));
       setConfirmDelete(null);
-      toast.success("Safe zone deleted successfully");
+      toast.success(t("toastDeleted"));
     } catch (error) {
-      toast.error("Error deleting safe zone");
+      toast.error(t("toastDeleteError"));
       console.error(error);
     }
   };
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: "Safe Zones" }]} />
+      <Breadcrumbs items={[{ label: t("pageTitle") }]} />
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-gray-900 text-xl font-semibold">Safe Zones</h2>
+        <h2 className="text-gray-900 text-xl font-semibold">{t("pageTitle")}</h2>
         <button
           onClick={() => setIsCreating(true)}
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Add Safe Zone
+          {t("addZone")}
         </button>
       </div>
 
@@ -159,7 +163,7 @@ export default function SafeZonesPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search safe zones..."
+            placeholder={t("searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
@@ -172,11 +176,11 @@ export default function SafeZonesPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-gray-700">Name</th>
-                <th className="px-6 py-3 text-left text-gray-700">Coordinates</th>
-                <th className="px-6 py-3 text-left text-gray-700">Radius (m)</th>
-                <th className="px-6 py-3 text-left text-gray-700">Created</th>
-                <th className="px-6 py-3 text-left text-gray-700">Actions</th>
+                <th className="px-6 py-3 text-left text-gray-700">{t("tableName")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">{t("tableCoordinates")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">{t("tableRadius")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">{t("tableCreated")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">{tCommon("actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -208,7 +212,7 @@ export default function SafeZonesPage() {
                         setConfirmDelete(zone);
                       }}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete Safe Zone"
+                      title={tCommon("delete")}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -224,8 +228,8 @@ export default function SafeZonesPage() {
         <div className="p-4 border-b border-gray-200">
           <h3 className="text-gray-900 font-semibold">
             {selectedZone
-              ? `${selectedZone.name} Location`
-              : "All Safe Zones Map"}
+              ? t("mapSelectedTitle", { name: selectedZone.name })
+              : t("mapAllTitle")}
           </h3>
         </div>
         <div className="h-128">
@@ -256,7 +260,7 @@ export default function SafeZonesPage() {
               onClick={() => setSelectedZone(null)}
               className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
             >
-              ← Show All Safe Zones
+              {t("showAll")}
             </button>
           </div>
         )}
@@ -266,11 +270,11 @@ export default function SafeZonesPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
             <div className="p-6 border-b border-gray-200">
-              <h3 className="text-gray-900">Add Safe Zone</h3>
+              <h3 className="text-gray-900">{t("modalTitle")}</h3>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-gray-700 mb-2">Name *</label>
+                <label className="block text-gray-700 mb-2">{t("formName")}{tCommon("requiredSuffix")}</label>
                 <input
                   value={formData.name}
                   onChange={(e) =>
@@ -281,7 +285,7 @@ export default function SafeZonesPage() {
                 />
               </div>
               <div>
-                <label className="block text-gray-700 mb-2">Type *</label>
+                <label className="block text-gray-700 mb-2">{t("formType")}{tCommon("requiredSuffix")}</label>
                 <select
                   value={formData.type}
                   onChange={(e) =>
@@ -290,14 +294,14 @@ export default function SafeZonesPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                   required
                 >
-                  <option value="Police Station">Police Station</option>
-                  <option value="Hospital">Hospital</option>
-                  <option value="Shelter">Shelter</option>
-                  <option value="Other">Other</option>
+                  <option value="Police Station">{t("typePolice")}</option>
+                  <option value="Hospital">{t("typeHospital")}</option>
+                  <option value="Shelter">{t("typeShelter")}</option>
+                  <option value="Other">{t("typeOther")}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-gray-700 mb-2">Address</label>
+                <label className="block text-gray-700 mb-2">{t("formAddress")}</label>
                 <input
                   value={formData.address}
                   onChange={(e) =>
@@ -308,7 +312,7 @@ export default function SafeZonesPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 mb-2">Latitude *</label>
+                  <label className="block text-gray-700 mb-2">{t("formLatitude")}{tCommon("requiredSuffix")}</label>
                   <input
                     type="number"
                     step="any"
@@ -321,9 +325,7 @@ export default function SafeZonesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2">
-                    Longitude *
-                  </label>
+                  <label className="block text-gray-700 mb-2">{t("formLongitude")}{tCommon("requiredSuffix")}</label>
                   <input
                     type="number"
                     step="any"
@@ -337,7 +339,7 @@ export default function SafeZonesPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-gray-700 mb-2">Radius (meters) *</label>
+                <label className="block text-gray-700 mb-2">{t("formRadius")}{tCommon("requiredSuffix")}</label>
                 <input
                   type="number"
                   step="any"
@@ -355,7 +357,7 @@ export default function SafeZonesPage() {
                 onClick={() => setIsCreating(false)}
                 className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
-                Cancel
+                {tCommon("cancel")}
               </button>
               <button
                 onClick={handleCreate}
@@ -367,7 +369,7 @@ export default function SafeZonesPage() {
                 }
                 className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
               >
-                Confirm
+                {tCommon("confirm")}
               </button>
             </div>
           </div>
@@ -376,11 +378,11 @@ export default function SafeZonesPage() {
 
       {confirmDelete && (
         <ConfirmModal
-          title="Delete Safe Zone"
-          message={`Are you sure you want to delete this safe zone?\n\nName: ${confirmDelete.name}`}
+          title={t("deleteTitle")}
+          message={t("deleteMessage", { name: confirmDelete.name })}
           onConfirm={handleDelete}
           onCancel={() => setConfirmDelete(null)}
-          confirmText="Delete"
+          confirmText={tCommon("delete")}
           confirmStyle="danger"
         />
       )}

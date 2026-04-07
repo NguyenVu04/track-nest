@@ -4,6 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Save, X, MapPin } from "lucide-react";
 import type { CrimeReport } from "@/types";
+import { useTranslations } from "next-intl";
 
 // Dynamically import LocationPicker to avoid SSR issues with Leaflet
 const LocationPicker = dynamic(
@@ -31,6 +32,9 @@ export function CrimeReportForm({
   onCancel,
   mode,
 }: CrimeReportFormProps) {
+  const t = useTranslations("crimeReports");
+  const tCommon = useTranslations("common");
+
   const [formData, setFormData] = useState<Partial<CrimeReport>>(
     report || {
       title: "",
@@ -88,7 +92,7 @@ export function CrimeReportForm({
     <div className="max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-gray-900">
-          {mode === "create" ? "New Crime Report" : "Edit Crime Report"}
+          {mode === "create" ? t("formNewTitle") : t("formEditTitle")}
         </h2>
       </div>
 
@@ -99,7 +103,7 @@ export function CrimeReportForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <label htmlFor="title" className="block text-gray-700 mb-2">
-              Title *
+              {t("formTitle")}{tCommon("requiredSuffix")}
             </label>
             <input
               id="title"
@@ -115,7 +119,7 @@ export function CrimeReportForm({
 
           <div>
             <label htmlFor="severity" className="block text-gray-700 mb-2">
-              Severity *
+              {t("formSeverity")}{tCommon("requiredSuffix")}
             </label>
             <select
               id="severity"
@@ -126,17 +130,17 @@ export function CrimeReportForm({
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
             >
-              <option value={1}>Low (1)</option>
-              <option value={2}>Low-Medium (2)</option>
-              <option value={3}>Medium (3)</option>
-              <option value={4}>High (4)</option>
-              <option value={5}>Critical (5)</option>
+              <option value={1}>{t("severityOpt1")}</option>
+              <option value={2}>{t("severityOpt2")}</option>
+              <option value={3}>{t("severityOpt3")}</option>
+              <option value={4}>{t("severityOpt4")}</option>
+              <option value={5}>{t("severityOpt5")}</option>
             </select>
           </div>
 
           <div>
             <label htmlFor="date" className="block text-gray-700 mb-2">
-              Incident Date *
+              {t("formDate")}{tCommon("requiredSuffix")}
             </label>
             <input
               id="date"
@@ -152,7 +156,7 @@ export function CrimeReportForm({
 
           <div className="md:col-span-2">
             <label htmlFor="content" className="block text-gray-700 mb-2">
-              Description *
+              {t("formContent")}{tCommon("requiredSuffix")}
             </label>
             <textarea
               id="content"
@@ -162,7 +166,7 @@ export function CrimeReportForm({
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               rows={4}
-              placeholder="Describe the incident in detail..."
+              placeholder={t("placeholderContent")}
               required
             />
           </div>
@@ -172,7 +176,7 @@ export function CrimeReportForm({
             <label className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Incident Location on Map *
+                {t("formMapLabel")}{tCommon("requiredSuffix")}
               </span>
             </label>
             <LocationPicker
@@ -180,8 +184,8 @@ export function CrimeReportForm({
                 [formData.latitude || 40.7829, formData.longitude || -73.9654]
               }
               onPositionChange={(position) =>
-                setFormData({ 
-                  ...formData, 
+                setFormData({
+                  ...formData,
                   latitude: position[0],
                   longitude: position[1]
                 })
@@ -191,7 +195,7 @@ export function CrimeReportForm({
 
           <div>
             <label htmlFor="latitude" className="block text-gray-700 mb-2">
-              Latitude *
+              {tCommon("latitude")}{tCommon("requiredSuffix")}
             </label>
             <input
               id="latitude"
@@ -211,7 +215,7 @@ export function CrimeReportForm({
 
           <div>
             <label htmlFor="longitude" className="block text-gray-700 mb-2">
-              Longitude *
+              {tCommon("longitude")}{tCommon("requiredSuffix")}
             </label>
             <input
               id="longitude"
@@ -231,7 +235,7 @@ export function CrimeReportForm({
 
           <div>
             <label htmlFor="numberOfVictims" className="block text-gray-700 mb-2">
-              Number of Victims
+              {t("formVictims")}
             </label>
             <input
               id="numberOfVictims"
@@ -250,7 +254,7 @@ export function CrimeReportForm({
 
           <div>
             <label htmlFor="numberOfOffenders" className="block text-gray-700 mb-2">
-              Number of Offenders
+              {t("formOffenders")}
             </label>
             <input
               id="numberOfOffenders"
@@ -280,7 +284,7 @@ export function CrimeReportForm({
                 }
                 className="w-4 h-4"
               />
-              <span className="text-gray-700">Arrests made</span>
+              <span className="text-gray-700">{t("formArrested")}</span>
             </label>
           </div>
         </div>
@@ -290,7 +294,7 @@ export function CrimeReportForm({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-gray-900">Review Crime Report</h3>
+              <h3 className="text-gray-900">{t("reviewTitle")}</h3>
               <button
                 onClick={() => setShowReview(false)}
                 className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
@@ -300,27 +304,27 @@ export function CrimeReportForm({
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <p className="text-gray-600 text-sm">Title</p>
+                <p className="text-gray-600 text-sm">{t("formTitle")}</p>
                 <p className="text-gray-900">{formData.title}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-gray-600 text-sm">Severity</p>
+                  <p className="text-gray-600 text-sm">{t("reviewSeverity")}</p>
                   <p className="text-gray-900">{formData.severity}/5</p>
                 </div>
                 <div>
-                  <p className="text-gray-600 text-sm">Number of Victims</p>
+                  <p className="text-gray-600 text-sm">{t("reviewVictims")}</p>
                   <p className="text-gray-900">{formData.numberOfVictims ?? 0}</p>
                 </div>
               </div>
               <div>
-                <p className="text-gray-600 text-sm">Location</p>
+                <p className="text-gray-600 text-sm">{t("reviewLocation")}</p>
                 <p className="text-gray-900">
                   {formData.latitude?.toFixed(4)}, {formData.longitude?.toFixed(4)}
                 </p>
               </div>
               <div>
-                <p className="text-gray-600 text-sm">Incident Date</p>
+                <p className="text-gray-600 text-sm">{t("reviewDate")}</p>
                 <p className="text-gray-900">
                   {formData.date
                     ? new Date(formData.date).toLocaleString()
@@ -328,18 +332,18 @@ export function CrimeReportForm({
                 </p>
               </div>
               <div>
-                <p className="text-gray-600 text-sm">Description</p>
+                <p className="text-gray-600 text-sm">{tCommon("description")}</p>
                 <p className="text-gray-900 whitespace-pre-wrap">
                   {formData.content}
                 </p>
               </div>
               <div>
-                <p className="text-gray-600 text-sm">Number of Offenders</p>
+                <p className="text-gray-600 text-sm">{t("reviewOffenders")}</p>
                 <p className="text-gray-900">{formData.numberOfOffenders ?? 0}</p>
               </div>
               <div>
-                <p className="text-gray-600 text-sm">Arrests Made</p>
-                <p className="text-gray-900">{formData.arrested ? "Yes" : "No"}</p>
+                <p className="text-gray-600 text-sm">{t("reviewArrested")}</p>
+                <p className="text-gray-900">{formData.arrested ? tCommon("yes") : tCommon("no")}</p>
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
@@ -348,14 +352,14 @@ export function CrimeReportForm({
                 className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                 disabled={isSubmitting}
               >
-                Back to Edit
+                {t("backToEdit")}
               </button>
               <button
                 onClick={handleConfirmSubmit}
                 className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Submitting..." : "Confirm Submit"}
+                {isSubmitting ? tCommon("submitting") : t("confirmSubmit")}
               </button>
             </div>
           </div>

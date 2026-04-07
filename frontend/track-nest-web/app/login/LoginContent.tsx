@@ -6,11 +6,13 @@ import { Loader2, Radar, ArrowRight, ShieldCheck, MapPin, Users } from "lucide-r
 import { authService } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 function LoginContentInner() {
   const [isLoading, setIsLoading] = useState(true);
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const t = useTranslations("auth");
 
   const redirectToKeycloak = useCallback(() => {
     authService.loginWithKeycloak().catch((error) => {
@@ -42,10 +44,16 @@ function LoginContentInner() {
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-10 bg-white rounded-2xl shadow-xl w-full max-w-sm">
         <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
-        <p className="text-sm text-slate-500">Initialising session…</p>
+        <p className="text-sm text-slate-500">{t("initialisingSession")}</p>
       </div>
     );
   }
+
+  const features = [
+    { icon: ShieldCheck, label: t("featureCrimeReports") },
+    { icon: Users,       label: t("featureMissingPersons") },
+    { icon: MapPin,      label: t("featureSafeZones") },
+  ];
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl shadow-brand-900/10 w-full max-w-sm overflow-hidden">
@@ -58,31 +66,23 @@ function LoginContentInner() {
           <Radar className="w-8 h-8 text-brand-600" />
         </div>
 
-        <h1 className="text-2xl font-bold text-slate-900 mb-1">TrackNest</h1>
-        <p className="text-sm text-slate-500 mb-8">
-          Smart city safety &amp; abduction prevention platform
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900 mb-1">{t("appName")}</h1>
+        <p className="text-sm text-slate-500 mb-8">{t("tagline")}</p>
 
         <button
           onClick={redirectToKeycloak}
           className="w-full flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-150 group"
         >
-          Sign in with Keycloak
+          {t("signIn")}
           <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </button>
 
-        <p className="mt-6 text-xs text-slate-400">
-          Secured by Keycloak · OAuth 2.0 / OIDC
-        </p>
+        <p className="mt-6 text-xs text-slate-400">{t("securedBy")}</p>
       </div>
 
       {/* Feature pills */}
       <div className="border-t border-slate-100 px-8 py-5 grid grid-cols-3 gap-3">
-        {[
-          { icon: ShieldCheck, label: "Crime Reports" },
-          { icon: Users,       label: "Missing Persons" },
-          { icon: MapPin,      label: "Safe Zones" },
-        ].map(({ icon: Icon, label }) => (
+        {features.map(({ icon: Icon, label }) => (
           <div key={label} className="flex flex-col items-center gap-1.5">
             <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-brand-50">
               <Icon className="w-4 h-4 text-brand-600" />

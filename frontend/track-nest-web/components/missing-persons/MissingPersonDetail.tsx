@@ -13,6 +13,7 @@ import { useState } from "react";
 import type { MissingPerson } from "@/types";
 import { MapView } from "../shared/MapView";
 import { ConfirmModal } from "../shared/ConfirmModal";
+import { useTranslations } from "next-intl";
 
 interface MissingPersonDetailProps {
   person: MissingPerson;
@@ -31,6 +32,9 @@ export function MissingPersonDetail({
   onDelete,
   userRole,
 }: MissingPersonDetailProps) {
+  const t = useTranslations("missingPersons");
+  const tCommon = useTranslations("common");
+
   const [confirmAction, setConfirmAction] = useState<
     "publish" | "delete" | null
   >(null);
@@ -68,7 +72,7 @@ export function MissingPersonDetail({
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h2 className="text-gray-900">Missing Person Details</h2>
+          <h2 className="text-gray-900">{t("detailTitle")}</h2>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
@@ -90,7 +94,7 @@ export function MissingPersonDetail({
                   <button
                     onClick={() => onEdit(person)}
                     className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    title="Edit"
+                    title={tCommon("edit")}
                   >
                     <Edit className="w-4 h-4" />
                   </button>
@@ -98,7 +102,7 @@ export function MissingPersonDetail({
                     <button
                       onClick={() => setConfirmAction("publish")}
                       className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                      title="Publish Report"
+                      title={tCommon("publish")}
                     >
                       <CheckCircle className="w-4 h-4" />
                     </button>
@@ -106,7 +110,7 @@ export function MissingPersonDetail({
                   <button
                     onClick={() => setConfirmAction("delete")}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Delete Report"
+                    title={tCommon("delete")}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -118,7 +122,7 @@ export function MissingPersonDetail({
               <div className="flex items-start gap-3">
                 <User className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
-                  <p className="text-gray-700">Name</p>
+                  <p className="text-gray-700">{t("detailName")}</p>
                   <p className="text-gray-900 mt-1">{person.fullName}</p>
                 </div>
               </div>
@@ -126,7 +130,7 @@ export function MissingPersonDetail({
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
-                  <p className="text-gray-700">Personal ID</p>
+                  <p className="text-gray-700">{t("detailPersonalId")}</p>
                   <p className="text-gray-900 mt-1">{person.personalId}</p>
                 </div>
               </div>
@@ -134,7 +138,7 @@ export function MissingPersonDetail({
               <div className="flex items-start gap-3">
                 <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
-                  <p className="text-gray-700">Date</p>
+                  <p className="text-gray-700">{t("detailDate")}</p>
                   <p className="text-gray-900 mt-1">
                     {new Date(person.date).toLocaleString()}
                   </p>
@@ -142,13 +146,13 @@ export function MissingPersonDetail({
               </div>
 
               <div className="pt-4 border-t border-gray-200">
-                <p className="text-gray-700 mb-2">Description</p>
+                <p className="text-gray-700 mb-2">{t("detailDescription")}</p>
                 <p className="text-gray-900">{person.content}</p>
               </div>
 
               {person.photo && (
                 <div className="pt-4 border-t border-gray-200">
-                  <p className="text-gray-700 mb-2">Photo</p>
+                  <p className="text-gray-700 mb-2">{t("detailPhoto")}</p>
                   <img
                     src={person.photo}
                     alt={person.fullName}
@@ -161,7 +165,7 @@ export function MissingPersonDetail({
 
           {/* Map */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col">
-            <h3 className="text-gray-900 mb-4">Last Known Location Map</h3>
+            <h3 className="text-gray-900 mb-4">{t("mapTitle")}</h3>
             <MapView
               center={[40.7829, -73.9654]}
               markers={[
@@ -177,22 +181,22 @@ export function MissingPersonDetail({
 
       {confirmAction === "publish" && (
         <ConfirmModal
-          title="Publish Missing Person Report"
-          message="Are you sure you want to publish this report? This will notify Emergency Services and the reported user."
+          title={t("detailPublishTitle")}
+          message={t("detailPublishMessage")}
           onConfirm={handleConfirmPublish}
           onCancel={() => setConfirmAction(null)}
-          confirmText="Publish"
+          confirmText={tCommon("publish")}
           confirmStyle="primary"
         />
       )}
 
       {confirmAction === "delete" && (
         <ConfirmModal
-          title="Delete Missing Person Report"
-          message="Are you sure you want to delete this report? This action cannot be undone and the reported user will be notified."
+          title={t("detailDeleteTitle")}
+          message={t("detailDeleteMessage")}
           onConfirm={handleConfirmDelete}
           onCancel={() => setConfirmAction(null)}
-          confirmText="Delete"
+          confirmText={tCommon("delete")}
           confirmStyle="danger"
         />
       )}
