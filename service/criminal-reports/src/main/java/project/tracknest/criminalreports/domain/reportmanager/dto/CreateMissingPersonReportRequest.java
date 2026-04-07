@@ -36,6 +36,7 @@ public class CreateMissingPersonReportRequest {
     @Email(message = "Invalid email format")
     private String contactEmail;
     
+    @NotBlank(message = "Contact phone is required")
     @Pattern(regexp = "^\\+?[0-9 .\\-()]{7,25}$", message = "Invalid phone number")
     private String contactPhone;
 }

@@ -142,7 +142,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
             if (status != null && !status.isEmpty()) {
                 reports = missingPersonReportRepository.findByReporterIdAndStatus(reporterId, status, pageRequest);
             } else if (isPublic) {
-                reports = missingPersonReportRepository.findAllPublic(pageRequest);
+                reports = missingPersonReportRepository.findByReporterIdAndStatus(reporterId, ReportStatusConstants.PUBLISHED, pageRequest);
             } else {
                 reports = missingPersonReportRepository.findByReporterId(reporterId, pageRequest);
             }
