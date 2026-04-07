@@ -8,6 +8,7 @@ import {
 import { useDevMode } from "@/contexts/DevModeContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getServiceUrl, SERVICE_URL_KEY } from "@/utils";
+import { useAppModal } from "@/components/Modals/AppModal";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -20,7 +21,6 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
   Pressable,
@@ -40,6 +40,7 @@ export default function LoginScreen() {
     saveTokens,
     continueAsGuest,
   } = useAuth();
+  const { modal, showAlert } = useAppModal();
 
   const [isLoading, setIsLoading] = useState(false);
   const [discovery, setDiscovery] = useState<Awaited<
@@ -121,9 +122,7 @@ export default function LoginScreen() {
         router.replace("/map");
       } catch (error) {
         console.error("Token exchange error:", error);
-        Alert.alert(t.loginFailedTitle, t.loginFailedMessage, [
-          { text: t.okButton },
-        ]);
+        showAlert(t.loginFailedTitle, t.loginFailedMessage, "error", t.okButton);
       } finally {
         setIsLoading(false);
       }
@@ -138,15 +137,13 @@ export default function LoginScreen() {
       exchangeToken(code);
     } else if (response?.type === "error") {
       console.error("OAuth error:", response.error);
-      Alert.alert(t.loginFailedTitle, t.loginFailedMessage, [
-        { text: t.okButton },
-      ]);
+      showAlert(t.loginFailedTitle, t.loginFailedMessage, "error", t.okButton);
     }
   }, [response, exchangeToken, t]);
 
   const handleLogin = async () => {
     if (!request) {
-      Alert.alert(t.errorTitle, t.authNotReadyMessage);
+      showAlert(t.errorTitle, t.authNotReadyMessage, "warning");
       return;
     }
     promptAsync();
@@ -158,7 +155,7 @@ export default function LoginScreen() {
       router.replace("/map");
     } catch (error) {
       console.error("Failed to continue as guest:", error);
-      Alert.alert(t.errorTitle, t.guestModeErrorMessage);
+      showAlert(t.errorTitle, t.guestModeErrorMessage, "error");
     }
   };
 
@@ -179,9 +176,9 @@ export default function LoginScreen() {
       setServerUrl(trimmed || (process.env.EXPO_PUBLIC_SERVICE_URL ?? ""));
       await setDevMode(pendingDevMode);
       setShowDevModal(false);
-      Alert.alert(t.saveSuccessTitle, t.saveSuccessMessage);
+      showAlert(t.saveSuccessTitle, t.saveSuccessMessage, "success");
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e?.message ?? t.saveError);
+      showAlert(t.errorTitle, e?.message ?? t.saveError, "error");
     }
   };
 
@@ -263,6 +260,8 @@ export default function LoginScreen() {
           </Pressable>
         </View>
       </View>
+
+      {modal}
 
       <Modal
         visible={showDevModal}

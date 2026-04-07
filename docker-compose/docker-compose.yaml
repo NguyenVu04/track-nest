@@ -172,7 +172,7 @@ services:
       - track_nest
     depends_on:
       - keycloak
-      - web
+      # - web
 
   criminal_reports:
     build:
@@ -388,17 +388,17 @@ services:
       retries: 3
       start_period: 10s
 
-  web:
-    build:
-      context: ../frontend/track-nets-web
-      dockerfile: Dockerfile
-    container_name: web
-    environment:
-      - NODE_ENV=production
-    ports:
-      - "3000:3000"
-    networks:
-      - track_nest
+  # web:
+  #   build:
+  #     context: ../frontend/track-nest-web
+  #     dockerfile: Dockerfile
+  #   container_name: web
+  #   environment:
+  #     - NODE_ENV=production
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - track_nest
 
 networks:
   track_nest:
