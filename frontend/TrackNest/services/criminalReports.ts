@@ -1,24 +1,21 @@
 import { getCriminalUrl } from "@/utils";
-import { getAuthMetadata } from "@/utils/auth";
+import { getAuthMetadata, getUserId } from "@/utils/auth";
 import axios from "axios";
 import { minioService } from "./mediaUpload";
 
 // Crime Report Types (matching backend Java models)
-export interface Location {
-  latitude: number;
-  longitude: number;
-}
-
 export interface CrimeReport {
   id: string;
   title: string;
-  content: string; // URL to detailed content
+  content: string;
   severity: number; // 1-5 scale
+  date: string;
   latitude: number;
   longitude: number;
   numberOfVictims: number;
   numberOfOffenders: number;
   arrested: boolean;
+  isPublic: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,13 +25,15 @@ export interface MissingPersonReport {
   title: string;
   fullName: string;
   personalId?: string;
-  photo?: string; // URL to photo
+  photo?: string;
   contactEmail?: string;
   contactPhone?: string;
   date: string;
-  content: string; // URL to detailed content
+  content: string;
   lastSeenLatitude?: number;
   lastSeenLongitude?: number;
+  status?: string;
+  isPublic: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,10 +52,22 @@ export interface CreateCrimeReportInput {
   title: string;
   content: string;
   severity: number;
+  date: string;
   latitude: number;
   longitude: number;
   numberOfVictims?: number;
   numberOfOffenders?: number;
+  arrested?: boolean;
+}
+
+export interface UpdateCrimeReportInput {
+  title?: string;
+  content?: string;
+  severity?: number;
+  date?: string;
+  numberOfVictims?: number;
+  numberOfOffenders?: number;
+  arrested?: boolean;
 }
 
 export interface CreateMissingPersonReportInput {
@@ -67,25 +78,33 @@ export interface CreateMissingPersonReportInput {
   contactPhone?: string;
   date: string;
   content: string;
-  lastSeenLatitude?: number;
-  lastSeenLongitude?: number;
-  photo?: string; // URL from MinIO upload
+  photo?: string;
 }
 
 // Query Types
 export interface CrimeReportsQuery {
   page?: number;
   size?: number;
-  title?: string;
-  severity?: number;
+  isPublic?: boolean;
+  minSeverity?: number;
 }
 
 export interface NearbyCrimeReportsQuery {
-  lat: number;
-  lng: number;
+  longitude: number;
+  latitude: number;
   radius?: number; // in meters
   page?: number;
   size?: number;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
 }
 
 // Criminal Reports Service Client
@@ -96,7 +115,7 @@ class CriminalReportsService {
     if (!this.baseUrl) {
       this.baseUrl = await getCriminalUrl();
     }
-    
+
     const authMetadata = await getAuthMetadata();
     return axios.create({
       baseURL: this.baseUrl,
@@ -104,187 +123,162 @@ class CriminalReportsService {
     });
   }
 
+  /** Returns axios headers including Authorization + X-User-Id for mutating endpoints. */
+  private async getMutationHeaders(): Promise<Record<string, string>> {
+    const [authMetadata, userId] = await Promise.all([getAuthMetadata(), getUserId()]);
+    return {
+      ...authMetadata,
+      "X-User-Id": userId,
+    };
+  }
+
+  private async getMutationClient() {
+    if (!this.baseUrl) {
+      this.baseUrl = await getCriminalUrl();
+    }
+
+    const headers = await this.getMutationHeaders();
+    return axios.create({
+      baseURL: this.baseUrl,
+      headers,
+    });
+  }
+
   // ==================== Crime Reports ====================
 
-  /**
-   * Create a new crime report
-   */
   async createCrimeReport(data: CreateCrimeReportInput): Promise<CrimeReport> {
-    const client = await this.getApiClient();
+    const client = await this.getMutationClient();
     const response = await client.post("/report-manager/crime-reports", data);
     return response.data;
   }
 
-  /**
-   * Get crime report by ID
-   */
   async getCrimeReportById(reportId: string): Promise<CrimeReport> {
-    const client = await this.getApiClient();
+    const client = await this.getMutationClient(); // GET but requires X-User-Id per docs
     const response = await client.get(`/report-manager/crime-reports/${reportId}`);
     return response.data;
   }
 
-  /**
-   * Publish a crime report (make it visible to public)
-   */
-  async publishCrimeReport(reportId: string): Promise<void> {
-    const client = await this.getApiClient();
-    await client.post(`/report-manager/crime-reports/${reportId}/publish`);
+  async updateCrimeReport(reportId: string, data: UpdateCrimeReportInput): Promise<CrimeReport> {
+    const client = await this.getMutationClient();
+    const response = await client.put(`/report-manager/crime-reports/${reportId}`, data);
+    return response.data;
   }
 
-  /**
-   * Delete a crime report
-   */
+  async publishCrimeReport(reportId: string): Promise<CrimeReport> {
+    const client = await this.getMutationClient();
+    const response = await client.post(`/report-manager/crime-reports/${reportId}/publish`);
+    return response.data;
+  }
+
   async deleteCrimeReport(reportId: string): Promise<void> {
-    const client = await this.getApiClient();
+    const client = await this.getMutationClient();
     await client.delete(`/report-manager/crime-reports/${reportId}`);
   }
 
-  /**
-   * List crime reports with filters and pagination
-   */
-  async getCrimeReports(query: CrimeReportsQuery = {}): Promise<{
-    content: CrimeReport[];
-    totalElements: number;
-    totalPages: number;
-    pageNumber: number;
-    pageSize: number;
-  }> {
+  async getCrimeReports(query: CrimeReportsQuery = {}): Promise<PageResponse<CrimeReport>> {
     const client = await this.getApiClient();
     const response = await client.get("/report-manager/crime-reports", {
       params: {
-        page: query.page || 0,
-        size: query.size || 20,
-        title: query.title,
-        severity: query.severity,
+        isPublic: query.isPublic,
+        minSeverity: query.minSeverity,
+        page: query.page ?? 0,
+        size: query.size ?? 20,
       },
     });
     return response.data;
   }
 
-  /**
-   * Get crime reports near a location
-   */
-  async getNearbyCrimeReports(query: NearbyCrimeReportsQuery): Promise<{
-    content: CrimeReport[];
-    totalElements: number;
-  }> {
+  async getNearbyCrimeReports(query: NearbyCrimeReportsQuery): Promise<PageResponse<CrimeReport>> {
     const client = await this.getApiClient();
     const response = await client.get("/report-manager/crime-reports/nearby", {
       params: {
-        lat: query.lat,
-        lng: query.lng,
-        radius: query.radius || 5000, // 5km default
-        page: query.page || 0,
-        size: query.size || 20,
+        longitude: query.longitude,
+        latitude: query.latitude,
+        radius: query.radius ?? 5000,
+        page: query.page ?? 0,
+        size: query.size ?? 20,
       },
+    });
+    return response.data;
+  }
+
+  async getCrimeHeatmap(longitude: number, latitude: number, radius: number = 5000, page: number = 0, size: number = 50): Promise<PageResponse<CrimeReport>> {
+    const client = await this.getApiClient();
+    const response = await client.get("/crime-locator/heatmap", {
+      params: { longitude, latitude, radius, page, size },
+    });
+    return response.data;
+  }
+
+  async isHighRiskArea(longitude: number, latitude: number): Promise<boolean> {
+    const client = await this.getApiClient();
+    const response = await client.get("/crime-locator/high-risk-check", {
+      params: { longitude, latitude },
     });
     return response.data;
   }
 
   // ==================== Missing Person Reports ====================
 
-  /**
-   * Create a new missing person report
-   */
   async createMissingPersonReport(data: CreateMissingPersonReportInput): Promise<MissingPersonReport> {
-    const client = await this.getApiClient();
+    const client = await this.getMutationClient();
     const response = await client.post("/report-manager/missing-person-reports", data);
     return response.data;
   }
 
-  /**
-   * Get missing person report by ID
-   */
   async getMissingPersonReportById(reportId: string): Promise<MissingPersonReport> {
     const client = await this.getApiClient();
     const response = await client.get(`/report-manager/missing-person-reports/${reportId}`);
     return response.data;
   }
 
-  /**
-   * Publish a missing person report
-   */
   async publishMissingPersonReport(reportId: string): Promise<void> {
-    const client = await this.getApiClient();
+    const client = await this.getMutationClient();
     await client.post(`/report-manager/missing-person-reports/${reportId}/publish`);
   }
 
-  /**
-   * Delete a missing person report
-   */
   async deleteMissingPersonReport(reportId: string): Promise<void> {
-    const client = await this.getApiClient();
+    const client = await this.getMutationClient();
     await client.delete(`/report-manager/missing-person-reports/${reportId}`);
   }
 
-  /**
-   * List all missing person reports with pagination
-   */
-  async getMissingPersonReports(page: number = 0, size: number = 20): Promise<{
-    content: MissingPersonReport[];
-    totalElements: number;
-    totalPages: number;
-    pageNumber: number;
-    pageSize: number;
-  }> {
+  async getMissingPersonReports(page: number = 0, size: number = 20, isPublic?: boolean, status?: string): Promise<PageResponse<MissingPersonReport>> {
     const client = await this.getApiClient();
     const response = await client.get("/report-manager/missing-person-reports", {
-      params: { page, size },
+      params: { isPublic, status, page, size },
     });
     return response.data;
   }
 
   // ==================== Guidelines ====================
 
-  /**
-   * List guidelines documents
-   */
-  async getGuidelines(page: number = 0, size: number = 20): Promise<{
-    content: GuidelinesDocument[];
-    totalElements: number;
-  }> {
+  async getGuidelines(page: number = 0, size: number = 20, isPublic?: boolean): Promise<PageResponse<GuidelinesDocument>> {
     const client = await this.getApiClient();
     const response = await client.get("/report-manager/guidelines", {
-      params: { page, size },
+      params: { isPublic, page, size },
     });
     return response.data;
   }
 
-  /**
-   * Get guidelines document by ID
-   */
   async getGuidelinesById(documentId: string): Promise<GuidelinesDocument> {
     const client = await this.getApiClient();
     const response = await client.get(`/report-manager/guidelines/${documentId}`);
     return response.data;
   }
 
-  /**
-   * Create a new guidelines document
-   */
   async createGuidelines(title: string, content: string): Promise<GuidelinesDocument> {
-    const client = await this.getApiClient();
-    const response = await client.post("/report-manager/guidelines", {
-      title,
-      content,
-    });
+    const client = await this.getMutationClient();
+    const response = await client.post("/report-manager/guidelines", { title, content });
     return response.data;
   }
 
-  /**
-   * Publish guidelines document
-   */
   async publishGuidelines(documentId: string): Promise<void> {
-    const client = await this.getApiClient();
+    const client = await this.getMutationClient();
     await client.post(`/report-manager/guidelines/${documentId}/publish`);
   }
 
-  /**
-   * Delete guidelines document
-   */
   async deleteGuidelines(documentId: string): Promise<void> {
-    const client = await this.getApiClient();
+    const client = await this.getMutationClient();
     await client.delete(`/report-manager/guidelines/${documentId}`);
   }
 }
@@ -295,27 +289,18 @@ export default criminalReportsService;
 
 // Helper functions for UI
 
-/**
- * Convert backend severity (1-5) to UI display format
- */
 export function getSeverityLabel(severity: number): string {
   if (severity >= 4) return "High";
   if (severity >= 2) return "Medium";
   return "Low";
 }
 
-/**
- * Get severity color for UI
- */
 export function getSeverityColor(severity: number): string {
-  if (severity >= 4) return "#e74c3c"; // danger
-  if (severity >= 2) return "#f39c12"; // warn
-  return "#27ae60"; // success
+  if (severity >= 4) return "#e74c3c";
+  if (severity >= 2) return "#f39c12";
+  return "#27ae60";
 }
 
-/**
- * Convert UI severity string to number (1-5)
- */
 export function severityToNumber(severity: "Low" | "Medium" | "High"): number {
   switch (severity) {
     case "High": return 5;
@@ -326,24 +311,22 @@ export function severityToNumber(severity: "Low" | "Medium" | "High"): number {
 }
 
 /**
- * Create a crime report from UI form
- * Handles image uploads to MinIO first, then creates the report
+ * Create a crime report from UI form.
+ * Uploads images to MinIO first, then creates the report.
  */
 export async function createCrimeReport(data: {
   title: string;
   description: string;
-  address: string;
   severity: "Low" | "Medium" | "High";
   latitude: number;
   longitude: number;
   images: string[];
 }): Promise<CrimeReport> {
-  // Upload images first if any
   let contentWithImages = data.description;
-  
+
   if (data.images && data.images.length > 0) {
     const uploadedUrls: string[] = [];
-    
+
     for (const imageUri of data.images) {
       try {
         const filename = `crime_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
@@ -357,28 +340,24 @@ export async function createCrimeReport(data: {
         console.warn("Failed to upload image:", error);
       }
     }
-    
-    // Append image URLs to content
+
     if (uploadedUrls.length > 0) {
       contentWithImages = `${data.description}\n\nImages: ${uploadedUrls.join(", ")}`;
     }
   }
-  
-  // Create the report
+
+  const today = new Date().toISOString().split("T")[0];
   const reportData: CreateCrimeReportInput = {
     title: data.title,
     content: contentWithImages,
     severity: severityToNumber(data.severity),
+    date: today,
     latitude: data.latitude,
     longitude: data.longitude,
     numberOfVictims: 1,
     numberOfOffenders: 1,
+    arrested: false,
   };
-  
-  const createdReport = await criminalReportsService.createCrimeReport(reportData);
-  
-  // Optionally publish immediately (depends on requirements)
-  // await criminalReportsService.publishCrimeReport(createdReport.id);
-  
-  return createdReport;
+
+  return criminalReportsService.createCrimeReport(reportData);
 }

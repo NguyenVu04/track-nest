@@ -26,6 +26,13 @@ export function useVoiceSosActivation(enabled: boolean = true) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Keep refs so event handler callbacks never need to be re-created when
+  // pathname or router identity changes (which happens on every navigation).
+  const routerRef = useRef(router);
+  const pathnameRef = useRef(pathname);
+  useEffect(() => { routerRef.current = router; }, [router]);
+  useEffect(() => { pathnameRef.current = pathname; }, [pathname]);
+
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const shouldListenRef = useRef(false);
   const lastTriggerAtRef = useRef(0);
@@ -98,7 +105,9 @@ export function useVoiceSosActivation(enabled: boolean = true) {
     }
   });
 
-  useSpeechRecognitionEvent("result", (event) => {
+  // Stable callback with empty deps — reads router/pathname through refs so it
+  // is never re-created on navigation, preventing listener re-registration.
+  const onResult = useCallback((event: { results: { transcript: string }[] }) => {
     const transcript = normalize(event.results[0]?.transcript ?? "");
     if (!transcript) return;
 
@@ -111,10 +120,13 @@ export function useVoiceSosActivation(enabled: boolean = true) {
     if (now - lastTriggerAtRef.current < 3000) return;
     lastTriggerAtRef.current = now;
 
-    if (pathname !== "/sos") {
-      router.push("/sos");
+    if (pathnameRef.current !== "/sos") {
+      routerRef.current.push("/sos");
     }
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedPhrases]); // normalizedPhrases is stable (useMemo with [])
+
+  useSpeechRecognitionEvent("result", onResult);
 
   useEffect(() => {
     startListening();

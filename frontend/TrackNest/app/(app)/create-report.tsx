@@ -1,11 +1,11 @@
 import { createReport as createReportLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
 import { createCrimeReport } from "@/services/criminalReports";
+import { useAppModal } from "@/components/Modals/AppModal";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -21,9 +21,9 @@ import { colors, radii, spacing } from "@/styles/styles";
 export default function CreateReportScreen() {
   const router = useRouter();
   const t = useTranslation(createReportLang);
+  const { modal, showAlert } = useAppModal();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [address, setAddress] = useState("");
   const [severity, setSeverity] = useState<"Low" | "Medium" | "High">("Medium");
   const [latitude, setLatitude] = useState("10.7769");
   const [longitude, setLongitude] = useState("106.6424");
@@ -31,15 +31,11 @@ export default function CreateReportScreen() {
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      Alert.alert("Error", "Please enter a title");
+      showAlert("Error", "Please enter a title", "warning");
       return;
     }
     if (!description.trim()) {
-      Alert.alert("Error", "Please enter a description");
-      return;
-    }
-    if (!address.trim()) {
-      Alert.alert("Error", "Please enter an address");
+      showAlert("Error", "Please enter a description", "warning");
       return;
     }
 
@@ -48,17 +44,14 @@ export default function CreateReportScreen() {
       await createCrimeReport({
         title: title.trim(),
         description: description.trim(),
-        address: address.trim(),
         severity,
         latitude: parseFloat(latitude) || 10.7769,
         longitude: parseFloat(longitude) || 106.6424,
         images: [],
       });
-      Alert.alert("Success", "Report submitted successfully", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      showAlert("Success", "Report submitted successfully", "success", "OK", () => router.back());
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to submit report");
+      showAlert("Error", err.message || "Failed to submit report", "error");
     } finally {
       setLoading(false);
     }
@@ -66,6 +59,7 @@ export default function CreateReportScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {modal}
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -105,17 +99,6 @@ export default function CreateReportScreen() {
               multiline
               numberOfLines={4}
               textAlignVertical="top"
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>{t.addressLabel}</Text>
-            <TextInput
-              style={styles.input}
-              value={address}
-              onChangeText={setAddress}
-              placeholder={t.addressPlaceholder}
-              placeholderTextColor="#999"
             />
           </View>
 
