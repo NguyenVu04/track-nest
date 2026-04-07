@@ -382,6 +382,15 @@ services:
   #   networks:
   #     - track_nest
 
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=eyJhIjoiMzQyYzc1NDc5NzQ0NjVlY2Q2YzBhNTRiM2JiNWYxMTciLCJ0IjoiYmMwZTYxYmYtYjU2OC00ODhiLWFlNzAtZjFlYmRkYTNhOGRjIiwicyI6Ik1EWmtZemhtTVdZdE5tVXlNeTAwTldaa0xUZ3laVEl0TURjNU4yWm1abUUwWWpVNCJ9
+    depends_on:
+      - nginx
+
 networks:
   track_nest:
     driver: bridge
