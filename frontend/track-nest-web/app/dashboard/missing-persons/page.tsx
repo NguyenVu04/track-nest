@@ -13,11 +13,15 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { useDebouncedCallback } from "use-debounce";
 import { criminalReportsService, MissingPersonReportResponse, PageResponse } from "@/services/criminalReportsService";
 import { Loading } from "@/components/loading/Loading";
+import { useTranslations } from "next-intl";
 
 export default function MissingPersonsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { addNotification } = useNotification();
+  const t = useTranslations("missingPersons");
+  const tCommon = useTranslations("common");
+
   const [missingPersons, setMissingPersons] = useState<MissingPerson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,7 +54,7 @@ export default function MissingPersonsPage() {
             p.id === id ? { ...p, status: "PUBLISHED" as const } : p,
           ),
         );
-        toast.success("Report published successfully");
+        toast.success(t("toastPublished"));
         addNotification({
           type: "missing-person",
           title: "Missing person report published",
@@ -58,11 +62,11 @@ export default function MissingPersonsPage() {
           reportId: person.id,
         });
       } catch (error) {
-        toast.error("Error publishing report");
+        toast.error(t("toastPublishError"));
         console.error(error);
       }
     },
-    [missingPersons, addNotification],
+    [missingPersons, addNotification, t],
   );
 
   const handleDelete = useCallback(
@@ -72,7 +76,7 @@ export default function MissingPersonsPage() {
       try {
         await criminalReportsService.deleteMissingPersonReport(id);
         setMissingPersons(missingPersons.filter((p) => p.id !== id));
-        toast.success("Report deleted successfully");
+        toast.success(t("toastDeleted"));
         addNotification({
           type: "missing-person",
           title: "Missing person report deleted",
@@ -80,11 +84,11 @@ export default function MissingPersonsPage() {
           reportId: person.id,
         });
       } catch (error) {
-        toast.error("Error deleting report");
+        toast.error(t("toastDeleteError"));
         console.error(error);
       }
     },
-    [missingPersons, addNotification],
+    [missingPersons, addNotification, t],
   );
 
   const filteredPersons = useMemo(() => {
@@ -93,7 +97,7 @@ export default function MissingPersonsPage() {
         person.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         person.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         person.content.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesStatus =
         statusFilter === "all" || person.status === statusFilter;
       return matchesSearch && matchesStatus;
@@ -109,7 +113,7 @@ export default function MissingPersonsPage() {
           page: 0,
           size: 100,
         });
-        
+
         const mappedPersons: MissingPerson[] = response.content.map((item) => ({
           id: item.id,
           title: item.title,
@@ -126,7 +130,7 @@ export default function MissingPersonsPage() {
           reporterId: item.reporterId,
           isPublic: item.isPublic,
         }));
-        
+
         setMissingPersons(mappedPersons);
       } catch (error) {
         console.error("Error fetching missing persons:", error);
@@ -150,18 +154,16 @@ export default function MissingPersonsPage() {
   return (
     <PageTransition>
       <div>
-        <Breadcrumbs items={[{ label: "Missing Person Reports" }]} />
+        <Breadcrumbs items={[{ label: t("pageTitle") }]} />
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="text-gray-900 text-xl font-semibold">
-            Missing Person Reports
-          </h2>
+          <h2 className="text-gray-900 text-xl font-semibold">{t("pageTitle")}</h2>
           {user.role === "Reporter" && (
             <button
               onClick={handleCreateNew}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              New Report
+              {t("newReport")}
             </button>
           )}
         </div>
@@ -172,7 +174,7 @@ export default function MissingPersonsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by name or title..."
+                placeholder={t("searchPlaceholder")}
                 defaultValue={searchQuery}
                 onChange={(e) => debouncedSetSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
@@ -185,10 +187,10 @@ export default function MissingPersonsPage() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent appearance-none"
               >
-                <option value="all">All Statuses</option>
-                <option value="PENDING">Pending</option>
-                <option value="PUBLISHED">Published</option>
-                <option value="RESOLVED">Resolved</option>
+                <option value="all">{t("filterAll")}</option>
+                <option value="PENDING">{t("filterPending")}</option>
+                <option value="PUBLISHED">{t("filterPublished")}</option>
+                <option value="RESOLVED">{t("filterResolved")}</option>
               </select>
             </div>
           </div>

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Save, X, MapPin, User, Calendar, FileText, Phone, Mail } from "lucide-react";
 import type { MissingPerson } from "@/types";
 import { criminalReportsService, CreateMissingPersonReportRequest } from "@/services/criminalReportsService";
+import { useTranslations } from "next-intl";
 
 const LocationPicker = dynamic(
   () => import("../shared/LocationPicker").then((mod) => mod.LocationPicker),
@@ -31,6 +32,9 @@ export function MissingPersonForm({
   onCancel,
   mode,
 }: MissingPersonFormProps) {
+  const t = useTranslations("missingPersons");
+  const tCommon = useTranslations("common");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<MissingPerson>>(
     person || {
@@ -99,9 +103,7 @@ export function MissingPersonForm({
     <div className="max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-gray-900 text-2xl font-semibold">
-          {mode === "create"
-            ? "New Missing Person Report"
-            : "Edit Missing Person Report"}
+          {mode === "create" ? t("formNewTitle") : t("formEditTitle")}
         </h2>
       </div>
 
@@ -114,7 +116,7 @@ export function MissingPersonForm({
             <label htmlFor="title" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                Report Title *
+                {t("formReportTitle")}{tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -125,7 +127,7 @@ export function MissingPersonForm({
                 setFormData({ ...formData, title: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder="Enter a title for this report"
+              placeholder={t("placeholderTitle")}
               required
             />
           </div>
@@ -134,7 +136,7 @@ export function MissingPersonForm({
             <label htmlFor="fullName" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <User className="w-4 h-4" />
-                Full Name *
+                {t("formFullName")}{tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -145,14 +147,14 @@ export function MissingPersonForm({
                 setFormData({ ...formData, fullName: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder="Missing person's full name"
+              placeholder={t("placeholderFullName")}
               required
             />
           </div>
 
           <div>
             <label htmlFor="personalId" className="block text-gray-700 mb-2">
-              Personal ID *
+              {t("formPersonalId")}{tCommon("requiredSuffix")}
             </label>
             <input
               id="personalId"
@@ -162,7 +164,7 @@ export function MissingPersonForm({
                 setFormData({ ...formData, personalId: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder="ID number"
+              placeholder={t("placeholderId")}
               required
             />
           </div>
@@ -171,7 +173,7 @@ export function MissingPersonForm({
             <label htmlFor="date" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Date Missing *
+                {t("formDateMissing")}{tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -188,7 +190,7 @@ export function MissingPersonForm({
 
           <div>
             <label htmlFor="photo" className="block text-gray-700 mb-2">
-              Photo URL
+              {t("formPhotoUrl")}
             </label>
             <input
               id="photo"
@@ -198,7 +200,7 @@ export function MissingPersonForm({
                 setFormData({ ...formData, photo: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder="https://example.com/photo.jpg"
+              placeholder={t("placeholderPhoto")}
             />
           </div>
 
@@ -206,7 +208,7 @@ export function MissingPersonForm({
             <label className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Location Coordinates *
+                {t("formLocationCoords")}{tCommon("requiredSuffix")}
               </span>
             </label>
             <LocationPicker
@@ -217,7 +219,7 @@ export function MissingPersonForm({
 
           <div>
             <label htmlFor="latitude" className="block text-gray-700 mb-2">
-              Latitude *
+              {tCommon("latitude")}{tCommon("requiredSuffix")}
             </label>
             <input
               id="latitude"
@@ -234,7 +236,7 @@ export function MissingPersonForm({
 
           <div>
             <label htmlFor="longitude" className="block text-gray-700 mb-2">
-              Longitude *
+              {tCommon("longitude")}{tCommon("requiredSuffix")}
             </label>
             <input
               id="longitude"
@@ -253,7 +255,7 @@ export function MissingPersonForm({
             <label htmlFor="content" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                Description *
+                {t("formContent")}{tCommon("requiredSuffix")}
               </span>
             </label>
             <textarea
@@ -264,7 +266,7 @@ export function MissingPersonForm({
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               rows={4}
-              placeholder="Physical description, clothing, distinguishing features..."
+              placeholder={t("placeholderContent")}
               required
             />
           </div>
@@ -273,7 +275,7 @@ export function MissingPersonForm({
             <label htmlFor="contactEmail" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                Contact Email
+                {t("formContactEmail")}
               </span>
             </label>
             <input
@@ -284,7 +286,7 @@ export function MissingPersonForm({
                 setFormData({ ...formData, contactEmail: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder="email@example.com"
+              placeholder={t("placeholderEmail")}
             />
           </div>
 
@@ -292,7 +294,7 @@ export function MissingPersonForm({
             <label htmlFor="contactPhone" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                Contact Phone *
+                {t("formContactPhone")}{tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -303,7 +305,7 @@ export function MissingPersonForm({
                 setFormData({ ...formData, contactPhone: e.target.value })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder="+1 234 567 8900"
+              placeholder={t("placeholderPhone")}
               required
             />
           </div>
@@ -316,7 +318,7 @@ export function MissingPersonForm({
             className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            {isSubmitting ? "Saving..." : mode === "create" ? "Create Report" : "Save Changes"}
+            {isSubmitting ? tCommon("saving") : mode === "create" ? t("createButton") : tCommon("save")}
           </button>
           <button
             type="button"
@@ -324,7 +326,7 @@ export function MissingPersonForm({
             className="flex items-center gap-2 px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
           >
             <X className="w-4 h-4" />
-            Cancel
+            {tCommon("cancel")}
           </button>
         </div>
       </form>

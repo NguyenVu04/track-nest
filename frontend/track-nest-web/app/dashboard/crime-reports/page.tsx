@@ -14,6 +14,7 @@ import { LoadingCard } from "@/components/loading/LoadingCard";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { criminalReportsService, CrimeReportResponse, PageResponse } from "@/services/criminalReportsService";
 import { Loading } from "@/components/loading/Loading";
+import { useTranslations } from "next-intl";
 
 const CrimeHeatmapView = dynamic(
   () =>
@@ -31,6 +32,8 @@ type ViewMode = "list" | "heatmap";
 export default function CrimeReportsPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const t = useTranslations("crimeReports");
+
   const [crimeReports, setCrimeReports] = useState<CrimeReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -46,7 +49,7 @@ export default function CrimeReportsPage() {
           page: 0,
           size: 100,
         });
-        
+
         const mappedReports: CrimeReport[] = response.content.map((item) => ({
           id: item.id,
           title: item.title,
@@ -63,11 +66,11 @@ export default function CrimeReportsPage() {
           reporterId: item.reporterId,
           isPublic: item.isPublic,
         }));
-        
+
         setCrimeReports(mappedReports);
       } catch (error) {
         console.error("Error fetching crime reports:", error);
-        toast.error("Failed to load crime reports");
+        toast.error(t("toastLoadError"));
       } finally {
         setIsLoading(false);
       }
@@ -76,7 +79,7 @@ export default function CrimeReportsPage() {
     if (user) {
       fetchCrimeReports();
     }
-  }, [user]);
+  }, [user, t]);
 
   const handleViewDetail = useCallback(
     (report: CrimeReport) => {
@@ -114,13 +117,13 @@ export default function CrimeReportsPage() {
       try {
         await criminalReportsService.deleteCrimeReport(id);
         setCrimeReports(crimeReports.filter((r) => r.id !== id));
-        toast.success("Report deleted successfully");
+        toast.success(t("toastDeleted"));
       } catch (error) {
-        toast.error("Error deleting report");
+        toast.error(t("toastDeleteError"));
         console.error(error);
       }
     },
-    [crimeReports],
+    [crimeReports, t],
   );
 
   const handleBackToList = () => {
@@ -141,10 +144,10 @@ export default function CrimeReportsPage() {
       const matchesSearch =
         report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         report.content.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const severityMatch = severityFilter === "all" || 
+
+      const severityMatch = severityFilter === "all" ||
         report.severity.toString() === severityFilter;
-      
+
       return matchesSearch && severityMatch;
     });
   }, [crimeReports, searchQuery, severityFilter]);
@@ -164,16 +167,16 @@ export default function CrimeReportsPage() {
   return (
     <PageTransition>
       <div>
-        <Breadcrumbs items={[{ label: "Crime Reports" }]} />
+        <Breadcrumbs items={[{ label: t("pageTitle") }]} />
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="text-gray-900 text-xl font-semibold">Crime Reports</h2>
+          <h2 className="text-gray-900 text-xl font-semibold">{t("pageTitle")}</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={handleViewHeatmap}
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               <BarChart3 className="w-4 h-4" />
-              Crime Heatmap
+              {t("heatmap")}
             </button>
             {user.role === "Reporter" && (
               <button
@@ -181,7 +184,7 @@ export default function CrimeReportsPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                New Report
+                {t("newReport")}
               </button>
             )}
           </div>
@@ -193,7 +196,7 @@ export default function CrimeReportsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by title or description..."
+                placeholder={t("searchPlaceholder")}
                 defaultValue={searchQuery}
                 onChange={(e) => debouncedSetSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
@@ -206,12 +209,12 @@ export default function CrimeReportsPage() {
                 onChange={(e) => setSeverityFilter(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent appearance-none"
               >
-                <option value="all">All Severities</option>
-                <option value="1">Very Low</option>
-                <option value="2">Low</option>
-                <option value="3">Medium</option>
-                <option value="4">High</option>
-                <option value="5">Very High</option>
+                <option value="all">{t("filterAllSeverities")}</option>
+                <option value="1">{t("severityVeryLow")}</option>
+                <option value="2">{t("severityLow")}</option>
+                <option value="3">{t("severityMedium")}</option>
+                <option value="4">{t("severityHigh")}</option>
+                <option value="5">{t("severityVeryHigh")}</option>
               </select>
             </div>
           </div>

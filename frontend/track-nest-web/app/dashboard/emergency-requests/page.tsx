@@ -10,10 +10,15 @@ import { toast } from "sonner";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { emergencyOpsService, EmergencyRequestResponse, PageResponse } from "@/services/emergencyOpsService";
 import { Loading } from "@/components/loading/Loading";
+import { useTranslations } from "next-intl";
 
 export default function EmergencyRequestsPage() {
   const { user } = useAuth();
   const { addNotification } = useNotification();
+  const t = useTranslations("emergencyRequests");
+  const tCommon = useTranslations("common");
+  const tStatus = useTranslations("status");
+
   const [requests, setRequests] = useState<EmergencyRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,7 +41,7 @@ export default function EmergencyRequestsPage() {
           0,
           50
         );
-        
+
         const mappedRequests: EmergencyRequest[] = response.content.map((item) => ({
           id: item.id,
           openAt: item.openAt,
@@ -48,18 +53,18 @@ export default function EmergencyRequestsPage() {
           longitude: item.longitude,
           latitude: item.latitude,
         }));
-        
+
         setRequests(mappedRequests);
       } catch (error) {
         console.error("Error fetching emergency requests:", error);
-        toast.error("Failed to load emergency requests");
+        toast.error(t("toastLoadError"));
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchRequests();
-  }, [user]);
+  }, [user, t]);
 
   if (!user) return null;
 
@@ -67,8 +72,8 @@ export default function EmergencyRequestsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900">Access Denied</h3>
-          <p className="text-gray-500">You need Emergency Services role to view this page.</p>
+          <h3 className="text-lg font-semibold text-gray-900">{tCommon("accessDenied")}</h3>
+          <p className="text-gray-500">{t("accessDeniedMessage")}</p>
         </div>
       </div>
     );
@@ -84,17 +89,17 @@ export default function EmergencyRequestsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-800";
-      case "ACCEPTED":
-        return "bg-blue-100 text-blue-800";
-      case "REJECTED":
-        return "bg-red-100 text-red-800";
-      case "COMPLETED":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+      case "PENDING":   return "bg-yellow-100 text-yellow-800";
+      case "ACCEPTED":  return "bg-blue-100 text-blue-800";
+      case "REJECTED":  return "bg-red-100 text-red-800";
+      case "COMPLETED": return "bg-green-100 text-green-800";
+      default:          return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const getStatusLabel = (status: string) => {
+    const key = status.toLowerCase() as Parameters<typeof tStatus>[0];
+    return tStatus(key);
   };
 
   const handleAccept = async (request: EmergencyRequest) => {
@@ -106,7 +111,7 @@ export default function EmergencyRequestsPage() {
         ),
       );
       setTrackingRequest(request);
-      toast.success("Request accepted successfully");
+      toast.success(t("toastAccepted"));
       addNotification({
         type: "emergency",
         title: "Emergency request accepted",
@@ -114,7 +119,7 @@ export default function EmergencyRequestsPage() {
         reportId: request.id,
       });
     } catch (error) {
-      toast.error("Error accepting request");
+      toast.error(t("toastAcceptError"));
       console.error(error);
     }
   };
@@ -130,11 +135,11 @@ export default function EmergencyRequestsPage() {
             : r,
         ),
       );
-      toast.success("Request rejected successfully");
+      toast.success(t("toastRejected"));
       setRejecting(null);
       setRejectReason("");
     } catch (error) {
-      toast.error("Error rejecting request");
+      toast.error(t("toastRejectError"));
       console.error(error);
     }
   };
@@ -153,22 +158,20 @@ export default function EmergencyRequestsPage() {
       if (trackingRequest?.id === completing.id) {
         setTrackingRequest(null);
       }
-      toast.success("Request completed successfully");
+      toast.success(t("toastCompleted"));
       setCompleting(null);
       setCompletionNote("");
     } catch (error) {
-      toast.error("Error completing request");
+      toast.error(t("toastCompleteError"));
       console.error(error);
     }
   };
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: "Emergency Requests" }]} />
+      <Breadcrumbs items={[{ label: t("pageTitle") }]} />
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-gray-900 text-xl font-semibold">
-          Emergency Requests
-        </h2>
+        <h2 className="text-gray-900 text-xl font-semibold">{t("pageTitle")}</h2>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
@@ -176,7 +179,7 @@ export default function EmergencyRequestsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by request ID..."
+            placeholder={t("searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
@@ -189,11 +192,11 @@ export default function EmergencyRequestsPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-gray-700">Request ID</th>
-                <th className="px-6 py-3 text-left text-gray-700">Location</th>
-                <th className="px-6 py-3 text-left text-gray-700">Status</th>
-                <th className="px-6 py-3 text-left text-gray-700">Created</th>
-                <th className="px-6 py-3 text-left text-gray-700">Actions</th>
+                <th className="px-6 py-3 text-left text-gray-700">{t("tableId")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">{t("tableLocation")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">{t("tableStatus")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">{t("tableCreated")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">{tCommon("actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -207,7 +210,7 @@ export default function EmergencyRequestsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(request.status)}`}>
-                      {request.status}
+                      {getStatusLabel(request.status)}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-gray-900">
@@ -220,14 +223,14 @@ export default function EmergencyRequestsPage() {
                           <button
                             onClick={() => handleAccept(request)}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Accept"
+                            title={t("accept")}
                           >
                             <CheckCircle className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setRejecting(request)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Reject"
+                            title={t("reject")}
                           >
                             <XCircle className="w-4 h-4" />
                           </button>
@@ -237,7 +240,7 @@ export default function EmergencyRequestsPage() {
                         <button
                           onClick={() => setCompleting(request)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Complete"
+                          title={t("complete")}
                         >
                           <ClipboardCheck className="w-4 h-4" />
                         </button>
@@ -254,7 +257,7 @@ export default function EmergencyRequestsPage() {
       {trackingRequest && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
           <h3 className="text-gray-900 mb-4">
-            Live Tracking - Request {trackingRequest.id.substring(0, 8)}
+            {t("trackingTitle", { id: trackingRequest.id.substring(0, 8) })}
           </h3>
           <MapView
             center={[trackingRequest.latitude, trackingRequest.longitude]}
@@ -265,9 +268,7 @@ export default function EmergencyRequestsPage() {
               },
             ]}
           />
-          <p className="text-gray-600 text-sm mt-3">
-            Live location tracking is active while the request is accepted.
-          </p>
+          <p className="text-gray-600 text-sm mt-3">{t("trackingActive")}</p>
         </div>
       )}
 
@@ -275,16 +276,16 @@ export default function EmergencyRequestsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="p-6 border-b border-gray-200">
-              <h3 className="text-gray-900">Reject Emergency Request</h3>
+              <h3 className="text-gray-900">{t("rejectModalTitle")}</h3>
             </div>
             <div className="p-6 space-y-4">
-              <label className="block text-gray-700">Reason *</label>
+              <label className="block text-gray-700">{t("rejectReasonLabel")}{tCommon("requiredSuffix")}</label>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                 rows={4}
-                placeholder="Enter reason for rejection"
+                placeholder={t("rejectReasonPlaceholder")}
                 required
               />
             </div>
@@ -296,14 +297,14 @@ export default function EmergencyRequestsPage() {
                 }}
                 className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
-                Cancel
+                {tCommon("cancel")}
               </button>
               <button
                 onClick={handleReject}
                 disabled={!rejectReason.trim()}
                 className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
               >
-                Confirm Reject
+                {t("confirmReject")}
               </button>
             </div>
           </div>
@@ -314,16 +315,16 @@ export default function EmergencyRequestsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="p-6 border-b border-gray-200">
-              <h3 className="text-gray-900">Complete Emergency Request</h3>
+              <h3 className="text-gray-900">{t("completeModalTitle")}</h3>
             </div>
             <div className="p-6 space-y-4">
-              <label className="block text-gray-700">Completion Note *</label>
+              <label className="block text-gray-700">{t("completeNoteLabel")}{tCommon("requiredSuffix")}</label>
               <textarea
                 value={completionNote}
                 onChange={(e) => setCompletionNote(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                 rows={4}
-                placeholder="Enter completion note..."
+                placeholder={t("completeNotePlaceholder")}
                 required
               />
             </div>
@@ -335,14 +336,14 @@ export default function EmergencyRequestsPage() {
                 }}
                 className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
-                Cancel
+                {tCommon("cancel")}
               </button>
               <button
                 onClick={handleComplete}
                 disabled={!completionNote.trim()}
                 className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
               >
-                Confirm Complete
+                {t("confirmComplete")}
               </button>
             </div>
           </div>

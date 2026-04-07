@@ -1,11 +1,12 @@
 "use client";
 
-import { Eye, CheckCircle, Trash2, Users, Calendar, Phone, Mail, XCircle } from "lucide-react";
+import { Eye, CheckCircle, Trash2, Users, Calendar, Phone, Mail } from "lucide-react";
 import { useState, memo } from "react";
 import type { MissingPerson } from "@/types";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { AnimatedListItem } from "../animations/AnimatedListItem";
 import { EmptyState } from "../shared/EmptyState";
+import { useTranslations } from "next-intl";
 
 interface MissingPersonListProps {
   persons: MissingPerson[];
@@ -15,20 +16,22 @@ interface MissingPersonListProps {
   userRole: string;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  PENDING:   { label: "Pending",   bg: "bg-amber-50",  text: "text-amber-700",  dot: "bg-amber-400"  },
-  PUBLISHED: { label: "Published", bg: "bg-brand-50",  text: "text-brand-700",  dot: "bg-brand-500"  },
-  RESOLVED:  { label: "Resolved",  bg: "bg-green-50",  text: "text-green-700",  dot: "bg-green-500"  },
-  REJECTED:  { label: "Rejected",  bg: "bg-red-50",    text: "text-red-700",    dot: "bg-red-500"    },
-  DELETED:   { label: "Deleted",   bg: "bg-slate-50",  text: "text-slate-500",  dot: "bg-slate-400"  },
+const STATUS_STYLE: Record<string, { bg: string; text: string; dot: string }> = {
+  PENDING:   { bg: "bg-amber-50",  text: "text-amber-700",  dot: "bg-amber-400"  },
+  PUBLISHED: { bg: "bg-brand-50",  text: "text-brand-700",  dot: "bg-brand-500"  },
+  RESOLVED:  { bg: "bg-green-50",  text: "text-green-700",  dot: "bg-green-500"  },
+  REJECTED:  { bg: "bg-red-50",    text: "text-red-700",    dot: "bg-red-500"    },
+  DELETED:   { bg: "bg-slate-50",  text: "text-slate-500",  dot: "bg-slate-400"  },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, bg: "bg-slate-50", text: "text-slate-600", dot: "bg-slate-400" };
+  const t = useTranslations("status");
+  const style = STATUS_STYLE[status] ?? { bg: "bg-slate-50", text: "text-slate-600", dot: "bg-slate-400" };
+  const label = t(status.toLowerCase() as Parameters<typeof t>[0]);
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
-      {cfg.label}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
+      {label}
     </span>
   );
 }
@@ -40,6 +43,9 @@ export const MissingPersonList = memo(function MissingPersonList({
   onDelete,
   userRole,
 }: MissingPersonListProps) {
+  const t = useTranslations("missingPersons");
+  const tCommon = useTranslations("common");
+
   const [confirmAction, setConfirmAction] = useState<{
     type: "publish" | "delete";
     id: string;
@@ -50,8 +56,8 @@ export const MissingPersonList = memo(function MissingPersonList({
     return (
       <EmptyState
         icon={Users}
-        title="No Missing Person Reports Found"
-        description="There are currently no missing person reports. When new reports are submitted, they will appear here."
+        title={t("emptyTitle")}
+        description={t("emptyDescription")}
       />
     );
   }
@@ -63,12 +69,9 @@ export const MissingPersonList = memo(function MissingPersonList({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/60">
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Report</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Full Name</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Contact</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
+                {[t("tableReport"), t("tableFullName"), t("tableDate"), t("tableContact"), t("tableStatus"), t("tableActions")].map((h) => (
+                  <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -111,7 +114,7 @@ export const MissingPersonList = memo(function MissingPersonList({
                       <button
                         onClick={() => onViewDetail(person)}
                         className="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50 transition-colors"
-                        title="View Details"
+                        title={tCommon("viewDetails")}
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -121,7 +124,7 @@ export const MissingPersonList = memo(function MissingPersonList({
                             <button
                               onClick={() => setConfirmAction({ type: "publish", id: person.id, title: person.title })}
                               className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
-                              title="Publish"
+                              title={tCommon("publish")}
                             >
                               <CheckCircle className="w-4 h-4" />
                             </button>
@@ -129,7 +132,7 @@ export const MissingPersonList = memo(function MissingPersonList({
                           <button
                             onClick={() => setConfirmAction({ type: "delete", id: person.id, title: person.title })}
                             className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                            title="Delete"
+                            title={tCommon("delete")}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -146,21 +149,21 @@ export const MissingPersonList = memo(function MissingPersonList({
 
       {confirmAction?.type === "publish" && (
         <ConfirmModal
-          title="Publish Missing Person Report"
-          message={`"${confirmAction.title}" will be visible to Emergency Services and the public.`}
+          title={t("publishTitle")}
+          message={t("publishMessage", { title: confirmAction.title })}
           onConfirm={() => { onPublish(confirmAction.id); setConfirmAction(null); }}
           onCancel={() => setConfirmAction(null)}
-          confirmText="Publish"
+          confirmText={tCommon("publish")}
           confirmStyle="primary"
         />
       )}
       {confirmAction?.type === "delete" && (
         <ConfirmModal
-          title="Delete Missing Person Report"
-          message={`"${confirmAction.title}" will be permanently removed. This action cannot be undone.`}
+          title={t("deleteTitle")}
+          message={t("deleteMessage", { title: confirmAction.title })}
           onConfirm={() => { onDelete(confirmAction.id); setConfirmAction(null); }}
           onCancel={() => setConfirmAction(null)}
-          confirmText="Delete"
+          confirmText={tCommon("delete")}
           confirmStyle="danger"
         />
       )}

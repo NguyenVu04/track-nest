@@ -4,6 +4,7 @@ import type { MissingPerson } from "@/types";
 import { MissingPersonList } from "./MissingPersonList";
 import { MissingPersonDetail } from "./MissingPersonDetail";
 import { MissingPersonForm } from "./MissingPersonForm";
+import { useTranslations } from "next-intl";
 
 interface MissingPersonDashboardProps {
   user: {
@@ -60,12 +61,13 @@ const mockMissingPersons: MissingPerson[] = [
 ];
 
 export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
+  const t = useTranslations("missingPersons");
+  const tCommon = useTranslations("common");
+
   const [missingPersons, setMissingPersons] =
     useState<MissingPerson[]>(mockMissingPersons);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [selectedPerson, setSelectedPerson] = useState<MissingPerson | null>(
-    null,
-  );
+  const [selectedPerson, setSelectedPerson] = useState<MissingPerson | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleViewDetail = (person: MissingPerson) => {
@@ -149,14 +151,14 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h2 className="text-gray-900">Missing Person Reports</h2>
+        <h2 className="text-gray-900">{t("pageTitle")}</h2>
         {user.role === "Reporter" && (
           <button
             onClick={handleCreateNew}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
-            New Report
+            {t("newReport")}
           </button>
         )}
       </div>
@@ -167,7 +169,7 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search..."
+            placeholder={tCommon("search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
