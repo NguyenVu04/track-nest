@@ -35,7 +35,9 @@ public class SecurityConfig {
                         "/report-manager/missing-person-reports",
                         "/report-manager/crime-reports",
                         "/report-manager/crime-reports/nearby",
-                        "/report-manager/guidelines")
+                        "/report-manager/guidelines",
+                        "/crime-locator/heatmap",
+                        "/crime-locator/high-risk-check")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/report-viewer/**")
                     .permitAll()
