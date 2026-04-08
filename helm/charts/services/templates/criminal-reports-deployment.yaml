@@ -18,11 +18,21 @@ spec:
         - name: criminal-reports
           image: "{{ .Values.criminalReports.image.repository }}:{{ .Values.criminalReports.image.tag }}"
           imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
 
           ports:
             - containerPort: {{ .Values.criminalReports.port }}
 
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+
             - name: ALLOWED_ORIGINS
               value: "{{ .Values.origins }}"
 

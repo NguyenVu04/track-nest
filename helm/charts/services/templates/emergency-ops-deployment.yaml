@@ -18,11 +18,21 @@ spec:
         - name: emergency-ops
           image: "{{ .Values.emergencyOps.image.repository }}:{{ .Values.emergencyOps.image.tag }}"
           imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
 
           ports:
             - containerPort: {{ .Values.emergencyOps.port }}
 
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+
             - name: ALLOWED_ORIGINS
               value: "{{ .Values.origins }}"
             # --- Pod identity ---
