@@ -104,6 +104,7 @@ export interface DeleteSafeZoneResponse {
 }
 
 export interface PageResponse<T> {
+  items: T[];
   content: T[];
   page: number;
   size: number;

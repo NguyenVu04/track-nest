@@ -218,7 +218,7 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
               <h2 className="text-gray-900 mb-2">{selectedGuideline.title}</h2>
               <p className="text-gray-600">{selectedGuideline.description}</p>
             </div>
-            {user.role === "Reporter" && (
+            {/* {user.role === "Reporter" && ( */}
               <button
                 onClick={() => setConfirmDelete(selectedGuideline.id)}
                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -226,7 +226,7 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
               >
                 <Trash2 className="w-4 h-4" />
               </button>
-            )}
+            {/* )} */}
           </div>
           <div className="flex items-center gap-4 text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">
             <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full">
@@ -367,7 +367,7 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-gray-900">System Guidelines</h2>
-        {user.role === "Reporter" && (
+        {/* {user.role === "Reporter" && ( */}
           <button
             onClick={handleCreateNew}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -375,7 +375,7 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
             <Plus className="w-4 h-4" />
             New Guideline
           </button>
-        )}
+        {/* )} */}
       </div>
 
       {/* Filters */}
@@ -447,7 +447,7 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
                   >
                     <Eye className="w-4 h-4" />
                   </button>
-                  {user.role === "Reporter" && (
+                  {/* {user.role === "Reporter" && ( */}
                     <button
                       onClick={() => setConfirmDelete(guideline.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -455,7 +455,7 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
-                  )}
+                  {/* )} */}
                 </div>
               </div>
             </div>

@@ -41,25 +41,44 @@ export const AppSidebar = memo(function AppSidebar({
   const tCommon = useTranslations("common");
 
   const coreNav = [
-    { href: "/dashboard",                   nameKey: "overview",        icon: LayoutDashboard },
-    { href: "/dashboard/missing-persons",   nameKey: "missingPersons",  icon: Users           },
-    { href: "/dashboard/crime-reports",     nameKey: "crimeReports",    icon: Shield          },
-    { href: "/dashboard/guidelines",        nameKey: "guidelines",      icon: BookOpen        },
-    { href: "/dashboard/family-circles",    nameKey: "familyCircles",   icon: UsersRound      },
+    { href: "/dashboard", nameKey: "overview", icon: LayoutDashboard },
+    {
+      href: "/dashboard/missing-persons",
+      nameKey: "missingPersons",
+      icon: Users,
+    },
+    { href: "/dashboard/crime-reports", nameKey: "crimeReports", icon: Shield },
+    { href: "/dashboard/guidelines", nameKey: "guidelines", icon: BookOpen },
+    {
+      href: "/dashboard/family-circles",
+      nameKey: "familyCircles",
+      icon: UsersRound,
+    },
   ];
 
   const opsNav = [
-    { href: "/dashboard/emergency-requests", nameKey: "emergencyRequests", icon: LifeBuoy, roles: ["Emergency Services"] },
-    { href: "/dashboard/safe-zones",         nameKey: "safeZones",         icon: MapPin,   roles: ["Emergency Services"] },
+    {
+      href: "/dashboard/emergency-requests",
+      nameKey: "emergencyRequests",
+      icon: LifeBuoy,
+      roles: ["Emergency Services"],
+    },
+    {
+      href: "/dashboard/safe-zones",
+      nameKey: "safeZones",
+      icon: MapPin,
+      roles: ["Emergency Services"],
+    },
   ];
 
   const adminNav = [
     { href: "/dashboard/accounts", nameKey: "accounts", icon: UserCircle },
   ];
 
-  const visibleOps = opsNav.filter(
-    (item) => !item.roles || item.roles.includes(userRole),
-  );
+  const visibleOps = opsNav
+  // .filter(
+  //   (item) => !item.roles || item.roles.includes(userRole),
+  // );
 
   const isActive = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
@@ -86,7 +105,9 @@ export const AppSidebar = memo(function AppSidebar({
           <Icon
             className={`size-4 shrink-0 ${isActive(href) ? "text-brand-400" : ""}`}
           />
-          <span className="text-sm">{t(nameKey as Parameters<typeof t>[0])}</span>
+          <span className="text-sm">
+            {t(nameKey as Parameters<typeof t>[0])}
+          </span>
           {isActive(href) && (
             <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400" />
           )}
@@ -108,7 +129,9 @@ export const AppSidebar = memo(function AppSidebar({
             <Radar className="size-5 text-brand-400" />
           </div>
           <div>
-            <p className="text-sm font-bold text-white tracking-wide">{t("brand")}</p>
+            <p className="text-sm font-bold text-white tracking-wide">
+              {t("brand")}
+            </p>
             <p className="text-[10px] text-slate-500 uppercase tracking-widest">
               {t("brandSubtitle")}
             </p>
@@ -164,7 +187,9 @@ export const AppSidebar = memo(function AppSidebar({
       <SidebarFooter className="px-4 py-4 border-t border-white/8">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <p className="text-[11px] text-slate-500">{tCommon("systemOnline")}</p>
+          <p className="text-[11px] text-slate-500">
+            {tCommon("systemOnline")}
+          </p>
         </div>
       </SidebarFooter>
 

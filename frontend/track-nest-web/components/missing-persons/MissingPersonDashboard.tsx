@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, Search } from "lucide-react";
-import type { MissingPerson } from "@/types";
+import type { MissingPerson, UserRole } from "@/types";
 import { MissingPersonList } from "./MissingPersonList";
 import { MissingPersonDetail } from "./MissingPersonDetail";
 import { MissingPersonForm } from "./MissingPersonForm";
@@ -11,7 +11,7 @@ interface MissingPersonDashboardProps {
     id: string;
     email: string;
     fullName: string;
-    role: string;
+    role: UserRole;
   };
 }
 
@@ -152,7 +152,7 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-gray-900">{t("pageTitle")}</h2>
-        {user.role === "Reporter" && (
+        {/* {user.role === "Reporter" && ( */}
           <button
             onClick={handleCreateNew}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -160,7 +160,7 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
             <Plus className="w-4 h-4" />
             {t("newReport")}
           </button>
-        )}
+        {/* )} */}
       </div>
 
       {/* Filters */}
