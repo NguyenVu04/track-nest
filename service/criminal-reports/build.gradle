@@ -25,6 +25,11 @@ repositories {
 }
 
 dependencies {
+	implementation 'io.opentelemetry:opentelemetry-sdk:1.60.1'
+	implementation 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure:1.60.1'
+	implementation 'io.micrometer:micrometer-registry-prometheus:1.17.0-M3'
+	implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.7.0-M4'
+	implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.60.1'
 	implementation "org.springframework.boot:spring-boot-starter-actuator"
 	implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-security'

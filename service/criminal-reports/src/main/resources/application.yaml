@@ -1,6 +1,11 @@
 spring:
   application:
     name: emergency-ops
+  main:
+    lazy-initialization: true
+  auto-configure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
   security:
     user:
       name: admin
@@ -47,7 +52,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       probes:
@@ -57,6 +62,19 @@ server:
   port: 38080
   servlet:
     context-path: /criminal-reports
+  tomcat:
+    max-threads: 50
+    accept-count: 100
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [${spring.application.name}] [trace=%X{traceId:-} span=%X{spanId:-}] %-5level %logger - %msg%n"
 
 app:
   kafka:
