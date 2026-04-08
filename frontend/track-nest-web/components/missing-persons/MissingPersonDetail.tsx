@@ -10,7 +10,7 @@ import {
   User,
 } from "lucide-react";
 import { useState } from "react";
-import type { MissingPerson } from "@/types";
+import type { MissingPerson, UserRole } from "@/types";
 import { MapView } from "../shared/MapView";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { useTranslations } from "next-intl";
@@ -21,7 +21,7 @@ interface MissingPersonDetailProps {
   onEdit: (person: MissingPerson) => void;
   onPublish: (id: string) => void;
   onDelete: (id: string) => void;
-  userRole: string;
+  userRole: UserRole;
 }
 
 export function MissingPersonDetail({
@@ -89,7 +89,7 @@ export function MissingPersonDetail({
                   {person.status}
                 </span>
               </div>
-              {userRole === "Reporter" && (
+              {userRole === "Reporter" || userRole === "User" && (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onEdit(person)}

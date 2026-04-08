@@ -8,67 +8,50 @@ import type { MissingPerson } from "@/types";
 import { MissingPersonDetail } from "@/components/missing-persons/MissingPersonDetail";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
-
-// Mock data
-const mockMissingPersons: MissingPerson[] = [
-  {
-    id: "1",
-    title: "Missing Person - Sarah Johnson",
-    fullName: "Sarah Johnson",
-    personalId: "DL-123456",
-    date: "2026-01-02T14:30:00Z",
-    content: "Brown hair, blue eyes, 5'6\" tall, wearing a red jacket. Last seen at Central Park.",
-    createdAt: "2026-01-02T16:00:00Z",
-    userId: "user-1",
-    reporterId: "user-1",
-    status: "PENDING",
-    isPublic: true,
-  },
-  {
-    id: "2",
-    title: "Missing Person - David Martinez",
-    fullName: "David Martinez",
-    personalId: "DL-789012",
-    date: "2026-01-03T08:15:00Z",
-    content: "Black hair, brown eyes, 5'8\" tall, wearing school uniform. Last seen at Downtown Metro Station.",
-    createdAt: "2026-01-03T10:00:00Z",
-    userId: "user-2",
-    reporterId: "user-2",
-    status: "PUBLISHED",
-    isPublic: true,
-  },
-  {
-    id: "3",
-    title: "Missing Person - Emily Chen",
-    fullName: "Emily Chen",
-    personalId: "DL-345678",
-    date: "2026-01-01T18:45:00Z",
-    content: "Long black hair, brown eyes, 5'4\" tall. Last seen in business attire at Financial District.",
-    createdAt: "2026-01-02T09:00:00Z",
-    userId: "user-3",
-    reporterId: "user-3",
-    status: "PUBLISHED",
-    isPublic: true,
-  },
-];
+import { criminalReportsService } from "@/services/criminalReportsService";
 
 export default function MissingPersonDetailPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { addNotification } = useNotification();
-  const [missingPersons, setMissingPersons] =
-    useState<MissingPerson[]>(mockMissingPersons);
+  const { id } = useParams<{ id: string }>();
+
+  const [person, setPerson] = useState<MissingPerson | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-  }, []);
+    if (!user || !id) return;
 
-  const { id } = useParams();
+    const fetchReport = async () => {
+      try {
+        setIsLoading(true);
+        const response = await criminalReportsService.getMissingPersonReport(id);
+        setPerson({
+          id: response.id,
+          title: response.title,
+          fullName: response.fullName,
+          personalId: response.personalId,
+          photo: response.photo,
+          date: response.date,
+          content: response.content,
+          contactEmail: response.contactEmail,
+          contactPhone: response.contactPhone,
+          createdAt: response.createdAt,
+          userId: response.userId,
+          status: response.status as MissingPerson["status"],
+          reporterId: response.reporterId,
+          isPublic: response.isPublic,
+        });
+      } catch (error) {
+        console.error("Failed to fetch missing person report:", error);
+        toast.error("Failed to load report");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const selectedPerson = missingPersons.find((p) => p.id === id);
+    fetchReport();
+  }, [user, id]);
 
   if (!user) return null;
 
@@ -76,7 +59,7 @@ export default function MissingPersonDetailPage() {
     return <Loading />;
   }
 
-  if (!selectedPerson) {
+  if (!person) {
     return (
       <div className="text-gray-900">
         <h2 className="text-xl font-semibold mb-4">Missing Person Not Found</h2>
@@ -90,22 +73,11 @@ export default function MissingPersonDetailPage() {
     );
   }
 
-  const mockRequest = async (shouldFail = false) => {
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    if (shouldFail) {
-      throw new Error("Mock server error");
-    }
-  };
-
-  const handlePublish = async (id: string) => {
-    const person = missingPersons.find((p) => p.id === id);
-    if (!person) return;
+  const handlePublish = async (reportId: string) => {
     try {
-      await mockRequest(false);
-      setMissingPersons(
-        missingPersons.map((p) =>
-          p.id === id ? { ...p, status: "PUBLISHED" as const } : p,
-        ),
+      const response = await criminalReportsService.publishMissingPersonReport(reportId);
+      setPerson((prev) =>
+        prev ? { ...prev, status: response.status as MissingPerson["status"], isPublic: response.isPublic } : prev,
       );
       toast.success("Report published successfully");
       addNotification({
@@ -115,18 +87,15 @@ export default function MissingPersonDetailPage() {
         reportId: person.id,
       });
     } catch (error) {
-      toast.error("Lỗi khi đăng tải báo cáo");
+      toast.error("Failed to publish report");
       console.error(error);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    const person = missingPersons.find((p) => p.id === id);
-    if (!person) return;
+  const handleDelete = async (reportId: string) => {
     try {
-      await mockRequest(false);
-      setMissingPersons(missingPersons.filter((p) => p.id !== id));
-      toast.success("Thành công");
+      await criminalReportsService.deleteMissingPersonReport(reportId);
+      toast.success("Report deleted successfully");
       addNotification({
         type: "missing-person",
         title: "Missing person report deleted",
@@ -135,13 +104,13 @@ export default function MissingPersonDetailPage() {
       });
       router.push("/dashboard/missing-persons");
     } catch (error) {
-      toast.error("Lỗi khi xóa báo cáo");
+      toast.error("Failed to delete report");
       console.error(error);
     }
   };
 
-  const handleEdit = (person: MissingPerson) => {
-    router.push(`/dashboard/missing-persons/${person.id}/edit`);
+  const handleEdit = (p: MissingPerson) => {
+    router.push(`/dashboard/missing-persons/${p.id}/edit`);
   };
 
   const handleBack = () => {
@@ -150,7 +119,7 @@ export default function MissingPersonDetailPage() {
 
   return (
     <MissingPersonDetail
-      person={selectedPerson}
+      person={person}
       onBack={handleBack}
       onEdit={handleEdit}
       onPublish={handlePublish}

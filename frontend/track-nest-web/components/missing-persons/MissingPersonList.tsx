@@ -118,7 +118,7 @@ export const MissingPersonList = memo(function MissingPersonList({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {userRole === "Reporter" && (
+                      {(userRole === "Reporter" || userRole === "User") && (
                         <>
                           {person.status === "PENDING" && (
                             <button

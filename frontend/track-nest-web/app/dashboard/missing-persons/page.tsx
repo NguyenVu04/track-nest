@@ -109,7 +109,7 @@ export default function MissingPersonsPage() {
       try {
         setIsLoading(true);
         const response: PageResponse<MissingPersonReportResponse> = await criminalReportsService.listMissingPersonReports({
-          isPublic: user?.role !== "Reporter",
+          isPublic: false,
           page: 0,
           size: 100,
         });
@@ -157,15 +157,13 @@ export default function MissingPersonsPage() {
         <Breadcrumbs items={[{ label: t("pageTitle") }]} />
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h2 className="text-gray-900 text-xl font-semibold">{t("pageTitle")}</h2>
-          {user.role === "Reporter" && (
-            <button
-              onClick={handleCreateNew}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              {t("newReport")}
-            </button>
-          )}
+          <button
+            onClick={handleCreateNew}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            {t("newReport")}
+          </button>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">

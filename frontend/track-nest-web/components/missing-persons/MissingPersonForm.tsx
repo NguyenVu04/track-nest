@@ -4,7 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Save, X, MapPin, User, Calendar, FileText, Phone, Mail } from "lucide-react";
 import type { MissingPerson } from "@/types";
-import { criminalReportsService, CreateMissingPersonReportRequest } from "@/services/criminalReportsService";
+import { criminalReportsService, CreateMissingPersonReportRequest, UpdateMissingPersonReportRequest } from "@/services/criminalReportsService";
 import { useTranslations } from "next-intl";
 
 const LocationPicker = dynamic(
@@ -90,7 +90,37 @@ export function MissingPersonForm({
         };
         onSave(newPerson);
       } else {
-        onSave(formData as MissingPerson);
+        const updateRequest: UpdateMissingPersonReportRequest = {
+          title: formData.title,
+          fullName: formData.fullName,
+          personalId: formData.personalId,
+          photo: formData.photo,
+          date: formData.date,
+          content: formData.content,
+          contactEmail: formData.contactEmail,
+          contactPhone: formData.contactPhone,
+        };
+        const response = await criminalReportsService.updateMissingPersonReport(
+          person!.id,
+          updateRequest,
+        );
+        const updatedPerson: MissingPerson = {
+          id: response.id,
+          title: response.title,
+          fullName: response.fullName,
+          personalId: response.personalId,
+          photo: response.photo,
+          date: response.date,
+          content: response.content,
+          contactEmail: response.contactEmail,
+          contactPhone: response.contactPhone,
+          createdAt: response.createdAt,
+          userId: response.userId,
+          status: response.status as MissingPerson["status"],
+          reporterId: response.reporterId,
+          isPublic: response.isPublic,
+        };
+        onSave(updatedPerson);
       }
     } catch (error) {
       console.error("Error saving missing person report:", error);

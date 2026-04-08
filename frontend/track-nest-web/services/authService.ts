@@ -316,6 +316,14 @@ export const authService = {
     return null;
   },
 
+  getUserId: (): string | null => {
+    const keycloak = getKeycloak();
+    if (keycloak.tokenParsed?.sub) {
+      return keycloak.tokenParsed.sub;
+    }
+    return null;
+  },
+
   isAuthenticated: (): boolean => {
     const keycloak = getKeycloak();
     if (keycloak.authenticated) {

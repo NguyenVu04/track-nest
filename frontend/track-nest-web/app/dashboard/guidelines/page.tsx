@@ -1,179 +1,91 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, FileText, Trash2, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Guideline } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
-
-// Mock data
-const mockGuidelines: Guideline[] = [
-  {
-    id: "1",
-    title: "Missing Person Report Guidelines",
-    abstractText:
-      "Step-by-step guide for filing and managing missing person reports",
-    createdAt: "2025-12-15T10:00:00Z",
-    reporterId: "admin-1",
-    isPublic: true,
-    content: `# Missing Person Report Guidelines
-
-## Overview
-This document provides comprehensive guidelines for handling missing person reports in the TRACK system.
-
-## Steps to File a Report
-1. Gather all necessary information about the missing person
-2. Fill out the complete report form with accurate details
-3. Include last known location and coordinates
-4. Provide contact information for follow-ups
-5. Submit the report for review
-
-## Best Practices
-- Act quickly - the first 24 hours are crucial
-- Provide clear physical descriptions
-- Include recent photographs if available
-- Keep contact information up to date
-- Follow up regularly on report status
-
-## Reporter Responsibilities
-- Verify all information before publishing
-- Maintain confidentiality of sensitive data
-- Respond promptly to Emergency Services inquiries
-- Update reports as new information becomes available`,
-  },
-  {
-    id: "2",
-    title: "Crime Reporting Procedures",
-    abstractText: "Protocols for documenting and reporting criminal incidents",
-    createdAt: "2025-12-20T14:30:00Z",
-    reporterId: "admin-1",
-    isPublic: true,
-    content: `# Crime Reporting Procedures
-
-## Purpose
-To establish standardized procedures for documenting and reporting criminal incidents in the TRACK system.
-
-## Incident Documentation
-1. Record the date, time, and location of the incident
-2. Classify the crime type accurately
-3. Assess and assign severity level
-4. Define the crime zone (circular or rectangular)
-5. Provide detailed incident description
-
-## Zone Mapping
-- Use circular zones for point-source incidents
-- Use rectangular zones for area-wide incidents
-- Ensure accurate coordinate input
-- Verify zone coverage matches incident scope
-
-## Publishing Reports
-- Review all details before publishing
-- Ensure proper severity classification
-- Coordinate with Emergency Services when needed
-- Monitor report status regularly`,
-  },
-  {
-    id: "3",
-    title: "System Access and Security",
-    abstractText: "User authentication and security best practices",
-    createdAt: "2026-01-01T09:00:00Z",
-    reporterId: "admin-1",
-    isPublic: true,
-    content: `# System Access and Security
-
-## Account Security
-- Use strong, unique passwords
-- Change passwords regularly (every 90 days)
-- Never share login credentials
-- Log out when not in use
-- Report suspicious activity immediately
-
-## Role-Based Access
-### Reporter Role
-- Create and manage reports
-- Publish missing person reports
-- Delete invalid reports
-- Access all dashboard features
-
-### Emergency Services Role
-- View all published reports
-- Generate crime analysis reports
-- Download heatmap data
-- Access real-time updates
-
-## Data Privacy
-- Handle all personal information with care
-- Follow GDPR and local privacy regulations
-- Do not collect unnecessary personal data
-- Ensure secure data transmission
-- Maintain data confidentiality`,
-  },
-];
+import { criminalReportsService } from "@/services/criminalReportsService";
 
 export default function GuidelinesPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [guidelines, setGuidelines] = useState<Guideline[]>(mockGuidelines);
+
+  const [guidelines, setGuidelines] = useState<Guideline[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchGuidelines = async () => {
+      try {
+        setIsLoading(true);
+        const response = await criminalReportsService.listGuidelinesDocuments({
+          isPublic: false,
+          page: 0,
+          size: 100,
+        });
+        setGuidelines(
+          response.content.map((item) => ({
+            id: item.id,
+            title: item.title,
+            abstractText: item.abstractText,
+            content: item.content,
+            createdAt: item.createdAt,
+            reporterId: item.reporterId,
+            isPublic: item.isPublic,
+          })),
+        );
+      } catch (error) {
+        console.error("Failed to fetch guidelines:", error);
+        toast.error("Failed to load guidelines");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGuidelines();
+  }, [user]);
+
   if (!user) return null;
-
-  const mockRequest = async (shouldFail = false) => {
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    if (shouldFail) {
-      throw new Error("Mock server error");
-    }
-  };
-
-  const handleCreateNew = () => {
-    router.push("/dashboard/guidelines/create");
-  };
-
-  const handleView = (guideline: Guideline) => {
-    router.push(`/dashboard/guidelines/${guideline.id}`);
-  };
+  if (isLoading) return <Loading fullScreen />;
 
   const handleDelete = async (id: string) => {
     try {
-      await mockRequest(false);
-      setGuidelines(guidelines.filter((g) => g.id !== id));
+      await criminalReportsService.deleteGuidelinesDocument(id);
+      setGuidelines((prev) => prev.filter((g) => g.id !== id));
       setConfirmDelete(null);
-      toast.success("Xóa thành công");
+      toast.success("Guideline deleted");
     } catch (error) {
-      toast.error("Lỗi khi xóa tài liệu hướng dẫn");
+      toast.error("Failed to delete guideline");
       console.error(error);
     }
   };
 
-  const filteredGuidelines = guidelines.filter((guideline) => {
-    const matchesSearch =
-      guideline.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      guideline.abstractText.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const filteredGuidelines = guidelines.filter(
+    (g) =>
+      g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      g.abstractText.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
-  // List mode - showing all guidelines
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h2 className="text-gray-900 text-xl font-semibold">
-          System Guidelines
-        </h2>
-        {user.role === "Reporter" && (
-          <button
-            onClick={handleCreateNew}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            New Guideline
-          </button>
-        )}
+        <h2 className="text-gray-900 text-xl font-semibold">System Guidelines</h2>
+        <button
+          onClick={() => router.push("/dashboard/guidelines/create")}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          New Guideline
+        </button>
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -187,7 +99,6 @@ export default function GuidelinesPage() {
         </div>
       </div>
 
-      {/* Guidelines Grid */}
       <div className="grid gap-4">
         {filteredGuidelines.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
@@ -203,34 +114,33 @@ export default function GuidelinesPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <FileText className="w-5 h-5 text-indigo-600" />
-                    <h3 className="text-gray-900 font-medium">
-                      {guideline.title}
-                    </h3>
+                    <h3 className="text-gray-900 font-medium">{guideline.title}</h3>
+                    {guideline.isPublic && (
+                      <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
+                        Published
+                      </span>
+                    )}
                   </div>
                   <p className="text-gray-600 mb-4">{guideline.abstractText}</p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>
-                      {new Date(guideline.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
+                  <span className="text-sm text-gray-500">
+                    {new Date(guideline.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   <button
-                    onClick={() => handleView(guideline)}
+                    onClick={() => router.push(`/dashboard/guidelines/${guideline.id}`)}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     title="View Guideline"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
-                  {user.role === "Reporter" && (
-                    <button
-                      onClick={() => setConfirmDelete(guideline.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete Guideline"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setConfirmDelete(guideline.id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete Guideline"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>

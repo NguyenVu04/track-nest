@@ -95,7 +95,7 @@ export function CrimeReportDetail({
                   </span>
                 </div>
               </div>
-              {userRole === "Reporter" && (
+              {(userRole === "Reporter" || userRole === "User") && (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onEdit(report)}
