@@ -1,10 +1,21 @@
-import { MOCK_CRIME_REPORTS } from "@/constant/mockCrimeReports";
-import { CrimeReport, DangerStatus } from "@/constant/types";
+import {
+  criminalReportsService,
+  CrimeReport as BackendCrimeReport,
+  getSeverityLabel,
+  getSeverityColor,
+} from "@/services/criminalReports";
 import useDeviceLocation from "@/hooks/useDeviceLocation";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import MapView, {
   Circle,
   Marker,
@@ -14,11 +25,12 @@ import MapView, {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type ReportWithDistance = {
-  report: CrimeReport;
+  report: BackendCrimeReport;
   distanceKm: number;
 };
 
 const USER_AREA_RADIUS_KM = 10;
+const USER_AREA_RADIUS_M = USER_AREA_RADIUS_KM * 1000;
 
 function toRadians(value: number): number {
   return (value * Math.PI) / 180;
@@ -30,140 +42,118 @@ function distanceKm(
   toLat: number,
   toLng: number,
 ): number {
-  const earthRadiusKm = 6371;
-  const latDiff = toRadians(toLat - fromLat);
-  const lngDiff = toRadians(toLng - fromLng);
-
+  const R = 6371;
+  const dLat = toRadians(toLat - fromLat);
+  const dLng = toRadians(toLng - fromLng);
   const a =
-    Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(toRadians(fromLat)) *
       Math.cos(toRadians(toLat)) *
-      Math.sin(lngDiff / 2) *
-      Math.sin(lngDiff / 2);
-
-  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function getDangerPalette(status: DangerStatus): {
-  stroke: string;
-  fill: string;
-  marker: string;
-} {
-  switch (status) {
-    case "low":
-      return {
-        stroke: "rgba(34, 197, 94, 0.95)",
-        fill: "rgba(34, 197, 94, 0.18)",
-        marker: "#22c55e",
-      };
-    case "medium":
-      return {
-        stroke: "rgba(245, 158, 11, 0.95)",
-        fill: "rgba(245, 158, 11, 0.2)",
-        marker: "#f59e0b",
-      };
-    case "high":
-      return {
-        stroke: "rgba(239, 68, 68, 0.95)",
-        fill: "rgba(239, 68, 68, 0.2)",
-        marker: "#ef4444",
-      };
-    default:
-      return {
-        stroke: "rgba(127, 29, 29, 0.98)",
-        fill: "rgba(127, 29, 29, 0.25)",
-        marker: "#7f1d1d",
-      };
-  }
-}
-
-function dangerRank(status: DangerStatus): number {
-  switch (status) {
-    case "critical":
-      return 4;
-    case "high":
-      return 3;
-    case "medium":
-      return 2;
-    default:
-      return 1;
-  }
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function viewportRadiusKm(region: Region): number {
-  const kmPerLatDegree = 111;
-  const kmPerLngDegree = 111 * Math.cos((region.latitude * Math.PI) / 180);
-  const latRadiusKm = (region.latitudeDelta * kmPerLatDegree) / 2;
-  const lngRadiusKm = (region.longitudeDelta * kmPerLngDegree) / 2;
-  return Math.sqrt(latRadiusKm * latRadiusKm + lngRadiusKm * lngRadiusKm);
+  const kmPerLatDeg = 111;
+  const kmPerLngDeg = 111 * Math.cos((region.latitude * Math.PI) / 180);
+  const latR = (region.latitudeDelta * kmPerLatDeg) / 2;
+  const lngR = (region.longitudeDelta * kmPerLngDeg) / 2;
+  return Math.sqrt(latR * latR + lngR * lngR);
+}
+
+function getSeverityStrokeColor(severity: number): string {
+  if (severity >= 4) return "rgba(239, 68, 68, 0.95)";
+  if (severity >= 2) return "rgba(245, 158, 11, 0.95)";
+  return "rgba(34, 197, 94, 0.95)";
+}
+
+function getSeverityFillColor(severity: number): string {
+  if (severity >= 4) return "rgba(239, 68, 68, 0.2)";
+  if (severity >= 2) return "rgba(245, 158, 11, 0.2)";
+  return "rgba(34, 197, 94, 0.18)";
+}
+
+function getSeverityMarkerColor(severity: number): string {
+  if (severity >= 4) return "#ef4444";
+  if (severity >= 2) return "#f59e0b";
+  return "#22c55e";
 }
 
 export default function CrimeHeatmapScreen() {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
-  const reportsRef = useRef(MOCK_CRIME_REPORTS);
   const { location } = useDeviceLocation(false);
 
+  const [reports, setReports] = useState<BackendCrimeReport[]>([]);
+  const [loading, setLoading] = useState(false);
   const [visibleRegion, setVisibleRegion] = useState<Region | null>(null);
   const [selectedRegionRadiusKm, setSelectedRegionRadiusKm] = useState(3);
   const [useCustomRadius, setUseCustomRadius] = useState(false);
 
   const initialRegion = useMemo(() => {
-    if (location) {
-      return {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        latitudeDelta: 0.11,
-        longitudeDelta: 0.11,
-      };
-    }
-
+    const lat = location?.latitude ?? 10.7769;
+    const lng = location?.longitude ?? 106.6424;
     return {
-      latitude: reportsRef.current[0].latitude,
-      longitude: reportsRef.current[0].longitude,
+      latitude: lat,
+      longitude: lng,
       latitudeDelta: 0.11,
       longitudeDelta: 0.11,
     };
   }, [location]);
 
-  const reportsAroundUser = useMemo(() => {
-    if (!location) {
-      return reportsRef.current.map((report) => ({
-        report,
-        distanceKm: Number.POSITIVE_INFINITY,
-      }));
+  const loadReports = useCallback(async () => {
+    if (!location) return;
+    setLoading(true);
+    try {
+      const result = await criminalReportsService.getCrimeHeatmap(
+        location.longitude,
+        location.latitude,
+        USER_AREA_RADIUS_M,
+        0,
+        50,
+      );
+      setReports(result.content);
+    } catch (err) {
+      console.error("Failed to load crime heatmap:", err);
+    } finally {
+      setLoading(false);
     }
+  }, [location]);
 
-    return reportsRef.current
-      .map((report) => ({
-        report,
+  useEffect(() => {
+    loadReports();
+  }, [loadReports]);
+
+  const reportsAroundUser = useMemo(() => {
+    if (!location)
+      return reports.map((r) => ({ report: r, distanceKm: Infinity }));
+    return reports
+      .map((r) => ({
+        report: r,
         distanceKm: distanceKm(
           location.latitude,
           location.longitude,
-          report.latitude,
-          report.longitude,
+          r.latitude,
+          r.longitude,
         ),
       }))
       .filter((item) => item.distanceKm <= USER_AREA_RADIUS_KM)
       .sort((a, b) => a.distanceKm - b.distanceKm);
-  }, [location]);
+  }, [reports, location]);
 
   const regionCenter = useMemo(() => {
-    const activeRegion = visibleRegion ?? initialRegion;
-    return {
-      latitude: activeRegion.latitude,
-      longitude: activeRegion.longitude,
-    };
+    const active = visibleRegion ?? initialRegion;
+    return { latitude: active.latitude, longitude: active.longitude };
   }, [visibleRegion, initialRegion]);
 
   const autoRadiusKm = useMemo(() => {
-    const activeRegion = visibleRegion ?? initialRegion;
-    return viewportRadiusKm(activeRegion);
+    return viewportRadiusKm(visibleRegion ?? initialRegion);
   }, [visibleRegion, initialRegion]);
 
-  const effectiveRegionRadiusKm = useMemo(() => {
-    return useCustomRadius ? selectedRegionRadiusKm : autoRadiusKm;
-  }, [useCustomRadius, selectedRegionRadiusKm, autoRadiusKm]);
+  const effectiveRegionRadiusKm = useCustomRadius
+    ? selectedRegionRadiusKm
+    : autoRadiusKm;
 
   const regionReports = useMemo(() => {
     return reportsAroundUser
@@ -181,28 +171,25 @@ export default function CrimeHeatmapScreen() {
   }, [reportsAroundUser, regionCenter, effectiveRegionRadiusKm]);
 
   const regionalSummary = useMemo(() => {
-    const criminalCount = regionReports.reduce(
-      (sum, item) => sum + item.report.numberOfCriminals,
+    const highestSeverity = regionReports.reduce(
+      (max, item) => Math.max(max, item.report.severity),
       0,
     );
-
-    const highestDanger = regionReports.reduce<DangerStatus>(
-      (best, item) =>
-        dangerRank(item.report.dangerStatus) > dangerRank(best)
-          ? item.report.dangerStatus
-          : best,
-      "low",
-    );
-
     return {
       incidents: regionReports.length,
-      criminals: criminalCount,
-      highestDanger,
+      victims: regionReports.reduce(
+        (sum, item) => sum + (item.report.numberOfVictims ?? 0),
+        0,
+      ),
+      highestSeverityLabel:
+        highestSeverity > 0 ? getSeverityLabel(highestSeverity) : "N/A",
+      highestSeverity,
     };
   }, [regionReports]);
 
   const renderReport = ({ item }: { item: ReportWithDistance }) => {
-    const palette = getDangerPalette(item.report.dangerStatus);
+    const markerColor = getSeverityMarkerColor(item.report.severity);
+    const severityLabel = getSeverityLabel(item.report.severity);
 
     return (
       <Pressable
@@ -221,17 +208,17 @@ export default function CrimeHeatmapScreen() {
       >
         <View style={styles.reportRow}>
           <View style={styles.reportLeft}>
-            <Ionicons name="warning" size={18} color={palette.marker} />
+            <Ionicons name="warning" size={18} color={markerColor} />
             <View style={{ flex: 1 }}>
               <Text style={styles.reportTitle}>{item.report.title}</Text>
               <Text style={styles.reportMeta}>
-                {item.report.incidentType} • {item.report.numberOfCriminals}{" "}
-                criminal(s)
+                Victims: {item.report.numberOfVictims ?? 0} • Offenders:{" "}
+                {item.report.numberOfOffenders ?? 0}
               </Text>
             </View>
           </View>
-          <Text style={[styles.statusBadge, { color: palette.marker }]}>
-            {item.report.dangerStatus.toUpperCase()}
+          <Text style={[styles.statusBadge, { color: markerColor }]}>
+            {severityLabel.toUpperCase()}
           </Text>
         </View>
         <Text style={styles.reportDistance}>
@@ -256,10 +243,21 @@ export default function CrimeHeatmapScreen() {
         <View style={styles.headerTextWrap}>
           <Text style={styles.title}>Crime Heatmap</Text>
           <Text style={styles.subtitle}>
-            Shows criminal actions within 10km around your area
+            Crime reports within {USER_AREA_RADIUS_KM}km of your area
           </Text>
         </View>
-        <View style={styles.backBtn} />
+        <Pressable
+          onPress={loadReports}
+          style={styles.backBtn}
+          hitSlop={8}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#74becb" />
+          ) : (
+            <Ionicons name="refresh" size={20} color="#0f172a" />
+          )}
+        </Pressable>
       </View>
 
       <View style={styles.summaryRow}>
@@ -268,12 +266,19 @@ export default function CrimeHeatmapScreen() {
           <Text style={styles.summaryLabel}>Incidents</Text>
         </View>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>{regionalSummary.criminals}</Text>
-          <Text style={styles.summaryLabel}>Criminals</Text>
+          <Text style={styles.summaryValue}>{regionalSummary.victims}</Text>
+          <Text style={styles.summaryLabel}>Victims</Text>
         </View>
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryValue}>
-            {regionalSummary.highestDanger.toUpperCase()}
+          <Text
+            style={[
+              styles.summaryValue,
+              {
+                color: getSeverityMarkerColor(regionalSummary.highestSeverity),
+              },
+            ]}
+          >
+            {regionalSummary.highestSeverityLabel.toUpperCase()}
           </Text>
           <Text style={styles.summaryLabel}>Danger</Text>
         </View>
@@ -285,54 +290,43 @@ export default function CrimeHeatmapScreen() {
         style={styles.map}
         initialRegion={initialRegion}
         onRegionChangeComplete={setVisibleRegion}
-        // cacheEnabled={true}
       >
-        {reportsAroundUser.map(({ report }) => {
-          const palette = getDangerPalette(report.dangerStatus);
-          const radius = 220 + report.numberOfCriminals * 45;
-          return (
-            <Circle
-              key={`heat-${report.id}`}
-              center={{
-                latitude: report.latitude,
-                longitude: report.longitude,
-              }}
-              radius={radius}
-              strokeColor={palette.stroke}
-              fillColor={palette.fill}
-              strokeWidth={2}
-            />
-          );
-        })}
+        {reportsAroundUser.map(({ report }) => (
+          <Circle
+            key={`heat-${report.id}`}
+            center={{ latitude: report.latitude, longitude: report.longitude }}
+            radius={220 + report.severity * 45}
+            strokeColor={getSeverityStrokeColor(report.severity)}
+            fillColor={getSeverityFillColor(report.severity)}
+            strokeWidth={2}
+          />
+        ))}
 
-        {reportsAroundUser.map(({ report }) => {
-          const palette = getDangerPalette(report.dangerStatus);
-          return (
-            <Marker
-              key={`crime-${report.id}`}
-              coordinate={{
-                latitude: report.latitude,
-                longitude: report.longitude,
-              }}
-              title={report.title}
-              description={`${report.incidentType} • ${report.numberOfCriminals} criminal(s)`}
-              pinColor={palette.marker}
-            />
-          );
-        })}
+        {reportsAroundUser.map(({ report }) => (
+          <Marker
+            key={`crime-${report.id}`}
+            coordinate={{
+              latitude: report.latitude,
+              longitude: report.longitude,
+            }}
+            title={report.title}
+            description={`Severity: ${getSeverityLabel(report.severity)} • Victims: ${report.numberOfVictims ?? 0}`}
+            pinColor={getSeverityMarkerColor(report.severity)}
+          />
+        ))}
 
-        {location ? (
+        {location && (
           <Circle
             center={{
               latitude: location.latitude,
               longitude: location.longitude,
             }}
-            radius={USER_AREA_RADIUS_KM * 1000}
+            radius={USER_AREA_RADIUS_M}
             strokeColor="rgba(37, 99, 235, 0.9)"
             fillColor="rgba(37, 99, 235, 0.08)"
             strokeWidth={2}
           />
-        ) : null}
+        )}
 
         <Circle
           center={regionCenter}
@@ -345,7 +339,7 @@ export default function CrimeHeatmapScreen() {
 
       <View style={styles.radiusControls}>
         <Text style={styles.radiusLabel}>
-          Region by viewport center ({effectiveRegionRadiusKm.toFixed(2)}km)
+          Region ({effectiveRegionRadiusKm.toFixed(2)}km)
         </Text>
         <Pressable
           style={[
@@ -360,32 +354,31 @@ export default function CrimeHeatmapScreen() {
               useCustomRadius && styles.modeButtonTextActive,
             ]}
           >
-            {useCustomRadius ? "Custom Radius: On" : "Custom Radius: Off"}
+            {useCustomRadius ? "Custom: On" : "Custom: Off"}
           </Text>
         </Pressable>
       </View>
 
       <View style={styles.radiusControlsSecondary}>
         <Text style={styles.radiusLabel}>Custom radius:</Text>
-        {[1, 3, 5].map((radiusKm) => (
+        {[1, 3, 5].map((r) => (
           <Pressable
-            key={radiusKm}
+            key={r}
             style={[
               styles.radiusButton,
-              selectedRegionRadiusKm === radiusKm && styles.radiusButtonActive,
+              selectedRegionRadiusKm === r && styles.radiusButtonActive,
               !useCustomRadius && styles.radiusButtonDisabled,
             ]}
-            onPress={() => setSelectedRegionRadiusKm(radiusKm)}
+            onPress={() => setSelectedRegionRadiusKm(r)}
             disabled={!useCustomRadius}
           >
             <Text
               style={[
                 styles.radiusButtonText,
-                selectedRegionRadiusKm === radiusKm &&
-                  styles.radiusButtonTextActive,
+                selectedRegionRadiusKm === r && styles.radiusButtonTextActive,
               ]}
             >
-              {radiusKm}km
+              {r}km
             </Text>
           </Pressable>
         ))}
@@ -400,7 +393,9 @@ export default function CrimeHeatmapScreen() {
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyText}>
-              No crime report found in this region.
+              {loading
+                ? "Loading..."
+                : "No crime reports found in this region."}
             </Text>
           </View>
         }
@@ -410,10 +405,7 @@ export default function CrimeHeatmapScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
-  },
+  container: { flex: 1, backgroundColor: "#f8fafc" },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -421,24 +413,10 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 8,
   },
-  backBtn: {
-    width: 32,
-    height: 32,
-    justifyContent: "center",
-  },
-  headerTextWrap: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  subtitle: {
-    marginTop: 2,
-    fontSize: 12,
-    color: "#4b5563",
-  },
+  backBtn: { width: 32, height: 32, justifyContent: "center" },
+  headerTextWrap: { flex: 1 },
+  title: { fontSize: 20, fontWeight: "700", color: "#111827" },
+  subtitle: { marginTop: 2, fontSize: 12, color: "#4b5563" },
   summaryRow: {
     paddingHorizontal: 16,
     flexDirection: "row",
@@ -454,16 +432,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: "center",
   },
-  summaryValue: {
-    fontWeight: "700",
-    color: "#0f172a",
-    fontSize: 14,
-  },
-  summaryLabel: {
-    marginTop: 2,
-    fontSize: 11,
-    color: "#6b7280",
-  },
+  summaryValue: { fontWeight: "700", color: "#0f172a", fontSize: 14 },
+  summaryLabel: { marginTop: 2, fontSize: 11, color: "#6b7280" },
   map: {
     height: "40%",
     marginHorizontal: 16,
@@ -484,11 +454,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 6,
   },
-  radiusLabel: {
-    fontSize: 12,
-    color: "#4b5563",
-    marginRight: 4,
-  },
+  radiusLabel: { fontSize: 12, color: "#4b5563", marginRight: 4 },
   modeButton: {
     borderRadius: 999,
     borderWidth: 1,
@@ -497,18 +463,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     backgroundColor: "#fff",
   },
-  modeButtonActive: {
-    backgroundColor: "#0f766e",
-    borderColor: "#0f766e",
-  },
-  modeButtonText: {
-    color: "#334155",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  modeButtonTextActive: {
-    color: "#ffffff",
-  },
+  modeButtonActive: { backgroundColor: "#0f766e", borderColor: "#0f766e" },
+  modeButtonText: { color: "#334155", fontSize: 12, fontWeight: "600" },
+  modeButtonTextActive: { color: "#ffffff" },
   radiusButton: {
     borderRadius: 999,
     borderWidth: 1,
@@ -517,30 +474,12 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     backgroundColor: "#fff",
   },
-  radiusButtonActive: {
-    backgroundColor: "#0f766e",
-    borderColor: "#0f766e",
-  },
-  radiusButtonDisabled: {
-    opacity: 0.45,
-  },
-  radiusButtonText: {
-    color: "#334155",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  radiusButtonTextActive: {
-    color: "#ffffff",
-  },
-  list: {
-    flex: 1,
-    marginTop: 6,
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-    gap: 8,
-  },
+  radiusButtonActive: { backgroundColor: "#0f766e", borderColor: "#0f766e" },
+  radiusButtonDisabled: { opacity: 0.45 },
+  radiusButtonText: { color: "#334155", fontSize: 12, fontWeight: "600" },
+  radiusButtonTextActive: { color: "#ffffff" },
+  list: { flex: 1, marginTop: 6 },
+  listContent: { paddingHorizontal: 16, paddingBottom: 24, gap: 8 },
   reportCard: {
     borderRadius: 12,
     borderWidth: 1,
@@ -554,37 +493,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-  reportLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flex: 1,
-  },
-  reportTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  reportMeta: {
-    fontSize: 12,
-    color: "#6b7280",
-    marginTop: 2,
-  },
-  statusBadge: {
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  reportDistance: {
-    marginTop: 6,
-    fontSize: 12,
-    color: "#475569",
-  },
-  emptyWrap: {
-    paddingVertical: 20,
-    alignItems: "center",
-  },
-  emptyText: {
-    color: "#6b7280",
-    fontSize: 13,
-  },
+  reportLeft: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
+  reportTitle: { fontSize: 14, fontWeight: "600", color: "#111827" },
+  reportMeta: { fontSize: 12, color: "#6b7280", marginTop: 2 },
+  statusBadge: { fontSize: 11, fontWeight: "700" },
+  reportDistance: { marginTop: 6, fontSize: 12, color: "#475569" },
+  emptyWrap: { paddingVertical: 20, alignItems: "center" },
+  emptyText: { color: "#6b7280", fontSize: 13 },
 });
