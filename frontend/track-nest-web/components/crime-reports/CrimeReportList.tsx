@@ -124,7 +124,7 @@ export const CrimeReportList = memo(function CrimeReportList({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {userRole === "Reporter" && (
+                      {(userRole === "Reporter" || userRole === "User") && (
                         <>
                           {!report.isPublic && (
                             <button

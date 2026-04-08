@@ -45,7 +45,7 @@ export default function CrimeReportsPage() {
       try {
         setIsLoading(true);
         const response: PageResponse<CrimeReportResponse> = await criminalReportsService.listCrimeReports({
-          isPublic: user?.role !== "Reporter",
+          isPublic: false,
           page: 0,
           size: 100,
         });
@@ -178,15 +178,13 @@ export default function CrimeReportsPage() {
               <BarChart3 className="w-4 h-4" />
               {t("heatmap")}
             </button>
-            {user.role === "Reporter" && (
-              <button
-                onClick={handleCreateNew}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                {t("newReport")}
-              </button>
-            )}
+            <button
+              onClick={handleCreateNew}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              {t("newReport")}
+            </button>
           </div>
         </div>
 

@@ -147,7 +147,7 @@ export default function EmergencyRequestsPage() {
   const handleComplete = async () => {
     if (!completing || !completionNote.trim()) return;
     try {
-      await emergencyOpsService.completeEmergencyRequest(completing.id, completionNote);
+      await emergencyOpsService.closeEmergencyRequest(completing.id);
       setRequests((prev) =>
         prev.map((r) =>
           r.id === completing.id

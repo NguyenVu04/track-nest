@@ -11,6 +11,7 @@ import {
   MapPin,
   UserCircle,
   Radar,
+  UsersRound,
 } from "lucide-react";
 import {
   Sidebar as SidebarPrimitive,
@@ -40,10 +41,11 @@ export const AppSidebar = memo(function AppSidebar({
   const tCommon = useTranslations("common");
 
   const coreNav = [
-    { href: "/dashboard",                  nameKey: "overview",        icon: LayoutDashboard },
-    { href: "/dashboard/missing-persons",  nameKey: "missingPersons",  icon: Users           },
-    { href: "/dashboard/crime-reports",    nameKey: "crimeReports",    icon: Shield          },
-    { href: "/dashboard/guidelines",       nameKey: "guidelines",      icon: BookOpen        },
+    { href: "/dashboard",                   nameKey: "overview",        icon: LayoutDashboard },
+    { href: "/dashboard/missing-persons",   nameKey: "missingPersons",  icon: Users           },
+    { href: "/dashboard/crime-reports",     nameKey: "crimeReports",    icon: Shield          },
+    { href: "/dashboard/guidelines",        nameKey: "guidelines",      icon: BookOpen        },
+    { href: "/dashboard/family-circles",    nameKey: "familyCircles",   icon: UsersRound      },
   ];
 
   const opsNav = [

@@ -24,9 +24,27 @@ api.interceptors.request.use(async (config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    const userId = authService.getUserId();
+    if (userId) {
+      config.headers["X-User-Id"] = userId;
+    }
   }
   return config;
 });
+
+export interface SubmitMissingPersonReportRequest {
+  userId: string;
+  reporterId: string;
+  title: string;
+  fullName: string;
+  personalId: string;
+  photo?: string;
+  contactEmail?: string;
+  contactPhone: string;
+  date: string;
+  content: string;
+}
 
 export interface CreateMissingPersonReportRequest {
   title: string;
@@ -35,6 +53,17 @@ export interface CreateMissingPersonReportRequest {
   photo?: string;
   date: string;
   content: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}
+
+export interface UpdateMissingPersonReportRequest {
+  title?: string;
+  fullName?: string;
+  personalId?: string;
+  photo?: string;
+  date?: string;
+  content?: string;
   contactEmail?: string;
   contactPhone?: string;
 }
@@ -68,6 +97,18 @@ export interface CreateCrimeReportRequest {
   arrested: boolean;
 }
 
+export interface UpdateCrimeReportRequest {
+  title?: string;
+  content?: string;
+  severity?: number;
+  date?: string;
+  longitude?: number;
+  latitude?: number;
+  numberOfVictims?: number;
+  numberOfOffenders?: number;
+  arrested?: boolean;
+}
+
 export interface CrimeReportResponse {
   id: string;
   title: string;
@@ -90,6 +131,20 @@ export interface CreateGuidelinesDocumentRequest {
   abstractText: string;
   content: string;
   isPublic: boolean;
+}
+
+export interface UpdateGuidelinesDocumentRequest {
+  title?: string;
+  abstractText?: string;
+  content?: string;
+  isPublic?: boolean;
+}
+
+export interface FileUploadResponse {
+  objectName: string;
+  publicUrl: string;
+  contentType: string;
+  size: number;
 }
 
 export interface GuidelinesDocumentResponse {
@@ -132,6 +187,17 @@ export const criminalReportsService = {
     return response.data;
   },
 
+  updateMissingPersonReport: async (
+    reportId: string,
+    data: UpdateMissingPersonReportRequest,
+  ): Promise<MissingPersonReportResponse> => {
+    const response = await api.put<MissingPersonReportResponse>(
+      `/report-manager/missing-person-reports/${reportId}`,
+      data,
+    );
+    return response.data;
+  },
+
   deleteMissingPersonReport: async (reportId: string): Promise<void> => {
     await api.delete(`/report-manager/missing-person-reports/${reportId}`);
   },
@@ -141,6 +207,15 @@ export const criminalReportsService = {
   ): Promise<MissingPersonReportResponse> => {
     const response = await api.post<MissingPersonReportResponse>(
       `/report-manager/missing-person-reports/${reportId}/publish`,
+    );
+    return response.data;
+  },
+
+  rejectMissingPersonReport: async (
+    reportId: string,
+  ): Promise<MissingPersonReportResponse> => {
+    const response = await api.post<MissingPersonReportResponse>(
+      `/report-manager/missing-person-reports/${reportId}/reject`,
     );
     return response.data;
   },
@@ -181,6 +256,17 @@ export const criminalReportsService = {
   ): Promise<CrimeReportResponse> => {
     const response = await api.post<CrimeReportResponse>(
       `/report-manager/crime-reports/${reportId}/publish`,
+    );
+    return response.data;
+  },
+
+  updateCrimeReport: async (
+    reportId: string,
+    data: UpdateCrimeReportRequest,
+  ): Promise<CrimeReportResponse> => {
+    const response = await api.put<CrimeReportResponse>(
+      `/report-manager/crime-reports/${reportId}`,
+      data,
     );
     return response.data;
   },
@@ -247,6 +333,17 @@ export const criminalReportsService = {
     return response.data;
   },
 
+  updateGuidelinesDocument: async (
+    documentId: string,
+    data: UpdateGuidelinesDocumentRequest,
+  ): Promise<GuidelinesDocumentResponse> => {
+    const response = await api.put<GuidelinesDocumentResponse>(
+      `/report-manager/guidelines/${documentId}`,
+      data,
+    );
+    return response.data;
+  },
+
   deleteGuidelinesDocument: async (documentId: string): Promise<void> => {
     await api.delete(`/report-manager/guidelines/${documentId}`);
   },
@@ -274,9 +371,33 @@ export const criminalReportsService = {
     return response.data;
   },
 
+  listMissingPersonReportsPublic: async (params?: {
+    isPublic?: boolean;
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<MissingPersonReportResponse>> => {
+    const response = await api.get<PageResponse<MissingPersonReportResponse>>(
+      "/report-viewer/missing-person-reports",
+      { params },
+    );
+    return response.data;
+  },
+
   viewCrimeReport: async (reportId: string): Promise<CrimeReportResponse> => {
     const response = await api.get<CrimeReportResponse>(
       `/report-viewer/crime-reports/${reportId}`,
+    );
+    return response.data;
+  },
+
+  listCrimeReportsPublic: async (params?: {
+    isPublic?: boolean;
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<CrimeReportResponse>> => {
+    const response = await api.get<PageResponse<CrimeReportResponse>>(
+      "/report-viewer/crime-reports",
+      { params },
     );
     return response.data;
   },
@@ -286,6 +407,30 @@ export const criminalReportsService = {
   ): Promise<GuidelinesDocumentResponse> => {
     const response = await api.get<GuidelinesDocumentResponse>(
       `/report-viewer/guidelines/${documentId}`,
+    );
+    return response.data;
+  },
+
+  listGuidelinesDocumentsPublic: async (params?: {
+    isPublic?: boolean;
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<GuidelinesDocumentResponse>> => {
+    const response = await api.get<PageResponse<GuidelinesDocumentResponse>>(
+      "/report-viewer/guidelines",
+      { params },
+    );
+    return response.data;
+  },
+
+  // MissingPersonRequestReceiver endpoints
+  submitMissingPersonReport: async (
+    data: SubmitMissingPersonReportRequest,
+  ): Promise<MissingPersonReportResponse> => {
+    const response = await api.post<MissingPersonReportResponse>(
+      "/missing-person-request-receiver/submit",
+      null,
+      { params: data },
     );
     return response.data;
   },
@@ -341,6 +486,29 @@ export const criminalReportsService = {
     const response = await api.get<boolean>("/crime-locator/high-risk-check", {
       params: { longitude, latitude },
     });
+    return response.data;
+  },
+
+  // File endpoints
+  uploadFile: async (
+    file: File,
+    bucket?: string,
+  ): Promise<FileUploadResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (bucket) formData.append("bucket", bucket);
+    const response = await api.post<FileUploadResponse>("/file/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+
+  deleteFile: async (bucket: string, filename: string): Promise<void> => {
+    await api.delete(`/file/${bucket}/${filename}`);
+  },
+
+  getFileUrl: async (bucket: string, filename: string): Promise<string> => {
+    const response = await api.get<string>(`/file/${bucket}/${filename}`);
     return response.data;
   },
 };

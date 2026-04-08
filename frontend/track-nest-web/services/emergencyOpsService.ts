@@ -28,6 +28,8 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// ─── Request / Response Types ─────────────────────────────────────────────────
+
 export interface CreateEmergencyRequestRequest {
   targetId: string;
   lastLatitudeDegrees: number;
@@ -46,27 +48,15 @@ export interface EmergencyRequestResponse {
   latitude: number;
 }
 
-export interface CreateSafeZoneRequest {
-  name: string;
-  longitude: number;
+export interface UpdateEmergencyServiceLocationRequest {
   latitude: number;
-  radius: number;
-}
-
-export interface SafeZoneResponse {
-  id: string;
-  name: string;
   longitude: number;
-  latitude: number;
-  radius: number;
-  createdAt: string;
-  emergencyServiceId: string;
 }
 
 export interface EmergencyServiceLocationResponse {
   emergencyServiceId: string;
-  longitude: number;
   latitude: number;
+  longitude: number;
   updatedAt: string;
 }
 
@@ -77,12 +67,40 @@ export interface EmergencyServiceTargetsResponse {
   lastUpdateTime: string;
 }
 
-export interface EmergencyRequestCountResponse {
-  total: number;
-  pending: number;
-  accepted: number;
-  rejected: number;
-  completed: number;
+export interface RequestCountResponse {
+  count: number;
+}
+
+export interface CreateSafeZoneRequest {
+  name: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+}
+
+export interface SafeZoneResponse {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  createdAt: string;
+  emergencyServiceId: string;
+}
+
+export interface NearestSafeZoneResponse {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  distanceMeters: number;
+  emergencyServiceId: string;
+}
+
+export interface DeleteSafeZoneResponse {
+  id: string;
+  deleted: boolean;
 }
 
 export interface PageResponse<T> {
@@ -95,7 +113,12 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
+// ─── Service ──────────────────────────────────────────────────────────────────
+
 export const emergencyOpsService = {
+  // ── Emergency Request Receiver (User role) ────────────────────────────────
+
+  /** Submit a new emergency request (User). */
   createEmergencyRequest: async (
     data: CreateEmergencyRequestRequest,
   ): Promise<EmergencyRequestResponse> => {
@@ -106,9 +129,10 @@ export const emergencyOpsService = {
     return response.data;
   },
 
+  /** List emergency requests submitted by the current user. */
   getUserEmergencyRequests: async (
-    page: number = 0,
-    size: number = 10,
+    page = 0,
+    size = 10,
   ): Promise<PageResponse<EmergencyRequestResponse>> => {
     const response = await api.get<PageResponse<EmergencyRequestResponse>>(
       "/emergency-request-receiver/requests",
@@ -117,10 +141,13 @@ export const emergencyOpsService = {
     return response.data;
   },
 
+  // ── Emergency Request Manager (Emergency Services role) ───────────────────
+
+  /** List requests assigned to the authenticated emergency service. */
   getEmergencyRequests: async (
     status?: string,
-    page: number = 0,
-    size: number = 10,
+    page = 0,
+    size = 10,
   ): Promise<PageResponse<EmergencyRequestResponse>> => {
     const response = await api.get<PageResponse<EmergencyRequestResponse>>(
       "/emergency-request-manager/requests",
@@ -129,123 +156,149 @@ export const emergencyOpsService = {
     return response.data;
   },
 
-  acceptEmergencyRequest: async (
-    requestId: string,
-  ): Promise<EmergencyRequestResponse> => {
-    const response = await api.post<EmergencyRequestResponse>(
-      `/emergency-request-manager/requests/${requestId}/accept`,
-    );
-    return response.data;
-  },
-
-  rejectEmergencyRequest: async (
-    requestId: string,
-    reason?: string,
-  ): Promise<EmergencyRequestResponse> => {
-    const response = await api.post<EmergencyRequestResponse>(
-      `/emergency-request-manager/requests/${requestId}/reject`,
-      { reason },
-    );
-    return response.data;
-  },
-
-  completeEmergencyRequest: async (
-    requestId: string,
-    note?: string,
-  ): Promise<EmergencyRequestResponse> => {
-    const response = await api.post<EmergencyRequestResponse>(
-      `/emergency-request-manager/requests/${requestId}/complete`,
-      { note },
-    );
-    return response.data;
-  },
-
+  /** Get request count for the authenticated emergency service. */
   getEmergencyRequestCount: async (
     status?: string,
-  ): Promise<EmergencyRequestCountResponse> => {
-    const response = await api.get<EmergencyRequestCountResponse>(
+  ): Promise<RequestCountResponse> => {
+    const response = await api.get<RequestCountResponse>(
       "/emergency-request-manager/requests/count",
       { params: { status } },
     );
     return response.data;
   },
 
-  createSafeZone: async (
-    data: CreateSafeZoneRequest,
-  ): Promise<SafeZoneResponse> => {
-    const response = await api.post<SafeZoneResponse>(
-      "/safe-zone-manager/zones",
+  /** Accept a pending emergency request. */
+  acceptEmergencyRequest: async (
+    requestId: string,
+  ): Promise<EmergencyRequestResponse> => {
+    const response = await api.patch<EmergencyRequestResponse>(
+      `/emergency-request-manager/requests/${requestId}/accept`,
+    );
+    return response.data;
+  },
+
+  /** Reject a pending emergency request. */
+  rejectEmergencyRequest: async (
+    requestId: string,
+  ): Promise<EmergencyRequestResponse> => {
+    const response = await api.patch<EmergencyRequestResponse>(
+      `/emergency-request-manager/requests/${requestId}/reject`,
+    );
+    return response.data;
+  },
+
+  /** Close (complete) an accepted emergency request. */
+  closeEmergencyRequest: async (
+    requestId: string,
+  ): Promise<EmergencyRequestResponse> => {
+    const response = await api.patch<EmergencyRequestResponse>(
+      `/emergency-request-manager/requests/${requestId}/close`,
+    );
+    return response.data;
+  },
+
+  /** Update the authenticated emergency service's location. */
+  updateEmergencyServiceLocation: async (
+    data: UpdateEmergencyServiceLocationRequest,
+  ): Promise<EmergencyServiceLocationResponse> => {
+    const response = await api.patch<EmergencyServiceLocationResponse>(
+      "/emergency-request-manager/emergency-service/location",
       data,
     );
     return response.data;
   },
 
+  /** Get the authenticated emergency service's last known location. */
+  getEmergencyServiceLocation:
+    async (): Promise<EmergencyServiceLocationResponse> => {
+      const response = await api.get<EmergencyServiceLocationResponse>(
+        "/emergency-request-manager/emergency-service/location",
+      );
+      return response.data;
+    },
+
+  // ── Emergency Responder (Emergency Services role) ─────────────────────────
+
+  /** List users (targets) with active accepted requests for this service. */
+  getEmergencyServiceTargets: async (
+    page = 0,
+    size = 10,
+  ): Promise<PageResponse<EmergencyServiceTargetsResponse>> => {
+    const response = await api.get<PageResponse<EmergencyServiceTargetsResponse>>(
+      "/emergency-responder/targets",
+      { params: { page, size } },
+    );
+    return response.data;
+  },
+
+  // ── Safe Zone Manager (Emergency Services role) ───────────────────────────
+
+  /** Create a new safe zone. */
+  createSafeZone: async (
+    data: CreateSafeZoneRequest,
+  ): Promise<SafeZoneResponse> => {
+    const response = await api.post<SafeZoneResponse>(
+      "/safe-zone-manager/safe-zone",
+      data,
+    );
+    return response.data;
+  },
+
+  /** List safe zones owned by the authenticated service. */
   getSafeZones: async (
     nameFilter?: string,
-    page: number = 0,
-    size: number = 10,
+    page = 0,
+    size = 20,
   ): Promise<PageResponse<SafeZoneResponse>> => {
     const response = await api.get<PageResponse<SafeZoneResponse>>(
-      "/safe-zone-manager/zones",
+      "/safe-zone-manager/safe-zones",
       { params: { nameFilter, page, size } },
     );
     return response.data;
   },
 
+  /** Update a safe zone. */
   updateSafeZone: async (
-    zoneId: string,
+    safeZoneId: string,
     data: CreateSafeZoneRequest,
   ): Promise<SafeZoneResponse> => {
     const response = await api.put<SafeZoneResponse>(
-      `/safe-zone-manager/zones/${zoneId}`,
+      `/safe-zone-manager/safe-zone/${safeZoneId}`,
       data,
     );
     return response.data;
   },
 
-  deleteSafeZone: async (zoneId: string): Promise<void> => {
-    await api.delete(`/safe-zone-manager/zones/${zoneId}`);
+  /** Delete a safe zone. */
+  deleteSafeZone: async (
+    safeZoneId: string,
+  ): Promise<DeleteSafeZoneResponse> => {
+    const response = await api.delete<DeleteSafeZoneResponse>(
+      `/safe-zone-manager/safe-zone/${safeZoneId}`,
+    );
+    return response.data;
   },
 
+  // ── Safe Zone Locator (all roles) ─────────────────────────────────────────
+
+  /** Find nearest safe zones to a coordinate. */
   getNearestSafeZones: async (
-    longitude: number,
-    latitude: number,
-    page: number = 0,
-    size: number = 10,
-  ): Promise<PageResponse<SafeZoneResponse>> => {
-    const response = await api.get<PageResponse<SafeZoneResponse>>(
-      "/safe-zone-locator/zones/nearest",
-      { params: { longitude, latitude, page, size } },
+    latitudeDegrees: number,
+    longitudeDegrees: number,
+    maxDistanceMeters: number,
+    maxNumberOfSafeZones = 10,
+  ): Promise<NearestSafeZoneResponse[]> => {
+    const response = await api.get<NearestSafeZoneResponse[]>(
+      "/safe-zone-locator/safe-zones/nearest",
+      {
+        params: {
+          latitudeDegrees,
+          longitudeDegrees,
+          maxDistanceMeters,
+          maxNumberOfSafeZones,
+        },
+      },
     );
-    return response.data;
-  },
-
-  updateEmergencyServiceLocation: async (
-    longitude: number,
-    latitude: number,
-  ): Promise<EmergencyServiceLocationResponse> => {
-    const response = await api.patch<EmergencyServiceLocationResponse>(
-      "/emergency-request-manager/location",
-      { longitude, latitude },
-    );
-    return response.data;
-  },
-
-  getEmergencyServiceLocation:
-    async (): Promise<EmergencyServiceLocationResponse> => {
-      const response = await api.get<EmergencyServiceLocationResponse>(
-        "/emergency-request-manager/location",
-      );
-      return response.data;
-    },
-
-  getEmergencyServiceTargets: async (
-    page: number = 0,
-    size: number = 10,
-  ): Promise<PageResponse<EmergencyServiceTargetsResponse>> => {
-    const response = await api.get<
-      PageResponse<EmergencyServiceTargetsResponse>
-    >("/emergency-responder/targets", { params: { page, size } });
     return response.data;
   },
 };
