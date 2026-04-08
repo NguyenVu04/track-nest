@@ -96,7 +96,7 @@ logging:
     org.hibernate.orm.jdbc.bind: TRACE
 
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [${spring.application.name}] [trace=%X{traceId:-} span=%X{spanId:-}] %-5level %logger - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [${spring.application.name}] [trace=%X{traceId} span=%X{spanId}] %-5level %logger - %msg%n"
 
 app:
   kafka:
