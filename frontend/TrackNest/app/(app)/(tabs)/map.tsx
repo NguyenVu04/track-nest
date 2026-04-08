@@ -35,8 +35,7 @@ import MapControls from "@/components/MapControls";
 import MapHeader from "@/components/MapHeader";
 import { map as mapLang } from "@/constant/languages";
 import { getMockFollowersForCircle } from "@/constant/mockFamilyCircles";
-import { MOCK_SAFE_ZONES } from "@/constant/mockSafeZones";
-import { FamilyCircle, Follower } from "@/constant/types";
+import { FamilyCircle, Follower, SafeZone } from "@/constant/types";
 import { useMapContext } from "@/contexts/MapContext";
 import { usePOIAnalytics } from "@/contexts/POIAnalyticsContext";
 import { useTracking } from "@/contexts/TrackingContext";
@@ -48,6 +47,7 @@ import { useMapController } from "@/hooks/useMapController";
 import { useMockFollowers } from "@/hooks/useMockFollowers";
 import { useStreamedFollowers } from "@/hooks/useStreamedFollowers";
 import { useTranslation } from "@/hooks/useTranslation";
+import { emergencyService } from "@/services/emergency";
 import { updateUserLocation } from "@/services/tracker";
 import { colors, radii, spacing } from "@/styles/styles";
 
@@ -79,7 +79,7 @@ export default function MapScreen() {
   const myInfoSheetRef = useRef<BottomSheetModal>(null);
   const mapTypeSheetRef = useRef<BottomSheetModal>(null);
   const familyCircleSheetRef = useRef<BottomSheetModal>(null);
-  const safeZonesRef = useRef(MOCK_SAFE_ZONES);
+  const [safeZones, setSafeZones] = useState<SafeZone[]>([]);
 
   // ====================
   // Hook usages
@@ -89,7 +89,8 @@ export default function MapScreen() {
   const { height: screenHeight } = useWindowDimensions();
   const { mapType, setMapType } = useMapContext();
   const { tracking, shareLocation } = useTracking();
-  const { crimeHeatmapPoints, loadCrimeHeatmap, nearbyPOIs, getPOIColor } = usePOIAnalytics();
+  const { crimeHeatmapPoints, loadCrimeHeatmap, nearbyPOIs, getPOIColor } =
+    usePOIAnalytics();
   const { circles, selectedCircle, selectCircle, refreshCircles } =
     useFamilyCircle();
   const t = useTranslation(mapLang);
@@ -262,6 +263,20 @@ export default function MapScreen() {
     }, 500);
   }, [fadeAnim]);
 
+  // Load real safe zones when location is available
+  useEffect(() => {
+    if (!location) return;
+    emergencyService
+      .getNearestSafeZones({
+        lat: location.latitude,
+        lng: location.longitude,
+        maxDistance: 10000,
+        maxNumber: 20,
+      })
+      .then(setSafeZones)
+      .catch((err) => console.warn("Failed to load safe zones:", err.message));
+  }, [location?.latitude, location?.longitude]);
+
   // Load crime heatmap when toggled on
   useEffect(() => {
     if (showCrimeHeatmap && location) {
@@ -361,7 +376,7 @@ export default function MapScreen() {
             setSelectedFollowerId(null);
           }}
         >
-          {safeZonesRef.current.map((zone) => (
+          {safeZones.map((zone) => (
             <Circle
               key={`safe-zone-area-${zone.id}`}
               center={{
@@ -375,7 +390,7 @@ export default function MapScreen() {
             />
           ))}
 
-          {safeZonesRef.current.map((zone) => (
+          {safeZones.map((zone) => (
             <Marker
               key={`safe-zone-marker-${zone.id}`}
               coordinate={{
@@ -389,39 +404,47 @@ export default function MapScreen() {
           ))}
 
           {/* POI Markers */}
-          {showPOIs && nearbyPOIs.map((poi) => (
-            <Marker
-              key={`poi-${poi.id}`}
-              coordinate={{
-                latitude: poi.latitude,
-                longitude: poi.longitude,
-              }}
-              title={poi.name}
-              description={poi.description || poi.category}
-              pinColor={getPOIColor(poi.category)}
-            />
-          ))}
+          {showPOIs &&
+            nearbyPOIs.map((poi) => (
+              <Marker
+                key={`poi-${poi.id}`}
+                coordinate={{
+                  latitude: poi.latitude,
+                  longitude: poi.longitude,
+                }}
+                title={poi.name}
+                description={poi.description || poi.category}
+                pinColor={getPOIColor(poi.category)}
+              />
+            ))}
 
           {/* Crime Heatmap Circles */}
-          {showCrimeHeatmap && crimeHeatmapPoints.map((crime) => (
-            <Circle
-              key={`crime-${crime.id}`}
-              center={{
-                latitude: crime.latitude,
-                longitude: crime.longitude,
-              }}
-              radius={100 + (crime.severity * 30)}
-              strokeColor={crime.severity >= 4 ? "#e74c3c" : crime.severity >= 2 ? "#f39c12" : "#27ae60"}
-              fillColor={
-                crime.severity >= 4 
-                  ? "rgba(231, 76, 60, 0.3)" 
-                  : crime.severity >= 2 
-                    ? "rgba(243, 156, 18, 0.2)" 
-                    : "rgba(39, 174, 96, 0.15)"
-              }
-              strokeWidth={2}
-            />
-          ))}
+          {showCrimeHeatmap &&
+            crimeHeatmapPoints.map((crime) => (
+              <Circle
+                key={`crime-${crime.id}`}
+                center={{
+                  latitude: crime.latitude,
+                  longitude: crime.longitude,
+                }}
+                radius={100 + crime.severity * 30}
+                strokeColor={
+                  crime.severity >= 4
+                    ? "#e74c3c"
+                    : crime.severity >= 2
+                      ? "#f39c12"
+                      : "#27ae60"
+                }
+                fillColor={
+                  crime.severity >= 4
+                    ? "rgba(231, 76, 60, 0.3)"
+                    : crime.severity >= 2
+                      ? "rgba(243, 156, 18, 0.2)"
+                      : "rgba(39, 174, 96, 0.15)"
+                }
+                strokeWidth={2}
+              />
+            ))}
 
           {followersToRender && followersToRender.length > 0
             ? followersToRender.map((f) => (

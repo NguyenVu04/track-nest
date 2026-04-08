@@ -81,6 +81,52 @@ export interface CreateMissingPersonReportInput {
   photo?: string;
 }
 
+// Update Input Types
+export interface UpdateMissingPersonReportInput {
+  title?: string;
+  fullName?: string;
+  personalId?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  date?: string;
+  content?: string;
+  photo?: string;
+}
+
+export interface UpdateGuidelinesDocumentInput {
+  title?: string;
+  content?: string;
+}
+
+export interface SubmitMissingPersonReportParams {
+  userId: string;
+  reporterId: string;
+  title: string;
+  fullName: string;
+  personalId: string;
+  photo?: string;
+  contactEmail?: string;
+  contactPhone: string;
+  date: string;
+  content: string;
+}
+
+export interface CrimeAnalysisReportResponse {
+  startDate: string;
+  endDate: string;
+  totalReports: number;
+  bySeverity: Record<string, number>;
+  byType?: Record<string, number>;
+  [key: string]: any;
+}
+
+export interface FileUploadResponse {
+  objectName: string;
+  publicUrl: string;
+  contentType: string;
+  size: number;
+}
+
 // Query Types
 export interface CrimeReportsQuery {
   page?: number;
@@ -125,7 +171,10 @@ class CriminalReportsService {
 
   /** Returns axios headers including Authorization + X-User-Id for mutating endpoints. */
   private async getMutationHeaders(): Promise<Record<string, string>> {
-    const [authMetadata, userId] = await Promise.all([getAuthMetadata(), getUserId()]);
+    const [authMetadata, userId] = await Promise.all([
+      getAuthMetadata(),
+      getUserId(),
+    ]);
     return {
       ...authMetadata,
       "X-User-Id": userId,
@@ -154,19 +203,29 @@ class CriminalReportsService {
 
   async getCrimeReportById(reportId: string): Promise<CrimeReport> {
     const client = await this.getMutationClient(); // GET but requires X-User-Id per docs
-    const response = await client.get(`/report-manager/crime-reports/${reportId}`);
+    const response = await client.get(
+      `/report-manager/crime-reports/${reportId}`,
+    );
     return response.data;
   }
 
-  async updateCrimeReport(reportId: string, data: UpdateCrimeReportInput): Promise<CrimeReport> {
+  async updateCrimeReport(
+    reportId: string,
+    data: UpdateCrimeReportInput,
+  ): Promise<CrimeReport> {
     const client = await this.getMutationClient();
-    const response = await client.put(`/report-manager/crime-reports/${reportId}`, data);
+    const response = await client.put(
+      `/report-manager/crime-reports/${reportId}`,
+      data,
+    );
     return response.data;
   }
 
   async publishCrimeReport(reportId: string): Promise<CrimeReport> {
     const client = await this.getMutationClient();
-    const response = await client.post(`/report-manager/crime-reports/${reportId}/publish`);
+    const response = await client.post(
+      `/report-manager/crime-reports/${reportId}/publish`,
+    );
     return response.data;
   }
 
@@ -175,7 +234,9 @@ class CriminalReportsService {
     await client.delete(`/report-manager/crime-reports/${reportId}`);
   }
 
-  async getCrimeReports(query: CrimeReportsQuery = {}): Promise<PageResponse<CrimeReport>> {
+  async getCrimeReports(
+    query: CrimeReportsQuery = {},
+  ): Promise<PageResponse<CrimeReport>> {
     const client = await this.getApiClient();
     const response = await client.get("/report-manager/crime-reports", {
       params: {
@@ -188,7 +249,9 @@ class CriminalReportsService {
     return response.data;
   }
 
-  async getNearbyCrimeReports(query: NearbyCrimeReportsQuery): Promise<PageResponse<CrimeReport>> {
+  async getNearbyCrimeReports(
+    query: NearbyCrimeReportsQuery,
+  ): Promise<PageResponse<CrimeReport>> {
     const client = await this.getApiClient();
     const response = await client.get("/report-manager/crime-reports/nearby", {
       params: {
@@ -202,7 +265,13 @@ class CriminalReportsService {
     return response.data;
   }
 
-  async getCrimeHeatmap(longitude: number, latitude: number, radius: number = 5000, page: number = 0, size: number = 50): Promise<PageResponse<CrimeReport>> {
+  async getCrimeHeatmap(
+    longitude: number,
+    latitude: number,
+    radius: number = 5000,
+    page: number = 0,
+    size: number = 50,
+  ): Promise<PageResponse<CrimeReport>> {
     const client = await this.getApiClient();
     const response = await client.get("/crime-locator/heatmap", {
       params: { longitude, latitude, radius, page, size },
@@ -220,21 +289,57 @@ class CriminalReportsService {
 
   // ==================== Missing Person Reports ====================
 
-  async createMissingPersonReport(data: CreateMissingPersonReportInput): Promise<MissingPersonReport> {
+  async createMissingPersonReport(
+    data: CreateMissingPersonReportInput,
+  ): Promise<MissingPersonReport> {
     const client = await this.getMutationClient();
-    const response = await client.post("/report-manager/missing-person-reports", data);
+    const response = await client.post(
+      "/report-manager/missing-person-reports",
+      data,
+    );
     return response.data;
   }
 
-  async getMissingPersonReportById(reportId: string): Promise<MissingPersonReport> {
+  async getMissingPersonReportById(
+    reportId: string,
+  ): Promise<MissingPersonReport> {
     const client = await this.getApiClient();
-    const response = await client.get(`/report-manager/missing-person-reports/${reportId}`);
+    const response = await client.get(
+      `/report-manager/missing-person-reports/${reportId}`,
+    );
     return response.data;
   }
 
-  async publishMissingPersonReport(reportId: string): Promise<void> {
+  async updateMissingPersonReport(
+    reportId: string,
+    data: UpdateMissingPersonReportInput,
+  ): Promise<MissingPersonReport> {
     const client = await this.getMutationClient();
-    await client.post(`/report-manager/missing-person-reports/${reportId}/publish`);
+    const response = await client.put(
+      `/report-manager/missing-person-reports/${reportId}`,
+      data,
+    );
+    return response.data;
+  }
+
+  async publishMissingPersonReport(
+    reportId: string,
+  ): Promise<MissingPersonReport> {
+    const client = await this.getMutationClient();
+    const response = await client.post(
+      `/report-manager/missing-person-reports/${reportId}/publish`,
+    );
+    return response.data;
+  }
+
+  async rejectMissingPersonReport(
+    reportId: string,
+  ): Promise<MissingPersonReport> {
+    const client = await this.getMutationClient();
+    const response = await client.post(
+      `/report-manager/missing-person-reports/${reportId}/reject`,
+    );
+    return response.data;
   }
 
   async deleteMissingPersonReport(reportId: string): Promise<void> {
@@ -242,17 +347,42 @@ class CriminalReportsService {
     await client.delete(`/report-manager/missing-person-reports/${reportId}`);
   }
 
-  async getMissingPersonReports(page: number = 0, size: number = 20, isPublic?: boolean, status?: string): Promise<PageResponse<MissingPersonReport>> {
+  async getMissingPersonReports(
+    page: number = 0,
+    size: number = 20,
+    isPublic?: boolean,
+    status?: string,
+  ): Promise<PageResponse<MissingPersonReport>> {
+    const client = await this.getMutationClient();
+    const response = await client.get(
+      "/report-manager/missing-person-reports",
+      {
+        params: { isPublic, status, page, size },
+      },
+    );
+    return response.data;
+  }
+
+  /** Submit a missing person report externally (no session required). */
+  async submitMissingPersonReport(
+    params: SubmitMissingPersonReportParams,
+  ): Promise<MissingPersonReport> {
     const client = await this.getApiClient();
-    const response = await client.get("/report-manager/missing-person-reports", {
-      params: { isPublic, status, page, size },
-    });
+    const response = await client.post(
+      "/missing-person-request-receiver/submit",
+      null,
+      { params },
+    );
     return response.data;
   }
 
   // ==================== Guidelines ====================
 
-  async getGuidelines(page: number = 0, size: number = 20, isPublic?: boolean): Promise<PageResponse<GuidelinesDocument>> {
+  async getGuidelines(
+    page: number = 0,
+    size: number = 20,
+    isPublic?: boolean,
+  ): Promise<PageResponse<GuidelinesDocument>> {
     const client = await this.getApiClient();
     const response = await client.get("/report-manager/guidelines", {
       params: { isPublic, page, size },
@@ -262,24 +392,174 @@ class CriminalReportsService {
 
   async getGuidelinesById(documentId: string): Promise<GuidelinesDocument> {
     const client = await this.getApiClient();
-    const response = await client.get(`/report-manager/guidelines/${documentId}`);
+    const response = await client.get(
+      `/report-manager/guidelines/${documentId}`,
+    );
     return response.data;
   }
 
-  async createGuidelines(title: string, content: string): Promise<GuidelinesDocument> {
+  async createGuidelines(
+    title: string,
+    content: string,
+  ): Promise<GuidelinesDocument> {
     const client = await this.getMutationClient();
-    const response = await client.post("/report-manager/guidelines", { title, content });
+    const response = await client.post("/report-manager/guidelines", {
+      title,
+      content,
+    });
     return response.data;
   }
 
-  async publishGuidelines(documentId: string): Promise<void> {
+  async updateGuidelines(
+    documentId: string,
+    data: UpdateGuidelinesDocumentInput,
+  ): Promise<GuidelinesDocument> {
     const client = await this.getMutationClient();
-    await client.post(`/report-manager/guidelines/${documentId}/publish`);
+    const response = await client.put(
+      `/report-manager/guidelines/${documentId}`,
+      data,
+    );
+    return response.data;
+  }
+
+  async publishGuidelines(documentId: string): Promise<GuidelinesDocument> {
+    const client = await this.getMutationClient();
+    const response = await client.post(
+      `/report-manager/guidelines/${documentId}/publish`,
+    );
+    return response.data;
   }
 
   async deleteGuidelines(documentId: string): Promise<void> {
     const client = await this.getMutationClient();
     await client.delete(`/report-manager/guidelines/${documentId}`);
+  }
+
+  // ==================== Report Viewer (public, no X-User-Id required) ====================
+
+  async getPublicCrimeReports(
+    page: number = 0,
+    size: number = 10,
+    isPublic: boolean = true,
+  ): Promise<PageResponse<CrimeReport>> {
+    const client = await this.getApiClient();
+    const response = await client.get("/report-viewer/crime-reports", {
+      params: { isPublic, page, size },
+    });
+    return response.data;
+  }
+
+  async getPublicCrimeReportById(reportId: string): Promise<CrimeReport> {
+    const client = await this.getApiClient();
+    const response = await client.get(
+      `/report-viewer/crime-reports/${reportId}`,
+    );
+    return response.data;
+  }
+
+  async getPublicMissingPersonReports(
+    page: number = 0,
+    size: number = 10,
+    isPublic: boolean = true,
+  ): Promise<PageResponse<MissingPersonReport>> {
+    const client = await this.getApiClient();
+    const response = await client.get("/report-viewer/missing-person-reports", {
+      params: { isPublic, page, size },
+    });
+    return response.data;
+  }
+
+  async getPublicMissingPersonReportById(
+    reportId: string,
+  ): Promise<MissingPersonReport> {
+    const client = await this.getApiClient();
+    const response = await client.get(
+      `/report-viewer/missing-person-reports/${reportId}`,
+    );
+    return response.data;
+  }
+
+  async getPublicGuidelines(
+    page: number = 0,
+    size: number = 10,
+    isPublic: boolean = true,
+  ): Promise<PageResponse<GuidelinesDocument>> {
+    const client = await this.getApiClient();
+    const response = await client.get("/report-viewer/guidelines", {
+      params: { isPublic, page, size },
+    });
+    return response.data;
+  }
+
+  async getPublicGuidelinesById(
+    documentId: string,
+  ): Promise<GuidelinesDocument> {
+    const client = await this.getApiClient();
+    const response = await client.get(
+      `/report-viewer/guidelines/${documentId}`,
+    );
+    return response.data;
+  }
+
+  // ==================== Crime Analyzer ====================
+
+  async getCrimeAnalysis(
+    startDate: string,
+    endDate: string,
+  ): Promise<CrimeAnalysisReportResponse> {
+    const client = await this.getApiClient();
+    const response = await client.get("/criminal-analyzer/crime-analysis", {
+      params: { startDate, endDate },
+    });
+    return response.data;
+  }
+
+  // ==================== Admin (hard-delete regardless of ownership) ====================
+
+  async adminDeleteMissingPersonReport(reportId: string): Promise<void> {
+    const client = await this.getApiClient();
+    await client.delete(`/report-admin/missing-person-reports/${reportId}`);
+  }
+
+  async adminDeleteCrimeReport(reportId: string): Promise<void> {
+    const client = await this.getApiClient();
+    await client.delete(`/report-admin/crime-reports/${reportId}`);
+  }
+
+  async adminDeleteGuidelines(documentId: string): Promise<void> {
+    const client = await this.getApiClient();
+    await client.delete(`/report-admin/guidelines/${documentId}`);
+  }
+
+  // ==================== File Management ====================
+
+  async uploadFile(
+    file: { uri: string; filename: string; type: string },
+    bucket: string = "criminal-reports",
+  ): Promise<FileUploadResponse> {
+    const client = await this.getMutationClient();
+    const formData = new FormData();
+    formData.append("file", {
+      uri: file.uri,
+      name: file.filename,
+      type: file.type,
+    } as any);
+    formData.append("bucket", bucket);
+    const response = await client.post("/file/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  }
+
+  async deleteFile(bucket: string, filename: string): Promise<void> {
+    const client = await this.getMutationClient();
+    await client.delete(`/file/${bucket}/${filename}`);
+  }
+
+  async getFileUrl(bucket: string, filename: string): Promise<string> {
+    const client = await this.getApiClient();
+    const response = await client.get(`/file/${bucket}/${filename}`);
+    return response.data;
   }
 }
 
@@ -303,10 +583,14 @@ export function getSeverityColor(severity: number): string {
 
 export function severityToNumber(severity: "Low" | "Medium" | "High"): number {
   switch (severity) {
-    case "High": return 5;
-    case "Medium": return 3;
-    case "Low": return 1;
-    default: return 3;
+    case "High":
+      return 5;
+    case "Medium":
+      return 3;
+    case "Low":
+      return 1;
+    default:
+      return 3;
   }
 }
 
