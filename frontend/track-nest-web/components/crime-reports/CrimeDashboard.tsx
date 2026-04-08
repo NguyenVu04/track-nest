@@ -183,7 +183,7 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-gray-900">{t("pageTitle")}</h2>
         <div className="flex items-center gap-2">
-          {user.role === "Emergency Services" && (
+          {/* {user.role === "Emergency Services" && ( */}
             <button
               onClick={handleViewHeatmap}
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -191,8 +191,8 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
               <BarChart3 className="w-4 h-4" />
               {t("heatmap")}
             </button>
-          )}
-          {user.role === "Reporter" && (
+          {/* )} */}
+          {/* {user.role === "Reporter" && ( */}
             <button
               onClick={handleCreateNew}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -200,7 +200,7 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
               <Plus className="w-4 h-4" />
               {t("newReport")}
             </button>
-          )}
+          {/* )} */}
         </div>
       </div>
 

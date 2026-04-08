@@ -68,16 +68,16 @@ export default function EmergencyRequestsPage() {
 
   if (!user) return null;
 
-  if (user.role !== "Emergency Services") {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900">{tCommon("accessDenied")}</h3>
-          <p className="text-gray-500">{t("accessDeniedMessage")}</p>
-        </div>
-      </div>
-    );
-  }
+  // if (user.role !== "Emergency Services") {
+  //   return (
+  //     <div className="flex items-center justify-center h-64">
+  //       <div className="text-center">
+  //         <h3 className="text-lg font-semibold text-gray-900">{tCommon("accessDenied")}</h3>
+  //         <p className="text-gray-500">{t("accessDeniedMessage")}</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (isLoading) {
     return <Loading fullScreen />;
@@ -127,7 +127,7 @@ export default function EmergencyRequestsPage() {
   const handleReject = async () => {
     if (!rejecting || !rejectReason.trim()) return;
     try {
-      await emergencyOpsService.rejectEmergencyRequest(rejecting.id, rejectReason);
+      await emergencyOpsService.rejectEmergencyRequest(rejecting.id);
       setRequests((prev) =>
         prev.map((r) =>
           r.id === rejecting.id

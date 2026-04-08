@@ -34,10 +34,10 @@ export default function SafeZonesPage() {
 
   useEffect(() => {
     const fetchZones = async () => {
-      if (!user || user.role !== "Emergency Services") {
-        setIsLoading(false);
-        return;
-      }
+      // if (!user || user.role !== "Emergency Services") {
+      //   setIsLoading(false);
+      //   return;
+      // }
 
       try {
         const response: PageResponse<SafeZoneResponse> = await emergencyOpsService.getSafeZones(
@@ -46,7 +46,9 @@ export default function SafeZonesPage() {
           50
         );
 
-        const mappedZones: SafeZone[] = response.content.map((item) => ({
+        console.log('response', response)
+
+        const mappedZones: SafeZone[] = response.items.map((item) => ({
           id: item.id,
           name: item.name,
           type: "Other",
@@ -72,16 +74,16 @@ export default function SafeZonesPage() {
 
   if (!user) return null;
 
-  if (user.role !== "Emergency Services") {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900">{tCommon("accessDenied")}</h3>
-          <p className="text-gray-500">{t("accessDeniedMessage")}</p>
-        </div>
-      </div>
-    );
-  }
+  // if (user.role !== "Emergency Services") {
+  //   return (
+  //     <div className="flex items-center justify-center h-64">
+  //       <div className="text-center">
+  //         <h3 className="text-lg font-semibold text-gray-900">{tCommon("accessDenied")}</h3>
+  //         <p className="text-gray-500">{t("accessDeniedMessage")}</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (isLoading) {
     return <Loading fullScreen />;
