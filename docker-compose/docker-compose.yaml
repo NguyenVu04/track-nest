@@ -154,25 +154,23 @@ services:
     networks:
       - track_nest
     depends_on:
-      criminal_reports:
-        condition: service_healthy
-      emergency_ops:
-        condition: service_healthy
-      user_tracking:
-        condition: service_healthy
-
-  nginx:
-    image: nginx:stable-alpine
-    container_name: nginx
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    networks:
-      - track_nest
-    depends_on:
+      - emergency_ops
+      - user_tracking
+      - criminal_reports
       - keycloak
-      - web
+
+  # nginx:
+  #   image: nginx:stable-alpine
+  #   container_name: nginx
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #   networks:
+  #     - track_nest
+  #   depends_on:
+  #     - keycloak
+  #     - web
 
   criminal_reports:
     build:
@@ -199,12 +197,6 @@ services:
     depends_on:
       - criminal_reports_postgres
       - minio
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health/readiness || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
   emergency_ops:
     build:
@@ -230,12 +222,6 @@ services:
       - track_nest
     depends_on:
       - emergency_ops_postgres
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health/readiness || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
   user_tracking:
     build:
@@ -257,12 +243,6 @@ services:
       - track_nest
     depends_on:
       - user_tracking_postgres
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health/readiness || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
  
   user_tracking_postgres:
     image: timescale/timescaledb-ha:pg17
@@ -387,17 +367,17 @@ services:
       retries: 3
       start_period: 10s
 
-  web:
-    build:
-      context: ../frontend/track-nets-web
-      dockerfile: Dockerfile
-    container_name: web
-    environment:
-      - NODE_ENV=production
-    ports:
-      - "3000:3000"
-    networks:
-      - track_nest
+  # web:
+  #   build:
+  #     context: ../frontend/track-nets-web
+  #     dockerfile: Dockerfile
+  #   container_name: web
+  #   environment:
+  #     - NODE_ENV=production
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - track_nest
 
 networks:
   track_nest:
