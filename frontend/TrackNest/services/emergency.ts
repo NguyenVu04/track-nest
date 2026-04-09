@@ -10,13 +10,14 @@ export interface Location {
 
 export interface EmergencyRequest {
   id: string;
+  openAt: string;
+  closeAt?: string;
   senderId: string;
   targetId: string;
-  lastLatitudeDegrees: number;
-  lastLongitudeDegrees: number;
-  status: EmergencyStatus;
-  createdAt: string;
-  updatedAt: string;
+  emergencyServiceId: string;
+  statusName: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
+  longitude: number;
+  latitude: number;
 }
 
 export enum EmergencyStatus {
@@ -24,7 +25,6 @@ export enum EmergencyStatus {
   ACCEPTED = "ACCEPTED",
   REJECTED = "REJECTED",
   COMPLETED = "COMPLETED",
-  CLOSED = "CLOSED",
 }
 
 export interface SafeZone {
@@ -32,7 +32,19 @@ export interface SafeZone {
   name: string;
   latitude: number;
   longitude: number;
-  radiusMeters: number;
+  radius: number;
+  createdAt: string;
+  emergencyServiceId: string;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
 }
 
 export interface EmergencyServiceLocation {
@@ -81,7 +93,7 @@ class EmergencyOperationsService {
   // Emergency Request Management
   async createEmergencyRequest(
     data: CreateEmergencyRequestData,
-  ): Promise<{ id: string; createdAtMs: number }> {
+  ): Promise<EmergencyRequest> {
     const client = await this.getApiClient();
     const response = await client.post(
       "/emergency-request-receiver/request",
@@ -93,13 +105,7 @@ class EmergencyOperationsService {
   async getMyEmergencyRequests(
     page: number = 0,
     size: number = 20,
-  ): Promise<{
-    items: EmergencyRequest[];
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    pageSize: number;
-  }> {
+  ): Promise<PageResponse<EmergencyRequest>> {
     const client = await this.getApiClient();
     const response = await client.get(`/emergency-request-receiver/requests`, {
       params: { page, size },
@@ -111,13 +117,7 @@ class EmergencyOperationsService {
     status: EmergencyStatus,
     page: number = 0,
     size: number = 20,
-  ): Promise<{
-    items: EmergencyRequest[];
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    pageSize: number;
-  }> {
+  ): Promise<PageResponse<EmergencyRequest>> {
     const client = await this.getApiClient();
     const response = await client.get(`/emergency-request-manager/requests`, {
       params: { status, page, size },
@@ -139,7 +139,7 @@ class EmergencyOperationsService {
   // Emergency Service Management (for responders)
   async acceptEmergencyRequest(
     requestId: string,
-  ): Promise<{ id: string; acceptedAtMs: number }> {
+  ): Promise<EmergencyRequest> {
     const client = await this.getApiClient();
     const response = await client.patch(
       `/emergency-request-manager/requests/${requestId}/accept`,
@@ -149,7 +149,7 @@ class EmergencyOperationsService {
 
   async rejectEmergencyRequest(
     requestId: string,
-  ): Promise<{ id: string; rejectedAtMs: number }> {
+  ): Promise<EmergencyRequest> {
     const client = await this.getApiClient();
     const response = await client.patch(
       `/emergency-request-manager/requests/${requestId}/reject`,
@@ -159,7 +159,7 @@ class EmergencyOperationsService {
 
   async closeEmergencyRequest(
     requestId: string,
-  ): Promise<{ id: string; closedAtMs: number }> {
+  ): Promise<EmergencyRequest> {
     const client = await this.getApiClient();
     const response = await client.patch(
       `/emergency-request-manager/requests/${requestId}/close`,
@@ -177,7 +177,7 @@ class EmergencyOperationsService {
 
   async updateEmergencyServiceLocation(
     location: Location,
-  ): Promise<{ id: string; updatedAtMs: number }> {
+  ): Promise<EmergencyServiceLocation> {
     const client = await this.getApiClient();
     const response = await client.patch(
       `/emergency-request-manager/emergency-service/location`,
@@ -192,13 +192,7 @@ class EmergencyOperationsService {
   async getEmergencyResponderTargets(
     page: number = 0,
     size: number = 20,
-  ): Promise<{
-    content: EmergencyResponderTarget[];
-    page: number;
-    size: number;
-    totalElements: number;
-    totalPages: number;
-  }> {
+  ): Promise<PageResponse<EmergencyResponderTarget>> {
     const client = await this.getApiClient();
     const response = await client.get(`/emergency-responder/targets`, {
       params: { page, size },
@@ -217,77 +211,37 @@ class EmergencyOperationsService {
         maxNumberOfSafeZones: query.maxNumber ?? 10,
       },
     });
-    // Map backend response fields to SafeZone interface
-    return (response.data as any[]).map((z) => ({
-      id: z.id ?? z.safeZoneId,
-      name: z.name ?? z.safeZoneName,
-      latitude: z.latitude ?? z.latitudeDegrees,
-      longitude: z.longitude ?? z.longitudeDegrees,
-      radiusMeters: z.radius ?? z.radiusMeters,
-    }));
+    return response.data;
   }
 
-  async createSafeZone(safeZone: Omit<SafeZone, "id">): Promise<SafeZone> {
+  async createSafeZone(safeZone: Omit<SafeZone, "id" | "createdAt" | "emergencyServiceId">): Promise<SafeZone> {
     const client = await this.getApiClient();
-    const response = await client.post(`/safe-zone-manager/safe-zone`, {
-      name: safeZone.name,
-      latitude: safeZone.latitude,
-      longitude: safeZone.longitude,
-      radius: safeZone.radiusMeters,
-    });
-    const z = response.data;
-    return {
-      id: z.id,
-      name: z.name,
-      latitude: z.latitude,
-      longitude: z.longitude,
-      radiusMeters: z.radius ?? z.radiusMeters,
-    };
+    const response = await client.post(`/safe-zone-manager/safe-zone`, safeZone);
+    return response.data;
   }
 
   async getSafeZones(
     page: number = 0,
     size: number = 20,
     nameFilter?: string,
-  ): Promise<SafeZone[]> {
+  ): Promise<PageResponse<SafeZone>> {
     const client = await this.getApiClient();
     const response = await client.get(`/safe-zone-manager/safe-zones`, {
       params: { page, size, nameFilter },
     });
-    const items: any[] =
-      response.data.content ?? response.data.items ?? response.data ?? [];
-    return items.map((z: any) => ({
-      id: z.id,
-      name: z.name,
-      latitude: z.latitude,
-      longitude: z.longitude,
-      radiusMeters: z.radius ?? z.radiusMeters,
-    }));
+    return response.data;
   }
 
   async updateSafeZone(
     id: string,
-    safeZone: Partial<SafeZone>,
+    safeZone: Partial<Pick<SafeZone, "name" | "latitude" | "longitude" | "radius">>,
   ): Promise<SafeZone> {
     const client = await this.getApiClient();
-    const body: Record<string, any> = {};
-    if (safeZone.name !== undefined) body.name = safeZone.name;
-    if (safeZone.latitude !== undefined) body.latitude = safeZone.latitude;
-    if (safeZone.longitude !== undefined) body.longitude = safeZone.longitude;
-    if (safeZone.radiusMeters !== undefined)
-      body.radius = safeZone.radiusMeters;
     const response = await client.put(
       `/safe-zone-manager/safe-zone/${id}`,
-      body,
+      safeZone,
     );
-    const z = response.data;
-    return {
-      id: z.id,
-      name: z.name,
-      latitude: z.latitude,
-      longitude: z.longitude,
-      radiusMeters: z.radius ?? z.radiusMeters,
-    };
+    return response.data;
   }
 
   async deleteSafeZone(id: string): Promise<{ id: string; deleted: boolean }> {

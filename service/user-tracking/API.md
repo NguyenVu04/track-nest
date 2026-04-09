@@ -443,3 +443,190 @@ Returns the count of unread risk notifications.
 | Field | Type | Description |
 |-------|------|-------------|
 | `count` | int64 | Total risk notification count |
+
+---
+
+## Data Shapes
+
+Canonical message schemas for all gRPC types. The REST gateway (port `18080`) translates these to JSON using standard protobuf-JSON mapping (camelCase field names).
+
+### REST Gateway
+
+The web frontend communicates with this service via a REST-to-gRPC gateway at port `18080`. gRPC method names map to REST paths using the convention `/grpc/<ServiceName>/<MethodName>`. For example:
+
+| gRPC Method | REST Gateway Path |
+|-------------|------------------|
+| `TrackingManagerController.createFamilyCircle` | `POST /tracking-manager/family-circles` |
+| `TrackingManagerController.listFamilyCircles` | `GET /tracking-manager/family-circles` |
+| `TrackingManagerController.deleteFamilyCircle` | `DELETE /tracking-manager/family-circles/{id}` |
+| `TrackingManagerController.updateFamilyCircle` | `PUT /tracking-manager/family-circles/{id}` |
+| `TrackingManagerController.listFamilyCircleMembers` | `GET /tracking-manager/family-circles/{id}/members` |
+| `TrackingManagerController.updateFamilyRole` | `PATCH /tracking-manager/family-circles/{id}/members/{memberId}/role` |
+| `TrackingManagerController.assignFamilyCircleAdmin` | `POST /tracking-manager/family-circles/{id}/members/{memberId}/admin` |
+| `TrackingManagerController.createParticipationPermission` | `POST /tracking-manager/permissions` |
+| `TrackingManagerController.participateInFamilyCircle` | `POST /tracking-manager/permissions/join` |
+| `TrackingManagerController.leaveFamilyCircle` | `POST /tracking-manager/family-circles/{id}/leave` |
+| `TrackingManagerController.removeMemberFromFamilyCircle` | `DELETE /tracking-manager/family-circles/{id}/members/{memberId}` |
+| `NotifierController.registerMobileDevice` | `POST /notifier/devices` |
+| `NotifierController.unregisterMobileDevice` | `DELETE /notifier/devices/{deviceId}` |
+| `NotifierController.updateMobileDevice` | `PATCH /notifier/devices/{deviceId}` |
+| `NotifierController.listTrackingNotifications` | `GET /notifier/tracking-notifications` |
+| `NotifierController.listRiskNotifications` | `GET /notifier/risk-notifications` |
+| `NotifierController.deleteTrackingNotification` | `DELETE /notifier/tracking-notifications/{id}` |
+| `NotifierController.deleteRiskNotification` | `DELETE /notifier/risk-notifications/{id}` |
+| `NotifierController.clearTrackingNotifications` | `DELETE /notifier/tracking-notifications` |
+| `NotifierController.clearRiskNotifications` | `DELETE /notifier/risk-notifications` |
+| `NotifierController.countTrackingNotifications` | `GET /notifier/tracking-notifications/count` |
+| `NotifierController.countRiskNotifications` | `GET /notifier/risk-notifications/count` |
+
+REST list endpoints return a paginated envelope:
+
+```json
+{
+  "items": [],
+  "page": 0,
+  "size": 20,
+  "totalElements": 100,
+  "totalPages": 5
+}
+```
+
+---
+
+### `FamilyCircle`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | UUID string | |
+| `name` | string | |
+| `ownerId` | UUID string | Creator's user ID |
+| `createdAt` | string (ISO 8601) | |
+
+```json
+{
+  "id": "uuid",
+  "name": "Nguyen Family",
+  "ownerId": "uuid",
+  "createdAt": "2026-03-01T08:00:00Z"
+}
+```
+
+---
+
+### `FamilyCircleMember`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `userId` | UUID string | |
+| `username` | string | |
+| `role` | `"OWNER"` \| `"ADMIN"` \| `"MEMBER"` | |
+| `admin` | boolean | `true` if role is OWNER or ADMIN |
+
+```json
+{
+  "userId": "uuid",
+  "username": "user1",
+  "role": "MEMBER",
+  "admin": false
+}
+```
+
+---
+
+### `TrackingNotification`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | UUID string | |
+| `type` | string | Notification category (e.g. `"info"`, `"alert"`) |
+| `title` | string | |
+| `content` | string | Notification body text |
+| `createdAt` | string (ISO 8601) | |
+| `targetId` | UUID string | Recipient user ID |
+
+```json
+{
+  "id": "uuid",
+  "type": "alert",
+  "title": "Zone Exit Alert",
+  "content": "User left the safe zone.",
+  "createdAt": "2026-03-05T08:00:00Z",
+  "targetId": "uuid"
+}
+```
+
+---
+
+### `RiskNotification`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | UUID string | |
+| `type` | string | Risk category (e.g. `"risk"`) |
+| `title` | string | |
+| `content` | string | Notification body text |
+| `createdAt` | string (ISO 8601) | |
+| `userId` | UUID string | Owner user ID |
+
+```json
+{
+  "id": "uuid",
+  "type": "risk",
+  "title": "Nearby Crime Alert",
+  "content": "A robbery was reported near your location.",
+  "createdAt": "2026-03-05T08:00:00Z",
+  "userId": "uuid"
+}
+```
+
+---
+
+### `MobileDevice`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | UUID string | |
+| `deviceToken` | string | FCM / APNs push token |
+| `platform` | `"ANDROID"` \| `"IOS"` | |
+| `languageCode` | string | BCP-47 code, e.g. `"en"`, `"vi"` |
+| `enabled` | boolean | Whether push is currently active |
+| `createdAt` | string (ISO 8601) | |
+
+```json
+{
+  "id": "uuid",
+  "deviceToken": "fcm-token-abc",
+  "platform": "ANDROID",
+  "languageCode": "vi",
+  "enabled": true,
+  "createdAt": "2026-03-01T08:00:00Z"
+}
+```
+
+---
+
+### `FamilyMemberLocation` (streaming)
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `userId` | UUID string | |
+| `latitude` | double | |
+| `longitude` | double | |
+| `timestamp` | string (ISO 8601) | Time of the reading |
+
+---
+
+### `CreateParticipationPermissionResponse`
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `permissionId` | UUID string | |
+| `code` | string | OTP/invite code to share |
+
+---
+
+### `CountTrackingNotificationsResponse` / `CountRiskNotificationsResponse`
+
+```json
+{ "count": 5 }
+```

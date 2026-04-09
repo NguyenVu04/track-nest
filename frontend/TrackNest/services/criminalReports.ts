@@ -15,9 +15,9 @@ export interface CrimeReport {
   numberOfVictims: number;
   numberOfOffenders: number;
   arrested: boolean;
-  isPublic: boolean;
   createdAt: string;
-  updatedAt: string;
+  reporterId: string;
+  isPublic: boolean;
 }
 
 export interface MissingPersonReport {
@@ -30,21 +30,21 @@ export interface MissingPersonReport {
   contactPhone?: string;
   date: string;
   content: string;
-  lastSeenLatitude?: number;
-  lastSeenLongitude?: number;
-  status?: string;
+  status: "PENDING" | "REJECTED" | "PUBLISHED";
   isPublic: boolean;
   createdAt: string;
-  updatedAt: string;
+  userId: string;
+  reporterId: string;
 }
 
 export interface GuidelinesDocument {
   id: string;
   title: string;
+  abstractText: string;
   content: string;
-  published: boolean;
   createdAt: string;
-  updatedAt: string;
+  reporterId: string;
+  isPublic: boolean;
 }
 
 // Create Report Input Types
@@ -95,7 +95,9 @@ export interface UpdateMissingPersonReportInput {
 
 export interface UpdateGuidelinesDocumentInput {
   title?: string;
+  abstractText?: string;
   content?: string;
+  isPublic?: boolean;
 }
 
 export interface SubmitMissingPersonReportParams {
@@ -111,13 +113,29 @@ export interface SubmitMissingPersonReportParams {
   content: string;
 }
 
+export interface CrimeTrendPoint {
+  date: string;
+  count: number;
+}
+
+export interface HotspotArea {
+  longitude: number;
+  latitude: number;
+  incidentCount: number;
+  averageSeverity: number;
+}
+
 export interface CrimeAnalysisReportResponse {
-  startDate: string;
-  endDate: string;
-  totalReports: number;
-  bySeverity: Record<string, number>;
-  byType?: Record<string, number>;
-  [key: string]: any;
+  reportDate: string;
+  totalCrimeReports: number;
+  totalMissingPersonReports: number;
+  crimesBySeverity: Record<number, number>;
+  crimesByType: Record<string, number>;
+  totalArrests: number;
+  totalVictims: number;
+  totalOffenders: number;
+  crimeTrend: CrimeTrendPoint[];
+  hotspots: HotspotArea[];
 }
 
 export interface FileUploadResponse {
@@ -400,12 +418,16 @@ class CriminalReportsService {
 
   async createGuidelines(
     title: string,
+    abstractText: string,
     content: string,
+    isPublic: boolean = false,
   ): Promise<GuidelinesDocument> {
     const client = await this.getMutationClient();
     const response = await client.post("/report-manager/guidelines", {
       title,
+      abstractText,
       content,
+      isPublic,
     });
     return response.data;
   }
