@@ -106,6 +106,15 @@ spec:
             - name: KC_METRICS_ENABLED
               value: "true"
 
+            - name: KC_HTTP_METRICS_HISTOGRAMS_ENABLED
+              value: "true"
+
+            - name: "KC_HTTP_METRICS_SLOS"
+              value: "250,500,1000,2500"
+
+            - name: KC_CACHE_METRICS_HISTOGRAMS_ENABLED
+              value: "true"
+
           volumeMounts:
             - name: realm-config
               mountPath: /opt/keycloak/data/import

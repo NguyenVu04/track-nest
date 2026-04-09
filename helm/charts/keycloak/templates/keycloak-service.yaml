@@ -10,9 +10,9 @@ spec:
     app: keycloak
   ports:
     - name: http
-      port: 8080
+      port: {{ .Values.keycloak.port }}
       targetPort: {{ .Values.keycloak.port }}
 
     - name: management
-      port: 9000
+      port: {{ .Values.keycloak.managementPort }}
       targetPort: {{ .Values.keycloak.managementPort }}

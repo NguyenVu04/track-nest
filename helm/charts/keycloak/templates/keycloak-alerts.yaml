@@ -10,7 +10,6 @@ spec:
     - name: keycloak.rules
       rules:
 
-        # 🔴 Service down
         - alert: KeycloakDown
           expr: up{job="keycloak"} == 0
           for: 1m
