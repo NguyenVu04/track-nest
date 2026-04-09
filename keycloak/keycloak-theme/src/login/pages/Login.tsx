@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { clsx } from "keycloakify/tools/clsx";
-import { getKcClsx } from "keycloakify/login/lib/kcClsx";
 import type { PageProps } from "keycloakify/login/pages/PageProps";
 import type { KcContext } from "../KcContext";
 import type { I18n } from "../i18n";
@@ -8,162 +6,227 @@ import type { I18n } from "../i18n";
 export default function Login(props: PageProps<Extract<KcContext, { pageId: "login.ftl" }>, I18n>) {
     const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
 
-    const { kcClsx } = getKcClsx({
-        doUseDefaultCss,
-        classes
-    });
-
-    const { social, realm, url, login, auth } = kcContext;
+    const { social, realm, url, login, auth, message, isAppInitiatedAction } = kcContext;
 
     const { msg, msgStr } = i18n;
 
     const [isLoginButtonDisabled] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+
+    const label = !realm.loginWithEmailAllowed ? "username" : realm.registrationEmailAsUsername ? "email" : "usernameOrEmail";
+
+    const autoCompleteHelper: typeof label = label === "usernameOrEmail" ? "username" : label;
+    const inputPlaceholder = label === "email" ? "your@email.com" : label === "username" ? "Username" : "Username or email";
 
     return (
-        <Template
-            {...{ kcContext, i18n, doUseDefaultCss, classes }}
-            displayMessage={!realm.loginWithEmailAllowed}
-            headerNode={msg("doLogIn")}
-            displayInfo={social?.displayInfo}
-            infoNode={
-                <div id="kc-registration-container">
-                    <div id="kc-registration">
-                        <span>
-                            {msg("noAccount")}
-                            {" "}
-                            <a tabIndex={6} href={url.registrationUrl}>
-                                {msg("doRegister")}
-                            </a>
-                        </span>
-                    </div>
+        <Template {...{ kcContext, i18n, doUseDefaultCss, classes }} displayMessage={false} headerNode={null} displayInfo={false} infoNode={null}>
+            <div className="tn-login-card">
+                {/* Logo */}
+                <div className="tn-logo-wrap">
+                    <img src="/tracknest-logo.png" alt="TrackNest" className="tn-logo-img" />
                 </div>
-            }
-        >
-            <div id="kc-form">
-                <div id="kc-form-wrapper">
-                    <form id="kc-form-login" action={url.loginAction} method="post">
-                        <div className={kcClsx("kcFormGroupClass")}>
-                            {(() => {
-                                const label = !realm.loginWithEmailAllowed
-                                    ? "username"
-                                    : realm.registrationEmailAsUsername
-                                    ? "email"
-                                    : "usernameOrEmail";
 
-                                const autoCompleteHelper: typeof label = label === "usernameOrEmail" ? "username" : label;
+                {/* Heading */}
+                <h1 className="tn-title">Welcome back</h1>
+                <p className="tn-subtitle">Please enter your details to sign in.</p>
 
-                                return (
-                                    <>
-                                        <label htmlFor="username" className={kcClsx("kcLabelClass")}>
-                                            {msg(label)}
-                                        </label>
-                                        <input
-                                            tabIndex={1}
-                                            id="username"
-                                            className={clsx(kcClsx("kcInputClass"), "pf-c-form-control")}
-                                            name="username"
-                                            defaultValue={login.username ?? ""}
-                                            type="text"
-                                            autoFocus={true}
-                                            autoComplete={autoCompleteHelper}
-                                        />
-                                    </>
-                                );
-                            })()}
+                {/* Alert messages */}
+                {message !== undefined && (message.type !== "warning" || !isAppInitiatedAction) && (
+                    <div className={`tn-alert tn-alert-${message.type}`}>{message.summary}</div>
+                )}
+
+                {/* Social providers (above form, like reference image 2) */}
+                {realm.password && social?.providers !== undefined && social.providers.length > 0 && (
+                    <>
+                        <div className="tn-social-row">
+                            {social.providers.map(p => (
+                                <a key={p.providerId} href={p.loginUrl} id={`zocial-${p.alias}`} className="tn-social-btn" title={p.displayName}>
+                                    <span className="tn-social-label">{p.displayName}</span>
+                                </a>
+                            ))}
                         </div>
-                        <div className={kcClsx("kcFormGroupClass")}>
-                            <label htmlFor="password" className={kcClsx("kcLabelClass")}>
-                                {msg("password")}
-                            </label>
+                        <div className="tn-divider">
+                            <span>or</span>
+                        </div>
+                    </>
+                )}
+
+                {/* Login form */}
+                <form id="kc-form-login" action={url.loginAction} method="post" className="tn-form">
+                    {/* Username / Email field */}
+                    <div className="tn-field">
+                        <label htmlFor="username" className="tn-label">
+                            {label === "email" ? "Email" : label === "username" ? "Username" : "Email or Username"}
+                        </label>
+                        <div className="tn-input-wrap">
+                            <span className="tn-input-icon">
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg>
+                            </span>
+                            <input
+                                tabIndex={1}
+                                id="username"
+                                className="tn-input"
+                                name="username"
+                                defaultValue={login.username ?? ""}
+                                type="text"
+                                autoFocus={true}
+                                autoComplete={autoCompleteHelper}
+                                placeholder={inputPlaceholder}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Password field */}
+                    <div className="tn-field">
+                        <label htmlFor="password" className="tn-label">
+                            Password
+                        </label>
+                        <div className="tn-input-wrap">
+                            <span className="tn-input-icon">
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                            </span>
                             <input
                                 tabIndex={2}
                                 id="password"
-                                className={clsx(kcClsx("kcInputClass"), "pf-c-form-control")}
+                                className="tn-input"
                                 name="password"
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 autoComplete="current-password"
+                                placeholder="••••••••"
                             />
-                        </div>
-                        <div className={clsx(kcClsx("kcFormGroupClass"), kcClsx("kcFormSettingClass"))}>
-                            <div id="kc-form-options">
-                                {realm.rememberMe && (
-                                    <div className="checkbox">
-                                        <label>
-                                            <input
-                                                tabIndex={3}
-                                                id="rememberMe"
-                                                name="rememberMe"
-                                                type="checkbox"
-                                                {...(login.rememberMe === "on"
-                                                    ? {
-                                                          checked: true
-                                                      }
-                                                    : {})}
-                                            />
-                                            {msg("rememberMe")}
-                                        </label>
-                                    </div>
+                            <button
+                                type="button"
+                                className="tn-password-toggle"
+                                onClick={() => setShowPassword(v => !v)}
+                                tabIndex={-1}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                            >
+                                {showPassword ? (
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                        <line x1="1" y1="1" x2="23" y2="23" />
+                                    </svg>
+                                ) : (
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
                                 )}
-                            </div>
-                            <div className={kcClsx("kcFormOptionsWrapperClass")}>
-                                {realm.resetPasswordAllowed && (
-                                    <span>
-                                        <a tabIndex={5} href={url.loginResetCredentialsUrl}>
-                                            {msg("doForgotPassword")}
-                                        </a>
-                                    </span>
-                                )}
-                            </div>
+                            </button>
                         </div>
-                        <div id="kc-form-buttons" className={kcClsx("kcFormGroupClass")}>
-                            <input
-                                type="hidden"
-                                id="id-hidden-input"
-                                name="credentialId"
-                                {...(auth?.selectedCredential !== undefined
-                                    ? {
-                                          value: auth.selectedCredential
-                                      }
-                                    : {})}
-                            />
-                            <input
-                                tabIndex={4}
-                                className={clsx(
-                                    kcClsx("kcButtonClass"),
-                                    kcClsx("kcButtonPrimaryClass"),
-                                    kcClsx("kcButtonBlockClass"),
-                                    kcClsx("kcButtonLargeClass"),
-                                    "pf-c-button",
-                                    "pf-m-primary"
-                                )}
-                                name="login"
-                                id="kc-login"
-                                type="submit"
-                                value={msgStr("doLogIn")}
-                                disabled={isLoginButtonDisabled}
-                            />
-                        </div>
-                    </form>
-                </div>
-            </div>
-            {realm.password && social?.providers !== undefined && (
-                <div id="kc-social-providers" className={clsx(kcClsx("kcFormSocialAccountSectionClass"))}>
-                    <ul
-                        className={clsx(
-                            kcClsx("kcFormSocialAccountListClass"),
-                            social.providers.length > 4 && kcClsx("kcFormSocialAccountListGridClass")
+                    </div>
+
+                    {/* Remember me + Forgot password row */}
+                    <div className="tn-form-meta">
+                        {realm.rememberMe && (
+                            <label className="tn-remember">
+                                <input
+                                    tabIndex={3}
+                                    id="rememberMe"
+                                    name="rememberMe"
+                                    type="checkbox"
+                                    {...(login.rememberMe === "on" ? { defaultChecked: true } : {})}
+                                />
+                                <span>{msgStr("rememberMe")}</span>
+                            </label>
                         )}
+                        {!realm.rememberMe && <span />}
+                        {realm.resetPasswordAllowed && (
+                            <a tabIndex={5} href={url.loginResetCredentialsUrl} className="tn-forgot">
+                                Forgot password?
+                            </a>
+                        )}
+                    </div>
+
+                    {/* Hidden credential input */}
+                    <input
+                        type="hidden"
+                        id="id-hidden-input"
+                        name="credentialId"
+                        {...(auth?.selectedCredential !== undefined ? { value: auth.selectedCredential } : {})}
+                    />
+
+                    {/* Submit button */}
+                    <button tabIndex={4} className="tn-submit-btn" name="login" id="kc-login" type="submit" disabled={isLoginButtonDisabled}>
+                        {msgStr("doLogIn")}
+                    </button>
+                </form>
+
+                {/* Register link */}
+                {realm.password && (
+                    <div className="tn-register">
+                        <span>{msgStr("noAccount")} </span>
+                        <a tabIndex={6} href={url.registrationUrl}>
+                            {msgStr("doRegister")}
+                        </a>
+                    </div>
+                )}
+
+                {/* Try another way */}
+                {auth !== undefined && auth.showTryAnotherWayLink && (
+                    <form
+                        id="kc-select-try-another-way-form"
+                        action={url.loginAction}
+                        method="post"
+                        style={{ textAlign: "center", marginTop: "12px" }}
                     >
-                        {social.providers.map(p => (
-                            <li key={p.providerId}>
-                                <a href={p.loginUrl} id={`zocial-${p.alias}`} className={clsx("zocial", kcClsx("kcFormSocialAccountLinkClass"))}>
-                                    <span>{p.displayName}</span>
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
+                        <input type="hidden" name="tryAnotherWay" value="on" />
+                        <a
+                            href="#"
+                            id="try-another-way"
+                            onClick={event => {
+                                document.forms["kc-select-try-another-way-form" as never].requestSubmit();
+                                event.preventDefault();
+                                return false;
+                            }}
+                        >
+                            {msg("doTryAnotherWay")}
+                        </a>
+                    </form>
+                )}
+            </div>
         </Template>
     );
 }

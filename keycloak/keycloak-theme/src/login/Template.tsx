@@ -53,21 +53,8 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
     }
 
     return (
-        <div className={kcClsx("kcLoginClass")}>
-            <div id="kc-header" className={kcClsx("kcHeaderClass")}>
-                <div id="kc-header-wrapper" className={kcClsx("kcHeaderWrapperClass")}>
-                    <div className="kc-logo-text">
-                        <img 
-                            src="/tracknest-logo.png" 
-                            alt="TrackNest Logo" 
-                            className="tracknest-logo-img"
-                            style={{ width: '48px', height: '48px' }}
-                        />
-                        <span>TrackNest</span>
-                    </div>
-                    {msg("loginTitleHtml", realm.displayNameHtml || realm.name)}
-                </div>
-            </div>
+        <div className="tn-page">
+            <div className="tn-page-inner">
             <div className={kcClsx("kcFormCardClass")}>
                 <header className={kcClsx("kcFormHeaderClass")}>
                     {enabledLanguages.length > 1 && (
@@ -190,6 +177,7 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
                         )}
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     );

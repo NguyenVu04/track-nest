@@ -49,7 +49,7 @@ export default function EmergencyRequestsPage() {
           senderId: item.senderId,
           targetId: item.targetId,
           emergencyServiceId: item.emergencyServiceId,
-          status: item.status as EmergencyRequest["status"],
+          status: item.statusName as EmergencyRequest["status"],
           longitude: item.longitude,
           latitude: item.latitude,
         }));
