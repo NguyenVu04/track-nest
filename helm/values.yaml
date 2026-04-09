@@ -45,3 +45,37 @@ kube-prometheus-stack:
             - bot_token_file: /etc/alertmanager/secrets/tracknest-secrets/bot-token
               chat_id: -5237911116
               parse_mode: HTML
+              message: |
+                {{- if eq .Status "firing" -}}
+                🚨 <b>ALERT FIRING</b>
+                {{- else -}}
+                ✅ <b>ALERT RESOLVED</b>
+                {{- end }}
+
+                <b>{{ .CommonLabels.alertname }}</b>
+
+                {{- if .CommonLabels.job }}
+                📦 <b>Service:</b> {{ .CommonLabels.job }}
+                {{- end }}
+
+                {{- if .CommonLabels.namespace }}
+                🧭 <b>Namespace:</b> {{ .CommonLabels.namespace }}
+                {{- end }}
+
+                {{- if .CommonLabels.severity }}
+                🔥 <b>Severity:</b> {{ .CommonLabels.severity }}
+                {{- end }}
+
+                {{ range .Alerts }}
+                ────────────────
+                🖥 <b>Instance:</b> {{ .Labels.instance }}
+
+                {{- if .Labels.pod }}
+                📍 <b>Pod:</b> {{ .Labels.pod }}
+                {{- end }}
+
+                {{- if .Annotations.description }}
+                📝 <b>Description:</b>
+                {{ .Annotations.description }}
+                {{- end }}
+                {{ end }}

@@ -15,6 +15,13 @@ spec:
       containers:
         - name: envoy
           image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
           ports:
             - containerPort: {{ .Values.envoy.port }}
             - containerPort: {{ .Values.envoy.adminPort }}

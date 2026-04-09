@@ -4,7 +4,7 @@ userTracking:
 
   image:
     repository: nguyenvu04/tracknest-usertracking
-    tag: "v1.2"
+    tag: "v1.2.1"
 
   database:
     host: ep-falling-snow-a1msncjz-pooler.ap-southeast-1.aws.neon.tech
@@ -17,7 +17,7 @@ criminalReports:
 
   image:
     repository: nguyenvu04/tracknest-criminalreports
-    tag: "v1.2"
+    tag: "v1.2.1"
 
   database:
     host: ep-wispy-math-a1wxwifi-pooler.ap-southeast-1.aws.neon.tech
@@ -30,7 +30,7 @@ emergencyOps:
 
   image:
     repository: nguyenvu04/tracknest-emergencyops
-    tag: "v1.2"
+    tag: "v1.2.1"
 
   database:
     host: ep-curly-shadow-a14usu28-pooler.ap-southeast-1.aws.neon.tech
