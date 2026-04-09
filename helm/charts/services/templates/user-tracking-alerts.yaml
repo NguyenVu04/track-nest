@@ -1,0 +1,42 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: user-tracking-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: {{ .Release.Name }}
+spec:
+  groups:
+    - name: user-tracking.rules
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(http_server_requests_seconds_count{job="user-tracking", status=~"5.."}[1m]))
+            /
+            sum(rate(http_server_requests_seconds_count{job="user-tracking"}[1m]))
+            > 0.05
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High error rate"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_server_requests_seconds_bucket{job="user-tracking"}[5m])) by (le)
+            ) > 0.5
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency (P95 > 0.5s)"
+
+        - alert: PodDown
+          expr: |
+            up{job="user-tracking"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod is down"

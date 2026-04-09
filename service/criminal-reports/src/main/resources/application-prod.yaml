@@ -17,4 +17,5 @@ logging:
   level:
     root: INFO
     org.springframework: INFO
-    org.hibernate: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: OFF

@@ -1,0 +1,46 @@
+kube-prometheus-stack:
+  grafana:
+    adminUser: admin
+    adminPassword: tracknestadmin
+
+  alertmanager:
+    enabled: true
+
+    alertmanagerSpec:
+      replicas: 1
+
+      secrets:
+        - tracknest-secrets
+
+    config:
+      global:
+        resolve_timeout: 5m
+
+      route:
+        receiver: telegram
+        group_by: ["alertname", "job"]
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 4h
+
+        routes:
+          - match:
+              severity: critical
+            receiver: telegram
+            group_wait: 10s
+            repeat_interval: 30m
+
+          - match:
+              severity: warning
+            receiver: telegram
+            repeat_interval: 2h
+          
+          - match:
+              severity: info
+            receiver: telegram
+
+      receivers:
+        - name: telegram
+          telegram_configs:
+            - bot_token_file: /etc/alertmanager/secrets/tracknest-secrets/bot-token
+              chat_id: 7119333189
