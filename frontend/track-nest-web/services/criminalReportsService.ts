@@ -65,7 +65,7 @@ export interface UpdateMissingPersonReportRequest {
   date?: string;
   content?: string;
   contactEmail?: string;
-  contactPhone?: string;
+  contactPhone: string;
 }
 
 export interface MissingPersonReportResponse {
@@ -80,7 +80,7 @@ export interface MissingPersonReportResponse {
   contactPhone?: string;
   createdAt: string;
   userId: string;
-  status: string;
+  status: "PENDING" | "REJECTED" | "PUBLISHED";
   reporterId: string;
   isPublic: boolean;
 }
@@ -165,6 +165,31 @@ export interface PageResponse<T> {
   totalPages: number;
   first: boolean;
   last: boolean;
+}
+
+export interface CrimeTrendPoint {
+  date: string;
+  count: number;
+}
+
+export interface HotspotArea {
+  longitude: number;
+  latitude: number;
+  incidentCount: number;
+  averageSeverity: number;
+}
+
+export interface CrimeAnalysisReportResponse {
+  reportDate: string;
+  totalCrimeReports: number;
+  totalMissingPersonReports: number;
+  crimesBySeverity: Record<number, number>;
+  crimesByType: Record<string, number>;
+  totalArrests: number;
+  totalVictims: number;
+  totalOffenders: number;
+  crimeTrend: CrimeTrendPoint[];
+  hotspots: HotspotArea[];
 }
 
 export const criminalReportsService = {
@@ -513,27 +538,3 @@ export const criminalReportsService = {
   },
 };
 
-export interface CrimeAnalysisReportResponse {
-  reportDate: string;
-  totalCrimeReports: number;
-  totalMissingPersonReports: number;
-  crimesBySeverity: Record<number, number>;
-  crimesByType: Record<string, number>;
-  totalArrests: number;
-  totalVictims: number;
-  totalOffenders: number;
-  crimeTrend: CrimeTrendPoint[];
-  hotspots: HotspotArea[];
-}
-
-export interface CrimeTrendPoint {
-  date: string;
-  count: number;
-}
-
-export interface HotspotArea {
-  longitude: number;
-  latitude: number;
-  incidentCount: number;
-  averageSeverity: number;
-}

@@ -277,3 +277,150 @@ Returns the nearest safe zones to a given coordinate, within a maximum distance.
   }
 ]
 ```
+
+---
+
+## Data Shapes
+
+Canonical JSON schemas for all request bodies and response objects.
+
+### `PageResponse<T>`
+
+```json
+{
+  "content": [],
+  "page": 0,
+  "size": 20,
+  "totalElements": 100,
+  "totalPages": 5,
+  "first": true,
+  "last": false
+}
+```
+
+---
+
+### Emergency Request — Shared Response Shape
+
+All emergency request endpoints (`POST /request`, `PATCH /accept`, `PATCH /reject`, `PATCH /close`) return the same shape:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | UUID string | |
+| `openAt` | string (ISO 8601) | When the request was opened |
+| `closeAt` | string (ISO 8601) \| null | When closed/completed, null if still open |
+| `senderId` | UUID string | User who sent the request |
+| `targetId` | UUID string | Target user ID |
+| `emergencyServiceId` | UUID string | Service handling the request |
+| `statusName` | `"PENDING"` \| `"ACCEPTED"` \| `"REJECTED"` \| `"COMPLETED"` | |
+| `longitude` | double | Sender's longitude at time of request |
+| `latitude` | double | Sender's latitude at time of request |
+
+```json
+{
+  "id": "c1c11111-1111-1111-1111-111111111111",
+  "openAt": "2026-03-04T09:30:00+07:00",
+  "closeAt": null,
+  "senderId": "uuid",
+  "targetId": "uuid",
+  "emergencyServiceId": "uuid",
+  "statusName": "PENDING",
+  "longitude": 106.7004,
+  "latitude": 10.7766
+}
+```
+
+---
+
+### `CreateEmergencyRequestRequest`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `targetId` | UUID | yes | ID of the emergency service to contact |
+| `lastLatitudeDegrees` | double | yes | Sender's current latitude |
+| `lastLongitudeDegrees` | double | yes | Sender's current longitude |
+
+---
+
+### `UpdateEmergencyServiceLocationRequest`
+
+| Field | Type | Required |
+|-------|------|----------|
+| `latitude` | double | yes |
+| `longitude` | double | yes |
+
+---
+
+### `GetEmergencyServiceLocationResponse`
+
+| Field | Type |
+|-------|------|
+| `emergencyServiceId` | UUID string |
+| `latitude` | double |
+| `longitude` | double |
+| `updatedAt` | string (ISO 8601) |
+
+---
+
+### `GetRequestCountResponse`
+
+```json
+{ "count": 12 }
+```
+
+---
+
+### `GetEmergencyServiceTargetsResponse` (per item in page)
+
+| Field | Type |
+|-------|------|
+| `userId` | UUID string |
+| `lastLatitude` | double |
+| `lastLongitude` | double |
+| `lastUpdateTime` | string (ISO 8601) |
+
+---
+
+### Safe Zone Response Shape
+
+Used by `POST /safe-zone-manager/safe-zone`, `PUT /safe-zone-manager/safe-zone/{id}`, and items in `GET /safe-zone-manager/safe-zones`.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | UUID string | |
+| `name` | string | |
+| `latitude` | double | |
+| `longitude` | double | |
+| `radius` | float | In meters |
+| `createdAt` | string (ISO 8601) | |
+| `emergencyServiceId` | UUID string | |
+
+---
+
+### `DeleteSafeZoneResponse`
+
+```json
+{ "id": "uuid", "deleted": true }
+```
+
+---
+
+### `CreateSafeZoneRequest` / `UpdateSafeZoneRequest`
+
+| Field | Type | Required | Validation |
+|-------|------|----------|-----------|
+| `name` | string | yes | ≤ 255 chars |
+| `latitude` | double | yes | |
+| `longitude` | double | yes | |
+| `radius` | float | yes | > 0 |
+
+---
+
+### Emergency Request Status Values
+
+| Value | Meaning |
+|-------|---------|
+| `PENDING` | Submitted, awaiting response |
+| `ACCEPTED` | Emergency service accepted |
+| `REJECTED` | Emergency service rejected |
+| `COMPLETED` | Request resolved and closed |

@@ -33,19 +33,13 @@ export interface FamilyCircle {
   name: string;
   ownerId: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface FamilyCircleMember {
-  id: string;
   userId: string;
   username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  avatarUrl?: string;
-  role: "MEMBER" | "ADMIN" | "OWNER";
-  joinedAt: string;
+  role: string;
+  admin: boolean;
 }
 
 export interface Location {
@@ -58,7 +52,7 @@ export interface TrackingNotification {
   id: string;
   type: "LOCATION_UPDATE" | "GEOFENCE_ALERT" | "EMERGENCY";
   title: string;
-  message: string;
+  content: string;
   read: boolean;
   createdAt: string;
   data?: Record<string, unknown>;
@@ -68,7 +62,7 @@ export interface RiskNotification {
   id: string;
   type: "HIGH_RISK_ZONE" | "ANOMALY_DETECTED";
   title: string;
-  message: string;
+  content: string;
   latitude: number;
   longitude: number;
   severity: number;
@@ -80,6 +74,7 @@ export interface MobileDevice {
   id: string;
   deviceToken: string;
   platform: "ANDROID" | "IOS";
+  languageCode: string;
   enabled: boolean;
   lastActiveAt: string;
 }
@@ -93,13 +88,14 @@ export interface UpdateFamilyCircleRequest {
 }
 
 export interface CreateParticipationPermissionRequest {
-  circleId: string;
+  familyCircleId: string;
   expiresAt?: string;
 }
 
 export interface RegisterMobileDeviceRequest {
   deviceToken: string;
   platform: "ANDROID" | "IOS";
+  languageCode: string;
 }
 
 export interface UpdateMobileDeviceRequest {

@@ -29,7 +29,7 @@ export interface UserActivity {
   details?: string;
 }
 
-export type MissingPersonStatus = "PENDING" | "PUBLISHED" | "RESOLVED" | "DELETED";
+export type MissingPersonStatus = "PENDING" | "PUBLISHED" | "REJECTED";
 
 export interface MissingPerson {
   id: string;
@@ -141,7 +141,6 @@ export interface FamilyCircle {
   name: string;
   ownerId: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface FamilyCircleMember {
@@ -163,7 +162,7 @@ export interface TrackingNotification {
   id: string;
   type: TrackingNotificationType;
   title: string;
-  message: string;
+  content: string;
   read: boolean;
   createdAt: string;
   data?: Record<string, unknown>;
@@ -173,7 +172,7 @@ export interface RiskNotification {
   id: string;
   type: RiskNotificationType;
   title: string;
-  message: string;
+  content: string;
   latitude: number;
   longitude: number;
   severity: number;
@@ -187,6 +186,7 @@ export interface MobileDevice {
   id: string;
   deviceToken: string;
   platform: MobilePlatform;
+  languageCode: string;
   enabled: boolean;
   lastActiveAt: string;
 }

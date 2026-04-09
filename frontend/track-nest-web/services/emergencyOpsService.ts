@@ -43,7 +43,7 @@ export interface EmergencyRequestResponse {
   senderId: string;
   targetId: string;
   emergencyServiceId: string;
-  status: string;
+  statusName: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
   longitude: number;
   latitude: number;
 }
@@ -104,7 +104,6 @@ export interface DeleteSafeZoneResponse {
 }
 
 export interface PageResponse<T> {
-  items: T[];
   content: T[];
   page: number;
   size: number;
