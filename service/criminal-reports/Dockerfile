@@ -24,4 +24,4 @@ EXPOSE 38080
 
 EXPOSE 8081
 
-ENTRYPOINT [ "java", "-XX:MaxRAMPercentage=60", "-XX:InitialRAMPercentage=30", "-XX:MaxMetaspaceSize=128m", "-Xss256k", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=200", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
+ENTRYPOINT [ "java", "-XX:MaxRAMPercentage=75", "-XX:InitialRAMPercentage=50", "-Xss256k", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=200", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
