@@ -3,3 +3,4 @@
 certs/
 /**/*/*.prod.*
 /**/*/secrets.yaml
+/**/*/*.tgz
