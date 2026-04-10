@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextvars import ContextVar, Token
 from dataclasses import dataclass
 
-from .exceptions import ForbiddenException, UnauthorizedException
+from src.util.exceptions import ForbiddenException, UnauthorizedException
 
 _current_user: ContextVar["AuthenticatedUser | None"] = ContextVar(
     "current_user",

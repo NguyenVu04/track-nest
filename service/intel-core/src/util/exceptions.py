@@ -13,7 +13,7 @@ from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from .logging import get_correlation_id, get_logger
+from src.util.logging import get_correlation_id, get_logger
 
 logger: logging.Logger = get_logger(__name__)
 

@@ -5,8 +5,8 @@ import binascii
 import json
 from typing import Any, Mapping
 
-from ...util.auth import AuthenticatedUser
-from ...util.exceptions import UnauthorizedException
+from src.util.auth import AuthenticatedUser
+from src.util.exceptions import UnauthorizedException
 
 
 def decode_verified_jwt_claims(token: str) -> dict[str, Any]:

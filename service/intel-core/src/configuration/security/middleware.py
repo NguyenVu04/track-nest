@@ -6,11 +6,11 @@ from typing import Any
 
 from fastapi import Request, Response
 
-from ...util import Settings, UnauthorizedException, get_settings
-from ...util.auth import AuthenticatedUser, reset_current_auth, set_current_auth
-from ...util.exceptions import AppException, app_exception_handler
+from src.util import Settings, UnauthorizedException, get_settings
+from src.util.auth import AuthenticatedUser, reset_current_auth, set_current_auth
+from src.util.exceptions import AppException, app_exception_handler
 
-from .jwt import decode_verified_jwt_claims, user_from_keycloak_claims
+from src.configuration.security.jwt import decode_verified_jwt_claims, user_from_keycloak_claims
 
 
 async def keycloak_user_filter(

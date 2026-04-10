@@ -1,17 +1,24 @@
+from __future__ import annotations
+
 from typing import Callable, Awaitable
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 
-from .util import (
+from src.util import (
     Settings,
     get_correlation_id,
     register_exception_handlers,
     setup_logging,
     set_correlation_id,
 )
-from .util import get_settings
-from .configuration import dispose_database
-from .configuration.security import configure_bearer_auth_openapi, keycloak_user_filter
+from src.util import get_settings
+from src.configuration import dispose_database
+from src.configuration.security import (
+    configure_bearer_auth_openapi, 
+    keycloak_user_filter,
+)
+
+from src.controller import chatbot_router
 
 settings: Settings = get_settings()
 setup_logging(settings.log_level)
@@ -47,3 +54,5 @@ async def add_correlation_id(
 @app.get("/")
 def read_root():
     return {"message": "Hello World"}
+
+app.include_router(chatbot_router)

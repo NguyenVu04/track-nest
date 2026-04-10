@@ -1,4 +1,4 @@
-from ...util.auth import (
+from src.util.auth import (
     AuthenticatedUser,
     get_current_bearer_token,
     get_current_user,
