@@ -3,22 +3,15 @@ from __future__ import annotations
 from typing import Callable, Awaitable
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
+from prometheus_fastapi_instrumentator import Instrumentator
 
-from src.util import (
-    Settings,
-    get_correlation_id,
-    register_exception_handlers,
-    setup_logging,
-    set_correlation_id,
-)
-from src.util import get_settings
-from src.configuration import dispose_database
-from src.configuration.security import (
-    configure_bearer_auth_openapi, 
-    keycloak_user_filter,
-)
-
-from src.controller import chatbot_router
+from src.configuration.database.setup import dispose_database
+from src.configuration.security.middleware import keycloak_user_filter
+from src.configuration.security.openapi import configure_bearer_auth_openapi
+from src.controller.chatbot_controller import router as chatbot_router
+from src.util.exceptions import register_exception_handlers
+from src.util.logging import get_correlation_id, set_correlation_id, setup_logging
+from src.util.settings import Settings, get_settings
 
 settings: Settings = get_settings()
 setup_logging(settings.log_level)
@@ -29,15 +22,15 @@ async def lifespan(app: FastAPI):
     yield
     dispose_database()
 
-
 app: FastAPI = FastAPI(
     lifespan=lifespan,
     swagger_ui_parameters={"persistAuthorization": True},
+    root_path="/intel-core",
 )
+Instrumentator().instrument(app).expose(app)
 register_exception_handlers(app)
 configure_bearer_auth_openapi(app)
 app.middleware("http")(keycloak_user_filter)
-
 
 @app.middleware("http")
 async def add_correlation_id(
@@ -50,9 +43,5 @@ async def add_correlation_id(
     correlation_id: str = get_correlation_id() or ""
     response.headers["X-Correlation-ID"] = correlation_id
     return response
-
-@app.get("/")
-def read_root():
-    return {"message": "Hello World"}
 
 app.include_router(chatbot_router)

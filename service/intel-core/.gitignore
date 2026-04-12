@@ -1,4 +1,4 @@
 .venv/
-*.prod
+*.env.*
 __pycache__/
 *.pyc

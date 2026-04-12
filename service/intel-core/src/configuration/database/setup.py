@@ -4,12 +4,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-from src.util import Settings, get_settings
+from src.util.settings import Settings, get_settings
 
 
 class Base(DeclarativeBase):
     pass
-
 
 settings: Settings = get_settings()
 

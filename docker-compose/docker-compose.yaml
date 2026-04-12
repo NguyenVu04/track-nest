@@ -157,6 +157,7 @@ services:
       - emergency_ops
       - user_tracking
       - criminal_reports
+      - intel_core
       - keycloak
 
   nginx:
@@ -243,6 +244,20 @@ services:
       - track_nest
     depends_on:
       - user_tracking_postgres
+
+  intel_core:
+    build:
+      context: ../service/intel-core
+      dockerfile: Dockerfile
+    container_name: intel_core
+    ports:
+      - "48000:48000"
+    environment:
+      ENV: "dev"
+    networks:
+      - track_nest
+    depends_on:
+      - intel_core_postgres
  
   user_tracking_postgres:
     image: timescale/timescaledb-ha:pg17
@@ -302,6 +317,28 @@ services:
       - criminal_reports_postgres_data:/var/lib/postgresql/data
       - ../database/01-criminal-reports-init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ../database/02-criminal-reports-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    networks:
+      - track_nest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+  
+  intel_core_postgres:
+    image: timescale/timescaledb-ha:pg17
+    container_name: intel_core_postgres
+    environment:
+      POSTGRES_USER: tracknestadmin
+      POSTGRES_PASSWORD: tracknestadmin
+      POSTGRES_DB: tracknest
+    ports:
+      - "45432:5432"
+    volumes:
+      - intel_core_postgres_data:/var/lib/postgresql/data
+      - ../database/01-intel-core-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ../database/02-intel-core-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     networks:
       - track_nest
     healthcheck:
@@ -388,6 +425,7 @@ volumes:
   emergency_ops_postgres_data:
   criminal_reports_postgres_data:
   emergency_detection_postgres_data:
+  intel_core_postgres_data:
   keycloak_postgres_data:
   redis-data:
   minio-1:

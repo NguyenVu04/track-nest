@@ -6,9 +6,9 @@ from typing import Any
 
 from fastapi import Request, Response
 
-from src.util import Settings, UnauthorizedException, get_settings
 from src.util.auth import AuthenticatedUser, reset_current_auth, set_current_auth
-from src.util.exceptions import AppException, app_exception_handler
+from src.util.exceptions import AppException, UnauthorizedException, app_exception_handler
+from src.util.settings import Settings, get_settings
 
 from src.configuration.security.jwt import decode_verified_jwt_claims, user_from_keycloak_claims
 
