@@ -33,8 +33,7 @@ COPY --from=builder /install /usr/local
 
 # Copy source
 COPY src ./src
-COPY .env.prod .env.prod
-COPY .env.dev .env.dev
+COPY .env .env
 
 # Expose correct port
 EXPOSE 48000

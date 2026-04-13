@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import Protocol
 from uuid import UUID
 
+from google.genai import Client
 from sqlalchemy.orm import Session
+from src.configuration.storage.storage_service import StorageService
 from src.domain.chatbot.datatype.post_message_dto import (
     PostMessageRequest,
     PostMessageResponse,
@@ -23,7 +25,8 @@ class ChatbotService(Protocol):
             self, 
             user_id: UUID, 
             request: PostSessionRequest,
-            db: Session
+            db: Session,
+            storage: StorageService
     ) -> PostSessionResponse:
         """Start a new chatbot session for the given user."""
         ...
@@ -32,7 +35,9 @@ class ChatbotService(Protocol):
             self, 
             user_id: UUID, 
             request: PostMessageRequest,
-            db: Session
+            db: Session,
+            storage: StorageService,
+            genai: Client
     ) -> PostMessageResponse:
         """Send a message to the chatbot and receive a response."""
         ...
