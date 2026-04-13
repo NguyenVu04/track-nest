@@ -157,6 +157,7 @@ services:
       - emergency_ops
       - user_tracking
       - criminal_reports
+      - intel_core
       - keycloak
 
   nginx:
@@ -243,6 +244,18 @@ services:
       - track_nest
     depends_on:
       - user_tracking_postgres
+
+  intel_core:
+    build:
+      context: ../service/intel-core
+      dockerfile: Dockerfile
+    container_name: intel_core
+    ports:
+      - "48000:48000"
+    networks:
+      - track_nest
+    depends_on:
+      - intel_core_postgres
  
   user_tracking_postgres:
     image: timescale/timescaledb-ha:pg17
@@ -388,6 +401,7 @@ volumes:
   emergency_ops_postgres_data:
   criminal_reports_postgres_data:
   emergency_detection_postgres_data:
+  intel_core_postgres_data:
   keycloak_postgres_data:
   redis-data:
   minio-1:
