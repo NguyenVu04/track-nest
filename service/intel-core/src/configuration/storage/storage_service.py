@@ -58,10 +58,10 @@ class StorageService:
             self, 
             document_id: UUID, 
             file_name: str
-    ) -> bytes:
+    ) -> str:
         key = self._build_key(document_id, file_name)
         response = self.client.get_object(Bucket=self.bucket, Key=key)
-        return response["Body"].read()
+        return response["Body"].read().decode("utf-8")
 
     def delete_file(
             self, 

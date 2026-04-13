@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 import datetime
+from html import unescape
+from html.parser import HTMLParser
 from google.genai import Client
+from google.genai.types import ContentUnionDict, Content, Part
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
 from src.configuration.storage.storage_service import StorageService
-from src.core.entity.chat_message import ChatMessage
+from src.core.entity.chat_message import ChatMessage, ChatMessageRole
 from src.core.entity.chat_session import ChatSession
 from src.domain.chatbot.datatype.get_session_dto import (
     GetSessionResponse,
-    MessageRole,
     SessionMessage,
 )
 from src.domain.chatbot.datatype.post_message_dto import (
@@ -22,9 +24,97 @@ from src.domain.chatbot.datatype.post_session_dto import (
     PostSessionRequest,
     PostSessionResponse,
 )
+from src.util.settings import Settings, get_settings
+
+
+class _HTMLTextExtractor(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self._chunks: list[str] = []
+        self._skip_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag in {"script", "style"}:
+            self._skip_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in {"script", "style"} and self._skip_depth > 0:
+            self._skip_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if self._skip_depth == 0 and data.strip():
+            self._chunks.append(data)
+
+    def get_text(self) -> str:
+        return " ".join(self._chunks)
+
 
 class ChatbotServiceImpl:
     __DEFAULT_FILE_NAME = "index.html"
+    settings: Settings = get_settings()
+
+    def _strip_html(self, html_content: str) -> str:
+        extractor = _HTMLTextExtractor()
+        extractor.feed(html_content)
+        extractor.close()
+        cleaned_text = unescape(extractor.get_text())
+        return " ".join(cleaned_text.split())
+
+    def _build_prompt(
+            self, 
+            session_id: UUID, 
+            document_id: UUID, 
+            message: str, 
+            db: Session,
+            storage: StorageService
+    ) -> ContentUnionDict:
+        """Build the prompt for the chatbot based on the document content and user message."""
+        messages = (
+            db.query(ChatMessage)
+                .filter(ChatMessage.session_id == session_id)
+                .order_by(ChatMessage.created_at)
+                .all()
+        )
+
+        if not messages:
+            system_message = ChatMessage(
+                session_id=session_id,
+                role=ChatMessageRole.SYSTEM,
+                content="You are a helpful assistant that provides information based on the provided document content. Use the document content to answer the user's question as accurately as possible."
+            )
+            db.add(system_message)
+            db.commit()
+            messages.append(system_message)
+
+        user_message = ChatMessage(
+            session_id=session_id,
+            role=ChatMessageRole.USER,
+            content=message
+        )
+        db.add(user_message)
+        db.commit()
+
+        messages.append(user_message)
+
+        document_raw = storage.read_file(document_id, self.__DEFAULT_FILE_NAME)
+        document_content = self._strip_html(document_raw)
+
+        prompt_parts = [
+            Part(
+                text=f"Document content:\n{document_content}",
+                role=ChatMessageRole.SYSTEM.value,
+            ),
+        ]
+
+        prompt_parts.extend(
+            Part(
+                text=chat_message.content,
+                role=chat_message.role.value,
+            )
+            for chat_message in messages
+        )
+
+        return prompt_parts
 
     async def get_status(self) -> str:
         """Get the status of the chatbot."""
@@ -70,7 +160,19 @@ class ChatbotServiceImpl:
             self.__DEFAULT_FILE_NAME
         ):
             raise ValueError(f"Document with ID {session.document_id} does not exist in storage.")
-        #TODO: Implement actual chatbot logic using genai client and the document content
+        
+        contents = self._build_prompt(
+            session_id=session.id,
+            document_id=session.document_id,
+            message=request.message,
+            db=db,
+            storage=storage
+        )
+        
+        genai.models.generate_content(
+            model=self.settings.gemini_model,
+            contents=contents
+        )
         response_text = f"Echo: {request.message}"
         return PostMessageResponse(response=response_text, created_at=datetime.datetime.now())
     
@@ -89,7 +191,7 @@ class ChatbotServiceImpl:
             db.query(ChatMessage)
             .filter(
                 ChatMessage.session_id == session_id,
-                ChatMessage.role.in_((MessageRole.USER.value, MessageRole.ASSISTANT.value)),
+                ChatMessage.role.in_((ChatMessageRole.USER.value, ChatMessageRole.ASSISTANT.value)),
             )
             .order_by(ChatMessage.created_at)
             .all()
@@ -100,7 +202,7 @@ class ChatbotServiceImpl:
             created_at=session.started_at,
             messages=[
                 SessionMessage(
-                    role=MessageRole(message.role),
+                    role=ChatMessageRole(message.role),
                     content=message.content,
                     created_at=message.created_at
                 )

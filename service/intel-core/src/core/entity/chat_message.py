@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from enum import Enum
+
 from datetime import datetime
 from uuid import UUID
 
@@ -9,11 +11,16 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from src.configuration.database.setup import Base
 
+class ChatMessageRole(str, Enum):
+    USER = "USER"
+    ASSISTANT = "ASSISTANT"
+    SYSTEM = "SYSTEM"
+
 class ChatMessage(Base):
     __tablename__ = "chat_message"
     __table_args__ = (
         CheckConstraint(
-            "role IN ('USER', 'ASSISTANT', 'SYSTEM')",
+            f"role IN ('{ChatMessageRole.USER.value}', '{ChatMessageRole.ASSISTANT.value}', '{ChatMessageRole.SYSTEM.value}')",
             name="ck_chat_message_role",
         ),
     )
@@ -28,7 +35,7 @@ class ChatMessage(Base):
         nullable=False
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    role: Mapped[str] = mapped_column(String(15), nullable=False)
+    role: Mapped[ChatMessageRole] = mapped_column(String(15), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
