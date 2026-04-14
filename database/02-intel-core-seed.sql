@@ -35,7 +35,7 @@ VALUES (
         '10000000-0000-0000-0000-000000000001',
         'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         'You are a crime analysis assistant. Answer based on the document.',
-        'SYSTEM',
+        'USER',
         '2026-04-10T10:00:00Z'
     ),
     (
@@ -49,7 +49,7 @@ VALUES (
         '10000000-0000-0000-0000-000000000003',
         'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         'An armed robbery occurred at a jewelry store involving two masked suspects who stole valuables.',
-        'ASSISTANT',
+        'MODEL',
         '2026-04-10T10:00:08Z'
     ),
     (
@@ -63,14 +63,14 @@ VALUES (
         '10000000-0000-0000-0000-000000000005',
         'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         'No injuries were reported.',
-        'ASSISTANT',
+        'MODEL',
         '2026-04-10T10:00:18Z'
     ),
     (
         '20000000-0000-0000-0000-000000000001',
         'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
         'You are a cybersecurity assistant. Answer based on the document.',
-        'SYSTEM',
+        'USER',
         '2026-04-11T09:00:00Z'
     ),
     (
@@ -84,7 +84,7 @@ VALUES (
         '20000000-0000-0000-0000-000000000003',
         'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
         'A ransomware attack encrypted company systems.',
-        'ASSISTANT',
+        'MODEL',
         '2026-04-11T09:00:08Z'
     ),
     (
@@ -98,14 +98,14 @@ VALUES (
         '20000000-0000-0000-0000-000000000005',
         'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
         'Internal databases and services were impacted.',
-        'ASSISTANT',
+        'MODEL',
         '2026-04-11T09:00:18Z'
     ),
     (
         '30000000-0000-0000-0000-000000000001',
         'cccccccc-cccc-cccc-cccc-cccccccccccc',
         'You are a crime assistant. Answer based on the document.',
-        'SYSTEM',
+        'USER',
         '2026-04-12T08:00:00Z'
     ),
     (
@@ -119,7 +119,7 @@ VALUES (
         '30000000-0000-0000-0000-000000000003',
         'cccccccc-cccc-cccc-cccc-cccccccccccc',
         'A burglary targeting a residential property was reported.',
-        'ASSISTANT',
+        'MODEL',
         '2026-04-12T08:00:08Z'
     ),
     (
@@ -133,14 +133,14 @@ VALUES (
         '30000000-0000-0000-0000-000000000005',
         'cccccccc-cccc-cccc-cccc-cccccccccccc',
         'Electronics and cash were stolen.',
-        'ASSISTANT',
+        'MODEL',
         '2026-04-12T08:00:18Z'
     ),
     (
         '40000000-0000-0000-0000-000000000001',
         'dddddddd-dddd-dddd-dddd-dddddddddddd',
         'You are a security assistant. Answer based on the document.',
-        'SYSTEM',
+        'USER',
         '2026-04-12T09:00:00Z'
     ),
     (
@@ -154,7 +154,7 @@ VALUES (
         '40000000-0000-0000-0000-000000000003',
         'dddddddd-dddd-dddd-dddd-dddddddddddd',
         'A coordinated theft occurred at a warehouse facility.',
-        'ASSISTANT',
+        'MODEL',
         '2026-04-12T09:00:08Z'
     ),
     (
@@ -168,14 +168,14 @@ VALUES (
         '40000000-0000-0000-0000-000000000005',
         'dddddddd-dddd-dddd-dddd-dddddddddddd',
         'Three suspects were involved.',
-        'ASSISTANT',
+        'MODEL',
         '2026-04-12T09:00:18Z'
     ),
     (
         '50000000-0000-0000-0000-000000000001',
         'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
         'You are an incident analysis assistant. Answer based on the document.',
-        'SYSTEM',
+        'USER',
         '2026-04-12T10:00:00Z'
     ),
     (
@@ -189,7 +189,7 @@ VALUES (
         '50000000-0000-0000-0000-000000000003',
         'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
         'A data breach exposed internal records of the organization.',
-        'ASSISTANT',
+        'MODEL',
         '2026-04-12T10:00:08Z'
     ),
     (
@@ -203,7 +203,7 @@ VALUES (
         '50000000-0000-0000-0000-000000000005',
         'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
         'Yes, personal and financial data were affected.',
-        'ASSISTANT',
+        'MODEL',
         '2026-04-12T10:00:18Z'
     ) ON CONFLICT DO NOTHING;
 COMMIT;

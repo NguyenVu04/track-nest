@@ -13,14 +13,13 @@ from src.configuration.database.setup import Base
 
 class ChatMessageRole(str, Enum):
     USER = "USER"
-    ASSISTANT = "ASSISTANT"
-    SYSTEM = "SYSTEM"
+    MODEL = "MODEL"
 
 class ChatMessage(Base):
     __tablename__ = "chat_message"
     __table_args__ = (
         CheckConstraint(
-            f"role IN ('{ChatMessageRole.USER.value}', '{ChatMessageRole.ASSISTANT.value}', '{ChatMessageRole.SYSTEM.value}')",
+            f"role IN ('{ChatMessageRole.USER.value}', '{ChatMessageRole.MODEL.value}')",
             name="ck_chat_message_role",
         ),
     )
