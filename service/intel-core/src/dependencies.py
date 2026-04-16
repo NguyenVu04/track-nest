@@ -8,5 +8,4 @@ def get_chatbot_service() -> ChatbotService:
 
 
 def get_storage_service() -> StorageService:
-    """Dependency function to get an instance of StorageService."""
     return StorageService()

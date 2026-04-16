@@ -154,9 +154,9 @@ services:
     networks:
       - track_nest
     depends_on:
-      # - emergency_ops
-      # - user_tracking
-      # - criminal_reports
+      - emergency_ops
+      - user_tracking
+      - criminal_reports
       - intel_core
       - keycloak
 
@@ -173,77 +173,77 @@ services:
       - keycloak
       - web
 
-  # criminal_reports:
-  #   build:
-  #     context: ../service/criminal-reports
-  #     dockerfile: Dockerfile
-  #   container_name: criminal_reports
-  #   ports:
-  #     - "38080:38080"
-  #   environment:
-  #     KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
-  #     REDIS_URL: "redis://redis:6379"
-  #     DB_HOST: "criminal_reports_postgres"
-  #     DB_PORT: 5432
-  #     DB_NAME: "tracknest"
-  #     DB_USERNAME: "tracknestadmin"
-  #     DB_PASSWORD: "tracknestadmin"
-  #     MINIO_ENDPOINT: "http://minio:9000"
-  #     MINIO_ACCESS_KEY: "minioadmin"
-  #     MINIO_SECRET_KEY: "minioadmin"
-  #     ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:38080"
-  #   networks:
-  #     - track_nest
-  #     - default
-  #   depends_on:
-  #     - criminal_reports_postgres
-  #     - minio
+  criminal_reports:
+    build:
+      context: ../service/criminal-reports
+      dockerfile: Dockerfile
+    container_name: criminal_reports
+    ports:
+      - "38080:38080"
+    environment:
+      KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
+      REDIS_URL: "redis://redis:6379"
+      DB_HOST: "criminal_reports_postgres"
+      DB_PORT: 5432
+      DB_NAME: "tracknest"
+      DB_USERNAME: "tracknestadmin"
+      DB_PASSWORD: "tracknestadmin"
+      MINIO_ENDPOINT: "http://minio:9000"
+      MINIO_ACCESS_KEY: "minioadmin"
+      MINIO_SECRET_KEY: "minioadmin"
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:38080"
+    networks:
+      - track_nest
+      - default
+    depends_on:
+      - criminal_reports_postgres
+      - minio
 
-  # emergency_ops:
-  #   build:
-  #     context: ../service/emergency-ops
-  #     dockerfile: Dockerfile
-  #   container_name: emergency_ops
-  #   ports:
-  #     - "28080:28080"
-  #   environment:
-  #     KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
-  #     REDIS_URL: "redis://redis:6379"
-  #     DB_HOST: "emergency_ops_postgres"
-  #     DB_PORT: 5432
-  #     DB_NAME: "tracknest"
-  #     DB_USERNAME: "tracknestadmin"
-  #     DB_PASSWORD: "tracknestadmin"
-  #     KEYCLOAK_AUTH_SERVER_URL: "http://keycloak:8080/auth"
-  #     KEYCLOAK_CLIENT_ID: "emergency-operations"
-  #     KEYCLOAK_CLIENT_SECRET: "2Bu3haFOwsOW7ONprnSGnmVoU8SvHLmy"
-  #     KEYCLOAK_PUBLIC_REALM: "public-dev"
-  #     ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:28080"
-  #   networks:
-  #     - track_nest
-  #   depends_on:
-  #     - emergency_ops_postgres
+  emergency_ops:
+    build:
+      context: ../service/emergency-ops
+      dockerfile: Dockerfile
+    container_name: emergency_ops
+    ports:
+      - "28080:28080"
+    environment:
+      KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
+      REDIS_URL: "redis://redis:6379"
+      DB_HOST: "emergency_ops_postgres"
+      DB_PORT: 5432
+      DB_NAME: "tracknest"
+      DB_USERNAME: "tracknestadmin"
+      DB_PASSWORD: "tracknestadmin"
+      KEYCLOAK_AUTH_SERVER_URL: "http://keycloak:8080/auth"
+      KEYCLOAK_CLIENT_ID: "emergency-operations"
+      KEYCLOAK_CLIENT_SECRET: "2Bu3haFOwsOW7ONprnSGnmVoU8SvHLmy"
+      KEYCLOAK_PUBLIC_REALM: "public-dev"
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:28080"
+    networks:
+      - track_nest
+    depends_on:
+      - emergency_ops_postgres
 
-  # user_tracking:
-  #   build:
-  #     context: ../service/user-tracking
-  #     dockerfile: Dockerfile
-  #   container_name: user_tracking
-  #   ports:
-  #     - "19090:19090"
-  #   environment:
-  #     KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
-  #     REDIS_URL: "redis://redis:6379"
-  #     DB_HOST: "user_tracking_postgres"
-  #     DB_PORT: 5432
-  #     DB_NAME: "tracknest"
-  #     DB_USERNAME: "tracknestadmin"
-  #     DB_PASSWORD: "tracknestadmin"
-  #     ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:18080"
-  #   networks:
-  #     - track_nest
-  #   depends_on:
-  #     - user_tracking_postgres
+  user_tracking:
+    build:
+      context: ../service/user-tracking
+      dockerfile: Dockerfile
+    container_name: user_tracking
+    ports:
+      - "19090:19090"
+    environment:
+      KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
+      REDIS_URL: "redis://redis:6379"
+      DB_HOST: "user_tracking_postgres"
+      DB_PORT: 5432
+      DB_NAME: "tracknest"
+      DB_USERNAME: "tracknestadmin"
+      DB_PASSWORD: "tracknestadmin"
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:18080"
+    networks:
+      - track_nest
+    depends_on:
+      - user_tracking_postgres
 
   intel_core:
     build:
@@ -252,9 +252,14 @@ services:
     container_name: intel_core
     ports:
       - "48000:48000"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "broker-1:19092,broker-2:19092,broker-3:19092"
+      REDIS_URL: "redis://redis:6379"
+      DATABASE_URL: "postgresql://tracknestadmin:tracknestadmin@intel_core_postgres:5432/tracknest"
+      S3_ENDPOINT: "http://minio:9000"
     networks:
       - track_nest
- 
+
   user_tracking_postgres:
     image: timescale/timescaledb-ha:pg17
     container_name: user_tracking_postgres

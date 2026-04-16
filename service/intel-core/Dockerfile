@@ -34,6 +34,7 @@ COPY --from=builder /install /usr/local
 # Copy source
 COPY src ./src
 COPY .env .env
+COPY certs ./certs
 
 # Expose correct port
 EXPOSE 48000

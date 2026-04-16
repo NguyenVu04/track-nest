@@ -1,4 +1,5 @@
 aiokafka==0.13.0
+redis==5.2.1
 alembic==1.18.4
 annotated-doc==0.0.4
 annotated-types==0.7.0

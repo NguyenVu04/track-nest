@@ -1,14 +1,21 @@
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager, suppress
 from typing import Callable, Awaitable
-from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request, Response
 from prometheus_fastapi_instrumentator import Instrumentator
 
+from src.ai.anomaly_detector import MockAnomalyDetector
 from src.configuration.database.setup import dispose_database
+from src.configuration.kafka.setup import create_kafka_consumer, create_kafka_producer
+from src.configuration.redis.setup import get_redis_client
 from src.configuration.security.middleware import keycloak_user_filter
 from src.configuration.security.openapi import configure_bearer_auth_openapi
 from src.controller.chatbot_controller import router as chatbot_router
+from src.domain.maintenance.session_cleanup_service import SessionCleanupService
+from src.domain.mobility.mobility_monitor import MobilityMonitor
 from src.util.exceptions import register_exception_handlers
 from src.util.logging import get_correlation_id, set_correlation_id, setup_logging
 from src.util.settings import Settings, get_settings
@@ -19,7 +26,27 @@ setup_logging(settings.log_level)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    monitor = MobilityMonitor(
+        detector=MockAnomalyDetector(),
+        consumer=create_kafka_consumer(),
+        producer=create_kafka_producer(),
+    )
+    cleanup = SessionCleanupService(
+        redis_client=get_redis_client(),
+        settings=settings,
+    )
+
+    monitor_task = asyncio.create_task(monitor.start())
+    cleanup_task = asyncio.create_task(cleanup.start())
+
     yield
+
+    monitor_task.cancel()
+    cleanup_task.cancel()
+    with suppress(Exception, asyncio.CancelledError):
+        await monitor_task
+    with suppress(Exception, asyncio.CancelledError):
+        await cleanup_task
     dispose_database()
 
 app: FastAPI = FastAPI(

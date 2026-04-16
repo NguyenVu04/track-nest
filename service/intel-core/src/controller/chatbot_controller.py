@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from io import BytesIO
 from fastapi import APIRouter, Depends, File, UploadFile
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from google.genai import Client
 
@@ -112,7 +112,7 @@ async def upload_file(
     Returns:
         Dictionary with upload metadata (key, bucket, file_name)
     """
-    document_id = UUID(user.subject)  # Using user ID as document ID for simplicity
+    document_id = uuid4()
     file_content = await file.read()
     file_obj = BytesIO(file_content)
     key = storage.upload_file(
