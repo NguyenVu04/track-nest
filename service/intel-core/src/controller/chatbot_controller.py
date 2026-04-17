@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from src.configuration.database.setup import get_db
 from src.configuration.gemini.setup import get_gemini_client
 from src.configuration.storage.storage_service import StorageService
-from src.dependencies import get_chatbot_service, get_storage_service
+from src.dependencies import get_chatbot_service, get_criminal_reports_storage
 from src.domain.chatbot.chatbot_service import ChatbotService
 from src.domain.chatbot.datatype.get_session_dto import GetSessionResponse
 from src.domain.chatbot.datatype.post_message_dto import (
@@ -43,7 +43,7 @@ async def start_chatbot_session(
     user: AuthenticatedUser = Depends(require_current_user),
     service: ChatbotService = Depends(get_chatbot_service),
     db: Session = Depends(get_db),
-    storage: StorageService = Depends(get_storage_service)
+    storage: StorageService = Depends(get_criminal_reports_storage)
 ) -> PostSessionResponse:
     """
     Start a new chatbot session for the authenticated user.
@@ -62,7 +62,7 @@ async def send_message(
     user: AuthenticatedUser = Depends(require_current_user),
     service: ChatbotService = Depends(get_chatbot_service),
     db: Session = Depends(get_db),
-    storage: StorageService = Depends(get_storage_service),
+    storage: StorageService = Depends(get_criminal_reports_storage),
     genai: Client = Depends(get_gemini_client)
 ) -> PostMessageResponse:
     """
@@ -98,7 +98,7 @@ async def retrieve_session(
 async def upload_file(
     file: UploadFile = File(...),
     user: AuthenticatedUser = Depends(require_current_user),
-    storage: StorageService = Depends(get_storage_service),
+    storage: StorageService = Depends(get_criminal_reports_storage),
 ) -> dict:
     """
     Endpoint to handle file uploads for chatbot sessions.

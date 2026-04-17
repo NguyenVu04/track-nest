@@ -14,6 +14,7 @@ from src.util.settings import Settings, get_settings
 
 logger: logging.Logger = get_logger(__name__)
 
+_NOTIFICATION_TYPE = "MOBILITY_ANOMALY"
 
 class MobilityMonitor:
     """Consumes location events, runs anomaly detection, and emits notifications."""
@@ -62,7 +63,7 @@ class MobilityMonitor:
             return
 
         try:
-            if self._detector.is_anomaly(location):
+            if await self._detector.is_anomaly(location):
                 await self._notify(location)
         except Exception as exc:
             logger.error(
@@ -76,9 +77,9 @@ class MobilityMonitor:
             title="Mobility Anomaly Detected",
             content=(
                 f"Anomalous movement detected for {location.username} "
-                f"at ({location.latitudeDeg:.5f}, {location.longitudeDeg:.5f})."
+                f"at {location.latitudeDeg:.5f}°, {location.longitudeDeg:.5f}°)."
             ),
-            type="MOBILITY_ANOMALY",
+            type=_NOTIFICATION_TYPE,
         )
         payload = json.dumps(notification.model_dump(mode="json")).encode("utf-8")
         await self._producer.send(self._settings.kafka_notification_topic, payload)

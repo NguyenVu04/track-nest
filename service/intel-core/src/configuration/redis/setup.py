@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+import redis as sync_redis
 import redis.asyncio as aioredis
 
 from src.util.settings import Settings, get_settings
@@ -17,3 +18,10 @@ def get_redis_client() -> aioredis.Redis:
     settings: Settings = get_settings()
     _validate_redis_settings(settings)
     return aioredis.from_url(settings.redis_url, decode_responses=False)
+
+
+@lru_cache(maxsize=1)
+def get_sync_redis_client() -> sync_redis.Redis:
+    settings: Settings = get_settings()
+    _validate_redis_settings(settings)
+    return sync_redis.Redis.from_url(settings.redis_url, decode_responses=False)

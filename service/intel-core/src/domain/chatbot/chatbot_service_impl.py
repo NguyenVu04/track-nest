@@ -103,7 +103,7 @@ class ChatbotServiceImpl:
         The system prompt and document are prepended inline; neither is stored in the
         database.
         """
-        document_raw = storage.read_file(document_id, _DEFAULT_FILE_NAME)
+        document_raw = storage.read_file(document_id, _DEFAULT_FILE_NAME).decode("utf-8")
         document_content = self._strip_html(document_raw)
 
         prompt: list[Content] = [
