@@ -7,13 +7,13 @@ from uuid import UUID
 from botocore.exceptions import ClientError
 
 from src.util.settings import Settings, get_settings
-from .setup import get_s3_client
+
 
 class StorageService:
-    def __init__(self, client: Any | None = None):
+    def __init__(self, bucket: str, client: Any):
         self.settings: Settings = get_settings()
-        self.client = client or get_s3_client()
-        self.bucket = self.settings.s3_bucket_name
+        self.client = client
+        self.bucket = bucket
 
     def upload_file(
         self,
@@ -54,14 +54,30 @@ class StorageService:
         normalized_file_name = str(file_name).replace("\\", "/").lstrip("/")
         return f"{document_id}/{normalized_file_name}"
 
+    def put_bytes(
+        self,
+        key: str,
+        body: bytes,
+        content_type: str | None = None,
+    ) -> None:
+        upload_kwargs: dict[str, str] = {}
+        normalized_content_type = self._normalize_content_type(content_type)
+        if normalized_content_type:
+            upload_kwargs["ContentType"] = normalized_content_type
+        self.client.put_object(Bucket=self.bucket, Key=key, Body=body, **upload_kwargs)
+
+    def get_bytes(self, key: str) -> bytes:
+        response = self.client.get_object(Bucket=self.bucket, Key=key)
+        return response["Body"].read()
+
     def read_file(
-            self, 
-            document_id: UUID, 
+            self,
+            document_id: UUID,
             file_name: str
-    ) -> str:
+    ) -> bytes:
         key = self._build_key(document_id, file_name)
         response = self.client.get_object(Bucket=self.bucket, Key=key)
-        return response["Body"].read().decode("utf-8")
+        return response["Body"].read()
 
     def delete_file(
             self, 

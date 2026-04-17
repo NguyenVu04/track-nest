@@ -252,11 +252,14 @@ services:
     container_name: intel_core
     ports:
       - "48000:48000"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "broker-1:19092,broker-2:19092,broker-3:19092"
+      REDIS_URL: "redis://redis:6379"
+      DATABASE_URL: "postgresql://tracknestadmin:tracknestadmin@intel_core_postgres:5432/tracknest"
+      S3_ENDPOINT: "http://minio:9000"
     networks:
       - track_nest
-    depends_on:
-      - intel_core_postgres
- 
+
   user_tracking_postgres:
     image: timescale/timescaledb-ha:pg17
     container_name: user_tracking_postgres

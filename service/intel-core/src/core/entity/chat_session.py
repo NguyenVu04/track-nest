@@ -25,3 +25,4 @@ class ChatSession(Base):
         server_default=func.now(),
     )
     document_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    message_left: Mapped[int] = mapped_column(nullable=False, default=0)

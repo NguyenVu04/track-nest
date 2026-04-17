@@ -6,14 +6,15 @@ CREATE TABLE chat_message (
     content TEXT NOT NULL,
     role VARCHAR(15) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    CHECK (role IN ('USER', 'ASSISTANT', 'SYSTEM'))
+    CHECK (role IN ('USER', 'MODEL'))
 );
 
 CREATE TABLE chat_session (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    document_id UUID NOT NULL
+    document_id UUID NOT NULL,
+    message_left SMALLINT NOT NULL DEFAULT 0
 );
 
 ALTER TABLE chat_message
