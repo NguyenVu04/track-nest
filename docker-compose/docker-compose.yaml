@@ -155,7 +155,7 @@ services:
       - track_nest
     depends_on:
       - emergency_ops
-      # - user_tracking
+      - user_tracking
       - criminal_reports
       - keycloak
 
@@ -190,7 +190,7 @@ services:
       MINIO_ENDPOINT: "http://minio:9000"
       MINIO_ACCESS_KEY: "minioadmin"
       MINIO_SECRET_KEY: "minioadmin"
-      GOOGLE_API_KEY: "AIzaSyBWyh-sZqAmapCJ8Rncml111uIHUr1CQxA"
+      GOOGLE_API_KEY: ""
       GOOGLE_GEMINI_CHAT_MODEL: "gemini-3-flash-preview"
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:38080"
     networks:
@@ -225,49 +225,49 @@ services:
     depends_on:
       - emergency_ops_postgres
 
-  # user_tracking:
-  #   build:
-  #     context: ../service/user-tracking
-  #     dockerfile: Dockerfile
-  #   container_name: user_tracking
-  #   ports:
-  #     - "19090:19090"
-  #   environment:
-  #     KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
-  #     REDIS_URL: "redis://redis:6379"
-  #     DB_HOST: "user_tracking_postgres"
-  #     DB_PORT: 5432
-  #     DB_NAME: "tracknest"
-  #     DB_USERNAME: "tracknestadmin"
-  #     DB_PASSWORD: "tracknestadmin"
-  #     ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:18080"
-  #   networks:
-  #     - track_nest
-  #   depends_on:
-  #     - user_tracking_postgres
+  user_tracking:
+    build:
+      context: ../service/user-tracking
+      dockerfile: Dockerfile
+    container_name: user_tracking
+    ports:
+      - "19090:19090"
+    environment:
+      KAFKA_SERVER: "broker-1:19092,broker-2:19092,broker-3:19092"
+      REDIS_URL: "redis://redis:6379"
+      DB_HOST: "user_tracking_postgres"
+      DB_PORT: 5432
+      DB_NAME: "tracknest"
+      DB_USERNAME: "tracknestadmin"
+      DB_PASSWORD: "tracknestadmin"
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:18080"
+    networks:
+      - track_nest
+    depends_on:
+      - user_tracking_postgres
 
-  # user_tracking_postgres:
-  #   image: timescale/timescaledb-ha:pg17
-  #   container_name: user_tracking_postgres
-  #   environment:
-  #     POSTGRES_USER: tracknestadmin
-  #     POSTGRES_PASSWORD: tracknestadmin
-  #     POSTGRES_DB: tracknest
-  #   ports:
-  #     - "15432:5432"
-  #   volumes:
-  #     - user_tracking_postgres_data:/var/lib/postgresql/data
-  #     - ../database/01-user-tracking-init.sql:/docker-entrypoint-initdb.d/01-init.sql
-  #     - ../database/02-user-tracking-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
-  #     - ../database/tables_postgres.sql:/docker-entrypoint-initdb.d/03-quartz.sql
-  #   networks:
-  #     - track_nest
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 30s
+  user_tracking_postgres:
+    image: timescale/timescaledb-ha:pg17
+    container_name: user_tracking_postgres
+    environment:
+      POSTGRES_USER: tracknestadmin
+      POSTGRES_PASSWORD: tracknestadmin
+      POSTGRES_DB: tracknest
+    ports:
+      - "15432:5432"
+    volumes:
+      - user_tracking_postgres_data:/var/lib/postgresql/data
+      - ../database/01-user-tracking-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ../database/02-user-tracking-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - ../database/tables_postgres.sql:/docker-entrypoint-initdb.d/03-quartz.sql
+    networks:
+      - track_nest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracknestadmin -d tracknest"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   emergency_ops_postgres:
     image: timescale/timescaledb-ha:pg17
