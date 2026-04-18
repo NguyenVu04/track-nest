@@ -1,5 +1,9 @@
 export const Vietnamese = {
   pageTitle: "Báo người mất tích",
+  photoLabel: "Ảnh người mất tích",
+  photoPlaceholder: "Chọn ảnh",
+  photoChangeButton: "Thay ảnh",
+  photoUploadError: "Không thể tải ảnh lên. Vui lòng thử lại.",
   titleLabel: "Tiêu đề",
   titlePlaceholder: "Nhập tiêu đề báo cáo",
   titleRequired: "Vui lòng nhập tiêu đề",
@@ -23,6 +27,10 @@ export const Vietnamese = {
 
 export const English = {
   pageTitle: "Report Missing Person",
+  photoLabel: "Photo of Missing Person",
+  photoPlaceholder: "Select Photo",
+  photoChangeButton: "Change Photo",
+  photoUploadError: "Failed to upload photo. Please try again.",
   titleLabel: "Title",
   titlePlaceholder: "Enter report title",
   titleRequired: "Please enter a title",
