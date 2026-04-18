@@ -184,7 +184,7 @@ export default function SafeZonesScreen() {
           <Circle
             key={`safe-zone-area-${zone.id}`}
             center={{ latitude: zone.latitude, longitude: zone.longitude }}
-            radius={zone.radiusMeters}
+            radius={zone.radius}
             strokeColor="rgba(46, 204, 113, 0.85)"
             fillColor="rgba(46, 204, 113, 0.18)"
             strokeWidth={2}
@@ -196,7 +196,7 @@ export default function SafeZonesScreen() {
             key={`safe-zone-marker-${zone.id}`}
             coordinate={{ latitude: zone.latitude, longitude: zone.longitude }}
             title={zone.name}
-            description={`Safe radius: ${zone.radiusMeters}m`}
+            description={`Safe radius: ${zone.radius}m`}
             pinColor="#2ecc71"
             onPress={() => handleFocusZone(zone)}
           />
@@ -220,7 +220,7 @@ export default function SafeZonesScreen() {
               <View style={styles.itemTextWrap}>
                 <Text style={styles.itemTitle}>{item.zone.name}</Text>
                 <Text style={styles.itemMeta}>
-                  Radius {item.zone.radiusMeters}m
+                  Radius {item.zone.radius}m
                 </Text>
               </View>
             </View>

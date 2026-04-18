@@ -160,7 +160,7 @@ export default function CrimeReportsPage() {
 
   if (viewMode === "heatmap") {
     return (
-      <CrimeHeatmapView reports={crimeReports} onBack={handleBackToList} />
+      <CrimeHeatmapView onBack={handleBackToList} />
     );
   }
 

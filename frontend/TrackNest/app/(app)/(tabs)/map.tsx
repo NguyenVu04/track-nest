@@ -394,7 +394,7 @@ export default function MapScreen() {
                 latitude: zone.latitude,
                 longitude: zone.longitude,
               }}
-              radius={zone.radiusMeters}
+              radius={zone.radius}
               strokeColor="rgba(46, 204, 113, 0.85)"
               fillColor="rgba(46, 204, 113, 0.18)"
               strokeWidth={2}
@@ -409,7 +409,7 @@ export default function MapScreen() {
                 longitude: zone.longitude,
               }}
               title={zone.name}
-              description={`Safe radius: ${zone.radiusMeters}m`}
+              description={`Safe radius: ${zone.radius}m`}
               pinColor="#2ecc71"
             />
           ))}
