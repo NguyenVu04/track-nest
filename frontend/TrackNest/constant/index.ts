@@ -31,3 +31,11 @@ export const CRASH_DETECTION_THRESHOLD = 3.0;
 
 // Minimum milliseconds between consecutive crash notifications (cooldown).
 export const CRASH_NOTIFICATION_COOLDOWN_MS = 15_000;
+
+// Lower g-force threshold used specifically when in driving mode (more sensitive).
+export const DRIVING_CRASH_THRESHOLD = 2.5;
+
+// React Native event emitted by NativeLocationModule when tracking mode changes.
+export const TRACKING_MODE_CHANGED_EVENT = "trackingModeChanged";
+
+export type TrackingMode = "NORMAL" | "NAVIGATION";

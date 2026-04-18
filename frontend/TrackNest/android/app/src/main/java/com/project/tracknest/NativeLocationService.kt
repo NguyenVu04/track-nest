@@ -10,6 +10,7 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -36,6 +37,9 @@ class NativeLocationService : Service() {
     private const val NAV_UPDATE_INTERVAL_MS = 5_000L
     private const val NAV_MIN_UPDATE_INTERVAL_MS = 2_000L
     private const val NAV_MIN_DISTANCE_M = 5f
+
+    private const val DRIVING_CRASH_THRESHOLD = 2.5
+    private const val CRASH_COOLDOWN_MS = 15_000L
   }
 
   private enum class TrackingMode {
@@ -149,7 +153,39 @@ class NativeLocationService : Service() {
   private fun switchTrackingMode(nextMode: TrackingMode) {
     if (nextMode == trackingMode) return
     stopLocationUpdates()
+    updateForegroundNotification(nextMode)
+    when (nextMode) {
+      TrackingMode.NAVIGATION -> startDrivingCrashDetection()
+      TrackingMode.NORMAL -> stopCrashDetection()
+    }
+    NativeLocationModule.emitModeChange(nextMode.name)
     startLocationUpdates(nextMode)
+  }
+
+  private fun updateForegroundNotification(mode: TrackingMode) {
+    val notification = when (mode) {
+      TrackingMode.NAVIGATION -> buildDrivingNotification()
+      TrackingMode.NORMAL -> buildForegroundNotification()
+    }
+    val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    manager.notify(FOREGROUND_NOTIFICATION_ID, notification)
+  }
+
+  private fun startDrivingCrashDetection() {
+    val intent = Intent(this, CrashDetectionService::class.java).apply {
+      putExtra(CrashDetectionService.EXTRA_THRESHOLD, DRIVING_CRASH_THRESHOLD)
+      putExtra(CrashDetectionService.EXTRA_COOLDOWN_MS, CRASH_COOLDOWN_MS)
+      putExtra(CrashDetectionService.EXTRA_DRIVING_MODE, true)
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      startForegroundService(intent)
+    } else {
+      startService(intent)
+    }
+  }
+
+  private fun stopCrashDetection() {
+    stopService(Intent(this, CrashDetectionService::class.java))
   }
 
   private fun stopLocationUpdates() {
@@ -173,6 +209,16 @@ class NativeLocationService : Service() {
     return NotificationCompat.Builder(this, SERVICE_CHANNEL_ID)
       .setContentTitle("TrackNest location tracking active")
       .setContentText("Collecting location in background")
+      .setSmallIcon(R.drawable.notification_icon)
+      .setOngoing(true)
+      .setPriority(NotificationCompat.PRIORITY_LOW)
+      .build()
+  }
+
+  private fun buildDrivingNotification(): Notification {
+    return NotificationCompat.Builder(this, SERVICE_CHANNEL_ID)
+      .setContentTitle("Driving mode active")
+      .setContentText("TrackNest is tracking your trip — crash detection enabled")
       .setSmallIcon(R.drawable.notification_icon)
       .setOngoing(true)
       .setPriority(NotificationCompat.PRIORITY_LOW)

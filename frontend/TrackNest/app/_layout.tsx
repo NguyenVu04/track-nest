@@ -8,7 +8,8 @@ import { ProfileProvider } from "@/contexts/ProfileContext";
 import { ReportsProvider } from "@/contexts/ReportsContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { TrackingProvider } from "@/contexts/TrackingContext";
-import { useCrashDetection } from "@/hooks/useCrashDetection";
+import { useDistractionTracker } from "@/hooks/useDistractionTracker";
+import { useDrivingMode } from "@/hooks/useDrivingMode";
 import "@/services/backgroundTasks";
 import fetch from "cross-fetch"; // polyfill for RN
 import { Stack } from "expo-router";
@@ -16,7 +17,8 @@ import { Stack } from "expo-router";
 global.fetch = global.fetch || fetch;
 
 export default function RootLayout() {
-  useCrashDetection();
+  const drivingMode = useDrivingMode();
+  useDistractionTracker(drivingMode);
   return (
     <AuthProvider>
       <DevModeProvider>

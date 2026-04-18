@@ -25,12 +25,14 @@ class CrashDetectionService : Service(), SensorEventListener {
 
     const val EXTRA_THRESHOLD = "threshold"
     const val EXTRA_COOLDOWN_MS = "cooldown_ms"
+    const val EXTRA_DRIVING_MODE = "driving_mode"
   }
 
   private lateinit var sensorManager: SensorManager
   private var threshold: Float = 3.0f
   private var cooldownMs: Long = 15_000L
   private var lastNotifiedAt: Long = 0L
+  private var isDrivingMode: Boolean = false
 
   override fun onCreate() {
     super.onCreate()
@@ -41,6 +43,7 @@ class CrashDetectionService : Service(), SensorEventListener {
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     threshold = intent?.getDoubleExtra(EXTRA_THRESHOLD, 3.0)?.toFloat() ?: 3.0f
     cooldownMs = intent?.getLongExtra(EXTRA_COOLDOWN_MS, 15_000L) ?: 15_000L
+    isDrivingMode = intent?.getBooleanExtra(EXTRA_DRIVING_MODE, false) ?: false
 
     startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification())
     startAccelerometerMonitoring()
@@ -113,9 +116,15 @@ class CrashDetectionService : Service(), SensorEventListener {
   }
 
   private fun buildForegroundNotification(): Notification {
+    val title = if (isDrivingMode) "Driving crash detection active" else "Crash detection active"
+    val text = if (isDrivingMode)
+      "TrackNest is monitoring for collision while driving"
+    else
+      "TrackNest is monitoring for sudden impacts"
+
     return NotificationCompat.Builder(this, SERVICE_CHANNEL_ID)
-      .setContentTitle("Crash detection active")
-      .setContentText("TrackNest is monitoring for sudden impacts")
+      .setContentTitle(title)
+      .setContentText(text)
       .setSmallIcon(R.drawable.notification_icon)
       .setOngoing(true)
       .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -125,9 +134,15 @@ class CrashDetectionService : Service(), SensorEventListener {
   private fun showCrashAlert(magnitudeG: Float) {
     val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+    val title = if (isDrivingMode) "Collision detected while driving!" else "Possible crash detected"
+    val body = if (isDrivingMode)
+      "A sudden impact was detected while driving (${String.format("%.1f", magnitudeG)}g). Are you okay?"
+    else
+      "A sudden impact was detected (${String.format("%.1f", magnitudeG)}g). Are you okay?"
+
     val notification = NotificationCompat.Builder(this, ALERT_CHANNEL_ID)
-      .setContentTitle("Possible crash detected")
-      .setContentText("A sudden impact was detected (${String.format("%.1f", magnitudeG)}g). Are you okay?")
+      .setContentTitle(title)
+      .setContentText(body)
       .setSmallIcon(R.drawable.notification_icon)
       .setAutoCancel(true)
       .setPriority(NotificationCompat.PRIORITY_HIGH)
