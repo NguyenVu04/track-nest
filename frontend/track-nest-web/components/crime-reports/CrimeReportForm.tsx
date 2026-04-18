@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Save, X, MapPin } from "lucide-react";
+import { Save, X, MapPin, Upload, Trash2 } from "lucide-react";
+import Image from "next/image";
 import type { CrimeReport } from "@/types";
+import { criminalReportsService } from "@/services/criminalReportsService";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
-// Dynamically import LocationPicker to avoid SSR issues with Leaflet
 const LocationPicker = dynamic(
   () => import("../shared/LocationPicker").then((mod) => mod.LocationPicker),
   {
@@ -18,6 +20,8 @@ const LocationPicker = dynamic(
     ),
   },
 );
+
+const MAX_IMAGES = 5;
 
 interface CrimeReportFormProps {
   report: CrimeReport | null;
@@ -34,6 +38,8 @@ export function CrimeReportForm({
 }: CrimeReportFormProps) {
   const t = useTranslations("crimeReports");
   const tCommon = useTranslations("common");
+
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<Partial<CrimeReport>>(
     report || {
@@ -52,13 +58,58 @@ export function CrimeReportForm({
       isPublic: true,
     },
   );
+
+  const [uploadedPhotoUrls, setUploadedPhotoUrls] = useState<string[]>([]);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
   const [showReview, setShowReview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handlePhotoFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (uploadedPhotoUrls.length >= MAX_IMAGES) return;
+
+    setIsUploadingPhoto(true);
+    try {
+      const result = await criminalReportsService.uploadFile(
+        file,
+        "criminal-reports",
+      );
+      setUploadedPhotoUrls((prev) => [...prev, result.publicUrl]);
+    } catch {
+      toast.error(t("uploadPhotoError"));
+    } finally {
+      setIsUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
+  const handlePhotoDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    handlePhotoFileChange({
+      target: { files: e.dataTransfer.files },
+    } as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  const handleRemovePhoto = (url: string) => {
+    setUploadedPhotoUrls((prev) => prev.filter((u) => u !== url));
+  };
+
+  const buildContentWithPhotos = (): string => {
+    const base = formData.content || "";
+    if (uploadedPhotoUrls.length === 0) return base;
+    return `${base}\n\n📸 Images:\n${uploadedPhotoUrls.join("\n")}`;
+  };
 
   const buildReport = (): CrimeReport => ({
     id: report?.id || Date.now().toString(),
     title: formData.title!,
-    content: formData.content!,
+    content: buildContentWithPhotos(),
     severity: formData.severity!,
     date: formData.date!,
     longitude: formData.longitude!,
@@ -171,6 +222,72 @@ export function CrimeReportForm({
             />
           </div>
 
+          {/* Photo upload */}
+          <div className="md:col-span-2">
+            <label className="block text-gray-700 mb-2">
+              {t("formPhotos")}
+              <span className="ml-1 text-gray-400 font-normal text-sm">
+                ({uploadedPhotoUrls.length}/{MAX_IMAGES})
+              </span>
+            </label>
+
+            {uploadedPhotoUrls.length > 0 && (
+              <div className="flex flex-wrap gap-3 mb-3">
+                {uploadedPhotoUrls.map((url) => (
+                  <div
+                    key={url}
+                    className="relative w-24 h-24 rounded-lg border border-gray-200 overflow-hidden group"
+                  >
+                    <Image
+                      src={url}
+                      alt="Uploaded"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(url)}
+                      className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {uploadedPhotoUrls.length < MAX_IMAGES && (
+              <div
+                className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                onClick={() => !isUploadingPhoto && photoInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handlePhotoDrop}
+              >
+                {isUploadingPhoto ? (
+                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                    <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm">{t("uploadingPhoto")}</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-gray-500 pointer-events-none">
+                    <Upload className="w-6 h-6 text-gray-400" />
+                    <span className="text-sm font-medium">{t("uploadPhotoBtn")}</span>
+                    <span className="text-xs text-gray-400">{t("uploadPhotoHint")}</span>
+                  </div>
+                )}
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoFileChange}
+                  disabled={isUploadingPhoto}
+                />
+              </div>
+            )}
+          </div>
+
           {/* Location Picker Map */}
           <div className="md:col-span-2">
             <label className="block text-gray-700 mb-2">
@@ -180,14 +297,12 @@ export function CrimeReportForm({
               </span>
             </label>
             <LocationPicker
-              position={
-                [formData.latitude || 40.7829, formData.longitude || -73.9654]
-              }
+              position={[formData.latitude || 40.7829, formData.longitude || -73.9654]}
               onPositionChange={(position) =>
                 setFormData({
                   ...formData,
                   latitude: position[0],
-                  longitude: position[1]
+                  longitude: position[1],
                 })
               }
             />
@@ -203,10 +318,7 @@ export function CrimeReportForm({
               step="any"
               value={formData.latitude ?? 40.7829}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  latitude: parseFloat(e.target.value),
-                })
+                setFormData({ ...formData, latitude: parseFloat(e.target.value) })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
@@ -223,10 +335,7 @@ export function CrimeReportForm({
               step="any"
               value={formData.longitude ?? -73.9654}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  longitude: parseFloat(e.target.value),
-                })
+                setFormData({ ...formData, longitude: parseFloat(e.target.value) })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required
@@ -243,10 +352,7 @@ export function CrimeReportForm({
               min="0"
               value={formData.numberOfVictims ?? 0}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  numberOfVictims: parseInt(e.target.value),
-                })
+                setFormData({ ...formData, numberOfVictims: parseInt(e.target.value) })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
             />
@@ -262,10 +368,7 @@ export function CrimeReportForm({
               min="0"
               value={formData.numberOfOffenders ?? 0}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  numberOfOffenders: parseInt(e.target.value),
-                })
+                setFormData({ ...formData, numberOfOffenders: parseInt(e.target.value) })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
             />
@@ -277,10 +380,7 @@ export function CrimeReportForm({
                 type="checkbox"
                 checked={formData.arrested ?? false}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    arrested: e.target.checked,
-                  })
+                  setFormData({ ...formData, arrested: e.target.checked })
                 }
                 className="w-4 h-4"
               />
@@ -288,11 +388,34 @@ export function CrimeReportForm({
             </label>
           </div>
         </div>
+
+        <div className="flex items-center gap-4 mt-6 pt-6 border-t border-gray-200">
+          <button
+            type="submit"
+            disabled={isSubmitting || isUploadingPhoto}
+            className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
+            {isSubmitting
+              ? tCommon("saving")
+              : mode === "create"
+                ? t("createButton")
+                : tCommon("save")}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex items-center gap-2 px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            <X className="w-4 h-4" />
+            {tCommon("cancel")}
+          </button>
+        </div>
       </form>
 
       {showReview && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-gray-900">{t("reviewTitle")}</h3>
               <button
@@ -326,9 +449,7 @@ export function CrimeReportForm({
               <div>
                 <p className="text-gray-600 text-sm">{t("reviewDate")}</p>
                 <p className="text-gray-900">
-                  {formData.date
-                    ? new Date(formData.date).toLocaleString()
-                    : ""}
+                  {formData.date ? new Date(formData.date).toLocaleString() : ""}
                 </p>
               </div>
               <div>
@@ -343,8 +464,31 @@ export function CrimeReportForm({
               </div>
               <div>
                 <p className="text-gray-600 text-sm">{t("reviewArrested")}</p>
-                <p className="text-gray-900">{formData.arrested ? tCommon("yes") : tCommon("no")}</p>
+                <p className="text-gray-900">
+                  {formData.arrested ? tCommon("yes") : tCommon("no")}
+                </p>
               </div>
+              {uploadedPhotoUrls.length > 0 && (
+                <div>
+                  <p className="text-gray-600 text-sm mb-2">{t("formPhotos")}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {uploadedPhotoUrls.map((url) => (
+                      <div
+                        key={url}
+                        className="relative w-20 h-20 rounded-lg border border-gray-200 overflow-hidden"
+                      >
+                        <Image
+                          src={url}
+                          alt="Photo"
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
               <button
