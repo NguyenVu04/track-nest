@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Save, X, MapPin, User, Calendar, FileText, Phone, Mail } from "lucide-react";
+import { Save, X, MapPin, User, Calendar, FileText, Phone, Mail, Upload, Trash2 } from "lucide-react";
+import Image from "next/image";
 import type { MissingPerson } from "@/types";
 import { criminalReportsService, CreateMissingPersonReportRequest, UpdateMissingPersonReportRequest } from "@/services/criminalReportsService";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 const LocationPicker = dynamic(
   () => import("../shared/LocationPicker").then((mod) => mod.LocationPicker),
@@ -36,6 +38,8 @@ export function MissingPersonForm({
   const tCommon = useTranslations("common");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<Partial<MissingPerson>>(
     person || {
       fullName: "",
@@ -53,6 +57,33 @@ export function MissingPersonForm({
   const [coordinates, setCoordinates] = useState<[number, number]>(
     person ? [10.8231, 106.6297] : [10.8231, 106.6297]
   );
+
+  const handlePhotoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingPhoto(true);
+    try {
+      const result = await criminalReportsService.uploadFile(file, "criminal-reports");
+      setFormData((prev) => ({ ...prev, photo: result.publicUrl }));
+    } catch {
+      toast.error(t("uploadPhotoError"));
+    } finally {
+      setIsUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
+  const handlePhotoDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    handlePhotoFileChange({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  const handleRemovePhoto = () => {
+    setFormData((prev) => ({ ...prev, photo: "" }));
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +129,7 @@ export function MissingPersonForm({
           date: formData.date,
           content: formData.content,
           contactEmail: formData.contactEmail,
-          contactPhone: formData.contactPhone,
+          contactPhone: formData.contactPhone ?? "",
         };
         const response = await criminalReportsService.updateMissingPersonReport(
           person!.id,
@@ -219,19 +250,56 @@ export function MissingPersonForm({
           </div>
 
           <div>
-            <label htmlFor="photo" className="block text-gray-700 mb-2">
-              {t("formPhotoUrl")}
-            </label>
-            <input
-              id="photo"
-              type="url"
-              value={formData.photo}
-              onChange={(e) =>
-                setFormData({ ...formData, photo: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder={t("placeholderPhoto")}
-            />
+            <label className="block text-gray-700 mb-2">{t("formPhotoUrl")}</label>
+
+            {formData.photo ? (
+              <div className="relative w-full rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                <Image
+                  src={formData.photo}
+                  alt="Uploaded photo"
+                  width={400}
+                  height={200}
+                  className="w-full h-48 object-cover"
+                  unoptimized
+                />
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-red-600 text-white text-xs rounded-md hover:bg-red-700 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  {t("removePhoto")}
+                </button>
+              </div>
+            ) : (
+              <div
+                className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                onClick={() => !isUploadingPhoto && photoInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handlePhotoDrop}
+              >
+                {isUploadingPhoto ? (
+                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                    <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm">{t("uploadingPhoto")}</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-gray-500 pointer-events-none">
+                    <Upload className="w-7 h-7 text-gray-400" />
+                    <span className="text-sm font-medium">{t("uploadPhotoBtn")}</span>
+                    <span className="text-xs text-gray-400">{t("uploadPhotoHint")}</span>
+                  </div>
+                )}
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoFileChange}
+                  disabled={isUploadingPhoto}
+                />
+              </div>
+            )}
           </div>
 
           <div className="md:col-span-2">
