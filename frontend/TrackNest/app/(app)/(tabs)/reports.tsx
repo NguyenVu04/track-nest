@@ -254,7 +254,12 @@ export default function ReportsScreen() {
   };
 
   const onCreateReport = () => {
-    router.push("/(app)/create-report" as any);
+    if (tab === "Crime Reports") {
+      router.push("/(app)/create-report" as any);
+    } else if (tab === "Missing") {
+      router.push("/(app)/create-missing" as any);
+    }
+    // Guide tab: FAB hidden, no action
   };
 
   return (
@@ -305,9 +310,11 @@ export default function ReportsScreen() {
           />
         )}
 
-        <Pressable style={styles.fab} onPress={onCreateReport}>
-          <Ionicons name="add" size={28} color="#fff" />
-        </Pressable>
+        {tab !== "Guide" && (
+          <Pressable style={styles.fab} onPress={onCreateReport}>
+            <Ionicons name="add" size={28} color="#fff" />
+          </Pressable>
+        )}
       </View>
     </SafeAreaView>
   );

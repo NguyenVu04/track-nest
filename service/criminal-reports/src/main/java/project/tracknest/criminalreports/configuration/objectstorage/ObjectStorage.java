@@ -7,4 +7,5 @@ public interface ObjectStorage {
     void deleteFile(String bucketName, String objectName);
     InputStream downloadFile(String bucketName, String objectName);
     boolean fileExists(String bucketName, String objectName);
+    void deleteFolder(String bucketName, String prefix);
 }

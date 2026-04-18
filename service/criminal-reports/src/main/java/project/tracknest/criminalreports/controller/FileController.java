@@ -78,6 +78,62 @@ public class FileController {
     }
 
     /**
+     * Upload a file scoped to a document.
+     * HTML files are stored as {documentId}/index.html; others as {documentId}/{originalFilename}.
+     * POST /file/document/{documentId}
+     */
+    @PostMapping("/document/{documentId}")
+    public ResponseEntity<FileUploadResponse> uploadDocumentFile(
+            @PathVariable UUID documentId,
+            @RequestParam("file") MultipartFile file,
+            @RequestHeader(value = "X-User-Id", required = false) UUID userId) {
+
+        String originalFilename = file.getOriginalFilename();
+        String contentType = file.getContentType();
+
+        String objectName;
+        if (contentType != null && contentType.contains("html")) {
+            objectName = documentId + "/index.html";
+        } else {
+            String safeName = (originalFilename != null && !originalFilename.isBlank())
+                    ? originalFilename
+                    : UUID.randomUUID().toString();
+            objectName = documentId + "/" + safeName;
+        }
+
+        log.info("Uploading document file: {} -> {}", originalFilename, objectName);
+
+        try {
+            objectStorage.uploadFile(bucketName, objectName, contentType, file.getInputStream());
+            String publicFileUrl = publicUrl + "/" + bucketName + "/" + objectName;
+            log.info("Document file uploaded: {}", publicFileUrl);
+            return ResponseEntity.ok(new FileUploadResponse(objectName, publicFileUrl, contentType, file.getSize()));
+        } catch (IOException e) {
+            log.error("Failed to upload document file: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Delete all files under a document folder ({documentId}/).
+     * DELETE /file/document/{documentId}
+     */
+    @DeleteMapping("/document/{documentId}")
+    public ResponseEntity<Void> deleteDocumentFolder(
+            @PathVariable UUID documentId,
+            @RequestHeader(value = "X-User-Id", required = false) UUID userId) {
+
+        log.info("Deleting document folder: {}/", documentId);
+        try {
+            objectStorage.deleteFolder(bucketName, documentId + "/");
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            log.error("Failed to delete document folder: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
      * Delete a file from MinIO storage
      * DELETE /file/{bucket}/{filename}
      */
@@ -86,9 +142,9 @@ public class FileController {
             @PathVariable String bucket,
             @PathVariable String filename,
             @RequestHeader(value = "X-User-Id", required = false) UUID userId) {
-        
+
         log.info("Deleting file: {}/{}", bucket, filename);
-        
+
         try {
             objectStorage.deleteFile(bucket, filename);
             log.info("File deleted successfully: {}/{}", bucket, filename);
@@ -107,7 +163,7 @@ public class FileController {
     public ResponseEntity<String> getFileUrl(
             @PathVariable String bucket,
             @PathVariable String filename) {
-        
+
         String publicFileUrl = publicUrl + "/" + bucket + "/" + filename;
         return ResponseEntity.ok(publicFileUrl);
     }
