@@ -4,8 +4,11 @@ import { createCrimeReport } from "@/services/criminalReports";
 import { useAppModal } from "@/components/Modals/AppModal";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import { Image } from "expo-image";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,6 +21,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radii, spacing } from "@/styles/styles";
 
+const MAX_IMAGES = 5;
+
 export default function CreateReportScreen() {
   const router = useRouter();
   const t = useTranslation(createReportLang);
@@ -27,7 +32,29 @@ export default function CreateReportScreen() {
   const [severity, setSeverity] = useState<"Low" | "Medium" | "High">("Medium");
   const [latitude, setLatitude] = useState("10.7769");
   const [longitude, setLongitude] = useState("106.6424");
+  const [photoUris, setPhotoUris] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const handleAddPhoto = async () => {
+    if (photoUris.length >= MAX_IMAGES) return;
+
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") return;
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      setPhotoUris((prev) => [...prev, result.assets[0].uri]);
+    }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setPhotoUris((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -47,9 +74,11 @@ export default function CreateReportScreen() {
         severity,
         latitude: parseFloat(latitude) || 10.7769,
         longitude: parseFloat(longitude) || 106.6424,
-        images: [],
+        images: photoUris,
       });
-      showAlert("Success", "Report submitted successfully", "success", "OK", () => router.back());
+      showAlert("Success", "Report submitted successfully", "success", "OK", () =>
+        router.back(),
+      );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to submit report";
       showAlert("Error", msg, "error");
@@ -134,6 +163,48 @@ export default function CreateReportScreen() {
             </View>
           </View>
 
+          {/* Image picker */}
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              {t.imagesLabel}{" "}
+              <Text style={styles.labelHint}>
+                ({photoUris.length}/{MAX_IMAGES})
+              </Text>
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.imageRow}
+            >
+              {photoUris.map((uri, index) => (
+                <View key={uri} style={styles.thumbWrapper}>
+                  <Image
+                    source={{ uri }}
+                    style={styles.thumb}
+                    contentFit="cover"
+                  />
+                  <Pressable
+                    style={styles.thumbRemove}
+                    onPress={() => handleRemovePhoto(index)}
+                    hitSlop={6}
+                  >
+                    <Ionicons name="close-circle" size={20} color="#fff" />
+                  </Pressable>
+                </View>
+              ))}
+              {photoUris.length < MAX_IMAGES && (
+                <Pressable style={styles.addImageBtn} onPress={handleAddPhoto}>
+                  <Ionicons
+                    name="camera-outline"
+                    size={24}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={styles.addImageText}>{t.addImage}</Text>
+                </Pressable>
+              )}
+            </ScrollView>
+          </View>
+
           <View style={styles.section}>
             <Text style={styles.label}>{t.locationLabel}</Text>
             <View style={styles.locationRow}>
@@ -164,10 +235,18 @@ export default function CreateReportScreen() {
 
           <View style={{ height: 40 }} />
         </ScrollView>
+
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
+
+const THUMB_SIZE = 88;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
@@ -187,6 +266,7 @@ const styles = StyleSheet.create({
   content: { flex: 1, padding: spacing.md },
   section: { marginBottom: spacing.lg },
   label: { fontSize: 14, fontWeight: "600", color: colors.textPrimary, marginBottom: spacing.sm },
+  labelHint: { fontWeight: "400", color: colors.textSecondary },
   input: {
     backgroundColor: colors.surface,
     borderRadius: radii.md,
@@ -214,7 +294,42 @@ const styles = StyleSheet.create({
   sevLowActive: { backgroundColor: "#f2fff0", borderColor: "#27ae60" },
   severityText: { fontWeight: "600", color: colors.textSecondary },
   severityTextActive: { color: colors.textPrimary },
+  imageRow: { flexDirection: "row", gap: spacing.sm, paddingVertical: 4 },
+  thumbWrapper: {
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: radii.md,
+    overflow: "hidden",
+    position: "relative",
+  },
+  thumb: { width: "100%", height: "100%" },
+  thumbRemove: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 10,
+  },
+  addImageBtn: {
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: radii.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  addImageText: { fontSize: 11, color: colors.textSecondary },
   locationRow: { flexDirection: "row", gap: spacing.md },
   locationInput: { flex: 1 },
   locationLabel: { fontSize: 12, color: colors.textSecondary, marginBottom: 4 },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
