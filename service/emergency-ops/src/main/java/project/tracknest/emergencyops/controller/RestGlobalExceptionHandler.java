@@ -10,12 +10,30 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class RestGlobalExceptionHandler {
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiError> handleResponseStatus(ResponseStatusException ex, HttpServletRequest req) {
+        ApiError body = ApiError.builder()
+                .status(ex.getStatusCode().value())
+                .error(HttpStatus
+                        .valueOf(
+                                ex.getStatusCode()
+                                        .value()
+                        ).getReasonPhrase()
+                )
+                .message(ex.getReason())
+                .path(req.getRequestURI())
+                .errors(List.of(ex.getMessage()))
+                .build();
+        return ResponseEntity.status(ex.getStatusCode()).body(body);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
         List<String> validationErrors = ex.getBindingResult()

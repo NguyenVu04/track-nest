@@ -5,10 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import project.tracknest.emergencyops.configuration.cache.ServerRedisMessage;
 import project.tracknest.emergencyops.configuration.cache.ServerRedisMessagePublisher;
 import project.tracknest.emergencyops.configuration.security.KeycloakService;
@@ -57,7 +59,7 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
 
         if (status.isEmpty()) {
             log.error("Emergency request status not found: {}", EmergencyRequestStatus.Status.PENDING.getValue());
-            throw new RuntimeException("Emergency request status not found when creating emergency request");
+            throw new IllegalStateException("Emergency request status not found when creating emergency request");
         }
 
         Optional<EmergencyService> emergencyService = emergencyServiceRepository
@@ -68,7 +70,7 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
 
         if (emergencyService.isEmpty()) {
             log.error("No emergency service found near location: ({}, {})", request.getLastLatitudeDegrees(), request.getLastLongitudeDegrees());
-            throw new RuntimeException("No emergency service found near your location");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No emergency service found near your location");
         }
 
         EmergencyService service = emergencyService.get();

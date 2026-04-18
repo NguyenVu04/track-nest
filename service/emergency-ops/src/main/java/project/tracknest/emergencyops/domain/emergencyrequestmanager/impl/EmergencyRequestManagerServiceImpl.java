@@ -270,8 +270,8 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
         }
 
         EmergencyService service = serviceOpt.get();
-        service.setLongitude(request.longitudeDegrees());
-        service.setLatitude(request.latitudeDegrees());
+        service.setLongitude(request.getLongitudeDegrees());
+        service.setLatitude(request.getLatitudeDegrees());
 
         emergencyServiceRepository.save(service);
 
