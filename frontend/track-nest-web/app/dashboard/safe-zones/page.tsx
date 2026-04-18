@@ -48,7 +48,7 @@ export default function SafeZonesPage() {
 
         console.log('response', response)
 
-        const mappedZones: SafeZone[] = response.items.map((item) => ({
+        const mappedZones: SafeZone[] = response.content.map((item) => ({
           id: item.id,
           name: item.name,
           type: "Other",
@@ -97,9 +97,9 @@ export default function SafeZonesPage() {
     try {
       const request: CreateSafeZoneRequest = {
         name: formData.name,
-        longitude: parseFloat(formData.longitude),
-        latitude: parseFloat(formData.latitude),
-        radius: parseFloat(formData.radius),
+        longitudeDegrees: parseFloat(formData.longitude),
+        latitudeDegrees: parseFloat(formData.latitude),
+        radiusMeters: parseFloat(formData.radius),
       };
 
       const response = await emergencyOpsService.createSafeZone(request);

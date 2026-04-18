@@ -151,7 +151,7 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
 
   if (viewMode === "heatmap") {
     return (
-      <CrimeHeatmapView reports={crimeReports} onBack={handleBackToList} />
+      <CrimeHeatmapView onBack={handleBackToList} />
     );
   }
 

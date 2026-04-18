@@ -211,12 +211,32 @@ class EmergencyOperationsService {
         maxNumberOfSafeZones: query.maxNumber ?? 10,
       },
     });
-    return response.data;
+    // Backend returns { safeZoneId, safeZoneName, latitudeDegrees, longitudeDegrees, radiusMeters }
+    return response.data.map((item: {
+      safeZoneId: string;
+      safeZoneName: string;
+      latitudeDegrees: number;
+      longitudeDegrees: number;
+      radiusMeters: number;
+    }): SafeZone => ({
+      id: item.safeZoneId,
+      name: item.safeZoneName,
+      latitude: item.latitudeDegrees,
+      longitude: item.longitudeDegrees,
+      radius: item.radiusMeters,
+      createdAt: "",
+      emergencyServiceId: "",
+    }));
   }
 
   async createSafeZone(safeZone: Omit<SafeZone, "id" | "createdAt" | "emergencyServiceId">): Promise<SafeZone> {
     const client = await this.getApiClient();
-    const response = await client.post(`/safe-zone-manager/safe-zone`, safeZone);
+    const response = await client.post(`/safe-zone-manager/safe-zone`, {
+      name: safeZone.name,
+      latitudeDegrees: safeZone.latitude,
+      longitudeDegrees: safeZone.longitude,
+      radiusMeters: safeZone.radius,
+    });
     return response.data;
   }
 
@@ -239,7 +259,12 @@ class EmergencyOperationsService {
     const client = await this.getApiClient();
     const response = await client.put(
       `/safe-zone-manager/safe-zone/${id}`,
-      safeZone,
+      {
+        name: safeZone.name,
+        latitudeDegrees: safeZone.latitude,
+        longitudeDegrees: safeZone.longitude,
+        radiusMeters: safeZone.radius,
+      },
     );
     return response.data;
   }

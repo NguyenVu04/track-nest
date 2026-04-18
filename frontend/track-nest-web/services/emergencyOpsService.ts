@@ -73,9 +73,9 @@ export interface RequestCountResponse {
 
 export interface CreateSafeZoneRequest {
   name: string;
-  latitude: number;
-  longitude: number;
-  radius: number;
+  latitudeDegrees: number;
+  longitudeDegrees: number;
+  radiusMeters: number;
 }
 
 export interface SafeZoneResponse {
@@ -89,13 +89,11 @@ export interface SafeZoneResponse {
 }
 
 export interface NearestSafeZoneResponse {
-  id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-  radius: number;
-  distanceMeters: number;
-  emergencyServiceId: string;
+  safeZoneId: string;
+  safeZoneName: string;
+  latitudeDegrees: number;
+  longitudeDegrees: number;
+  radiusMeters: number;
 }
 
 export interface DeleteSafeZoneResponse {

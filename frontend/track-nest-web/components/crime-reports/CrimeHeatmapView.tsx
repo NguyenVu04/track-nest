@@ -5,97 +5,97 @@ import { ArrowLeft, Download } from "lucide-react";
 import type { CrimeReport } from "@/types";
 import { MapView } from "../shared/MapView";
 import { toast } from "sonner";
+import { criminalReportsService } from "@/services/criminalReportsService";
 
 interface CrimeHeatmapViewProps {
-  reports: CrimeReport[];
   onBack: () => void;
 }
 
-export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
-  const [selectedArea, setSelectedArea] = useState<string>("all");
+export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [heatmapReports, setHeatmapReports] = useState<CrimeReport[]>([]);
 
-  const mockRequest = async (shouldFail = false) => {
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    if (shouldFail) {
-      throw new Error("Mock server error");
-    }
-  };
-
-  const getArea = (report: CrimeReport) => {
-    const title = report.title.toLowerCase();
-    if (title.includes("downtown")) return "Downtown";
-    if (title.includes("central")) return "Central";
-    if (title.includes("upper")) return "Uptown";
-    return "Other";
-  };
+  const [latInput, setLatInput] = useState("10.7769");
+  const [lngInput, setLngInput] = useState("106.7009");
+  const [radiusInput, setRadiusInput] = useState("5000");
 
   const handleGenerate = async () => {
+    const latitude = parseFloat(latInput);
+    const longitude = parseFloat(lngInput);
+    const radius = parseFloat(radiusInput);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(radius)) {
+      toast.error("Please enter valid latitude, longitude, and radius values.");
+      return;
+    }
+
     try {
       setIsGenerating(true);
-      await mockRequest(false);
+      const response = await criminalReportsService.viewCrimeHeatmap(
+        longitude,
+        latitude,
+        radius,
+        0,
+        100,
+      );
+
+      const mapped: CrimeReport[] = response.content.map((item) => ({
+        id: item.id,
+        title: item.title,
+        content: item.content,
+        severity: item.severity as CrimeReport["severity"],
+        date: item.date,
+        longitude: item.longitude,
+        latitude: item.latitude,
+        numberOfVictims: item.numberOfVictims,
+        numberOfOffenders: item.numberOfOffenders,
+        arrested: item.arrested,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        reporterId: item.reporterId,
+        isPublic: item.isPublic,
+      }));
+
+      setHeatmapReports(mapped);
       setHasGenerated(true);
-      toast.success("Thành công");
+      toast.success(`Loaded ${mapped.length} crime reports in the area.`);
     } catch (error) {
-      toast.error("Lỗi khi tổng hợp báo cáo tội phạm");
+      toast.error("Failed to load crime heatmap data.");
+      console.error(error);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  // Generate heatmap data from reports
-  const generateHeatmapData = (): [number, number, number][] => {
-    // Convert reports to heatmap data points
-    return reportsForView.map((report) => {
-      // Intensity based on severity (1-5 scale)
-      const intensity = report.severity * 2;
-      return [report.latitude, report.longitude, intensity];
-    });
-  };
-
-  const filteredReports = reports.filter((report) => {
-    const matchesArea =
-      !selectedArea ||
-      selectedArea === getArea(report) ||
-      selectedArea === "all";
-    return matchesArea;
-  });
-
-  const reportsForView = hasGenerated ? filteredReports : [];
+  const generateHeatmapData = (): [number, number, number][] =>
+    heatmapReports.map((report) => [
+      report.latitude,
+      report.longitude,
+      report.severity * 2,
+    ]);
 
   const heatmapData = hasGenerated ? generateHeatmapData() : [];
 
-  // Get all markers from reports
-  const markers = reportsForView.map((report) => ({
+  const markers = heatmapReports.map((report) => ({
     position: [report.latitude, report.longitude] as [number, number],
     label: report.title,
     popup: `${report.title}<br/>Severity: ${report.severity}/5`,
   }));
 
-  // Calculate center from all reports
   const center: [number, number] =
-    reportsForView.length > 0
+    heatmapReports.length > 0
       ? [
-          reportsForView.reduce((sum, r) => sum + r.latitude, 0) /
-            reportsForView.length,
-          reportsForView.reduce((sum, r) => sum + r.longitude, 0) /
-            reportsForView.length,
+          heatmapReports.reduce((sum, r) => sum + r.latitude, 0) / heatmapReports.length,
+          heatmapReports.reduce((sum, r) => sum + r.longitude, 0) / heatmapReports.length,
         ]
-      : [40.7829, -73.9654];
+      : [parseFloat(latInput) || 10.7769, parseFloat(lngInput) || 106.7009];
 
   const handleDownload = () => {
     if (!hasGenerated) return;
-    // Generate a simple CSV report
     const csvContent = [
-      [
-        "Title",
-        "Severity",
-        "Date",
-        "Latitude",
-        "Longitude",
-      ],
-      ...reportsForView.map((r) => [
+      ["Title", "Severity", "Date", "Latitude", "Longitude"],
+      ...heatmapReports.map((r) => [
         r.title,
         r.severity.toString(),
         new Date(r.date).toLocaleDateString(),
@@ -110,18 +110,16 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `crime-heatmap-${
-      new Date().toISOString().split("T")[0]
-    }.csv`;
+    link.download = `crime-heatmap-${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
   const stats = {
-    total: reportsForView.length,
-    high: reportsForView.filter((r) => r.severity >= 4).length,
-    medium: reportsForView.filter((r) => r.severity === 3).length,
-    low: reportsForView.filter((r) => r.severity <= 2).length,
+    total: heatmapReports.length,
+    high: heatmapReports.filter((r) => r.severity >= 4).length,
+    medium: heatmapReports.filter((r) => r.severity === 3).length,
+    low: heatmapReports.filter((r) => r.severity <= 2).length,
   };
 
   return (
@@ -138,23 +136,39 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
 
       {/* Filters and Generate */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="areaFilter" className="block text-gray-700 mb-2">
-              Area *
-            </label>
-            <select
-              id="areaFilter"
-              value={selectedArea}
-              onChange={(e) => setSelectedArea(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              <option value="all">All Areas</option>
-              <option value="Downtown">Downtown</option>
-              <option value="Central">Central</option>
-              <option value="Uptown">Uptown</option>
-              <option value="Other">Other</option>
-            </select>
+            <label className="block text-gray-700 mb-2">Latitude</label>
+            <input
+              type="number"
+              step="any"
+              value={latInput}
+              onChange={(e) => setLatInput(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+              placeholder="e.g. 10.7769"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 mb-2">Longitude</label>
+            <input
+              type="number"
+              step="any"
+              value={lngInput}
+              onChange={(e) => setLngInput(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+              placeholder="e.g. 106.7009"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 mb-2">Radius (meters)</label>
+            <input
+              type="number"
+              step="any"
+              value={radiusInput}
+              onChange={(e) => setRadiusInput(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+              placeholder="e.g. 5000"
+            />
           </div>
         </div>
         <div className="flex flex-col md:flex-row md:items-center gap-4 mt-4">
@@ -163,7 +177,7 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
             disabled={isGenerating}
             className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
           >
-            {isGenerating ? "Generating..." : "Tạo báo cáo tổng hợp"}
+            {isGenerating ? "Generating..." : "Generate Heatmap"}
           </button>
           <button
             onClick={handleDownload}
@@ -179,15 +193,15 @@ export function CrimeHeatmapView({ reports, onBack }: CrimeHeatmapViewProps) {
       {!hasGenerated && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 text-center">
           <p className="text-gray-600">
-            Select area and time range, then click "Tạo báo cáo tổng hợp" to
-            generate the analysis.
+            Enter a center coordinate and radius, then click "Generate Heatmap"
+            to load public crime data from the server.
           </p>
         </div>
       )}
 
       {/* Statistics Cards */}
       {hasGenerated && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <p className="text-gray-600 text-sm">Total Reports</p>
             <p className="text-gray-900 mt-1">{stats.total}</p>
