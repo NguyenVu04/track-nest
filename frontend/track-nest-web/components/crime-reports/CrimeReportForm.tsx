@@ -78,7 +78,7 @@ export function CrimeReportForm({
         file,
         "criminal-reports",
       );
-      setUploadedPhotoUrls((prev) => [...prev, result.publicUrl]);
+      setUploadedPhotoUrls((prev) => [...prev, result.url]);
     } catch {
       toast.error(t("uploadPhotoError"));
     } finally {
