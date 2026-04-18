@@ -4,8 +4,11 @@ import { useReports } from "@/contexts/ReportsContext";
 import { useAppModal } from "@/components/Modals/AppModal";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import { Image } from "expo-image";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -31,7 +34,24 @@ export default function CreateMissingScreen() {
   const [contactEmail, setContactEmail] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [description, setDescription] = useState("");
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const handlePickPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") return;
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [3, 4],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -49,16 +69,21 @@ export default function CreateMissingScreen() {
 
     setLoading(true);
     try {
-      await createMissingPersonReport({
-        title: title.trim(),
-        fullName: fullName.trim(),
-        personalId: personalId.trim() || undefined,
-        contactPhone: contactPhone.trim() || undefined,
-        contactEmail: contactEmail.trim() || undefined,
-        date,
-        content: description.trim(),
-      });
-      showAlert("Success", t.submitSuccess, "success", "OK", () => router.back());
+      await createMissingPersonReport(
+        {
+          title: title.trim(),
+          fullName: fullName.trim(),
+          personalId: personalId.trim() || undefined,
+          contactPhone: contactPhone.trim() || undefined,
+          contactEmail: contactEmail.trim() || undefined,
+          date,
+          content: description.trim(),
+        },
+        photoUri ?? undefined,
+      );
+      showAlert("Success", t.submitSuccess, "success", "OK", () =>
+        router.back(),
+      );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t.submitError;
       showAlert("Error", msg, "error");
@@ -87,6 +112,39 @@ export default function CreateMissingScreen() {
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Photo picker */}
+          <View style={styles.section}>
+            <Text style={styles.label}>{t.photoLabel}</Text>
+            <Pressable style={styles.photoPicker} onPress={handlePickPhoto}>
+              {photoUri ? (
+                <>
+                  <Image
+                    source={{ uri: photoUri }}
+                    style={styles.photoPreview}
+                    contentFit="cover"
+                  />
+                  <View style={styles.photoOverlay}>
+                    <Ionicons name="camera" size={20} color="#fff" />
+                    <Text style={styles.photoOverlayText}>
+                      {t.photoChangeButton}
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.photoPlaceholder}>
+                  <Ionicons
+                    name="person-add-outline"
+                    size={36}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={styles.photoPlaceholderText}>
+                    {t.photoPlaceholder}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          </View>
+
           <View style={styles.section}>
             <Text style={styles.label}>{t.titleLabel} *</Text>
             <TextInput
@@ -173,6 +231,12 @@ export default function CreateMissingScreen() {
 
           <View style={{ height: 40 }} />
         </ScrollView>
+
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -195,7 +259,12 @@ const styles = StyleSheet.create({
   disabledText: { opacity: 0.5 },
   content: { flex: 1, padding: spacing.md },
   section: { marginBottom: spacing.lg },
-  label: { fontSize: 14, fontWeight: "600", color: colors.textPrimary, marginBottom: spacing.sm },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
   input: {
     backgroundColor: colors.surface,
     borderRadius: radii.md,
@@ -207,4 +276,44 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   textArea: { minHeight: 100 },
+  photoPicker: {
+    width: 120,
+    height: 160,
+    borderRadius: radii.md,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  photoPreview: { width: "100%", height: "100%" },
+  photoOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingVertical: 6,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 4,
+  },
+  photoOverlayText: { color: "#fff", fontSize: 12, fontWeight: "600" },
+  photoPlaceholder: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  photoPlaceholderText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: "center",
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
