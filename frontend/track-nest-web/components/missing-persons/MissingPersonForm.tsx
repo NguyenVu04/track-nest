@@ -64,7 +64,7 @@ export function MissingPersonForm({
     setIsUploadingPhoto(true);
     try {
       const result = await criminalReportsService.uploadFile(file, "criminal-reports");
-      setFormData((prev) => ({ ...prev, photo: result.publicUrl }));
+      setFormData((prev) => ({ ...prev, photo: result.url }));
     } catch {
       toast.error(t("uploadPhotoError"));
     } finally {

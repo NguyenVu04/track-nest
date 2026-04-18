@@ -139,8 +139,8 @@ export interface CrimeAnalysisReportResponse {
 }
 
 export interface FileUploadResponse {
-  objectName: string;
-  publicUrl: string;
+  filename: string;
+  url: string;
   contentType: string;
   size: number;
 }
