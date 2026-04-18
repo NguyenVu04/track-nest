@@ -141,33 +141,44 @@ export default function MapScreen() {
 
   // ── Upload user location to server when it changes ──
   const lastUploadedRef = useRef<{ lat: number; lng: number } | null>(null);
+  const locationRef2 = useRef(location);
+  useEffect(() => {
+    locationRef2.current = location;
+  }, [location]);
 
   useEffect(() => {
-    if (!tracking || !shareLocation || !location) return;
+    if (!tracking || !shareLocation) return;
 
-    // Avoid uploading the same position repeatedly
-    const prev = lastUploadedRef.current;
-    if (
-      prev &&
-      Math.abs(prev.lat - location.latitude) < 0.0001 &&
-      Math.abs(prev.lng - location.longitude) < 0.0001
-    ) {
-      return;
-    }
-
-    lastUploadedRef.current = {
-      lat: location.latitude,
-      lng: location.longitude,
+    const upload = (loc: typeof location) => {
+      if (!loc) return;
+      updateUserLocation([
+        {
+          latitudeDeg: loc.latitude,
+          longitudeDeg: loc.longitude,
+          accuracyMeter: loc.accuracy ?? 10,
+          velocityMps: loc.speed ?? 0,
+        },
+      ]).catch((err) => console.warn("Location upload failed:", err.message));
     };
 
-    updateUserLocation([
-      {
-        latitudeDeg: location.latitude,
-        longitudeDeg: location.longitude,
-        accuracyMeter: 10,
-        velocityMps: location.speed ?? 0,
-      },
-    ]).catch((err) => console.warn("Location upload failed:", err.message));
+    // Upload on meaningful position change
+    const prev = lastUploadedRef.current;
+    if (
+      location &&
+      (!prev ||
+        Math.abs(prev.lat - location.latitude) >= 0.0001 ||
+        Math.abs(prev.lng - location.longitude) >= 0.0001)
+    ) {
+      lastUploadedRef.current = {
+        lat: location.latitude,
+        lng: location.longitude,
+      };
+      upload(location);
+    }
+
+    // Heartbeat: upload current position every 5s regardless of movement
+    const heartbeat = setInterval(() => upload(locationRef2.current), 5000);
+    return () => clearInterval(heartbeat);
   }, [tracking, shareLocation, location]);
 
   useEffect(() => {

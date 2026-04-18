@@ -30,6 +30,7 @@ export type LocationState = {
   latitude: number;
   longitude: number;
   speed: number | null;
+  accuracy?: number | null;
   timestamp?: number;
   time_spent?: number;
 };
