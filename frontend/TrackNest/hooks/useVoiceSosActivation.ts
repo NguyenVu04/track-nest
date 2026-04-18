@@ -4,7 +4,7 @@ import {
   useSpeechRecognitionEvent,
 } from "expo-speech-recognition";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { AppState, AppStateStatus } from "react-native";
+import { AppState, AppStateStatus, Keyboard } from "react-native";
 
 const DEFAULT_TRIGGER_PHRASES = [
   "help me",
@@ -35,6 +35,7 @@ export function useVoiceSosActivation(enabled: boolean = true) {
 
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const shouldListenRef = useRef(false);
+  const keyboardVisibleRef = useRef(false);
   const lastTriggerAtRef = useRef(0);
 
   const normalizedPhrases = useMemo(
@@ -57,6 +58,10 @@ export function useVoiceSosActivation(enabled: boolean = true) {
       console.warn("Speech recognition is not available on this device");
       return;
     }
+
+    // Do not start while keyboard is open — starting the recognizer on Android
+    // requests input focus and causes the system to dismiss the keyboard.
+    if (keyboardVisibleRef.current) return;
 
     shouldListenRef.current = true;
 
@@ -131,7 +136,7 @@ export function useVoiceSosActivation(enabled: boolean = true) {
   useEffect(() => {
     startListening();
 
-    const subscription = AppState.addEventListener("change", (nextState) => {
+    const appStateSub = AppState.addEventListener("change", (nextState) => {
       appStateRef.current = nextState;
       if (nextState === "active") {
         if (shouldListenRef.current || enabled) {
@@ -142,8 +147,24 @@ export function useVoiceSosActivation(enabled: boolean = true) {
       }
     });
 
+    // Pause recognition while the keyboard is visible so the recognizer
+    // restart cycle doesn't steal focus and dismiss the keyboard.
+    const keyboardShowSub = Keyboard.addListener("keyboardDidShow", () => {
+      keyboardVisibleRef.current = true;
+      stopListening();
+    });
+
+    const keyboardHideSub = Keyboard.addListener("keyboardDidHide", () => {
+      keyboardVisibleRef.current = false;
+      if (enabled && appStateRef.current === "active") {
+        startListening();
+      }
+    });
+
     return () => {
-      subscription.remove();
+      appStateSub.remove();
+      keyboardShowSub.remove();
+      keyboardHideSub.remove();
       stopListening();
     };
   }, [enabled, startListening, stopListening]);
