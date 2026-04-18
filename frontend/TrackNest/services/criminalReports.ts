@@ -573,6 +573,33 @@ class CriminalReportsService {
     return response.data;
   }
 
+  /**
+   * Upload a file scoped to a document.
+   * HTML files → {documentId}/index.html; others → {documentId}/{filename}.
+   */
+  async uploadDocumentFile(
+    documentId: string,
+    file: { uri: string; filename: string; type: string },
+  ): Promise<FileUploadResponse> {
+    const client = await this.getMutationClient();
+    const formData = new FormData();
+    formData.append("file", {
+      uri: file.uri,
+      name: file.filename,
+      type: file.type,
+    } as unknown as Blob);
+    const response = await client.post(`/file/document/${documentId}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  }
+
+  /** Delete all files in a document's folder ({documentId}/) */
+  async deleteDocumentFolder(documentId: string): Promise<void> {
+    const client = await this.getMutationClient();
+    await client.delete(`/file/document/${documentId}`);
+  }
+
   async deleteFile(bucket: string, filename: string): Promise<void> {
     const client = await this.getMutationClient();
     await client.delete(`/file/${bucket}/${filename}`);

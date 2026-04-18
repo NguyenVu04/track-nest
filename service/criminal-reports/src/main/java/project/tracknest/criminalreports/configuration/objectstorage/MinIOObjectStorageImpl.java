@@ -1,11 +1,15 @@
 package project.tracknest.criminalreports.configuration.objectstorage;
 
 import io.minio.*;
-import lombok.RequiredArgsConstructor;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
+import io.minio.messages.Item;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -79,6 +83,40 @@ public class MinIOObjectStorageImpl implements ObjectStorage {
             return response;
         } catch (Exception e) {
             log.error("Error downloading file from MinIO: ", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void deleteFolder(String bucketName, String prefix) {
+        try {
+            Iterable<Result<Item>> objects = client.listObjects(ListObjectsArgs.builder()
+                    .bucket(bucketName)
+                    .prefix(prefix)
+                    .recursive(true)
+                    .build());
+
+            List<DeleteObject> toDelete = new ArrayList<>();
+            for (Result<Item> result : objects) {
+                toDelete.add(new DeleteObject(result.get().objectName()));
+            }
+
+            if (toDelete.isEmpty()) {
+                return;
+            }
+
+            Iterable<Result<DeleteError>> errors = client.removeObjects(RemoveObjectsArgs.builder()
+                    .bucket(bucketName)
+                    .objects(toDelete)
+                    .build());
+
+            for (Result<DeleteError> error : errors) {
+                log.error("Error deleting object in folder {}: {}", prefix, error.get().message());
+            }
+
+            log.info("Folder deleted from MinIO: {}/{}", bucketName, prefix);
+        } catch (Exception e) {
+            log.error("Error deleting folder from MinIO: ", e);
             throw new RuntimeException(e);
         }
     }

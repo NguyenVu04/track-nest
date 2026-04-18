@@ -85,6 +85,40 @@ class MinIOService {
   }
 
   /**
+   * Upload a file scoped to a document.
+   * HTML files → {documentId}/index.html; others → {documentId}/{filename}.
+   */
+  async uploadDocumentFile(
+    documentId: string,
+    file: { uri: string; filename: string; type: string },
+  ): Promise<{ url: string; filename: string }> {
+    const client = await this.getApiClient();
+    const formData = new FormData();
+    formData.append("file", {
+      uri: file.uri,
+      name: file.filename,
+      type: file.type,
+    } as unknown as Blob);
+
+    try {
+      const response = await client.post(`/file/document/${documentId}`, formData);
+      return {
+        url: response.data.publicUrl || response.data.url,
+        filename: response.data.filename || file.filename,
+      };
+    } catch (error) {
+      console.error("Document file upload failed:", error);
+      throw new Error("Failed to upload document file. Please try again.");
+    }
+  }
+
+  /** Delete all files in a document's folder ({documentId}/) */
+  async deleteDocumentFolder(documentId: string): Promise<void> {
+    const client = await this.getApiClient();
+    await client.delete(`/file/document/${documentId}`);
+  }
+
+  /**
    * Delete a file from MinIO
    */
   async deleteFile(filename: string): Promise<void> {

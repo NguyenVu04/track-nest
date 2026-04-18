@@ -5,6 +5,7 @@ import { AppLanguage } from "@/contexts/LanguageContext";
 export * as Card from "./Card";
 export * as CircleMembersModal from "./CircleMembersModal";
 export * as createReport from "./create-report";
+export * as createMissing from "./create-missing";
 export * as CurrentLocationMarker from "./CurrentLocationMarker";
 export * as Fab from "./Fab";
 export * as familyCircleNew from "./family-circle-new";

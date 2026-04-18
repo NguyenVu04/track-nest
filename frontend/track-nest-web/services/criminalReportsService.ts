@@ -528,6 +528,29 @@ export const criminalReportsService = {
     return response.data;
   },
 
+  /**
+   * Upload a file scoped to a document.
+   * HTML files are stored as {documentId}/index.html; others as {documentId}/{originalFilename}.
+   */
+  uploadDocumentFile: async (
+    documentId: string,
+    file: File,
+  ): Promise<FileUploadResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post<FileUploadResponse>(
+      `/file/document/${documentId}`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return response.data;
+  },
+
+  /** Delete all files in a document's folder ({documentId}/) */
+  deleteDocumentFolder: async (documentId: string): Promise<void> => {
+    await api.delete(`/file/document/${documentId}`);
+  },
+
   deleteFile: async (bucket: string, filename: string): Promise<void> => {
     await api.delete(`/file/${bucket}/${filename}`);
   },

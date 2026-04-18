@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.tracknest.criminalreports.configuration.objectstorage.ObjectStorage;
 import project.tracknest.criminalreports.core.datatype.PageResponse;
 import project.tracknest.criminalreports.core.datatype.ReportStatusConstants;
 import project.tracknest.criminalreports.core.entity.CrimeReport;
@@ -34,7 +35,11 @@ class ReportManagerServiceImpl implements ReportManagerService {
     private final GuidelinesDocumentRepository guidelinesDocumentRepository;
     private final ReporterRepository reporterRepository;
     private final MissingPersonReportStatusRepository statusRepository;
-    
+    private final ObjectStorage objectStorage;
+
+    @org.springframework.beans.factory.annotation.Value("${app.minio.buckets.criminal-reports:criminal-reports}")
+    private String bucketName;
+
     private static final String DEFAULT_STATUS = ReportStatusConstants.PENDING;
     
     @Override
@@ -324,14 +329,16 @@ class ReportManagerServiceImpl implements ReportManagerService {
         GuidelinesDocument document = guidelinesDocumentRepository.findByReporterIdAndId(reporterId, documentId)
                 .orElseThrow(() -> new RuntimeException("Guidelines document not found"));
         guidelinesDocumentRepository.delete(document);
+        objectStorage.deleteFolder(bucketName, documentId + "/");
     }
-    
+
     @Override
     @Transactional
     public void deleteGuidelinesDocumentAsAdmin(UUID documentId) {
         GuidelinesDocument document = guidelinesDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Guidelines document not found"));
         guidelinesDocumentRepository.delete(document);
+        objectStorage.deleteFolder(bucketName, documentId + "/");
     }
     
     @Override

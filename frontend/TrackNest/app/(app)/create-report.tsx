@@ -50,8 +50,9 @@ export default function CreateReportScreen() {
         images: [],
       });
       showAlert("Success", "Report submitted successfully", "success", "OK", () => router.back());
-    } catch (err: any) {
-      showAlert("Error", err.message || "Failed to submit report", "error");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to submit report";
+      showAlert("Error", msg, "error");
     } finally {
       setLoading(false);
     }
