@@ -12,6 +12,7 @@ import project.tracknest.criminalreports.configuration.objectstorage.ObjectStora
 import project.tracknest.criminalreports.controller.dto.FileUploadResponse;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.UUID;
 
 @RestController
@@ -156,15 +157,30 @@ public class FileController {
     }
 
     /**
-     * Get file URL for viewing
+     * Proxy a file from MinIO storage — keeps MinIO private.
      * GET /file/{bucket}/{filename}
      */
     @GetMapping("/{bucket}/{filename:.+}")
-    public ResponseEntity<String> getFileUrl(
+    public ResponseEntity<byte[]> serveFile(
             @PathVariable String bucket,
             @PathVariable String filename) {
 
-        String publicFileUrl = publicUrl + "/" + bucket + "/" + filename;
-        return ResponseEntity.ok(publicFileUrl);
+        try (InputStream stream = objectStorage.downloadFile(bucket, filename)) {
+            byte[] bytes = stream.readAllBytes();
+            String contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            String lower = filename.toLowerCase();
+            if (lower.endsWith(".png")) contentType = MediaType.IMAGE_PNG_VALUE;
+            else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) contentType = MediaType.IMAGE_JPEG_VALUE;
+            else if (lower.endsWith(".gif")) contentType = MediaType.IMAGE_GIF_VALUE;
+            else if (lower.endsWith(".webp")) contentType = "image/webp";
+            else if (lower.endsWith(".pdf")) contentType = MediaType.APPLICATION_PDF_VALUE;
+            return ResponseEntity.ok()
+                    .header("Content-Type", contentType)
+                    .header("Cache-Control", "public, max-age=86400")
+                    .body(bytes);
+        } catch (Exception e) {
+            log.error("Failed to serve file {}/{}: {}", bucket, filename, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 }

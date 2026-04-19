@@ -190,7 +190,7 @@ services:
       DB_USERNAME: "tracknestadmin"
       DB_PASSWORD: "tracknestadmin"
       MINIO_ENDPOINT: "http://minio:9000"
-      MINIO_PUBLIC_URL: "http://localhost:9000"
+      MINIO_PUBLIC_URL: "http://localhost:38080/file"
       MINIO_ACCESS_KEY: "minioadmin"
       MINIO_SECRET_KEY: "minioadmin"
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:38080"
