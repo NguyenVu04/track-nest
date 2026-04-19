@@ -2,10 +2,20 @@
 
 import { useState } from "react";
 import { ArrowLeft, Download } from "lucide-react";
+import dynamic from "next/dynamic";
 import type { CrimeReport } from "@/types";
 import { MapView } from "../shared/MapView";
 import { toast } from "sonner";
 import { criminalReportsService } from "@/services/criminalReportsService";
+import { LoadingCard } from "../loading/LoadingCard";
+
+const HeatmapCenterPicker = dynamic(
+  () =>
+    import("../shared/HeatmapCenterPicker").then((mod) => ({
+      default: mod.HeatmapCenterPicker,
+    })),
+  { ssr: false, loading: () => <LoadingCard /> },
+);
 
 interface CrimeHeatmapViewProps {
   onBack: () => void;
@@ -16,17 +26,15 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [heatmapReports, setHeatmapReports] = useState<CrimeReport[]>([]);
 
-  const [latInput, setLatInput] = useState("10.7769");
-  const [lngInput, setLngInput] = useState("106.7009");
+  const [centerPosition, setCenterPosition] = useState<[number, number]>([10.7769, 106.7009]);
   const [radiusInput, setRadiusInput] = useState("5000");
 
   const handleGenerate = async () => {
-    const latitude = parseFloat(latInput);
-    const longitude = parseFloat(lngInput);
+    const [latitude, longitude] = centerPosition;
     const radius = parseFloat(radiusInput);
 
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(radius)) {
-      toast.error("Please enter valid latitude, longitude, and radius values.");
+    if (!Number.isFinite(radius) || radius <= 0) {
+      toast.error("Please enter a valid radius value.");
       return;
     }
 
@@ -89,7 +97,7 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
           heatmapReports.reduce((sum, r) => sum + r.latitude, 0) / heatmapReports.length,
           heatmapReports.reduce((sum, r) => sum + r.longitude, 0) / heatmapReports.length,
         ]
-      : [parseFloat(latInput) || 10.7769, parseFloat(lngInput) || 106.7009];
+      : centerPosition;
 
   const handleDownload = () => {
     if (!hasGenerated) return;
@@ -136,57 +144,51 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
 
       {/* Filters and Generate */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-gray-700 mb-2">Latitude</label>
-            <input
-              type="number"
-              step="any"
-              value={latInput}
-              onChange={(e) => setLatInput(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder="e.g. 10.7769"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-2">Longitude</label>
-            <input
-              type="number"
-              step="any"
-              value={lngInput}
-              onChange={(e) => setLngInput(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder="e.g. 106.7009"
-            />
-          </div>
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-2">
+            Center Location
+            <span className="ml-2 text-sm font-normal text-gray-400">
+              (click on the map to select)
+            </span>
+          </label>
+          <HeatmapCenterPicker
+            position={centerPosition}
+            radius={parseFloat(radiusInput) || 0}
+            onPositionChange={setCenterPosition}
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-gray-700 mb-2">Radius (meters)</label>
             <input
               type="number"
               step="any"
+              min="1"
               value={radiusInput}
               onChange={(e) => setRadiusInput(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               placeholder="e.g. 5000"
             />
           </div>
-        </div>
-        <div className="flex flex-col md:flex-row md:items-center gap-4 mt-4">
-          <button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
-          >
-            {isGenerating ? "Generating..." : "Generate Heatmap"}
-          </button>
-          <button
-            onClick={handleDownload}
-            disabled={!hasGenerated}
-            className="flex items-center gap-2 px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-60"
-          >
-            <Download className="w-4 h-4" />
-            Download Report
-          </button>
+          <div className="flex flex-col justify-end gap-2">
+            <div className="flex gap-2">
+              <button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
+              >
+                {isGenerating ? "Generating..." : "Generate Heatmap"}
+              </button>
+              <button
+                onClick={handleDownload}
+                disabled={!hasGenerated}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-60"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
