@@ -59,7 +59,7 @@ export function CrimeReportForm({
     },
   );
 
-  const [uploadedPhotoUrls, setUploadedPhotoUrls] = useState<string[]>([]);
+  const [uploadedPhotoUrls, setUploadedPhotoUrls] = useState<string[]>(report?.photos ?? []);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const [showReview, setShowReview] = useState(false);
@@ -100,16 +100,10 @@ export function CrimeReportForm({
     setUploadedPhotoUrls((prev) => prev.filter((u) => u !== url));
   };
 
-  const buildContentWithPhotos = (): string => {
-    const base = formData.content || "";
-    if (uploadedPhotoUrls.length === 0) return base;
-    return `${base}\n\n📸 Images:\n${uploadedPhotoUrls.join("\n")}`;
-  };
-
   const buildReport = (): CrimeReport => ({
     id: report?.id || Date.now().toString(),
     title: formData.title!,
-    content: buildContentWithPhotos(),
+    content: formData.content!,
     severity: formData.severity!,
     date: formData.date!,
     longitude: formData.longitude!,
@@ -117,6 +111,7 @@ export function CrimeReportForm({
     numberOfVictims: formData.numberOfVictims!,
     numberOfOffenders: formData.numberOfOffenders!,
     arrested: formData.arrested!,
+    photos: uploadedPhotoUrls,
     createdAt: formData.createdAt!,
     updatedAt: formData.updatedAt!,
     reporterId: formData.reporterId!,

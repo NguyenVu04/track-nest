@@ -9,6 +9,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useState } from "react";
+import Image from "next/image";
 import type { CrimeReport } from "@/types";
 import { MapView } from "../shared/MapView";
 import { ConfirmModal } from "../shared/ConfirmModal";
@@ -147,6 +148,19 @@ export function CrimeReportDetail({
                 <p className="text-gray-600 text-sm">{t("detailOffenders")}: {report.numberOfOffenders}</p>
                 <p className="text-gray-600 text-sm">{t("detailArrested")}: {report.arrested ? tCommon("yes") : tCommon("no")}</p>
               </div>
+
+              {report.photos && report.photos.length > 0 && (
+                <div className="pt-4 border-t border-gray-200">
+                  <p className="text-gray-700 mb-3">{t("formPhotos")}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {report.photos.map((url) => (
+                      <div key={url} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200">
+                        <Image src={url} alt="Crime scene photo" fill className="object-cover" unoptimized />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

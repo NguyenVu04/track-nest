@@ -101,6 +101,7 @@ export interface CreateCrimeReportRequest {
   numberOfVictims: number;
   numberOfOffenders: number;
   arrested: boolean;
+  photos?: string[];
 }
 
 export interface UpdateCrimeReportRequest {
@@ -113,6 +114,7 @@ export interface UpdateCrimeReportRequest {
   numberOfVictims?: number;
   numberOfOffenders?: number;
   arrested?: boolean;
+  photos?: string[];
 }
 
 export interface CrimeReportResponse {
@@ -126,6 +128,7 @@ export interface CrimeReportResponse {
   numberOfVictims: number;
   numberOfOffenders: number;
   arrested: boolean;
+  photos?: string[];
   createdAt: string;
   updatedAt: string;
   reporterId: string;
