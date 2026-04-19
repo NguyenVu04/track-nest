@@ -1928,8 +1928,8 @@
     "providerId" : "google",
     "enabled" : true,
     "config" : {
-      "clientSecret" : "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",
-      "clientId" : "1077799122397-2014se83dn8c1n3lvgq3rcelkj1ddrb8.apps.googleusercontent.com"
+      "clientSecret" : "",
+      "clientId" : ""
     },
     "types" : [ ]
   } ],

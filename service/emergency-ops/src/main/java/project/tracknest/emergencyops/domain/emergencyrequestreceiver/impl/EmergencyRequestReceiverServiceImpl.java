@@ -34,8 +34,10 @@ import java.util.UUID;
 @Slf4j
 class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverService, EmergencyRequestReceiverSubscriber {
     private static final String TRACKING_NOTIFICATION_MESSAGE_TYPE = "EMERGENCY_REQUEST_ASSIGNED";
-    private static final String TRACKING_NOTIFICATION_TITLE = "New Emergency Request Assigned";
-    private static final String TRACKING_NOTIFICATION_CONTENT_TEMPLATE = "An emergency request for family member %s has been assigned to emergency service %s.";
+    private static final String TRACKING_NOTIFICATION_TITLE = "Emergency Assistance Dispatched";
+    private static final String TRACKING_NOTIFICATION_CONTENT_TEMPLATE = """
+            Emergency assistance for %s has been assigned to %s.
+            """;
 
     @Value("${app.stomp.queue.emergency-request}")
     private String emergencyRequestQueue;

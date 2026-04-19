@@ -127,3 +127,12 @@ app:
       updateGrpcSessions:
         cron: "0 */3 * * * ?"
         description: "Update gRPC sessions"
+      cellVisitMaintenance:
+        cron: "0 0 0 * * ?"
+        description: "Prune stale cell visits, promote mature cells, recalculate bucket totals"
+      anomalyRunCleanup:
+        cron: "0 0 0 * * ?"
+        description: "Delete resolved anomaly runs older than the retention window"
+      locationCleanup:
+        cron: "0 0 0 * * ?"
+        description: "Delete location rows older than the retention window"

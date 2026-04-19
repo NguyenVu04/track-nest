@@ -9,14 +9,16 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.datatype.TrackingNotificationMessage;
 import project.tracknest.usertracking.core.entity.AnomalyRun;
 import project.tracknest.usertracking.core.entity.CellVisit;
 import project.tracknest.usertracking.core.entity.LocationBucket;
 import project.tracknest.usertracking.domain.anomalydetector.service.AnomalyDetectorHandler;
 
-import java.time.*;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,12 +27,15 @@ import java.util.UUID;
 @Slf4j
 class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
     private static final int H3_RESOLUTION = 8;
+    private static final int H3_RING_SIZE = 1;
     private static final int MIN_TOTAL_NUM_VISITS = 20;
     private static final long MIN_ANOMALY_INTERVAL_SECONDS = 3600;
     private static final String ANOMALY_NOTIFICATION_TYPE = "ANOMALY_DETECTED";
-    private static final String ANOMALY_NOTIFICATION_TITLE = "Anomaly Detected";
-    private static final String ANOMALY_NOTIFICATION_BODY_TEMPLATE =
-            "Anomaly detected for user %s at timestamp %s. Location: (lat=%.6f, lon=%.6f)";
+    private static final String ANOMALY_NOTIFICATION_TITLE = "Unusual movement detected";
+    private static final String ANOMALY_NOTIFICATION_BODY_TEMPLATE = """
+            %s is showing movement that differs from their usual pattern.
+            This may be normal, but you may want to check in.
+            """;
 
     @Value("${app.kafka.topics[2]}")
     private String anomalyNotificationTopic;
@@ -45,49 +50,53 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
     @Async
     @Transactional
     @Override
-    public void detectAnomaly(LocationMessage message) {
-        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        UUID userId = message.userId();
-
+    public void detectAnomaly(
+            UUID userId,
+            String username,
+            double latitudeDeg,
+            double longitudeDeg,
+            OffsetDateTime timestamp
+    ) {
         Optional<AnomalyRun> openRun = anomalyRunRepository
                 .findFirstByUserIdAndResolvedFalseOrderByLastSeenAtDesc(userId);
-        LocationBucket bucket = getOrCreateBucket(userId, message.timestampMs());
+        LocationBucket bucket = getOrCreateBucket(userId, timestamp);
 
         if (bucket.getTotalNumVisits() < MIN_TOTAL_NUM_VISITS) {
             log.info(
                     "Skipping anomaly detection for user {} at timestamp {} due to insufficient data (totalNumVisits={})",
-                    userId, message.timestampMs(), bucket.getTotalNumVisits()
+                    userId, timestamp, bucket.getTotalNumVisits()
             );
-            openRun.ifPresent(run -> markResolved(run, now));
+            openRun.ifPresent(run -> markResolved(run, timestamp));
             return;
         }
 
-        String cellId = h3Core.latLngToCellAddress(
-                message.latitudeDeg(), message.longitudeDeg(), H3_RESOLUTION
+        String cellId = h3Core.latLngToCellAddress(latitudeDeg, longitudeDeg, H3_RESOLUTION);
+        List<String> ringCellIds = h3Core.gridDisk(cellId, H3_RING_SIZE);
+        Optional<CellVisit> matureVisit = findMatureVisitInRingOrRegisterCandidate(
+                userId, bucket.getId(), cellId, ringCellIds
         );
-        Optional<CellVisit> matureVisit = findMatureVisitOrRegisterCandidate(userId, bucket.getId(), cellId);
 
         if (matureVisit.isPresent()) {
             log.info(
-                    "No anomaly detected for user {} at timestamp {} (cellId={})",
-                    userId, message.timestampMs(), matureVisit.get().getCellId()
+                    "No anomaly detected for user {} at timestamp {} (matureCellId={})",
+                    userId, timestamp, matureVisit.get().getCellId()
             );
-            openRun.ifPresent(run -> markResolved(run, now));
+            openRun.ifPresent(run -> markResolved(run, timestamp));
             return;
         }
 
-        if (openRun.isPresent() && shouldSuppress(openRun.get(), now, message)) {
+        if (openRun.isPresent() && shouldSuppress(openRun.get(), timestamp, userId, timestamp)) {
             return;
         }
 
-        raiseAnomaly(message, now);
+        raiseAnomaly(userId, username, timestamp);
     }
 
-    private boolean shouldSuppress(AnomalyRun run, OffsetDateTime now, LocationMessage message) {
+    private boolean shouldSuppress(AnomalyRun run, OffsetDateTime now, UUID userId, OffsetDateTime timestamp) {
         if (!run.isResolved()) {
             log.info(
                     "Skipping anomaly detection for user {} at timestamp {} due to unresolved anomaly run (lastSeenAt={})",
-                    message.userId(), message.timestampMs(), run.getLastSeenAt()
+                    userId, timestamp, run.getLastSeenAt()
             );
             return true;
         }
@@ -96,7 +105,7 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
         if (secondsSinceLastSeen < MIN_ANOMALY_INTERVAL_SECONDS) {
             log.info(
                     "Skipping anomaly detection for user {} at timestamp {} due to recent anomaly run (lastSeenAt={})",
-                    message.userId(), message.timestampMs(), run.getLastSeenAt()
+                    userId, timestamp, run.getLastSeenAt()
             );
             return true;
         }
@@ -109,9 +118,9 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
         anomalyRunRepository.save(run);
     }
 
-    private void raiseAnomaly(LocationMessage message, OffsetDateTime now) {
+    private void raiseAnomaly(UUID userId, String username, OffsetDateTime now) {
         AnomalyRun newRun = AnomalyRun.builder()
-                .userId(message.userId())
+                .userId(userId)
                 .resolved(false)
                 .startedAt(now)
                 .lastSeenAt(now)
@@ -119,27 +128,18 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
         anomalyRunRepository.save(newRun);
 
         TrackingNotificationMessage notification = new TrackingNotificationMessage(
-                message.userId(), //TODO: add meaningful information
-                String.format(
-                        ANOMALY_NOTIFICATION_BODY_TEMPLATE,
-                        message.userId(),
-                        message.timestampMs(),
-                        message.latitudeDeg(),
-                        message.longitudeDeg()
-                ),
+                userId,
+                String.format(ANOMALY_NOTIFICATION_BODY_TEMPLATE, username),
                 ANOMALY_NOTIFICATION_TITLE,
                 ANOMALY_NOTIFICATION_TYPE
         );
         kafkaTemplate.send(anomalyNotificationTopic, notification);
     }
 
-    private LocationBucket getOrCreateBucket(UUID userId, long timestampMs) {
-        LocalDateTime dt = LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(timestampMs),
-                ZoneOffset.UTC
-        );
-        short dayOfWeek = (short) dt.getDayOfWeek().getValue();
-        short hourOfDay = (short) dt.getHour();
+    private LocationBucket getOrCreateBucket(UUID userId, OffsetDateTime timestamp) {
+        OffsetDateTime utc = timestamp.withOffsetSameInstant(ZoneOffset.UTC);
+        short dayOfWeek = (short) utc.getDayOfWeek().getValue();
+        short hourOfDay = (short) utc.getHour();
 
         return bucketRepository
                 .findByUserIdAndDayOfWeekAndHourOfDay(userId, dayOfWeek, hourOfDay)
@@ -156,9 +156,11 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
                 });
     }
 
-    private Optional<CellVisit> findMatureVisitOrRegisterCandidate(UUID userId, UUID bucketId, String cellId) {
+    private Optional<CellVisit> findMatureVisitInRingOrRegisterCandidate(
+            UUID userId, UUID bucketId, String cellId, List<String> ringCellIds
+    ) {
         Optional<CellVisit> matureVisit = visitRepository
-                .findByUserIdAndCellIdAndBucketIdAndIsMature(userId, cellId, bucketId);
+                .findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(userId, bucketId, ringCellIds);
 
         if (matureVisit.isEmpty()) {
             visitRepository.save(

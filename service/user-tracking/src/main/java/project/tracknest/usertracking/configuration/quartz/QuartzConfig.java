@@ -5,7 +5,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import project.tracknest.usertracking.domain.anomalydetector.impl.AnomalyRunCleanupJob;
+import project.tracknest.usertracking.domain.anomalydetector.impl.CellVisitMaintenanceJob;
 import project.tracknest.usertracking.domain.tracker.locationcommand.impl.DisconnectInactiveUsersJob;
+import project.tracknest.usertracking.domain.tracker.locationcommand.impl.LocationCleanupJob;
 import project.tracknest.usertracking.domain.tracker.locationquery.impl.UpdateGrpcSessionsJob;
 
 @Configuration
@@ -82,6 +85,78 @@ public class QuartzConfig {
         return buildCronTrigger(
                 jobDetail,
                 "updateGrpcSessionsTrigger",
+                config.getCron()
+        );
+    }
+
+    @Bean
+    public JobDetail cellVisitMaintenanceJobDetail() {
+        var config = props.getJobs().get("cellVisitMaintenance");
+
+        return buildJobDetail(
+                CellVisitMaintenanceJob.class,
+                "cellVisitMaintenanceJob",
+                config.getDescription()
+        );
+    }
+
+    @Bean
+    public Trigger cellVisitMaintenanceTrigger(
+            @Qualifier("cellVisitMaintenanceJobDetail") JobDetail jobDetail
+    ) {
+        var config = props.getJobs().get("cellVisitMaintenance");
+
+        return buildCronTrigger(
+                jobDetail,
+                "cellVisitMaintenanceTrigger",
+                config.getCron()
+        );
+    }
+
+    @Bean
+    public JobDetail anomalyRunCleanupJobDetail() {
+        var config = props.getJobs().get("anomalyRunCleanup");
+
+        return buildJobDetail(
+                AnomalyRunCleanupJob.class,
+                "anomalyRunCleanupJob",
+                config.getDescription()
+        );
+    }
+
+    @Bean
+    public Trigger anomalyRunCleanupTrigger(
+            @Qualifier("anomalyRunCleanupJobDetail") JobDetail jobDetail
+    ) {
+        var config = props.getJobs().get("anomalyRunCleanup");
+
+        return buildCronTrigger(
+                jobDetail,
+                "anomalyRunCleanupTrigger",
+                config.getCron()
+        );
+    }
+
+    @Bean
+    public JobDetail locationCleanupJobDetail() {
+        var config = props.getJobs().get("locationCleanup");
+
+        return buildJobDetail(
+                LocationCleanupJob.class,
+                "locationCleanupJob",
+                config.getDescription()
+        );
+    }
+
+    @Bean
+    public Trigger locationCleanupTrigger(
+            @Qualifier("locationCleanupJobDetail") JobDetail jobDetail
+    ) {
+        var config = props.getJobs().get("locationCleanup");
+
+        return buildCronTrigger(
+                jobDetail,
+                "locationCleanupTrigger",
                 config.getCron()
         );
     }

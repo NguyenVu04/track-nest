@@ -115,12 +115,6 @@ ALTER TABLE cell_visit
 ALTER TABLE cell_visit
     ADD FOREIGN KEY (bucket_id) REFERENCES location_bucket (id) ON DELETE CASCADE;
 
-ALTER TABLE cell_candidate
-    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
-
-ALTER TABLE cell_candidate
-    ADD FOREIGN KEY (bucket_id) REFERENCES location_bucket (id) ON DELETE CASCADE;
-
 ALTER TABLE anomaly_run
     ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
 
@@ -147,15 +141,6 @@ ALTER TABLE tracking_notification_alerts_user
 
 ALTER TABLE tracking_notification_alerts_user
     ADD FOREIGN KEY (notification_id) REFERENCES tracking_notification (id) ON DELETE CASCADE;
-
-ALTER TABLE location SET (
-    timescaledb.compress = true,
-    timescaledb.compress_segmentby = 'user_id',
-    timescaledb.compress_orderby = '"timestamp" DESC');
-
-SELECT add_compression_policy('location', INTERVAL '7 days');
-
-SELECT add_retention_policy('location', INTERVAL '28 days');
 
 CREATE INDEX idx_location_user_time_desc ON location (user_id, "timestamp" DESC);
 

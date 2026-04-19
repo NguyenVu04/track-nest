@@ -73,7 +73,13 @@ class LocationCommandServiceImpl implements LocationCommandService {
                     .build();
 
             messageProducer.produce(message);
-            anomalyDetectorHandler.detectAnomaly(message);
+            anomalyDetectorHandler.detectAnomaly(
+                    userId,
+                    user.getUsername(),
+                    userLocation.getLatitudeDeg(),
+                    userLocation.getLongitudeDeg(),
+                    timestamp
+            );
 
             log.info("Received request to update location command");
         }

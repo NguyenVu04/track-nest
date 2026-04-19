@@ -1,7 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
-CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 CREATE TABLE reporter (
     id UUID PRIMARY KEY
@@ -103,9 +102,3 @@ ALTER TABLE guidelines_document
     ADD FOREIGN KEY (reporter_id) REFERENCES reporter(id);
 
 CREATE INDEX idx_crime_report_geom_spgist ON crime_report USING SPGIST (geom);
-
-SELECT cron.schedule(
-    'cleanup-outdated-chat-sessions',
-    '0 0 * * *',
-    $$DELETE FROM chat_session WHERE started_at < NOW() - INTERVAL '1 day'$$
-);
