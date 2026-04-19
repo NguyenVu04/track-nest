@@ -33,6 +33,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/actuator/**")
                         .permitAll()
+                        .requestMatchers("/chatbot/**")
+                        .hasRole("USER")
                         .anyRequest()
                         .denyAll()
                 )

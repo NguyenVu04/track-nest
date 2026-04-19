@@ -157,7 +157,6 @@ services:
       - emergency_ops
       - user_tracking
       - criminal_reports
-      - intel_core
       - keycloak
 
   nginx:
@@ -191,6 +190,8 @@ services:
       MINIO_ENDPOINT: "http://minio:9000"
       MINIO_ACCESS_KEY: "minioadmin"
       MINIO_SECRET_KEY: "minioadmin"
+      GOOGLE_API_KEY: ""
+      GOOGLE_GEMINI_CHAT_MODEL: "gemini-3-flash-preview"
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:38080"
     networks:
       - track_nest
@@ -245,21 +246,6 @@ services:
     depends_on:
       - user_tracking_postgres
 
-  intel_core:
-    build:
-      context: ../service/intel-core
-      dockerfile: Dockerfile
-    container_name: intel_core
-    ports:
-      - "48000:48000"
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: "broker-1:19092,broker-2:19092,broker-3:19092"
-      REDIS_URL: "redis://redis:6379"
-      DATABASE_URL: "postgresql://tracknestadmin:tracknestadmin@intel_core_postgres:5432/tracknest"
-      S3_ENDPOINT: "http://minio:9000"
-    networks:
-      - track_nest
-
   user_tracking_postgres:
     image: timescale/timescaledb-ha:pg17
     container_name: user_tracking_postgres
@@ -267,6 +253,12 @@ services:
       POSTGRES_USER: tracknestadmin
       POSTGRES_PASSWORD: tracknestadmin
       POSTGRES_DB: tracknest
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=timescaledb,pg_cron"
+      - "-c"
+      - "cron.database_name=tracknest"
     ports:
       - "15432:5432"
     volumes:
@@ -404,7 +396,6 @@ volumes:
   emergency_ops_postgres_data:
   criminal_reports_postgres_data:
   emergency_detection_postgres_data:
-  intel_core_postgres_data:
   keycloak_postgres_data:
   redis-data:
   minio-1:

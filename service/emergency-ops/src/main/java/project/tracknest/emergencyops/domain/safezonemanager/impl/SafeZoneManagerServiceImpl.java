@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
 import project.tracknest.emergencyops.core.entity.EmergencyService;
 import project.tracknest.emergencyops.core.entity.SafeZone;
@@ -30,7 +32,10 @@ class SafeZoneManagerServiceImpl implements SafeZoneManagerService {
         Optional<EmergencyService> serviceOpt = emergencyServiceRepository.findById(serviceId);
         if (serviceOpt.isEmpty()) {
             log.error("Emergency service with id {} not found when creating safe zone", serviceId);
-            throw new IllegalArgumentException("Emergency service not found");
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Emergency service not found"
+            );
         }
 
         EmergencyService service = serviceOpt.get();
@@ -93,7 +98,10 @@ class SafeZoneManagerServiceImpl implements SafeZoneManagerService {
 
         if (safeZoneOpt.isEmpty()) {
             log.warn("Safe zone with id {} not found for service id {} when updating", safeZoneId, serviceId);
-            throw new IllegalArgumentException("Safe zone not found");
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Safe zone not found"
+            );
         }
 
         SafeZone safeZone = safeZoneOpt.get();
@@ -122,7 +130,10 @@ class SafeZoneManagerServiceImpl implements SafeZoneManagerService {
 
         if (safeZoneOpt.isEmpty()) {
             log.warn("Safe zone with id {} not found for service id {} when deleting", safeZoneId, serviceId);
-            throw new IllegalArgumentException("Safe zone not found");
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Safe zone not found"
+            );
         }
 
         safeZoneRepository.delete(safeZoneOpt.get());

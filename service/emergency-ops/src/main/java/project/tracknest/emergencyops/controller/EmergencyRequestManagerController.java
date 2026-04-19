@@ -1,5 +1,6 @@
 package project.tracknest.emergencyops.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class EmergencyRequestManagerController {
 
     @PatchMapping("/emergency-service/location")
     public ResponseEntity<PatchEmergencyServiceLocationResponse> updateEmergencyServiceLocation(
-            @RequestBody PatchEmergencyServiceLocationRequest request
+            @Valid @RequestBody PatchEmergencyServiceLocationRequest request
     ) {
         UUID serviceId = getCurrentUserId();
 

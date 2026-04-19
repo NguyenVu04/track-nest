@@ -30,10 +30,6 @@ static_resources:
                 max_age: "3600"
                 allow_credentials: true
               routes:
-              - match: { prefix: "/intel-core/" }
-                route:
-                  cluster: intel_core_rest
-                  timeout: 0s
               - match: { prefix: "/emergency-ops/" }
                 route:
                   cluster: emergency_ops_rest
@@ -79,14 +75,6 @@ static_resources:
                   forward: true
                   payload_in_metadata: jwt_payload
               rules:
-              - match:
-                  prefix: "/intel-core/swagger-ui"
-              - match:
-                  prefix: "/intel-core/api-docs"
-              - match:
-                  prefix: "/intel-core/"
-                requires:
-                  provider_name: keycloak_public
               - match:
                   prefix: "/emergency-ops/swagger-ui"
               - match:
@@ -145,18 +133,6 @@ static_resources:
               socket_address:
                 address: criminal_reports
                 port_value: 38080
-  - name: intel_core_rest
-    connect_timeout: 5s
-    type: logical_dns
-    load_assignment:
-      cluster_name: intel_core_rest
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address:
-                address: intel_core
-                port_value: 48000
   - name: user_tracking_grpc
     connect_timeout: 5s
     type: logical_dns
