@@ -309,40 +309,6 @@ export function CrimeReportForm({
           </div>
 
           <div>
-            <label htmlFor="latitude" className="block text-gray-700 mb-2">
-              {tCommon("latitude")}{tCommon("requiredSuffix")}
-            </label>
-            <input
-              id="latitude"
-              type="number"
-              step="any"
-              value={formData.latitude ?? 40.7829}
-              onChange={(e) =>
-                setFormData({ ...formData, latitude: parseFloat(e.target.value) })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="longitude" className="block text-gray-700 mb-2">
-              {tCommon("longitude")}{tCommon("requiredSuffix")}
-            </label>
-            <input
-              id="longitude"
-              type="number"
-              step="any"
-              value={formData.longitude ?? -73.9654}
-              onChange={(e) =>
-                setFormData({ ...formData, longitude: parseFloat(e.target.value) })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
             <label htmlFor="numberOfVictims" className="block text-gray-700 mb-2">
               {t("formVictims")}
             </label>
@@ -414,7 +380,7 @@ export function CrimeReportForm({
       </form>
 
       {showReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-gray-900">{t("reviewTitle")}</h3>

@@ -59,7 +59,7 @@ export function LocationPicker({
 }: LocationPickerProps) {
   return (
     <div className="space-y-2">
-      <div className="h-64 rounded-lg overflow-hidden border border-gray-300">
+      <div className="h-[480px] rounded-lg overflow-hidden border border-gray-300">
         <MapContainer
           center={position}
           zoom={13}
@@ -74,10 +74,12 @@ export function LocationPicker({
           <MapCenterHandler position={position} />
         </MapContainer>
       </div>
-      <p className="text-sm text-gray-500">
-        Click on the map to select a location, or enter coordinates manually
-        below.
-      </p>
+      <div className="flex items-center justify-between text-sm text-gray-500 px-1">
+        <span>Click on the map to select a location</span>
+        <span className="font-mono text-gray-700">
+          {position[0].toFixed(5)}, {position[1].toFixed(5)}
+        </span>
+      </div>
     </div>
   );
 }

@@ -323,40 +323,6 @@ export function MissingPersonForm({
             />
           </div>
 
-          <div>
-            <label htmlFor="latitude" className="block text-gray-700 mb-2">
-              {tCommon("latitude")}{tCommon("requiredSuffix")}
-            </label>
-            <input
-              id="latitude"
-              type="number"
-              step="any"
-              value={coordinates[0]}
-              onChange={(e) =>
-                setCoordinates([parseFloat(e.target.value), coordinates[1]])
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="longitude" className="block text-gray-700 mb-2">
-              {tCommon("longitude")}{tCommon("requiredSuffix")}
-            </label>
-            <input
-              id="longitude"
-              type="number"
-              step="any"
-              value={coordinates[1]}
-              onChange={(e) =>
-                setCoordinates([coordinates[0], parseFloat(e.target.value)])
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            />
-          </div>
-
           <div className="md:col-span-2">
             <label htmlFor="content" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
