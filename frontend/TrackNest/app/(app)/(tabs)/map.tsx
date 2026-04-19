@@ -44,7 +44,6 @@ import useDeviceLocation from "@/hooks/useDeviceLocation";
 import { useFamilyCircle } from "@/hooks/useFamilyCircle";
 import { useFollowers } from "@/hooks/useFollowers";
 import { useMapController } from "@/hooks/useMapController";
-import { useMockFollowers } from "@/hooks/useMockFollowers";
 import { useStreamedFollowers } from "@/hooks/useStreamedFollowers";
 import { useTranslation } from "@/hooks/useTranslation";
 import { emergencyService } from "@/services/emergency";
@@ -107,10 +106,6 @@ export default function MapScreen() {
   );
 
   // ── Fallback: mock followers (used when stream has no data yet) ──
-  const mockFollowers = useMockFollowers(
-    location?.latitude,
-    location?.longitude,
-  );
   const circleFollowers: Follower[] = useMemo(() => {
     if (!selectedCircle || !location) return [];
     return getMockFollowersForCircle(
@@ -126,7 +121,7 @@ export default function MapScreen() {
         ? streamedFollowers
         : circleFollowers.length > 0
           ? circleFollowers
-          : mockFollowers;
+          : [];
     return [...baseFollowers].sort((a, b) => {
       // First, sort by active status (active first)
       if (a.sharingActive !== b.sharingActive) {
@@ -137,7 +132,7 @@ export default function MapScreen() {
       const timeB = b.lastActive ? new Date(b.lastActive).getTime() : 0;
       return timeB - timeA;
     });
-  }, [streamedFollowers, circleFollowers, mockFollowers]);
+  }, [streamedFollowers, circleFollowers]);
 
   // ── Upload user location to server when it changes ──
   const hasAnimatedInitialRef = useRef(false);
