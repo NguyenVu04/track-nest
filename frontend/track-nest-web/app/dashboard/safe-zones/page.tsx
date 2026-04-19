@@ -8,9 +8,17 @@ import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { MapView } from "@/components/shared/MapView";
 import { toast } from "sonner";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { emergencyOpsService, SafeZoneResponse, PageResponse, CreateSafeZoneRequest } from "@/services/emergencyOpsService";
+import {
+  emergencyOpsService,
+  CreateSafeZoneRequest,
+  CreateSafeZoneResponse,
+  PageResponse,
+  SafeZoneResponse,
+} from "@/services/emergencyOpsService";
 import { Loading } from "@/components/loading/Loading";
 import { useTranslations } from "next-intl";
+
+const DEFAULT_CENTER: [number, number] = [10.8231, 106.6297];
 
 export default function SafeZonesPage() {
   const { user } = useAuth();
@@ -23,12 +31,13 @@ export default function SafeZonesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<SafeZone | null>(null);
   const [selectedZone, setSelectedZone] = useState<SafeZone | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<
+    [number, number] | null
+  >(null);
   const [formData, setFormData] = useState({
     name: "",
     type: "Police Station",
     address: "",
-    latitude: "",
-    longitude: "",
     radius: "500",
   });
 
@@ -40,15 +49,10 @@ export default function SafeZonesPage() {
       // }
 
       try {
-        const response: PageResponse<SafeZoneResponse> = await emergencyOpsService.getSafeZones(
-          undefined,
-          0,
-          50
-        );
+        const response: PageResponse<SafeZoneResponse> =
+          await emergencyOpsService.getSafeZones(undefined, 0, 50);
 
-        console.log('response', response)
-
-        const mappedZones: SafeZone[] = response.content.map((item) => ({
+        const mappedZones: SafeZone[] = response.items.map((item) => ({
           id: item.id,
           name: item.name,
           type: "Other",
@@ -57,7 +61,6 @@ export default function SafeZonesPage() {
           latitude: item.latitude,
           radius: item.radius,
           createdAt: item.createdAt,
-          emergencyServiceId: item.emergencyServiceId,
         }));
 
         setZones(mappedZones);
@@ -93,37 +96,57 @@ export default function SafeZonesPage() {
     z.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  const openCreateModal = () => {
+    setSelectedLocation(DEFAULT_CENTER);
+    setFormData({
+      name: "",
+      type: "Police Station",
+      address: "",
+      radius: "500",
+    });
+    setIsCreating(true);
+  };
+
+  const closeCreateModal = () => {
+    setIsCreating(false);
+    setSelectedLocation(null);
+  };
+
   const handleCreate = async () => {
     try {
+      if (!selectedLocation) {
+        toast.error("Please choose a location on the map");
+        return;
+      }
+
+      const [latitude, longitude] = selectedLocation;
       const request: CreateSafeZoneRequest = {
         name: formData.name,
-        longitudeDegrees: parseFloat(formData.longitude),
-        latitudeDegrees: parseFloat(formData.latitude),
+        longitudeDegrees: longitude,
+        latitudeDegrees: latitude,
         radiusMeters: parseFloat(formData.radius),
       };
 
-      const response = await emergencyOpsService.createSafeZone(request);
+      const response: CreateSafeZoneResponse =
+        await emergencyOpsService.createSafeZone(request);
 
       const newZone: SafeZone = {
         id: response.id,
-        name: response.name,
+        name: formData.name,
         type: formData.type as SafeZone["type"],
         address: formData.address,
-        longitude: response.longitude,
-        latitude: response.latitude,
-        radius: response.radius,
-        createdAt: response.createdAt,
-        emergencyServiceId: response.emergencyServiceId,
+        longitude,
+        latitude,
+        radius: parseFloat(formData.radius),
+        createdAt: new Date(response.createdAtMs).toISOString(),
       };
 
-      setZones([newZone, ...zones]);
-      setIsCreating(false);
+      setZones((prev) => [newZone, ...prev]);
+      closeCreateModal();
       setFormData({
         name: "",
         type: "Police Station",
         address: "",
-        latitude: "",
-        longitude: "",
         radius: "500",
       });
       toast.success(t("toastCreated"));
@@ -137,7 +160,7 @@ export default function SafeZonesPage() {
     if (!confirmDelete) return;
     try {
       await emergencyOpsService.deleteSafeZone(confirmDelete.id);
-      setZones(zones.filter((z) => z.id !== confirmDelete.id));
+      setZones((prev) => prev.filter((z) => z.id !== confirmDelete.id));
       setConfirmDelete(null);
       toast.success(t("toastDeleted"));
     } catch (error) {
@@ -150,9 +173,11 @@ export default function SafeZonesPage() {
     <div>
       <Breadcrumbs items={[{ label: t("pageTitle") }]} />
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-gray-900 text-xl font-semibold">{t("pageTitle")}</h2>
+        <h2 className="text-gray-900 text-xl font-semibold">
+          {t("pageTitle")}
+        </h2>
         <button
-          onClick={() => setIsCreating(true)}
+          onClick={openCreateModal}
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -178,11 +203,21 @@ export default function SafeZonesPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-gray-700">{t("tableName")}</th>
-                <th className="px-6 py-3 text-left text-gray-700">{t("tableCoordinates")}</th>
-                <th className="px-6 py-3 text-left text-gray-700">{t("tableRadius")}</th>
-                <th className="px-6 py-3 text-left text-gray-700">{t("tableCreated")}</th>
-                <th className="px-6 py-3 text-left text-gray-700">{tCommon("actions")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">
+                  {t("tableName")}
+                </th>
+                <th className="px-6 py-3 text-left text-gray-700">
+                  {t("tableCoordinates")}
+                </th>
+                <th className="px-6 py-3 text-left text-gray-700">
+                  {t("tableRadius")}
+                </th>
+                <th className="px-6 py-3 text-left text-gray-700">
+                  {t("tableCreated")}
+                </th>
+                <th className="px-6 py-3 text-left text-gray-700">
+                  {tCommon("actions")}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -269,94 +304,105 @@ export default function SafeZonesPage() {
       </div>
 
       {isCreating && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full overflow-hidden">
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-gray-900">{t("modalTitle")}</h3>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-gray-700 mb-2">{t("formName")}{tCommon("requiredSuffix")}</label>
-                <input
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
+            <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="h-90 lg:h-full min-h-90 border-b lg:border-b-0 lg:border-r border-gray-200 bg-gray-50">
+                <MapView
+                  center={selectedLocation ?? DEFAULT_CENTER}
+                  markers={
+                    selectedLocation
+                      ? [
+                          {
+                            position: selectedLocation,
+                            label: t("pageTitle"),
+                          },
+                        ]
+                      : []
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-                  required
+                  onMapClick={(position) => setSelectedLocation(position)}
                 />
               </div>
-              <div>
-                <label className="block text-gray-700 mb-2">{t("formType")}{tCommon("requiredSuffix")}</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) =>
-                    setFormData({ ...formData, type: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-                  required
-                >
-                  <option value="Police Station">{t("typePolice")}</option>
-                  <option value="Hospital">{t("typeHospital")}</option>
-                  <option value="Shelter">{t("typeShelter")}</option>
-                  <option value="Other">{t("typeOther")}</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-gray-700 mb-2">{t("formAddress")}</label>
-                <input
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="p-6 space-y-4">
                 <div>
-                  <label className="block text-gray-700 mb-2">{t("formLatitude")}{tCommon("requiredSuffix")}</label>
+                  <label className="block text-gray-700 mb-2">
+                    {t("formName")}
+                    {tCommon("requiredSuffix")}
+                  </label>
                   <input
-                    type="number"
-                    step="any"
-                    value={formData.latitude}
+                    value={formData.name}
                     onChange={(e) =>
-                      setFormData({ ...formData, latitude: e.target.value })
+                      setFormData({ ...formData, name: e.target.value })
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2">{t("formLongitude")}{tCommon("requiredSuffix")}</label>
+                  <label className="block text-gray-700 mb-2">
+                    {t("formType")}
+                    {tCommon("requiredSuffix")}
+                  </label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) =>
+                      setFormData({ ...formData, type: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+                    required
+                  >
+                    <option value="Police Station">{t("typePolice")}</option>
+                    <option value="Hospital">{t("typeHospital")}</option>
+                    <option value="Shelter">{t("typeShelter")}</option>
+                    <option value="Other">{t("typeOther")}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-2">
+                    {t("formAddress")}
+                  </label>
+                  <input
+                    value={formData.address}
+                    onChange={(e) =>
+                      setFormData({ ...formData, address: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-2">
+                    {t("formRadius")}
+                    {tCommon("requiredSuffix")}
+                  </label>
                   <input
                     type="number"
                     step="any"
-                    value={formData.longitude}
+                    value={formData.radius}
                     onChange={(e) =>
-                      setFormData({ ...formData, longitude: e.target.value })
+                      setFormData({ ...formData, radius: e.target.value })
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                     required
                   />
                 </div>
-              </div>
-              <div>
-                <label className="block text-gray-700 mb-2">{t("formRadius")}{tCommon("requiredSuffix")}</label>
-                <input
-                  type="number"
-                  step="any"
-                  value={formData.radius}
-                  onChange={(e) =>
-                    setFormData({ ...formData, radius: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-                  required
-                />
+                <div className="rounded-lg border border-dashed border-indigo-200 bg-indigo-50 p-4 text-sm text-gray-700">
+                  <p className="font-medium text-gray-900 mb-1">
+                    {t("formLatitude")} / {t("formLongitude")}
+                  </p>
+                  <p>
+                    {selectedLocation
+                      ? `${selectedLocation[0].toFixed(6)}, ${selectedLocation[1].toFixed(6)}`
+                      : "Click on the map to choose the safe-zone center."}
+                  </p>
+                </div>
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
               <button
-                onClick={() => setIsCreating(false)}
+                onClick={closeCreateModal}
                 className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 {tCommon("cancel")}
@@ -364,10 +410,7 @@ export default function SafeZonesPage() {
               <button
                 onClick={handleCreate}
                 disabled={
-                  !formData.name ||
-                  !formData.latitude ||
-                  !formData.longitude ||
-                  !formData.radius
+                  !formData.name || !selectedLocation || !formData.radius
                 }
                 className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
               >

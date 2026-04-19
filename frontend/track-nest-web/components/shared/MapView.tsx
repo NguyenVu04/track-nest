@@ -9,6 +9,7 @@ import {
   Circle,
   Rectangle,
   useMap,
+  useMapEvents,
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -45,6 +46,7 @@ interface MapViewProps {
   zones?: ZoneData[];
   heatmapData?: [number, number, number][]; // [lat, lng, intensity]
   height?: string;
+  onMapClick?: (position: [number, number]) => void;
 }
 
 // Component to handle map bounds fitting
@@ -71,12 +73,27 @@ function MapBoundsHandler({
   return null;
 }
 
+function MapClickHandler({
+  onMapClick,
+}: {
+  onMapClick?: (position: [number, number]) => void;
+}) {
+  useMapEvents({
+    click(event) {
+      onMapClick?.([event.latlng.lat, event.latlng.lng]);
+    },
+  });
+
+  return null;
+}
+
 export function MapView({
   center,
   markers = [],
   zones = [],
   heatmapData = [],
   height = "100%",
+  onMapClick,
 }: MapViewProps) {
   return (
     <MapContainer
@@ -146,6 +163,7 @@ export function MapView({
 
       {/* Handle map bounds */}
       <MapBoundsHandler markers={markers} center={center} />
+      <MapClickHandler onMapClick={onMapClick} />
     </MapContainer>
   );
 }
