@@ -267,6 +267,22 @@ export default function ReportsScreen() {
       <View style={styles.container}>
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>{t.title}</Text>
+          <View style={styles.headerActions}>
+            <Pressable
+              style={styles.headerIconBtn}
+              onPress={() => router.push("/(app)/crime-dashboard" as any)}
+              hitSlop={8}
+            >
+              <Ionicons name="stats-chart-outline" size={20} color="#74becb" />
+            </Pressable>
+            <Pressable
+              style={styles.headerIconBtn}
+              onPress={() => router.push("/(app)/crime-analysis" as any)}
+              hitSlop={8}
+            >
+              <Ionicons name="bar-chart-outline" size={20} color="#74becb" />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.segmentRow}>
@@ -325,10 +341,21 @@ const styles = StyleSheet.create({
   headerRow: {
     marginBottom: 12,
     flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "center",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    paddingTop: 4,
   },
   headerTitle: { fontSize: 18, fontWeight: "600" },
+  headerActions: { flexDirection: "row", gap: 4 },
+  headerIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#f0f9ff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   segmentRow: { flexDirection: "row", padding: 12, gap: 8 },
   segmentBtn: {
     paddingVertical: 8,

@@ -90,6 +90,8 @@ export default function AppLayout() {
           <Stack.Screen name="manage-trackers" />
           <Stack.Screen name="safe-zones" />
           <Stack.Screen name="crime-heatmap" />
+          <Stack.Screen name="crime-dashboard" />
+          <Stack.Screen name="crime-analysis" />
           <Stack.Screen name="missing-detail" />
           <Stack.Screen name="report-detail" />
           <Stack.Screen name="create-report" />
