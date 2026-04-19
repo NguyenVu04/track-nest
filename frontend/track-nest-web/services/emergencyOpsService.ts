@@ -85,7 +85,16 @@ export interface SafeZoneResponse {
   longitude: number;
   radius: number;
   createdAt: string;
-  emergencyServiceId: string;
+}
+
+export interface CreateSafeZoneResponse {
+  id: string;
+  createdAtMs: number;
+}
+
+export interface UpdateSafeZoneResponse {
+  id: string;
+  updatedAtMs: number;
 }
 
 export interface NearestSafeZoneResponse {
@@ -103,6 +112,7 @@ export interface DeleteSafeZoneResponse {
 
 export interface PageResponse<T> {
   content: T[];
+  items: T[]; // Alias for content
   page: number;
   size: number;
   totalElements: number;
@@ -222,10 +232,9 @@ export const emergencyOpsService = {
     page = 0,
     size = 10,
   ): Promise<PageResponse<EmergencyServiceTargetsResponse>> => {
-    const response = await api.get<PageResponse<EmergencyServiceTargetsResponse>>(
-      "/emergency-responder/targets",
-      { params: { page, size } },
-    );
+    const response = await api.get<
+      PageResponse<EmergencyServiceTargetsResponse>
+    >("/emergency-responder/targets", { params: { page, size } });
     return response.data;
   },
 
@@ -234,8 +243,8 @@ export const emergencyOpsService = {
   /** Create a new safe zone. */
   createSafeZone: async (
     data: CreateSafeZoneRequest,
-  ): Promise<SafeZoneResponse> => {
-    const response = await api.post<SafeZoneResponse>(
+  ): Promise<CreateSafeZoneResponse> => {
+    const response = await api.post<CreateSafeZoneResponse>(
       "/safe-zone-manager/safe-zone",
       data,
     );
@@ -259,8 +268,8 @@ export const emergencyOpsService = {
   updateSafeZone: async (
     safeZoneId: string,
     data: CreateSafeZoneRequest,
-  ): Promise<SafeZoneResponse> => {
-    const response = await api.put<SafeZoneResponse>(
+  ): Promise<UpdateSafeZoneResponse> => {
+    const response = await api.put<UpdateSafeZoneResponse>(
       `/safe-zone-manager/safe-zone/${safeZoneId}`,
       data,
     );

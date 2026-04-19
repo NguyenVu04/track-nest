@@ -80,7 +80,11 @@ export interface Guideline {
   isPublic: boolean;
 }
 
-export type EmergencyRequestStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
+export type EmergencyRequestStatus =
+  | "PENDING"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "COMPLETED";
 
 export interface EmergencyRequest {
   id: string;
@@ -105,7 +109,7 @@ export interface SafeZone {
   latitude: number;
   radius: number;
   createdAt: string;
-  emergencyServiceId: string;
+  emergencyServiceId?: string;
 }
 
 export interface EmergencyService {
@@ -158,7 +162,10 @@ export interface FamilyCircleMember {
   joinedAt: string;
 }
 
-export type TrackingNotificationType = "LOCATION_UPDATE" | "GEOFENCE_ALERT" | "EMERGENCY";
+export type TrackingNotificationType =
+  | "LOCATION_UPDATE"
+  | "GEOFENCE_ALERT"
+  | "EMERGENCY";
 export type RiskNotificationType = "HIGH_RISK_ZONE" | "ANOMALY_DETECTED";
 
 export interface TrackingNotification {
