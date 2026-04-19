@@ -15,6 +15,7 @@ export interface CrimeReport {
   numberOfVictims: number;
   numberOfOffenders: number;
   arrested: boolean;
+  photos?: string[];
   createdAt: string;
   reporterId: string;
   isPublic: boolean;
@@ -60,6 +61,7 @@ export interface CreateCrimeReportInput {
   numberOfVictims?: number;
   numberOfOffenders?: number;
   arrested?: boolean;
+  photos?: string[];
 }
 
 export interface UpdateCrimeReportInput {
@@ -138,6 +140,32 @@ export interface CrimeAnalysisReportResponse {
   totalOffenders: number;
   crimeTrend: CrimeTrendPoint[];
   hotspots: HotspotArea[];
+}
+
+export interface DashboardSummaryResponse {
+  crimeStats: {
+    total: number;
+    active: number;
+    investigating: number;
+    resolved: number;
+  };
+  missingPersonStats: {
+    total: number;
+    pending: number;
+    published: number;
+    rejected: number;
+  };
+  guidelineStats: {
+    total: number;
+    thisMonth: number;
+  };
+  reporterStats: {
+    totalReporters: number;
+  };
+  crimeByType: Array<{ name: string; value: number }>;
+  weeklyTrend: Array<{ date: string; dayName: string; crimes: number; missing: number }>;
+  severityGroups: Array<{ name: string; value: number }>;
+  statusGroups: Array<{ name: string; value: number }>;
 }
 
 export interface FileUploadResponse {
@@ -538,6 +566,12 @@ class CriminalReportsService {
     return response.data;
   }
 
+  async getDashboardSummary(): Promise<DashboardSummaryResponse> {
+    const client = await this.getApiClient();
+    const response = await client.get("/criminal-analyzer/dashboard");
+    return response.data;
+  }
+
   // ==================== Admin (hard-delete regardless of ownership) ====================
 
   async adminDeleteMissingPersonReport(reportId: string): Promise<void> {
@@ -657,11 +691,9 @@ export async function createCrimeReport(data: {
   longitude: number;
   images: string[];
 }): Promise<CrimeReport> {
-  let contentWithImages = data.description;
+  const uploadedUrls: string[] = [];
 
   if (data.images && data.images.length > 0) {
-    const uploadedUrls: string[] = [];
-
     for (const imageUri of data.images) {
       try {
         const filename = `crime_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
@@ -675,16 +707,12 @@ export async function createCrimeReport(data: {
         console.warn("Failed to upload image:", error);
       }
     }
-
-    if (uploadedUrls.length > 0) {
-      contentWithImages = `${data.description}\n\nImages: ${uploadedUrls.join(", ")}`;
-    }
   }
 
   const today = new Date().toISOString().split("T")[0];
   const reportData: CreateCrimeReportInput = {
     title: data.title,
-    content: contentWithImages,
+    content: data.description,
     severity: severityToNumber(data.severity),
     date: today,
     latitude: data.latitude,
@@ -692,6 +720,7 @@ export async function createCrimeReport(data: {
     numberOfVictims: 1,
     numberOfOffenders: 1,
     arrested: false,
+    photos: uploadedUrls.length > 0 ? uploadedUrls : undefined,
   };
 
   return criminalReportsService.createCrimeReport(reportData);

@@ -8,6 +8,7 @@ export type Report = {
   date: string;
   severity: "High" | "Medium" | "Low";
   description: string;
+  photos?: string[];
 };
 
 export type MissingPerson = {
@@ -42,6 +43,7 @@ function adaptCrimeReportToReport(crimeReport: CrimeReport): Report {
     date: date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
     severity: getSeverityLabel(crimeReport.severity) as "High" | "Medium" | "Low",
     description: crimeReport.content || `Victims: ${crimeReport.numberOfVictims}, Offenders: ${crimeReport.numberOfOffenders}`,
+    photos: crimeReport.photos,
   };
 }
 
