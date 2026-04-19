@@ -140,6 +140,7 @@ export default function MapScreen() {
   }, [streamedFollowers, circleFollowers, mockFollowers]);
 
   // ── Upload user location to server when it changes ──
+  const hasAnimatedInitialRef = useRef(false);
   const lastUploadedRef = useRef<{ lat: number; lng: number } | null>(null);
   const locationRef2 = useRef(location);
   useEffect(() => {
@@ -273,6 +274,13 @@ export default function MapScreen() {
       });
     }, 500);
   }, [fadeAnim]);
+
+  // Animate to current location once on first load
+  useEffect(() => {
+    if (!isMapReady || !location || hasAnimatedInitialRef.current) return;
+    hasAnimatedInitialRef.current = true;
+    centerMap(location.latitude, location.longitude);
+  }, [isMapReady, location, centerMap]);
 
   // Load real safe zones when location is available
   useEffect(() => {
