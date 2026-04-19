@@ -130,7 +130,7 @@ class MinIOService {
    * Get public URL for a file (for viewing)
    */
   getFileUrl(filename: string): string {
-    return `${this.minioBaseUrl}/${this.bucketName}/${filename}`;
+    return `${this.baseUrl}/file/${this.bucketName}/${filename}`;
   }
 }
 
