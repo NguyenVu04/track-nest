@@ -39,6 +39,8 @@ export default function MissingPersonDetailPage() {
           createdAt: response.createdAt,
           userId: response.userId,
           status: response.status as MissingPerson["status"],
+          latitude: response.latitude,
+          longitude: response.longitude,
           reporterId: response.reporterId,
           isPublic: response.isPublic,
         });

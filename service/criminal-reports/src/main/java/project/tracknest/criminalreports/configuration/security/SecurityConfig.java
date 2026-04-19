@@ -45,6 +45,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/report-viewer/**")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/file/**")
+                    .permitAll()
                         .anyRequest()
                     .authenticated()
                 )
