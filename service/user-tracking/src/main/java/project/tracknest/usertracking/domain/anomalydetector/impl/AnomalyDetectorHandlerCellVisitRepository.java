@@ -12,8 +12,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface AnomalyDetectorHandlerCellVisitRepository extends JpaRepository<CellVisit, UUID> {
-    Optional<CellVisit> findByUserIdAndCellIdAndBucketIdAndIsMature(
-            UUID userId, String cellId, UUID bucketId
+
+    Optional<CellVisit> findFirstByUserIdAndBucketIdAndCellIdAndMatureFalse(
+            UUID userId, UUID bucketId, String cellId
     );
 
     Optional<CellVisit> findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(

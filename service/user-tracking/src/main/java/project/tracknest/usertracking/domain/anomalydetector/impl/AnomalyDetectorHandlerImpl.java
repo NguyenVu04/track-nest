@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.TrackingNotificationMessage;
@@ -47,7 +46,6 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
     private final AnomalyDetectorHandlerCellVisitRepository visitRepository;
     private final AnomalyDetectorHandlerAnomalyRunRepository anomalyRunRepository;
 
-    @Async
     @Transactional
     @Override
     public void detectAnomaly(
@@ -72,8 +70,12 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
 
         String cellId = h3Core.latLngToCellAddress(latitudeDeg, longitudeDeg, H3_RESOLUTION);
         List<String> ringCellIds = h3Core.gridDisk(cellId, H3_RING_SIZE);
+        log.info(
+                "Detecting anomaly for user {} at timestamp {} in bucket {} (cellId={}, ringCellIds={})",
+                userId, timestamp, bucket.getId(), cellId, ringCellIds
+        );
         Optional<CellVisit> matureVisit = findMatureVisitInRingOrRegisterCandidate(
-                userId, bucket.getId(), cellId, ringCellIds
+                userId, bucket.getId(), cellId, ringCellIds, timestamp
         );
 
         if (matureVisit.isPresent()) {
@@ -119,6 +121,11 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
     }
 
     private void raiseAnomaly(UUID userId, String username, OffsetDateTime now) {
+        log.info(
+                "Raising anomaly for user {} at timestamp {} (username={})",
+                userId, now, username
+        );
+
         AnomalyRun newRun = AnomalyRun.builder()
                 .userId(userId)
                 .resolved(false)
@@ -138,7 +145,7 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
 
     private LocationBucket getOrCreateBucket(UUID userId, OffsetDateTime timestamp) {
         OffsetDateTime utc = timestamp.withOffsetSameInstant(ZoneOffset.UTC);
-        short dayOfWeek = (short) utc.getDayOfWeek().getValue();
+        short dayOfWeek = (short) (utc.getDayOfWeek().getValue() - 1);
         short hourOfDay = (short) utc.getHour();
 
         return bucketRepository
@@ -157,20 +164,35 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
     }
 
     private Optional<CellVisit> findMatureVisitInRingOrRegisterCandidate(
-            UUID userId, UUID bucketId, String cellId, List<String> ringCellIds
+            UUID userId, UUID bucketId, String cellId, List<String> ringCellIds, OffsetDateTime timestamp
     ) {
         Optional<CellVisit> matureVisit = visitRepository
                 .findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(userId, bucketId, ringCellIds);
 
-        if (matureVisit.isEmpty()) {
-            visitRepository.save(
-                    CellVisit.builder()
-                            .userId(userId)
-                            .cellId(cellId)
-                            .bucketId(bucketId)
-                            .mature(false)
-                            .build()
-            );
+        if (matureVisit.isEmpty() || !matureVisit.get().getCellId().equals(cellId)) {
+            Optional<CellVisit> existingCandidate = visitRepository
+                    .findFirstByUserIdAndBucketIdAndCellIdAndMatureFalse(userId, bucketId, cellId);
+            if (existingCandidate.isPresent()) {
+                CellVisit visit = existingCandidate.get();
+                visit.setLastSeen(timestamp);
+                visit.setNumVisits(visit.getNumVisits() + 1);
+                visitRepository.save(visit);
+            } else {
+                visitRepository.save(
+                        CellVisit.builder()
+                                .userId(userId)
+                                .cellId(cellId)
+                                .bucketId(bucketId)
+                                .mature(false)
+                                .lastSeen(timestamp)
+                                .build()
+                );
+            }
+        } else {
+            CellVisit visit = matureVisit.get();
+            visit.setNumVisits(visit.getNumVisits() + 1);
+            visit.setLastSeen(timestamp);
+            visitRepository.save(visit);
         }
         return matureVisit;
     }
