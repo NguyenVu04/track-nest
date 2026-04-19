@@ -41,6 +41,12 @@ public class MissingPersonReport {
     @Column(name = "content", nullable = false)
     private String content;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     @Email(message = "Invalid email format")
     @Column(name = "contact_email")
     private String contactEmail;

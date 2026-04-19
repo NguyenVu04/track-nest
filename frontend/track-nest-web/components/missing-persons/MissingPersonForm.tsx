@@ -98,6 +98,8 @@ export function MissingPersonForm({
           photo: formData.photo || undefined,
           date: formData.date!,
           content: formData.content!,
+          latitude: coordinates[0],
+          longitude: coordinates[1],
           contactEmail: formData.contactEmail || undefined,
           contactPhone: formData.contactPhone!,
         };
@@ -128,6 +130,8 @@ export function MissingPersonForm({
           photo: formData.photo || undefined,
           date: formData.date,
           content: formData.content,
+          latitude: coordinates[0],
+          longitude: coordinates[1],
           contactEmail: formData.contactEmail || undefined,
           contactPhone: formData.contactPhone ?? "",
         };

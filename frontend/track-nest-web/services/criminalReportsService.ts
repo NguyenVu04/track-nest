@@ -53,6 +53,8 @@ export interface CreateMissingPersonReportRequest {
   photo?: string;
   date: string;
   content: string;
+  latitude?: number;
+  longitude?: number;
   contactEmail?: string;
   contactPhone: string;
 }
@@ -64,6 +66,8 @@ export interface UpdateMissingPersonReportRequest {
   photo?: string;
   date?: string;
   content?: string;
+  latitude?: number;
+  longitude?: number;
   contactEmail?: string;
   contactPhone: string;
 }
@@ -76,6 +80,8 @@ export interface MissingPersonReportResponse {
   photo: string;
   date: string;
   content: string;
+  latitude?: number;
+  longitude?: number;
   contactEmail?: string;
   contactPhone?: string;
   createdAt: string;

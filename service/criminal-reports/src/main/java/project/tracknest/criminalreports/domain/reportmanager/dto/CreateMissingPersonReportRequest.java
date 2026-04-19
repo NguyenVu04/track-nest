@@ -32,7 +32,11 @@ public class CreateMissingPersonReportRequest {
     
     @NotBlank(message = "Content is required")
     private String content;
-    
+
+    private Double latitude;
+
+    private Double longitude;
+
     @Email(message = "Invalid email format")
     private String contactEmail;
     
