@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.core.entity.Location;
 import project.tracknest.usertracking.core.entity.User;
+import project.tracknest.usertracking.domain.anomalydetector.service.AnomalyDetectorHandler;
 import project.tracknest.usertracking.domain.tracker.locationcommand.service.LocationCommandService;
 import project.tracknest.usertracking.proto.lib.UpdateUserLocationRequest;
 import project.tracknest.usertracking.proto.lib.UpdateUserLocationResponse;
@@ -26,6 +27,7 @@ class LocationCommandServiceImpl implements LocationCommandService {
     private final TrackerLocationRepository locationRepository;
     private final LocationMessageProducer messageProducer;
     private final TrackerUserRepository userRepository;
+    private final AnomalyDetectorHandler anomalyDetectorHandler;
 
     @Override
     @Transactional
@@ -71,6 +73,7 @@ class LocationCommandServiceImpl implements LocationCommandService {
                     .build();
 
             messageProducer.produce(message);
+            anomalyDetectorHandler.detectAnomaly(message);
 
             log.info("Received request to update location command");
         }

@@ -10,7 +10,6 @@ import project.tracknest.usertracking.core.datatype.RiskNotificationMessage;
 import project.tracknest.usertracking.core.datatype.TrackingNotificationMessage;
 import project.tracknest.usertracking.core.entity.*;
 
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +18,6 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
-    private static final long INTERVAL_BETWEEN_NOTIFICATIONS_SECOND = 5 * 60; // 30 minutes
     private static final String RISK_NOTIFICATION_TYPE = "RISK";
     private static final String TRACKING_NOTIFICATION_TYPE = "TRACKING";
 
@@ -30,16 +28,6 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
     private final NotifierRiskNotificationRepository riskNotificationRepository;
     private final NotifierTrackingNotificationRepository trackingNotificationRepository;
     private final NotifierTrackerTrackingNotificationRepository trackerTrackingNotificationRepository;
-
-    private boolean shouldNotSendNotification(OffsetDateTime lastNotificationTime) {
-        if (lastNotificationTime == null) {
-            return false;
-        }
-        OffsetDateTime now = OffsetDateTime.now();
-        long secondsSinceLastNotification = Duration.between(lastNotificationTime, now)
-                .getSeconds();
-        return secondsSinceLastNotification < INTERVAL_BETWEEN_NOTIFICATIONS_SECOND;
-    }
 
     @Override
     @Transactional
@@ -65,20 +53,6 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                 .findAllUserFamilyMembers(target.getId());
 
         for (User member : familyMembers) {
-
-            Optional<TrackingNotification> lastFamilyNotificationOpt =
-                    trackingNotificationRepository
-                            .findTopByTarget_IdOrderByCreatedAt(member.getId());
-            if (lastFamilyNotificationOpt.isPresent()) {
-                OffsetDateTime lastFamilyNotificationTime =
-                        lastFamilyNotificationOpt.get().getCreatedAt();
-                if (shouldNotSendNotification(lastFamilyNotificationTime)) {
-                    log.info("Skipping tracking notification to family member {} due to interval constraint.",
-                            member.getId());
-                    continue;
-                }
-            }
-
             List<MobileDevice> devices = mobileRepository
                     .findByTargetId(member.getId());
             List<String> deviceTokens = devices.stream()
@@ -119,19 +93,6 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
         if (userOpt.isEmpty()) {
             log.warn("User with id {} not found. Skipping risk notification.", message.userId());
             return;
-        }
-
-        Optional<RiskNotification> lastNotificationOpt =
-                riskNotificationRepository
-                        .findTopByUser_IdOrderByCreatedAt(message.userId());
-        if (lastNotificationOpt.isPresent()) {
-            OffsetDateTime lastNotificationTime =
-                    lastNotificationOpt.get().getCreatedAt();
-            if (shouldNotSendNotification(lastNotificationTime)) {
-                log.info("Skipping risk notification to user {} due to interval constraint.",
-                        message.userId());
-                return;
-            }
         }
 
         List<MobileDevice> devices = mobileRepository

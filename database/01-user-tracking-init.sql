@@ -77,6 +77,53 @@ CREATE TABLE user_in_family_circle (
     PRIMARY KEY (family_circle_id, user_id)
 );
 
+CREATE TABLE location_bucket (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    day_of_week SMALLINT NOT NULL,
+    hour_of_day SMALLINT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    total_num_visits INTEGER NOT NULL DEFAULT 1,
+    CHECK (day_of_week >= 0 AND day_of_week <= 6),
+    CHECK (hour_of_day >= 0 AND hour_of_day <= 23),
+    UNIQUE (user_id, day_of_week, hour_of_day)
+);
+
+CREATE TABLE cell_visit (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    cell_id VARCHAR(16) NOT NULL,
+    bucket_id UUID NOT NULL,
+    first_seen TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    last_seen TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    num_visits INTEGER NOT NULL DEFAULT 1,
+    mature BOOLEAN NOT NULL DEFAULT FALSE,
+    UNIQUE (cell_id, bucket_id)
+);
+
+CREATE TABLE anomaly_run (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    resolved BOOLEAN NOT NULL DEFAULT FALSE,
+    last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE cell_visit
+    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+
+ALTER TABLE cell_visit
+    ADD FOREIGN KEY (bucket_id) REFERENCES location_bucket (id) ON DELETE CASCADE;
+
+ALTER TABLE cell_candidate
+    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+
+ALTER TABLE cell_candidate
+    ADD FOREIGN KEY (bucket_id) REFERENCES location_bucket (id) ON DELETE CASCADE;
+
+ALTER TABLE anomaly_run
+    ADD FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE;
+
 ALTER TABLE user_in_family_circle
     ADD FOREIGN KEY (family_circle_id) REFERENCES family_circle (id) ON DELETE CASCADE;
 
