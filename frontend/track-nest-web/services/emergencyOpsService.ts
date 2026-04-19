@@ -38,14 +38,32 @@ export interface CreateEmergencyRequestRequest {
 
 export interface EmergencyRequestResponse {
   id: string;
-  openAt: string;
-  closeAt?: string;
   senderId: string;
+  senderUsername: string;
+  senderFirstName: string;
+  senderLastName: string;
+  senderPhoneNumber: string;
+  senderEmail: string;
+  senderAvatarUrl?: string;
   targetId: string;
-  emergencyServiceId: string;
-  statusName: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
-  longitude: number;
-  latitude: number;
+  targetUsername: string;
+  targetFirstName: string;
+  targetLastName: string;
+  targetPhoneNumber: string;
+  targetEmail: string;
+  targetAvatarUrl?: string;
+  openedAt: number;
+  closedAt?: number;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
+  targetLastLatitude: number;
+  targetLastLongitude: number;
+}
+
+export interface EmergencyRequestActionResponse {
+  id: string;
+  acceptedAtMs?: number;
+  rejectedAtMs?: number;
+  closedAtMs?: number;
 }
 
 export interface UpdateEmergencyServiceLocationRequest {
@@ -178,8 +196,8 @@ export const emergencyOpsService = {
   /** Accept a pending emergency request. */
   acceptEmergencyRequest: async (
     requestId: string,
-  ): Promise<EmergencyRequestResponse> => {
-    const response = await api.patch<EmergencyRequestResponse>(
+  ): Promise<EmergencyRequestActionResponse> => {
+    const response = await api.patch<EmergencyRequestActionResponse>(
       `/emergency-request-manager/requests/${requestId}/accept`,
     );
     return response.data;
@@ -188,8 +206,8 @@ export const emergencyOpsService = {
   /** Reject a pending emergency request. */
   rejectEmergencyRequest: async (
     requestId: string,
-  ): Promise<EmergencyRequestResponse> => {
-    const response = await api.patch<EmergencyRequestResponse>(
+  ): Promise<EmergencyRequestActionResponse> => {
+    const response = await api.patch<EmergencyRequestActionResponse>(
       `/emergency-request-manager/requests/${requestId}/reject`,
     );
     return response.data;
@@ -198,8 +216,8 @@ export const emergencyOpsService = {
   /** Close (complete) an accepted emergency request. */
   closeEmergencyRequest: async (
     requestId: string,
-  ): Promise<EmergencyRequestResponse> => {
-    const response = await api.patch<EmergencyRequestResponse>(
+  ): Promise<EmergencyRequestActionResponse> => {
+    const response = await api.patch<EmergencyRequestActionResponse>(
       `/emergency-request-manager/requests/${requestId}/close`,
     );
     return response.data;

@@ -1,60 +1,54 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, ClipboardCheck, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCircle, XCircle, ClipboardCheck, Search, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
-import type { EmergencyRequest } from "@/types";
 import { MapView } from "@/components/shared/MapView";
 import { toast } from "sonner";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { emergencyOpsService, EmergencyRequestResponse, PageResponse } from "@/services/emergencyOpsService";
+import {
+  emergencyOpsService,
+  EmergencyRequestResponse,
+  PageResponse,
+} from "@/services/emergencyOpsService";
 import { Loading } from "@/components/loading/Loading";
 import { useTranslations } from "next-intl";
 
 export default function EmergencyRequestsPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const { addNotification } = useNotification();
   const t = useTranslations("emergencyRequests");
   const tCommon = useTranslations("common");
   const tStatus = useTranslations("status");
 
-  const [requests, setRequests] = useState<EmergencyRequest[]>([]);
+  const [requests, setRequests] = useState<EmergencyRequestResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [rejecting, setRejecting] = useState<EmergencyRequest | null>(null);
-  const [completing, setCompleting] = useState<EmergencyRequest | null>(null);
-  const [trackingRequest, setTrackingRequest] = useState<EmergencyRequest | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [rejecting, setRejecting] = useState<EmergencyRequestResponse | null>(null);
+  const [completing, setCompleting] = useState<EmergencyRequestResponse | null>(null);
+  const [trackingRequest, setTrackingRequest] = useState<EmergencyRequestResponse | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [completionNote, setCompletionNote] = useState("");
 
   useEffect(() => {
     const fetchRequests = async () => {
-      if (!user || user.role !== "Emergency Services") {
+      if (!user || user.role !== "Emergency Services" && user.role !== "User") {
         setIsLoading(false);
         return;
       }
 
       try {
         const response: PageResponse<EmergencyRequestResponse> = await emergencyOpsService.getEmergencyRequests(
-          undefined,
+          statusFilter || undefined,
           0,
           50
         );
 
-        const mappedRequests: EmergencyRequest[] = response.content.map((item) => ({
-          id: item.id,
-          openAt: item.openAt,
-          closeAt: item.closeAt,
-          senderId: item.senderId,
-          targetId: item.targetId,
-          emergencyServiceId: item.emergencyServiceId,
-          status: item.statusName as EmergencyRequest["status"],
-          longitude: item.longitude,
-          latitude: item.latitude,
-        }));
-
-        setRequests(mappedRequests);
+        setRequests(response.items);
       } catch (error) {
         console.error("Error fetching emergency requests:", error);
         toast.error(t("toastLoadError"));
@@ -64,7 +58,7 @@ export default function EmergencyRequestsPage() {
     };
 
     fetchRequests();
-  }, [user, t]);
+  }, [user, t, statusFilter]);
 
   if (!user) return null;
 
@@ -102,7 +96,15 @@ export default function EmergencyRequestsPage() {
     return tStatus(key);
   };
 
-  const handleAccept = async (request: EmergencyRequest) => {
+  const navigateToRequestDetail = (request: EmergencyRequestResponse) => {
+    sessionStorage.setItem(
+      `emergency-request-detail:${request.id}`,
+      JSON.stringify(request),
+    );
+    router.push(`/dashboard/emergency-requests/${request.id}`);
+  };
+
+  const handleAccept = async (request: EmergencyRequestResponse) => {
     try {
       await emergencyOpsService.acceptEmergencyRequest(request.id);
       setRequests((prev) =>
@@ -110,7 +112,7 @@ export default function EmergencyRequestsPage() {
           r.id === request.id ? { ...r, status: "ACCEPTED" } : r,
         ),
       );
-      setTrackingRequest(request);
+      setTrackingRequest({ ...request, status: "ACCEPTED" });
       toast.success(t("toastAccepted"));
       addNotification({
         type: "emergency",
@@ -147,11 +149,11 @@ export default function EmergencyRequestsPage() {
   const handleComplete = async () => {
     if (!completing || !completionNote.trim()) return;
     try {
-      await emergencyOpsService.closeEmergencyRequest(completing.id);
+      const response = await emergencyOpsService.closeEmergencyRequest(completing.id);
       setRequests((prev) =>
         prev.map((r) =>
           r.id === completing.id
-            ? { ...r, status: "COMPLETED", closeAt: new Date().toISOString() }
+            ? { ...r, status: "COMPLETED", closedAt: response.closedAtMs ?? Date.now() }
             : r,
         ),
       );
@@ -175,15 +177,28 @@ export default function EmergencyRequestsPage() {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder={t("searchPlaceholder")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-          />
+        <div className="grid gap-3 md:grid-cols-[1fr_220px]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder={t("searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+          >
+            <option value="">{tCommon("all")}</option>
+            <option value="PENDING">{tStatus("pending")}</option>
+            <option value="ACCEPTED">{tStatus("accepted")}</option>
+            <option value="REJECTED">{tStatus("rejected")}</option>
+            <option value="COMPLETED">{tStatus("completed")}</option>
+          </select>
         </div>
       </div>
 
@@ -193,6 +208,8 @@ export default function EmergencyRequestsPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableId")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">Sender</th>
+                <th className="px-6 py-3 text-left text-gray-700">Target</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableLocation")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableStatus")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableCreated")}</th>
@@ -203,10 +220,28 @@ export default function EmergencyRequestsPage() {
               {filteredRequests.map((request) => (
                 <tr key={request.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
-                    <div className="text-gray-900 font-mono text-sm">{request.id.substring(0, 8)}...</div>
+                    <button
+                      type="button"
+                      onClick={() => navigateToRequestDetail(request)}
+                      className="text-left text-indigo-600 font-mono text-sm hover:underline"
+                    >
+                      {request.id.substring(0, 8)}...
+                    </button>
                   </td>
                   <td className="px-6 py-4 text-gray-900">
-                    {request.latitude.toFixed(4)}, {request.longitude.toFixed(4)}
+                    <div className="font-medium">
+                      {request.senderFirstName} {request.senderLastName}
+                    </div>
+                    <div className="text-sm text-gray-500">@{request.senderUsername}</div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-900">
+                    <div className="font-medium">
+                      {request.targetFirstName} {request.targetLastName}
+                    </div>
+                    <div className="text-sm text-gray-500">@{request.targetUsername}</div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-900">
+                    {request.targetLastLatitude.toFixed(4)}, {request.targetLastLongitude.toFixed(4)}
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(request.status)}`}>
@@ -214,10 +249,17 @@ export default function EmergencyRequestsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-gray-900">
-                    {new Date(request.openAt).toLocaleString()}
+                    {new Date(request.openedAt).toLocaleString()}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => navigateToRequestDetail(request)}
+                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="View details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
                       {request.status === "PENDING" && (
                         <>
                           <button
@@ -260,10 +302,10 @@ export default function EmergencyRequestsPage() {
             {t("trackingTitle", { id: trackingRequest.id.substring(0, 8) })}
           </h3>
           <MapView
-            center={[trackingRequest.latitude, trackingRequest.longitude]}
+            center={[trackingRequest.targetLastLatitude, trackingRequest.targetLastLongitude]}
             markers={[
               {
-                position: [trackingRequest.latitude, trackingRequest.longitude],
+                position: [trackingRequest.targetLastLatitude, trackingRequest.targetLastLongitude],
                 label: "Emergency Location",
               },
             ]}
