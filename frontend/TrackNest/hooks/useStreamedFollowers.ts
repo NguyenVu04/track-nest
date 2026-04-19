@@ -5,6 +5,10 @@ import { Follower } from "@/constant/types";
 import { FamilyMemberLocation } from "@/proto/tracker_pb";
 import { streamFamilyMemberLocations } from "@/services/tracker";
 
+// ~3m — below this the client-side smooth animation handles jitter, no need to
+// re-render the whole list of markers.
+const MIN_POSITION_DELTA = 0.00003;
+
 /**
  * Streams live family-member locations for the given circle.
  *
@@ -27,6 +31,8 @@ export function useStreamedFollowers(
   const membersRef = useRef<Map<string, Follower>>(new Map());
   // Track previous circle so we can detect when it actually changes
   const prevCircleIdRef = useRef<string | undefined>(undefined);
+  // Coalesce bursts of updates into one setState per animation frame
+  const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     const circleChanged = familyCircleId !== prevCircleIdRef.current;
@@ -35,6 +41,10 @@ export function useStreamedFollowers(
     // Always cancel any running stream first
     streamRef.current?.cancel();
     streamRef.current = null;
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
 
     if (!familyCircleId) {
       // No circle selected — clear everything
@@ -60,6 +70,16 @@ export function useStreamedFollowers(
     membersRef.current.clear();
     setFollowers([]);
 
+    const scheduleFlush = () => {
+      if (cancelled) return;
+      if (rafIdRef.current !== null) return;
+      rafIdRef.current = requestAnimationFrame(() => {
+        rafIdRef.current = null;
+        if (cancelled) return;
+        setFollowers(Array.from(membersRef.current.values()));
+      });
+    };
+
     const start = async () => {
       try {
         setIsStreaming(true);
@@ -70,7 +90,7 @@ export function useStreamedFollowers(
           (loc) => {
             if (cancelled) return;
 
-            const follower: Follower = {
+            const next: Follower = {
               id: loc.memberId,
               latitude: loc.latitudeDeg,
               longitude: loc.longitudeDeg,
@@ -82,9 +102,28 @@ export function useStreamedFollowers(
               shareTracking: loc.online,
             };
 
-            membersRef.current.set(loc.memberId, follower);
-            // Snapshot the map into an array for React state
-            setFollowers(Array.from(membersRef.current.values()));
+            const existing = membersRef.current.get(loc.memberId);
+            membersRef.current.set(loc.memberId, next);
+
+            // Skip state update when nothing meaningful changed: saves a full
+            // map re-render + sort when stream pushes redundant heartbeats.
+            if (existing) {
+              const latDiff = Math.abs(existing.latitude - next.latitude);
+              const lngDiff = Math.abs(existing.longitude - next.longitude);
+              const metaChanged =
+                existing.sharingActive !== next.sharingActive ||
+                existing.name !== next.name ||
+                existing.avatar !== next.avatar;
+              if (
+                latDiff < MIN_POSITION_DELTA &&
+                lngDiff < MIN_POSITION_DELTA &&
+                !metaChanged
+              ) {
+                return;
+              }
+            }
+
+            scheduleFlush();
           },
           (err) => {
             if (!cancelled) {
@@ -118,6 +157,10 @@ export function useStreamedFollowers(
 
     return () => {
       cancelled = true;
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
       streamRef.current?.cancel();
       streamRef.current = null;
     };
