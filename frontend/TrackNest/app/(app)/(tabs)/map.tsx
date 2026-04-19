@@ -2,6 +2,7 @@
 // Library imports
 // ====================
 import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
@@ -68,6 +69,13 @@ export default function MapScreen() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [showCrimeHeatmap, setShowCrimeHeatmap] = useState(false);
   const [showPOIs, setShowPOIs] = useState(true);
+
+  // Keep the tab bar visible above any BottomSheetModal opened from this screen
+  const tabBarHeight = useBottomTabBarHeight();
+  const sheetContainerStyle = useMemo(
+    () => ({ bottom: tabBarHeight }),
+    [tabBarHeight],
+  );
 
   // ====================
   // Ref declarations
@@ -505,6 +513,7 @@ export default function MapScreen() {
         followerInfoSheetRef={followerInfoSheetRef}
         renderBackdrop={renderBackdrop}
         selectedFollower={selectedFollower}
+        tabBarHeight={tabBarHeight}
       />
 
       {generalInfoListData.length > 0 && (
@@ -512,6 +521,7 @@ export default function MapScreen() {
           generalInfoSheetRef={generalInfoSheetRef}
           generalInfoListData={generalInfoListData}
           generalInfoRenderItem={generalInfoRenderItem}
+          tabBarHeight={tabBarHeight}
         />
       )}
 
@@ -521,6 +531,7 @@ export default function MapScreen() {
         enableDynamicSizing={true}
         maxDynamicContentSize={Math.floor(screenHeight * 0.55)}
         index={0}
+        containerStyle={sheetContainerStyle}
       >
         <View style={styles.myInfoContent}>
           <Text style={styles.myInfoTitle}>{t.me}</Text>
@@ -568,6 +579,7 @@ export default function MapScreen() {
         renderBackdrop={renderBackdrop}
         mapType={mapType}
         handleSelectMapType={handleSelectMapType}
+        tabBarHeight={tabBarHeight}
       />
 
       <FamilyCircleListSheet
@@ -577,6 +589,7 @@ export default function MapScreen() {
         handleSelectFamilyCircle={handleSelectFamilyCircle}
         familyCircles={circles}
         onRefresh={refreshCircles}
+        tabBarHeight={tabBarHeight}
       />
     </>
   );

@@ -9,6 +9,7 @@ type MapTypesSheetProps = {
   renderBackdrop: (props: any) => React.ReactElement;
   mapType: MapType;
   handleSelectMapType: (type: MapType) => void;
+  tabBarHeight?: number;
 };
 
 const MapTypesSheet = ({
@@ -16,6 +17,7 @@ const MapTypesSheet = ({
   renderBackdrop,
   mapType,
   handleSelectMapType,
+  tabBarHeight = 0,
 }: MapTypesSheetProps) => {
   const handleSheetChanges = (index: number) => {};
 
@@ -25,6 +27,7 @@ const MapTypesSheet = ({
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
       enableDynamicSizing={true}
+      containerStyle={{ bottom: tabBarHeight }}
     >
       <MapTypeBottomSheet
         currentMapType={mapType}
