@@ -182,6 +182,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .numberOfVictims(request.getNumberOfVictims())
                 .numberOfOffenders(request.getNumberOfOffenders())
                 .arrested(request.isArrested())
+                .photos(request.getPhotos() != null ? request.getPhotos() : new java.util.ArrayList<>())
                 .reporter(reporter)
                 .isPublic(false)
                 .createdAt(OffsetDateTime.now())
@@ -212,6 +213,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
         report.setNumberOfVictims(request.getNumberOfVictims());
         report.setNumberOfOffenders(request.getNumberOfOffenders());
         report.setArrested(request.isArrested());
+        if (request.getPhotos() != null) report.setPhotos(request.getPhotos());
         report.setUpdatedAt(OffsetDateTime.now());
         CrimeReport saved = crimeReportRepository.save(report);
         return mapToCrimeReportResponse(saved);
@@ -402,13 +404,14 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .numberOfVictims(report.getNumberOfVictims())
                 .numberOfOffenders(report.getNumberOfOffenders())
                 .arrested(report.isArrested())
+                .photos(report.getPhotos())
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
                 .publicFlag(report.isPublic())
                 .build();
     }
-    
+
     private GuidelinesDocumentResponse mapToGuidelinesDocumentResponse(GuidelinesDocument document) {
         return GuidelinesDocumentResponse.builder()
                 .id(document.getId())

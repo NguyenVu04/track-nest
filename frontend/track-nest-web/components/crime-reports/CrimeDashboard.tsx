@@ -39,6 +39,7 @@ function mapResponse(r: CrimeReportResponse): CrimeReport {
     numberOfVictims: r.numberOfVictims,
     numberOfOffenders: r.numberOfOffenders,
     arrested: r.arrested,
+    photos: r.photos ?? [],
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
     reporterId: r.reporterId,
@@ -103,6 +104,7 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
         numberOfVictims: report.numberOfVictims,
         numberOfOffenders: report.numberOfOffenders,
         arrested: report.arrested,
+        photos: report.photos ?? [],
       };
       const res = await criminalReportsService.createCrimeReport(req);
       setCrimeReports((prev) => [mapResponse(res), ...prev]);
@@ -115,6 +117,7 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
         numberOfVictims: report.numberOfVictims,
         numberOfOffenders: report.numberOfOffenders,
         arrested: report.arrested,
+        photos: report.photos ?? [],
       };
       const res = await criminalReportsService.updateCrimeReport(report.id, req);
       setCrimeReports((prev) =>

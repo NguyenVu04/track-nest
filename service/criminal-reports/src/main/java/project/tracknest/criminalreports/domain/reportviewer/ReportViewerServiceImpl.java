@@ -132,6 +132,7 @@ class ReportViewerServiceImpl implements ReportViewerService {
                 .numberOfVictims(report.getNumberOfVictims())
                 .numberOfOffenders(report.getNumberOfOffenders())
                 .arrested(report.isArrested())
+                .photos(report.getPhotos())
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)

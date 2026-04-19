@@ -63,6 +63,7 @@ export interface CrimeReport {
   numberOfVictims: number;
   numberOfOffenders: number;
   arrested: boolean;
+  photos?: string[];
   createdAt: string;
   updatedAt: string;
   reporterId: string;
