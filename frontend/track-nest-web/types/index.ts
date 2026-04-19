@@ -39,6 +39,8 @@ export interface MissingPerson {
   photo?: string;
   date: string;
   content: string;
+  latitude?: number;
+  longitude?: number;
   contactEmail?: string;
   contactPhone?: string;
   createdAt: string;

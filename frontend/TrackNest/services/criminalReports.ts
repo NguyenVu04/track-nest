@@ -26,6 +26,8 @@ export interface MissingPersonReport {
   fullName: string;
   personalId?: string;
   photo?: string;
+  latitude?: number;
+  longitude?: number;
   contactEmail?: string;
   contactPhone?: string;
   date: string;
