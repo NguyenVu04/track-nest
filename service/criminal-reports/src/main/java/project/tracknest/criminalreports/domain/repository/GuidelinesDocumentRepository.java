@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import project.tracknest.criminalreports.core.entity.GuidelinesDocument;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,4 +23,7 @@ public interface GuidelinesDocumentRepository extends JpaRepository<GuidelinesDo
     
     @Query("SELECT g FROM GuidelinesDocument g WHERE g.isPublic = true")
     Page<GuidelinesDocument> findAllPublic(Pageable pageable);
+
+    @Query("SELECT COUNT(g) FROM GuidelinesDocument g WHERE g.createdAt >= :since")
+    long countCreatedSince(@Param("since") OffsetDateTime since);
 }
