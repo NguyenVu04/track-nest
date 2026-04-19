@@ -47,6 +47,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/file/**")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/criminal-analyzer/dashboard")
+                    .permitAll()
                         .anyRequest()
                     .authenticated()
                 )

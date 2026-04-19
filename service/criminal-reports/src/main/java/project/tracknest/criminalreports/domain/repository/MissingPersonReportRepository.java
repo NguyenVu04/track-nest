@@ -33,4 +33,7 @@ public interface MissingPersonReportRepository extends JpaRepository<MissingPers
 
     @Query("SELECT m FROM MissingPersonReport m WHERE m.createdAt >= :startDate AND m.createdAt <= :endDate")
     List<MissingPersonReport> findByCreatedAtBetween(@Param("startDate") OffsetDateTime startDate, @Param("endDate") OffsetDateTime endDate);
+
+    @Query("SELECT COUNT(m) FROM MissingPersonReport m WHERE m.status.name = :status")
+    long countByStatus(@Param("status") String status);
 }

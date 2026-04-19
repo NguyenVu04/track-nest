@@ -173,6 +173,44 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
+export interface DashboardNameValue {
+  name: string;
+  value: number;
+}
+
+export interface DashboardDailyTrend {
+  date: string;
+  dayName: string;
+  crimes: number;
+  missing: number;
+}
+
+export interface DashboardSummaryResponse {
+  crimeStats: {
+    total: number;
+    active: number;
+    investigating: number;
+    resolved: number;
+  };
+  missingPersonStats: {
+    total: number;
+    pending: number;
+    published: number;
+    rejected: number;
+  };
+  guidelineStats: {
+    total: number;
+    thisMonth: number;
+  };
+  reporterStats: {
+    totalReporters: number;
+  };
+  crimeByType: DashboardNameValue[];
+  weeklyTrend: DashboardDailyTrend[];
+  severityGroups: DashboardNameValue[];
+  statusGroups: DashboardNameValue[];
+}
+
 export interface CrimeTrendPoint {
   date: string;
   count: number;
@@ -482,6 +520,13 @@ export const criminalReportsService = {
   },
 
   // CriminalAnalyzer endpoints
+  getDashboardSummary: async (): Promise<DashboardSummaryResponse> => {
+    const response = await api.get<DashboardSummaryResponse>(
+      "/criminal-analyzer/dashboard",
+    );
+    return response.data;
+  },
+
   generateCrimeAnalysisReport: async (
     startDate: string,
     endDate: string,

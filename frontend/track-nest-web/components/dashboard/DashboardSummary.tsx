@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { AlertCircle, Users, Shield, BookOpen, TrendingUp, TrendingDown, Calendar } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { criminalReportsService, DashboardSummaryResponse } from "@/services/criminalReportsService";
 
 /* ─── Palette ─────────────────────────────────────────────────────────────── */
 const TEAL    = "#74becb";
@@ -75,43 +76,50 @@ function BreakdownRow({ label, value, color }: { label: string; value: number; c
   );
 }
 
+function SkeletonBlock({ className }: { className?: string }) {
+  return <div className={`animate-pulse bg-slate-100 rounded-xl ${className}`} />;
+}
+
 /* ─── Main component ─────────────────────────────────────────────────────── */
 export function DashboardSummary() {
   const t = useTranslations("dashboard");
 
-  const crimeStats        = { total: 24, active: 8,  investigating: 10, resolved: 6  };
-  const missingPersonStats = { total: 15, unhandled: 3, published: 9,  resolved: 3  };
-  const guidelineStats    = { total: 42, recent: 5 };
-  const userStats         = { totalUsers: 128, reporters: 95, emergencyServices: 33 };
+  const [data, setData] = useState<DashboardSummaryResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const crimeByTypeData = [
-    { name: t("crimeTheft"),   value: 8 },
-    { name: t("crimeAssault"), value: 5 },
-    { name: t("crimeRobbery"), value: 4 },
-    { name: t("crimeOther"),   value: 7 },
-  ];
+  useEffect(() => {
+    criminalReportsService.getDashboardSummary()
+      .then(setData)
+      .catch(() => setError("Failed to load dashboard data"))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const timelineData = [
-    { name: t("dayMon"), crimes: 3, missing: 2 },
-    { name: t("dayTue"), crimes: 4, missing: 1 },
-    { name: t("dayWed"), crimes: 5, missing: 3 },
-    { name: t("dayThu"), crimes: 2, missing: 2 },
-    { name: t("dayFri"), crimes: 6, missing: 1 },
-    { name: t("daySat"), crimes: 2, missing: 4 },
-    { name: t("daySun"), crimes: 2, missing: 2 },
-  ];
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <SkeletonBlock className="h-10 w-64" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <SkeletonBlock key={i} className="h-28" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {[...Array(4)].map((_, i) => <SkeletonBlock key={i} className="h-72" />)}
+        </div>
+      </div>
+    );
+  }
 
-  const severityData = [
-    { name: t("severityLow"),  value: 8  },
-    { name: t("severityMed"),  value: 10 },
-    { name: t("severityHigh"), value: 6  },
-  ];
+  if (error || !data) {
+    return (
+      <div className="flex items-center justify-center h-64 text-slate-500">
+        <AlertCircle className="w-5 h-5 mr-2 text-red-400" />
+        {error ?? "No data available"}
+      </div>
+    );
+  }
 
-  const statusData = [
-    { name: t("active"),        value: 8  },
-    { name: t("investigating"), value: 10 },
-    { name: t("resolvedStat"), value: 6  },
-  ];
+  const { crimeStats, missingPersonStats, guidelineStats, reporterStats,
+          crimeByType, weeklyTrend, severityGroups, statusGroups } = data;
 
   return (
     <div className="space-y-6 page-enter">
@@ -129,20 +137,44 @@ export function DashboardSummary() {
 
       {/* ── Stat cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard title={t("statCrimeReports")}   value={crimeStats.total}         description={`${crimeStats.active} ${t("active")}`}                      icon={<Shield    className="w-5 h-5" />} trend={12}  accent={RED}    />
-        <StatCard title={t("statMissingPersons")} value={missingPersonStats.total} description={`${missingPersonStats.unhandled} ${t("unhandled")}`}          icon={<Users     className="w-5 h-5" />} trend={-5}  accent={TEAL}   />
-        <StatCard title={t("statGuidelines")}     value={guidelineStats.total}     description={`${guidelineStats.recent} ${t("thisMonth")}`}                 icon={<BookOpen  className="w-5 h-5" />}            accent={GREEN}  />
-        <StatCard title={t("statActiveUsers")}    value={userStats.totalUsers}     description={`${userStats.reporters} ${t("reporters")}`}                   icon={<AlertCircle className="w-5 h-5" />} trend={8} accent={PURPLE} />
+        <StatCard
+          title={t("statCrimeReports")}
+          value={crimeStats.total}
+          description={`${crimeStats.active} ${t("active")}`}
+          icon={<Shield className="w-5 h-5" />}
+          accent={RED}
+        />
+        <StatCard
+          title={t("statMissingPersons")}
+          value={missingPersonStats.total}
+          description={`${missingPersonStats.pending} ${t("unhandled")}`}
+          icon={<Users className="w-5 h-5" />}
+          accent={TEAL}
+        />
+        <StatCard
+          title={t("statGuidelines")}
+          value={guidelineStats.total}
+          description={`${guidelineStats.thisMonth} ${t("thisMonth")}`}
+          icon={<BookOpen className="w-5 h-5" />}
+          accent={GREEN}
+        />
+        <StatCard
+          title={t("statActiveUsers")}
+          value={reporterStats.totalReporters}
+          description={t("reporters")}
+          icon={<AlertCircle className="w-5 h-5" />}
+          accent={PURPLE}
+        />
       </div>
 
       {/* ── Charts ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <ChartCard title={t("chartWeeklyTrend")}>
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={timelineData}>
+            <LineChart data={weeklyTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-              <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
+              <XAxis dataKey="dayName" stroke="#94a3b8" tick={{ fontSize: 12 }} />
+              <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} allowDecimals={false} />
               <Tooltip contentStyle={TOOLTIP_STYLE} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Line type="monotone" dataKey="crimes"  stroke={RED}  strokeWidth={2} name={t("statCrimeReports")}   dot={{ fill: RED,  r: 3 }} activeDot={{ r: 5 }} />
@@ -154,11 +186,15 @@ export function DashboardSummary() {
         <ChartCard title={t("chartCrimeDistribution")}>
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
-              <Pie data={crimeByTypeData} cx="50%" cy="50%" innerRadius={55} outerRadius={90}
-                   paddingAngle={3} dataKey="value"
-                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                   labelLine={false}>
-                {crimeByTypeData.map((_, i) => (
+              <Pie
+                data={crimeByType}
+                cx="50%" cy="50%"
+                innerRadius={55} outerRadius={90}
+                paddingAngle={3} dataKey="value"
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                labelLine={false}
+              >
+                {crimeByType.map((_, i) => (
                   <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                 ))}
               </Pie>
@@ -169,10 +205,10 @@ export function DashboardSummary() {
 
         <ChartCard title={t("chartSeverityLevels")}>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={severityData} barSize={36}>
+            <BarChart data={severityGroups} barSize={36}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-              <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
+              <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} allowDecimals={false} />
               <Tooltip contentStyle={TOOLTIP_STYLE} />
               <Bar dataKey="value" fill={AMBER} radius={[6, 6, 0, 0]} name={t("statCrimeReports")} />
             </BarChart>
@@ -181,10 +217,10 @@ export function DashboardSummary() {
 
         <ChartCard title={t("chartReportStatus")}>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={statusData} barSize={36}>
+            <BarChart data={statusGroups} barSize={36}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} />
-              <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
+              <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} allowDecimals={false} />
               <Tooltip contentStyle={TOOLTIP_STYLE} />
               <Bar dataKey="value" fill={TEAL} radius={[6, 6, 0, 0]} name={t("statCrimeReports")} />
             </BarChart>
@@ -210,10 +246,10 @@ export function DashboardSummary() {
             <Users className="w-4 h-4 text-brand-600" />
             <h3 className="text-sm font-semibold text-slate-700">{t("breakdownMissingPersons")}</h3>
           </div>
-          <BreakdownRow label={t("total")}     value={missingPersonStats.total}     color={TEAL}    />
-          <BreakdownRow label={t("unhandled")} value={missingPersonStats.unhandled} color={RED}     />
-          <BreakdownRow label={t("reporters")} value={missingPersonStats.published} color={TEAL_DK} />
-          <BreakdownRow label={t("resolvedStat")} value={missingPersonStats.resolved} color={GREEN} />
+          <BreakdownRow label={t("total")}      value={missingPersonStats.total}     color={TEAL}    />
+          <BreakdownRow label={t("unhandled")}  value={missingPersonStats.pending}   color={RED}     />
+          <BreakdownRow label={t("reporters")}  value={missingPersonStats.published} color={TEAL_DK} />
+          <BreakdownRow label={t("resolvedStat")} value={missingPersonStats.rejected} color={GREEN} />
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
@@ -221,9 +257,8 @@ export function DashboardSummary() {
             <AlertCircle className="w-4 h-4 text-purple-500" />
             <h3 className="text-sm font-semibold text-slate-700">{t("breakdownUsers")}</h3>
           </div>
-          <BreakdownRow label={t("totalUsers")}        value={userStats.totalUsers}        color={TEAL}   />
-          <BreakdownRow label={t("reporters")}         value={userStats.reporters}         color={PURPLE} />
-          <BreakdownRow label={t("emergencyServices")} value={userStats.emergencyServices} color={AMBER}  />
+          <BreakdownRow label={t("totalUsers")} value={reporterStats.totalReporters} color={TEAL}   />
+          <BreakdownRow label={t("reporters")}  value={reporterStats.totalReporters} color={PURPLE} />
         </div>
       </div>
 
@@ -235,10 +270,8 @@ export function DashboardSummary() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: t("total"),     value: guidelineStats.total, color: GREEN  },
-            { label: t("thisMonth"), value: guidelineStats.recent, color: TEAL  },
-            { label: t("thisWeek"),  value: 2,                     color: PURPLE },
-            { label: t("views"),     value: 342,                   color: AMBER  },
+            { label: t("total"),     value: guidelineStats.total,      color: GREEN  },
+            { label: t("thisMonth"), value: guidelineStats.thisMonth,   color: TEAL   },
           ].map(({ label, value, color }) => (
             <div key={label} className="rounded-xl p-4 border border-slate-100 bg-slate-50">
               <p className="text-xs text-slate-500 mb-1">{label}</p>
