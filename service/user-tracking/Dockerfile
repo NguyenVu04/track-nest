@@ -20,10 +20,18 @@ WORKDIR /app
 
 COPY --from=builder /app/build/libs/user-tracking-1.0.0.jar app.jar
 
-EXPOSE 19090
+EXPOSE 19090 18080 8081
 
-EXPOSE 18080
+ENV JAVA_TOOL_OPTIONS="\
+-XX:+UseContainerSupport \
+-XX:MaxRAMPercentage=75 \
+-XX:InitialRAMPercentage=50 \
+-Xss256k \
+-XX:+UseG1GC \
+-XX:MaxGCPauseMillis=200 \
+-XX:+ExitOnOutOfMemoryError \
+-XX:+HeapDumpOnOutOfMemoryError \
+-XX:HeapDumpPath=/tmp/heapdumps \
+-Djava.security.egd=file:/dev/./urandom"
 
-EXPOSE 8081
-
-ENTRYPOINT [ "java", "-XX:MaxRAMPercentage=75", "-XX:InitialRAMPercentage=50", "-Xss256k", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=200", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

@@ -1,0 +1,13 @@
+{{- if .Values.keycloak.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-keycloak
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.keycloak.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "keycloak.selectorLabels" . | nindent 6 }}
+{{- end }}

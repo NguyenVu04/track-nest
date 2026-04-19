@@ -3,16 +3,25 @@ kind: Service
 metadata:
   name: user-tracking
   labels:
-    app: user-tracking
+    {{- include "services.labels" (dict "Ctx" . "Name" "user-tracking") | nindent 4 }}
+  annotations:
+    # Hint for gRPC-aware load balancers (Envoy / Linkerd / Istio sidecars).
+    service.alpha.kubernetes.io/app-protocols: '{"grpc":"grpc"}'
 spec:
   type: ClusterIP
   selector:
-    app: user-tracking
+    {{- include "services.selectorLabels" (dict "Ctx" . "Name" "user-tracking") | nindent 4 }}
   ports:
+    - name: grpc
+      port: {{ .Values.userTracking.grpcPort }}
+      targetPort: grpc
+      protocol: TCP
+      appProtocol: grpc
     - name: http
-      port: {{ .Values.userTracking.port }}
-      targetPort: {{ .Values.userTracking.port }}
-
+      port: {{ .Values.userTracking.httpPort }}
+      targetPort: http
+      protocol: TCP
     - name: management
       port: 8081
-      targetPort: 8081
+      targetPort: management
+      protocol: TCP

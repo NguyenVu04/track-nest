@@ -3,97 +3,59 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}-user-tracking
   labels:
-    app: user-tracking
+    {{- include "services.labels" (dict "Ctx" . "Name" "user-tracking") | nindent 4 }}
 spec:
   replicas: {{ .Values.userTracking.replicaCount }}
+  revisionHistoryLimit: {{ .Values.defaults.revisionHistoryLimit }}
+  strategy:
+    {{- toYaml .Values.defaults.strategy | nindent 4 }}
   selector:
     matchLabels:
-      app: user-tracking
+      {{- include "services.selectorLabels" (dict "Ctx" . "Name" "user-tracking") | nindent 6 }}
   template:
     metadata:
       labels:
-        app: user-tracking
+        {{- include "services.selectorLabels" (dict "Ctx" . "Name" "user-tracking") | nindent 8 }}
     spec:
+      terminationGracePeriodSeconds: {{ .Values.defaults.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.defaults.podSecurityContext | nindent 8 }}
       containers:
         - name: user-tracking
           image: "{{ .Values.userTracking.image.repository }}:{{ .Values.userTracking.image.tag }}"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: {{ .Values.defaults.imagePullPolicy }}
+          securityContext:
+            {{- toYaml .Values.defaults.containerSecurityContext | nindent 12 }}
+
           resources:
-            requests:
-              cpu: "250m"
-              memory: "512Mi"
-            limits:
-              cpu: "1"
-              memory: "1Gi"
+            {{- toYaml .Values.defaults.resources | nindent 12 }}
 
           ports:
-            - containerPort: {{ .Values.userTracking.port }}
+            - name: grpc
+              containerPort: {{ .Values.userTracking.grpcPort }}
+              protocol: TCP
+            - name: http
+              containerPort: {{ .Values.userTracking.httpPort }}
+              protocol: TCP
+            - name: management
+              containerPort: 8081
+              protocol: TCP
 
           env:
-            - name: SPRING_PROFILES_ACTIVE
-              value: "prod"
+            {{- include "services.commonEnv" . | nindent 12 }}
 
-            - name: ALLOWED_ORIGINS
-              value: "{{ .Values.origins }}"
-            # --- Pod identity ---
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-
-            - name: POD_UID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.uid
-
-            # --- Kafka ---
-            - name: KAFKA_SERVER
-              value: "{{ .Values.kafka.server }}"
-
-            - name: KAFKA_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secrets
-                  key: KAFKA_USERNAME
-
-            - name: KAFKA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secrets
-                  key: KAFKA_PASSWORD
-
-            - name: KAFKA_SSL_TRUSTSTORE_LOCATION
-              value: /app/certs/truststore.jks
-
-            - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secrets
-                  key: KAFKA_SSL_TRUSTSTORE_PASSWORD
-
-            # --- Redis ---
-            - name: REDIS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secrets
-                  key: REDIS_URL
-
-            # --- Database (UPDATED ✅) ---
+            # --- Database (TimescaleDB/Neon) ---
             - name: DB_HOST
-              value: "{{ .Values.userTracking.database.host }}"
-
+              value: {{ .Values.userTracking.database.host | quote }}
             - name: DB_PORT
-              value: "{{ .Values.userTracking.database.port }}"
-
+              value: {{ .Values.userTracking.database.port | quote }}
             - name: DB_NAME
-              value: "{{ .Values.userTracking.database.name }}"
-
+              value: {{ .Values.userTracking.database.name | quote }}
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-secrets
                   key: USER_TRACKING_DB_USERNAME
-
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -106,18 +68,9 @@ spec:
               readOnly: true
 
           livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8081
-            initialDelaySeconds: 60
-            periodSeconds: 30
-
+            {{- include "services.livenessProbe" . | nindent 12 }}
           readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: 8081
-            initialDelaySeconds: 60
-            periodSeconds: 30
+            {{- include "services.readinessProbe" . | nindent 12 }}
 
       volumes:
         - name: truststore

@@ -1,0 +1,13 @@
+{{- if .Values.envoy.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-envoy
+  labels:
+    {{- include "gateway.envoyLabels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.envoy.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "gateway.envoySelector" . | nindent 6 }}
+{{- end }}

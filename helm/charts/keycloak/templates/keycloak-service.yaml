@@ -3,16 +3,17 @@ kind: Service
 metadata:
   name: keycloak
   labels:
-    app: keycloak
+    {{- include "keycloak.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
-    app: keycloak
+    {{- include "keycloak.selectorLabels" . | nindent 4 }}
   ports:
     - name: http
       port: {{ .Values.keycloak.port }}
-      targetPort: {{ .Values.keycloak.port }}
-
+      targetPort: http
+      protocol: TCP
     - name: management
       port: {{ .Values.keycloak.managementPort }}
-      targetPort: {{ .Values.keycloak.managementPort }}
+      targetPort: management
+      protocol: TCP

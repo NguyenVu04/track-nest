@@ -1,0 +1,22 @@
+{{- if .Values.criminalReports.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-criminal-reports
+  labels:
+    {{- include "services.labels" (dict "Ctx" . "Name" "criminal-reports") | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-criminal-reports
+  minReplicas: {{ .Values.criminalReports.hpa.minReplicas }}
+  maxReplicas: {{ .Values.criminalReports.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.criminalReports.hpa.targetCPUUtilizationPercentage }}
+{{- end }}

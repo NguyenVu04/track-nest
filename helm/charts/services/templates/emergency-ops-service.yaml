@@ -3,16 +3,17 @@ kind: Service
 metadata:
   name: emergency-ops
   labels:
-    app: emergency-ops
+    {{- include "services.labels" (dict "Ctx" . "Name" "emergency-ops") | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
-    app: emergency-ops
+    {{- include "services.selectorLabels" (dict "Ctx" . "Name" "emergency-ops") | nindent 4 }}
   ports:
     - name: http
       port: {{ .Values.emergencyOps.port }}
-      targetPort: {{ .Values.emergencyOps.port }}
-
+      targetPort: http
+      protocol: TCP
     - name: management
       port: 8081
-      targetPort: 8081
+      targetPort: management
+      protocol: TCP

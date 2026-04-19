@@ -1,0 +1,13 @@
+{{- if .Values.userTracking.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-user-tracking
+  labels:
+    {{- include "services.labels" (dict "Ctx" . "Name" "user-tracking") | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.userTracking.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "services.selectorLabels" (dict "Ctx" . "Name" "user-tracking") | nindent 6 }}
+{{- end }}

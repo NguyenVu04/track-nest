@@ -20,8 +20,18 @@ WORKDIR /app
 
 COPY --from=builder /app/build/libs/emergency-ops-1.0.0.jar app.jar
 
-EXPOSE 28080
+EXPOSE 28080 8081
 
-EXPOSE 8081
+ENV JAVA_TOOL_OPTIONS="\
+-XX:+UseContainerSupport \
+-XX:MaxRAMPercentage=75 \
+-XX:InitialRAMPercentage=50 \
+-Xss256k \
+-XX:+UseG1GC \
+-XX:MaxGCPauseMillis=200 \
+-XX:+ExitOnOutOfMemoryError \
+-XX:+HeapDumpOnOutOfMemoryError \
+-XX:HeapDumpPath=/tmp/heapdumps \
+-Djava.security.egd=file:/dev/./urandom"
 
-ENTRYPOINT [ "java", "-XX:MaxRAMPercentage=75", "-XX:InitialRAMPercentage=50", "-Xss256k", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=200", "-XX:+ExitOnOutOfMemoryError", "-jar", "app.jar"]
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

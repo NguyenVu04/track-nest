@@ -1,12 +1,110 @@
+############################################################
+# Gateway subchart — edge L7 layer.
+#   nginx terminates TLS for the web UI / keycloak
+#   envoy terminates TLS + gRPC-Web + JWT auth for APIs
+############################################################
+
+# Secret containing tls.crt / tls.key for both gateways.
+# Provision out-of-band (not managed by this chart).
+tlsSecretName: cf-cert
+
 envoy:
+  replicaCount: 1
+
   image:
     repository: envoyproxy/envoy
     tag: v1.36-latest
+    pullPolicy: IfNotPresent
+
+  # Container-level listening ports.
   port: 8800
   adminPort: 9901
 
+  # External LB port (443 → container port).
+  servicePort: 443
+
+  serviceType: LoadBalancer
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    fsGroup: 101
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  revisionHistoryLimit: 5
+  terminationGracePeriodSeconds: 30
+
+  pdb:
+    enabled: false
+    minAvailable: 1
+
 nginx:
+  replicaCount: 1
+
   image:
     repository: nginx
     tag: stable-alpine
+    pullPolicy: IfNotPresent
+
+  # Container listens on both 80 and 443; 80 redirects.
   port: 443
+  plainPort: 80
+
+  servicePort: 443
+  plainServicePort: 80
+
+  serviceType: LoadBalancer
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+
+  podSecurityContext:
+    runAsNonRoot: false
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop: ["ALL"]
+      add: ["NET_BIND_SERVICE"]
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  revisionHistoryLimit: 5
+  terminationGracePeriodSeconds: 30
+
+  pdb:
+    enabled: false
+    minAvailable: 1

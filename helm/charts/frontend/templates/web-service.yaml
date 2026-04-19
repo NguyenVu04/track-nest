@@ -3,12 +3,13 @@ kind: Service
 metadata:
   name: web
   labels:
-    app: web
+    {{- include "web.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
-    app: web
+    {{- include "web.selectorLabels" . | nindent 4 }}
   ports:
     - name: http
       port: {{ .Values.web.port }}
-      targetPort: {{ .Values.web.port }}
+      targetPort: http
+      protocol: TCP

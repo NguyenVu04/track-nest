@@ -1,3 +1,6 @@
+############################################################
+# Keycloak subchart values
+############################################################
 keycloak:
   replicaCount: 1
   port: 8080
@@ -6,6 +9,18 @@ keycloak:
   image:
     repository: nguyenvu04/tracknest-keycloak
     tag: "v1.1"
+    pullPolicy: IfNotPresent
+
+  # Startup mode: use "start" for production (requires valid hostname/TLS
+  # termination), "start-dev" only for local/dev overrides.
+  startCommand: start
+  importRealm: true
+
+  # Public hostname Keycloak emits in issuer / redirect URLs.
+  # MUST match what sits in front of it (nginx/envoy/CF).
+  hostname: tracknestapp.org
+  hostnameStrict: false
+  hostnameStrictHttps: true
 
   database:
     url: jdbc:postgresql://ep-frosty-thunder-a16w6tab-pooler.ap-southeast-1.aws.neon.tech:5432/neondb
@@ -13,3 +28,55 @@ keycloak:
   realmFiles:
     public: public-dev.json
     restricted: restricted-dev.json
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop: ["ALL"]
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  revisionHistoryLimit: 5
+  terminationGracePeriodSeconds: 60
+
+  probes:
+    readiness:
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 5
+      failureThreshold: 5
+    liveness:
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 5
+      failureThreshold: 5
+
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 75
+
+  pdb:
+    enabled: false
+    minAvailable: 1

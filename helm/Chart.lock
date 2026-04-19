@@ -1,6 +1,18 @@
 dependencies:
+- name: services
+  repository: file://charts/services
+  version: 0.1.0
+- name: keycloak
+  repository: file://charts/keycloak
+  version: 0.1.0
+- name: gateway
+  repository: file://charts/gateway
+  version: 0.1.0
+- name: web-frontend
+  repository: file://charts/frontend
+  version: 0.1.0
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
   version: 83.2.0
-digest: sha256:2985746e6d61060391510868d0de58e49b035f502c0cd12e1c7c00e3c780f9e0
-generated: "2026-04-09T00:20:07.3743569+07:00"
+digest: sha256:13223aaf7fc84b74cb345aa94ac82f307c92428def51a126b1796787581ab648
+generated: "2026-04-19T20:46:22.5302434+07:00"

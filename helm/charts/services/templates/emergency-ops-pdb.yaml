@@ -1,0 +1,13 @@
+{{- if .Values.emergencyOps.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-emergency-ops
+  labels:
+    {{- include "services.labels" (dict "Ctx" . "Name" "emergency-ops") | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.emergencyOps.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "services.selectorLabels" (dict "Ctx" . "Name" "emergency-ops") | nindent 6 }}
+{{- end }}

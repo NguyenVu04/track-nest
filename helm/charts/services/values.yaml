@@ -1,16 +1,102 @@
+############################################################
+# Services subchart — three Spring Boot services.
+# Each exposes :8081 for management (actuator/prometheus).
+############################################################
+
+# --- Shared defaults, referenced by each service ---------
+defaults:
+  imagePullPolicy: IfNotPresent
+  revisionHistoryLimit: 5
+  terminationGracePeriodSeconds: 45
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  # Non-root UID baked into the upstream eclipse-temurin runtime image.
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop: ["ALL"]
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+  probes:
+    liveness:
+      path: /actuator/health/liveness
+      port: 8081
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readiness:
+      path: /actuator/health/readiness
+      port: 8081
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+# --- Shared infra wiring ---------------------------------
+kafka:
+  server: kafka-ab0708-tracknest.j.aivencloud.com:25187
+  truststorePath: /app/certs/truststore.jks
+
+keycloak:
+  authServerUrl: http://keycloak:8080/auth
+  publicRealm: public-dev
+
+# Comma-separated CORS origins applied to every service.
+origins: "http://localhost:3000,http://localhost,http://localhost:8080,http://localhost:28080,http://localhost:38080,http://tracknestapp.org,http://api.tracknestapp.org,https://tracknestapp.org,https://api.tracknestapp.org"
+
+# Spring profile activated in every service container.
+springProfile: prod
+
+# --- user-tracking ---------------------------------------
 userTracking:
   replicaCount: 1
-  port: 19090
 
   image:
     repository: nguyenvu04/tracknest-usertracking
     tag: "v1.2.3"
+
+  # gRPC (external) and HTTP (internal REST/actuator) ports.
+  grpcPort: 19090
+  httpPort: 18080
 
   database:
     host: ep-falling-snow-a1msncjz-pooler.ap-southeast-1.aws.neon.tech
     port: 5432
     name: neondb
 
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 75
+
+  pdb:
+    enabled: false
+    minAvailable: 1
+
+# --- criminal-reports ------------------------------------
 criminalReports:
   replicaCount: 1
   port: 38080
@@ -24,6 +110,20 @@ criminalReports:
     port: 5432
     name: neondb
 
+  gemini:
+    chatModel: gemini-3-flash-preview
+
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 75
+
+  pdb:
+    enabled: false
+    minAvailable: 1
+
+# --- emergency-ops ---------------------------------------
 emergencyOps:
   replicaCount: 1
   port: 28080
@@ -39,9 +139,13 @@ emergencyOps:
 
   keycloak:
     clientId: emergency-operations
-    realm: public-dev
 
-kafka:
-  server: kafka-ab0708-tracknest.j.aivencloud.com:25187
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 75
 
-origins: "http://localhost:3000,http://localhost,http://localhost:8080,http://localhost:28080,http://localhost:38080,http://tracknestapp.org,http://api.tracknestapp.org,https://tracknestapp.org,https://api.tracknestapp.org"
+  pdb:
+    enabled: false
+    minAvailable: 1

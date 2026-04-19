@@ -1,0 +1,22 @@
+{{- if .Values.keycloak.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-keycloak
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-keycloak
+  minReplicas: {{ .Values.keycloak.hpa.minReplicas }}
+  maxReplicas: {{ .Values.keycloak.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.keycloak.hpa.targetCPUUtilizationPercentage }}
+{{- end }}

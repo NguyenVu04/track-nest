@@ -1,0 +1,13 @@
+{{- if .Values.criminalReports.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-criminal-reports
+  labels:
+    {{- include "services.labels" (dict "Ctx" . "Name" "criminal-reports") | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.criminalReports.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "services.selectorLabels" (dict "Ctx" . "Name" "criminal-reports") | nindent 6 }}
+{{- end }}
