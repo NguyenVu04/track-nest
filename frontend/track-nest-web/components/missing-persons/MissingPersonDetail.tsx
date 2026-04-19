@@ -164,18 +164,20 @@ export function MissingPersonDetail({
           </div>
 
           {/* Map */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col">
-            <h3 className="text-gray-900 mb-4">{t("mapTitle")}</h3>
-            <MapView
-              center={[40.7829, -73.9654]}
-              markers={[
-                {
-                  position: [40.7829, -73.9654] as [number, number],
-                  label: person.fullName,
-                },
-              ]}
-            />
-          </div>
+          {person.latitude != null && person.longitude != null && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col">
+              <h3 className="text-gray-900 mb-4">{t("mapTitle")}</h3>
+              <MapView
+                center={[person.latitude, person.longitude]}
+                markers={[
+                  {
+                    position: [person.latitude, person.longitude] as [number, number],
+                    label: person.fullName,
+                  },
+                ]}
+              />
+            </div>
+          )}
         </div>
       </div>
 

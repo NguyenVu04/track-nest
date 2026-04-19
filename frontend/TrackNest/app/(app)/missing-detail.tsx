@@ -9,6 +9,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -147,6 +148,17 @@ export default function MissingDetailScreen() {
             <Text style={styles.sectionTitle}>{t.physicalDescription}</Text>
             <Text style={styles.description}>{person.content}</Text>
           </View>
+
+          {person.photo ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t.photo}</Text>
+              <Image
+                source={{ uri: person.photo }}
+                style={styles.photo}
+                resizeMode="cover"
+              />
+            </View>
+          ) : null}
 
           <View style={styles.actionButtons}>
             <Pressable style={[styles.button, styles.callButton]}>
@@ -295,5 +307,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 14,
     color: "#fff",
+  },
+  photo: {
+    width: "100%",
+    height: 220,
+    borderRadius: 10,
+    marginTop: 8,
   },
 });
