@@ -14,7 +14,7 @@ const LocationPicker = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-64 rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center">
+      <div className="h-120 rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center">
         <span className="text-gray-500">Loading map...</span>
       </div>
     ),
@@ -46,9 +46,9 @@ export function CrimeReportForm({
       title: "",
       content: "",
       severity: 3,
-      date: new Date().toISOString().slice(0, 16),
-      longitude: -73.9654,
-      latitude: 40.7829,
+      date: new Date().toISOString().slice(0, 10),
+      longitude: 106.7009,
+      latitude: 10.7769,
       numberOfVictims: 0,
       numberOfOffenders: 0,
       arrested: false,
@@ -195,8 +195,8 @@ export function CrimeReportForm({
             </label>
             <input
               id="date"
-              type="datetime-local"
-              value={formData.date?.slice(0, 16)}
+              type="date"
+              value={formData.date?.slice(0, 10)}
               onChange={(e) =>
                 setFormData({ ...formData, date: e.target.value })
               }
@@ -297,7 +297,7 @@ export function CrimeReportForm({
               </span>
             </label>
             <LocationPicker
-              position={[formData.latitude || 40.7829, formData.longitude || -73.9654]}
+              position={[formData.latitude || 10.7769, formData.longitude || 106.7009]}
               onPositionChange={(position) =>
                 setFormData({
                   ...formData,

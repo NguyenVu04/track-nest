@@ -1,11 +1,20 @@
-import { useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 import { Plus, Search, BarChart3 } from "lucide-react";
 import type { CrimeReport } from "@/types";
+import {
+  criminalReportsService,
+  CrimeReportResponse,
+  CreateCrimeReportRequest,
+  UpdateCrimeReportRequest,
+} from "@/services/criminalReportsService";
 import { CrimeReportList } from "./CrimeReportList";
 import { CrimeReportDetail } from "./CrimeReportDetail";
 import { CrimeReportForm } from "./CrimeReportForm";
 import { CrimeHeatmapView } from "./CrimeHeatmapView";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 interface CrimeDashboardProps {
   user: {
@@ -18,82 +27,42 @@ interface CrimeDashboardProps {
 
 type ViewMode = "list" | "detail" | "create" | "edit" | "heatmap";
 
-// Mock data
-const mockCrimeReports: CrimeReport[] = [
-  {
-    id: "1",
-    title: "Theft - Vehicle Break-in",
-    content: "Car window smashed, items stolen from vehicle",
-    severity: 3,
-    date: "2026-01-03T22:30:00Z",
-    longitude: -73.9776,
-    latitude: 40.7614,
-    numberOfVictims: 1,
-    numberOfOffenders: 1,
-    arrested: false,
-    createdAt: "2026-01-04T08:00:00Z",
-    updatedAt: "2026-01-04T08:00:00Z",
-    reporterId: "user-1",
-    isPublic: true,
-  },
-  {
-    id: "2",
-    title: "Assault - Street Altercation",
-    content: "Physical altercation between two individuals",
-    severity: 5,
-    date: "2026-01-02T19:15:00Z",
-    longitude: -73.9855,
-    latitude: 40.758,
-    numberOfVictims: 1,
-    numberOfOffenders: 1,
-    arrested: false,
-    createdAt: "2026-01-02T19:30:00Z",
-    updatedAt: "2026-01-02T19:30:00Z",
-    reporterId: "user-2",
-    isPublic: true,
-  },
-  {
-    id: "3",
-    title: "Burglary - Residential",
-    content: "Break-in at residential apartment, valuables stolen",
-    severity: 4,
-    date: "2026-01-01T03:00:00Z",
-    longitude: -73.9566,
-    latitude: 40.7736,
-    numberOfVictims: 1,
-    numberOfOffenders: 2,
-    arrested: false,
-    createdAt: "2026-01-01T09:00:00Z",
-    updatedAt: "2026-01-01T09:00:00Z",
-    reporterId: "user-3",
-    isPublic: true,
-  },
-  {
-    id: "4",
-    title: "Vandalism - Public Property",
-    content: "Graffiti on public building",
-    severity: 1,
-    date: "2026-01-03T02:00:00Z",
-    longitude: -74.006,
-    latitude: 40.7128,
-    numberOfVictims: 0,
-    numberOfOffenders: 1,
-    arrested: false,
-    createdAt: "2026-01-03T08:00:00Z",
-    updatedAt: "2026-01-03T08:00:00Z",
-    reporterId: "user-4",
-    isPublic: true,
-  },
-];
+function mapResponse(r: CrimeReportResponse): CrimeReport {
+  return {
+    id: r.id,
+    title: r.title,
+    content: r.content,
+    severity: r.severity as CrimeReport["severity"],
+    date: r.date,
+    longitude: r.longitude,
+    latitude: r.latitude,
+    numberOfVictims: r.numberOfVictims,
+    numberOfOffenders: r.numberOfOffenders,
+    arrested: r.arrested,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
+    reporterId: r.reporterId,
+    isPublic: r.isPublic,
+  };
+}
 
 export function CrimeDashboard({ user }: CrimeDashboardProps) {
   const t = useTranslations("crimeReports");
   const tCommon = useTranslations("common");
 
-  const [crimeReports, setCrimeReports] = useState<CrimeReport[]>(mockCrimeReports);
+  const [crimeReports, setCrimeReports] = useState<CrimeReport[]>([]);
+  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedReport, setSelectedReport] = useState<CrimeReport | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    criminalReportsService
+      .listCrimeReports({ page: 0, size: 100 })
+      .then((res) => setCrimeReports(res.content.map(mapResponse)))
+      .catch(() => toast.error(tCommon("loadError")))
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleViewDetail = (report: CrimeReport) => {
     setSelectedReport(report);
@@ -105,9 +74,16 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
     setViewMode("create");
   };
 
-  const handlePublish = (id: string) => {
-    const report = crimeReports.find((r) => r.id === id);
-    if (report) handleEdit(report);
+  const handlePublish = async (id: string) => {
+    try {
+      const res = await criminalReportsService.publishCrimeReport(id);
+      setCrimeReports((prev) =>
+        prev.map((r) => (r.id === id ? mapResponse(res) : r)),
+      );
+      toast.success(tCommon("published"));
+    } catch {
+      toast.error(tCommon("actionError"));
+    }
   };
 
   const handleEdit = (report: CrimeReport) => {
@@ -115,21 +91,46 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
     setViewMode("edit");
   };
 
-  const handleSave = (report: CrimeReport) => {
+  const handleSave = async (report: CrimeReport) => {
     if (viewMode === "create") {
-      setCrimeReports([...crimeReports, report]);
+      const req: CreateCrimeReportRequest = {
+        title: report.title,
+        content: report.content,
+        severity: report.severity,
+        date: report.date.slice(0, 10),
+        longitude: report.longitude,
+        latitude: report.latitude,
+        numberOfVictims: report.numberOfVictims,
+        numberOfOffenders: report.numberOfOffenders,
+        arrested: report.arrested,
+      };
+      const res = await criminalReportsService.createCrimeReport(req);
+      setCrimeReports((prev) => [mapResponse(res), ...prev]);
     } else {
-      setCrimeReports(
-        crimeReports.map((r) => (r.id === report.id ? report : r)),
+      const req: UpdateCrimeReportRequest = {
+        title: report.title,
+        content: report.content,
+        severity: report.severity,
+        date: report.date.slice(0, 10),
+        numberOfVictims: report.numberOfVictims,
+        numberOfOffenders: report.numberOfOffenders,
+        arrested: report.arrested,
+      };
+      const res = await criminalReportsService.updateCrimeReport(report.id, req);
+      setCrimeReports((prev) =>
+        prev.map((r) => (r.id === report.id ? mapResponse(res) : r)),
       );
     }
     setViewMode("list");
   };
 
-  const handleDelete = (id: string) => {
-    setCrimeReports(crimeReports.filter((r) => r.id !== id));
-    if (selectedReport?.id === id) {
-      setViewMode("list");
+  const handleDelete = async (id: string) => {
+    try {
+      await criminalReportsService.deleteCrimeReport(id);
+      setCrimeReports((prev) => prev.filter((r) => r.id !== id));
+      if (selectedReport?.id === id) setViewMode("list");
+    } catch {
+      toast.error(tCommon("actionError"));
     }
   };
 
@@ -138,21 +139,14 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
     setSelectedReport(null);
   };
 
-  const handleViewHeatmap = () => {
-    setViewMode("heatmap");
-  };
-
-  const filteredReports = crimeReports.filter((report) => {
-    const matchesSearch =
-      report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.content.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const filteredReports = crimeReports.filter(
+    (r) =>
+      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.content.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   if (viewMode === "heatmap") {
-    return (
-      <CrimeHeatmapView onBack={handleBackToList} />
-    );
+    return <CrimeHeatmapView onBack={handleBackToList} />;
   }
 
   if (viewMode === "detail" && selectedReport) {
@@ -183,50 +177,49 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-gray-900">{t("pageTitle")}</h2>
         <div className="flex items-center gap-2">
-          {/* {user.role === "Emergency Services" && ( */}
-            <button
-              onClick={handleViewHeatmap}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              <BarChart3 className="w-4 h-4" />
-              {t("heatmap")}
-            </button>
-          {/* )} */}
-          {/* {user.role === "Reporter" && ( */}
-            <button
-              onClick={handleCreateNew}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              {t("newReport")}
-            </button>
-          {/* )} */}
+          <button
+            onClick={() => setViewMode("heatmap")}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            <BarChart3 className="w-4 h-4" />
+            {t("heatmap")}
+          </button>
+          <button
+            onClick={handleCreateNew}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            {t("newReport")}
+          </button>
         </div>
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder={t("searchPlaceholder")}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder={t("searchPlaceholder")}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
         </div>
       </div>
 
-      <CrimeReportList
-        reports={filteredReports}
-        onViewDetail={handleViewDetail}
-        onPublish={handlePublish}
-        onDelete={handleDelete}
-        userRole={user.role}
-      />
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <CrimeReportList
+          reports={filteredReports}
+          onViewDetail={handleViewDetail}
+          onPublish={handlePublish}
+          onDelete={handleDelete}
+          userRole={user.role}
+        />
+      )}
     </div>
   );
 }
