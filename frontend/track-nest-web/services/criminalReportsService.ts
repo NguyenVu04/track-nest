@@ -2,7 +2,7 @@ import axios from "axios";
 import { authService } from "./authService";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL || "http://localhost:28080";
+  process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL || "http://localhost:38080";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -54,7 +54,7 @@ export interface CreateMissingPersonReportRequest {
   date: string;
   content: string;
   contactEmail?: string;
-  contactPhone?: string;
+  contactPhone: string;
 }
 
 export interface UpdateMissingPersonReportRequest {

@@ -95,11 +95,11 @@ export function MissingPersonForm({
           title: formData.title || formData.fullName || "Missing Person Report",
           fullName: formData.fullName!,
           personalId: formData.personalId!,
-          photo: formData.photo,
+          photo: formData.photo || undefined,
           date: formData.date!,
           content: formData.content!,
-          contactEmail: formData.contactEmail,
-          contactPhone: formData.contactPhone,
+          contactEmail: formData.contactEmail || undefined,
+          contactPhone: formData.contactPhone!,
         };
 
         const response = await criminalReportsService.createMissingPersonReport(request);
@@ -125,10 +125,10 @@ export function MissingPersonForm({
           title: formData.title,
           fullName: formData.fullName,
           personalId: formData.personalId,
-          photo: formData.photo,
+          photo: formData.photo || undefined,
           date: formData.date,
           content: formData.content,
-          contactEmail: formData.contactEmail,
+          contactEmail: formData.contactEmail || undefined,
           contactPhone: formData.contactPhone ?? "",
         };
         const response = await criminalReportsService.updateMissingPersonReport(
