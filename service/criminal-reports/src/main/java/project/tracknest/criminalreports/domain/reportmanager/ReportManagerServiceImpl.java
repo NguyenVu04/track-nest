@@ -58,6 +58,8 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .photo(request.getPhoto() != null ? request.getPhoto() : "")
                 .date(request.getDate())
                 .content(request.getContent())
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
                 .contactEmail(request.getContactEmail())
                 .contactPhone(request.getContactPhone())
                 .userId(reporterId)
@@ -89,6 +91,8 @@ class ReportManagerServiceImpl implements ReportManagerService {
         report.setPhoto(request.getPhoto() != null ? request.getPhoto() : report.getPhoto());
         report.setDate(request.getDate());
         report.setContent(request.getContent());
+        if (request.getLatitude() != null) report.setLatitude(request.getLatitude());
+        if (request.getLongitude() != null) report.setLongitude(request.getLongitude());
         report.setContactEmail(request.getContactEmail());
         report.setContactPhone(request.getContactPhone());
         MissingPersonReport saved = missingPersonReportRepository.save(report);
@@ -376,6 +380,8 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .content(report.getContent())
                 .contactEmail(report.getContactEmail())
                 .contactPhone(report.getContactPhone())
+                .latitude(report.getLatitude())
+                .longitude(report.getLongitude())
                 .createdAt(report.getCreatedAt())
                 .userId(report.getUserId())
                 .status(statusName)

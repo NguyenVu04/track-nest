@@ -21,7 +21,7 @@ ON CONFLICT (id) DO NOTHING;
 ------------------------------------------------
 INSERT INTO missing_person_report (
     id, title, full_name, personal_id, photo, contact_email, contact_phone,
-    date, content, created_at, user_id, reporter_id, status_name
+    date, content, latitude, longitude, created_at, user_id, reporter_id, status_name
 ) VALUES
 (
     'f0000001-f000-4000-8000-f00000000001',
@@ -32,7 +32,8 @@ INSERT INTO missing_person_report (
     'hoanguyen@gmail.com',
     '0901100001',
     '2026-03-05',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000001.pdf',
+    'Female, 21 years old, 1.60m tall, long black hair, slim build. Last seen leaving Thu Duc campus after afternoon classes wearing a white ao dai. She did not show up for her evening part-time job and her phone has been switched off since 5 PM.',
+    10.8800, 106.8050,
     '2026-03-05 08:00:00+07',
     'b0000001-b000-4000-8000-b00000000001',
     'c0000001-c000-4000-8000-c00000000001',
@@ -47,7 +48,8 @@ INSERT INTO missing_person_report (
     'ducvan@gmail.com',
     '0901100002',
     '2026-03-05',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000002.pdf',
+    'Male, 29 years old, 1.68m tall, short hair, medium build with a tattoo on his right forearm. Last seen clocking out of a garment factory in Binh Tan District at 6 PM. Did not return home and did not contact family.',
+    10.7500, 106.6100,
     '2026-03-05 09:30:00+07',
     'b0000002-b000-4000-8000-b00000000002',
     'c0000001-c000-4000-8000-c00000000001',
@@ -62,7 +64,8 @@ INSERT INTO missing_person_report (
     'maile@gmail.com',
     '0901100003',
     '2026-03-06',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000003.pdf',
+    'Female, 68 years old, 1.52m tall, short grey hair, wearing a floral blouse and dark trousers. Has Alzheimer''s disease and left the house alone in the early morning. Last seen by a neighbor near the local market in Go Vap District.',
+    10.8380, 106.6650,
     '2026-03-06 07:45:00+07',
     'b0000003-b000-4000-8000-b00000000003',
     'c0000002-c000-4000-8000-c00000000002',
@@ -77,7 +80,8 @@ INSERT INTO missing_person_report (
     'khoapham@gmail.com',
     '0901100004',
     '2026-03-06',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000004.pdf',
+    'Male, 17 years old, 1.70m tall, athletic build, short hair. Last seen leaving Tran Phu High School in District 5 on his bicycle after extra classes at 8 PM. His bicycle was found abandoned near the canal the following morning.',
+    10.7550, 106.6680,
     '2026-03-06 11:00:00+07',
     'b0000004-b000-4000-8000-b00000000004',
     'c0000002-c000-4000-8000-c00000000002',
@@ -92,7 +96,8 @@ INSERT INTO missing_person_report (
     'lanvo@gmail.com',
     '0901100005',
     '2026-03-07',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000005.pdf',
+    'Female, 45 years old, 1.55m tall, medium build, shoulder-length black hair with streaks of grey. Runs a vegetable stall at Tan Binh Market. Left to collect goods from a supplier in Hoc Mon District and has not returned or answered calls.',
+    10.8000, 106.6450,
     '2026-03-07 08:20:00+07',
     'b0000005-b000-4000-8000-b00000000005',
     'c0000003-c000-4000-8000-c00000000003',
@@ -107,7 +112,8 @@ INSERT INTO missing_person_report (
     'minhbui@gmail.com',
     '0901100006',
     '2026-03-07',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000006.pdf',
+    'Male, 38 years old, 1.67m tall, slightly overweight, short black hair. Works as a ride-hailing driver. His last recorded trip ended in Nha Be District at 11:30 PM. The vehicle was found parked near a canal with the engine off but the door open.',
+    10.6900, 106.7300,
     '2026-03-07 13:00:00+07',
     'b0000006-b000-4000-8000-b00000000006',
     'c0000003-c000-4000-8000-c00000000003',
@@ -122,7 +128,8 @@ INSERT INTO missing_person_report (
     'thudang@gmail.com',
     '0901100007',
     '2026-03-08',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000007.pdf',
+    'Female, 74 years old, 1.50m tall, thin build, white hair, walks slowly. Last seen in the early morning near a pagoda in Binh Thanh District wearing a light blue shirt and black trousers. She is hard of hearing and may not respond to her name.',
+    10.8150, 106.7100,
     '2026-03-08 06:30:00+07',
     'b0000007-b000-4000-8000-b00000000007',
     'c0000004-c000-4000-8000-c00000000004',
@@ -137,7 +144,8 @@ INSERT INTO missing_person_report (
     'hungdo@gmail.com',
     '0901100008',
     '2026-03-08',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000008.pdf',
+    'Male, 52 years old, 1.65m tall, tanned skin, short grey hair. Sells lottery tickets along Le Loi Street, District 1. His regular customers report he did not appear at his usual spot for two days. His family in Long An Province has not heard from him.',
+    10.7730, 106.7020,
     '2026-03-08 10:15:00+07',
     'b0000008-b000-4000-8000-b00000000008',
     'c0000004-c000-4000-8000-c00000000004',
@@ -152,7 +160,8 @@ INSERT INTO missing_person_report (
     'sarah.j@email.com',
     '0901100009',
     '2026-03-09',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000009.pdf',
+    'Female, 32 years old, approximately 1.68m tall, blonde hair, blue eyes, wearing a yellow backpack. Last seen checking out of a hostel on Bui Vien Street, District 1. Her passport and most belongings were left in her room. She is an Australian national.',
+    10.7676, 106.6942,
     '2026-03-09 14:00:00+07',
     'b0000009-b000-4000-8000-b00000000009',
     'c0000005-c000-4000-8000-c00000000005',
@@ -167,7 +176,8 @@ INSERT INTO missing_person_report (
     'tuanngo@gmail.com',
     '0901100010',
     '2026-03-09',
-    'https://cdn.example.com/files/missing-person-reports/report-f000000a.pdf',
+    'Male, 25 years old, 1.70m tall, slim, wearing a green delivery uniform and helmet. Was on his last delivery route in District 12 when GPS tracking was lost at 9:45 PM. His motorbike was found overturned on a quiet street with no signs of the driver.',
+    10.8530, 106.7150,
     '2026-03-09 16:45:00+07',
     'b000000a-b000-4000-8000-b0000000000a',
     'c0000005-c000-4000-8000-c00000000005',
@@ -182,7 +192,8 @@ INSERT INTO missing_person_report (
     'yenhoang@gmail.com',
     '0901100011',
     '2026-03-10',
-    'https://cdn.example.com/files/missing-person-reports/report-f000000b.pdf',
+    'Female, 40 years old, 1.58m tall, medium build, wears glasses, straight black hair tied back. A primary school teacher in District 3. Did not arrive at school on Monday morning and her apartment shows no signs of a struggle. Last contact was a phone call to her mother the night before.',
+    10.7850, 106.6900,
     '2026-03-10 09:00:00+07',
     'b000000b-b000-4000-8000-b0000000000b',
     'c0000006-c000-4000-8000-c00000000006',
@@ -197,7 +208,8 @@ INSERT INTO missing_person_report (
     'sonnguyen@gmail.com',
     '0901100012',
     '2026-03-10',
-    'https://cdn.example.com/files/missing-person-reports/report-f000000c.pdf',
+    'Male, 33 years old, 1.72m tall, muscular build, short hair, has a scar above his right eyebrow. Was working on a construction site in Thu Duc City. Did not show up after the lunch break and his hard hat and tools were left at the site.',
+    10.8780, 106.7980,
     '2026-03-10 11:30:00+07',
     'b000000c-b000-4000-8000-b0000000000c',
     'c0000006-c000-4000-8000-c00000000006',
@@ -212,7 +224,8 @@ INSERT INTO missing_person_report (
     'bichtran@gmail.com',
     '0901100013',
     '2026-03-11',
-    'https://cdn.example.com/files/missing-person-reports/report-f000000d.pdf',
+    'Female, 27 years old, 1.57m tall, slim, short black hair. Works night shifts at a clinic in Phu Nhuan District. Finished her shift at 6 AM and boarded a bus toward her home in District 10. Surveillance footage shows her exiting the bus but she never reached home.',
+    10.7990, 106.6800,
     '2026-03-11 07:00:00+07',
     'b000000d-b000-4000-8000-b0000000000d',
     'c0000007-c000-4000-8000-c00000000007',
@@ -227,7 +240,8 @@ INSERT INTO missing_person_report (
     'thanhole@gmail.com',
     '0901100014',
     '2026-03-11',
-    'https://cdn.example.com/files/missing-person-reports/report-f000000e.pdf',
+    'Male, 55 years old, 1.63m tall, stocky build, balding with grey temples. Runs a hardware store on Ly Thuong Kiet Street, District 10. Closed the shop as usual at 7 PM and was last seen at a nearby pho restaurant. His family has not been able to reach him since.',
+    10.7720, 106.6680,
     '2026-03-11 14:20:00+07',
     'b000000e-b000-4000-8000-b0000000000e',
     'c0000007-c000-4000-8000-c00000000007',
@@ -242,7 +256,8 @@ INSERT INTO missing_person_report (
     'longpham@gmail.com',
     '0901100015',
     '2026-03-12',
-    'https://cdn.example.com/files/missing-person-reports/report-f000000f.pdf',
+    'Male, 48 years old, 1.66m tall, tanned and weathered skin, short dark hair. Went out fishing alone on a small boat from the Can Gio coast at 4 AM. Did not return by evening. His boat was found drifting unmanned the following day with fishing gear still on board.',
+    10.4100, 106.9600,
     '2026-03-12 05:30:00+07',
     'b000000f-b000-4000-8000-b0000000000f',
     'c0000008-c000-4000-8000-c00000000008',
@@ -257,7 +272,8 @@ INSERT INTO missing_person_report (
     'khanhvo@gmail.com',
     '0901100016',
     '2026-03-12',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000010.pdf',
+    'Male, 31 years old, 1.69m tall, medium build, short hair, usually has grease stains on his hands. Works at a motorbike repair shop in Binh Thanh District. Left for a parts supplier in District 12 at noon and did not return. His phone rings but is not answered.',
+    10.8150, 106.7100,
     '2026-03-12 12:00:00+07',
     'b0000010-b000-4000-8000-b00000000010',
     'c0000008-c000-4000-8000-c00000000008',
@@ -272,9 +288,10 @@ INSERT INTO missing_person_report (
     'hienbui@gmail.com',
     '0901100017',
     '2026-03-13',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000011.pdf',
+    'Female, 50 years old, 1.53m tall, stocky build, short permed hair. Works as a morning cleaner at an office building in District 1. Did not show up for work and her landlord reports she left her rented room in a hurry, leaving behind personal belongings.',
+    10.7750, 106.7030,
     '2026-03-13 08:45:00+07',
-    'b0000011-b000-4000-8000-b00000000011',
+    'b0000011-b000-4000-8000-b0000000000b',
     'c0000009-c000-4000-8000-c00000000009',
     'PENDING'
 ),
@@ -287,9 +304,10 @@ INSERT INTO missing_person_report (
     'quocdang@gmail.com',
     '0901100018',
     '2026-03-13',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000012.pdf',
+    'Male, 36 years old, 1.71m tall, slim, wears glasses, carries a camera bag. Was investigating a local story in a suburban area of Binh Duong Province. Sent a last message to his editor at 10 PM saying he had found an important lead. Has not been seen since.',
+    11.0500, 106.6500,
     '2026-03-13 10:30:00+07',
-    'b0000012-b000-4000-8000-b00000000012',
+    'b0000012-b000-4000-8000-b0000000000c',
     'c0000009-c000-4000-8000-c00000000009',
     'REJECTED'
 ),
@@ -302,9 +320,10 @@ INSERT INTO missing_person_report (
     'ngocdo@gmail.com',
     '0901100019',
     '2026-03-14',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000013.pdf',
+    'Female, 30 years old, 1.62m tall, slim, long straight hair, wears a white lab coat at work. Was closing her pharmacy in District 5 when a neighbor heard shouting. The next morning the pharmacy was found locked from outside with the lights still on inside.',
+    10.7550, 106.6680,
     '2026-03-14 09:15:00+07',
-    'b0000013-b000-4000-8000-b00000000013',
+    'b0000013-b000-4000-8000-b0000000000d',
     'c000000a-c000-4000-8000-c0000000000a',
     'PUBLISHED'
 ),
@@ -317,9 +336,10 @@ INSERT INTO missing_person_report (
     'binhngo@gmail.com',
     '0901100020',
     '2026-03-14',
-    'https://cdn.example.com/files/missing-person-reports/report-f0000014.pdf',
+    'Male, 65 years old, 1.67m tall, grey hair, upright posture, often wears a veteran''s cap. Went for his usual morning walk in a park in Thu Duc City and never returned home. Witnesses saw him speaking with an unfamiliar man near the park entrance before disappearing.',
+    10.8780, 106.8020,
     '2026-03-14 15:00:00+07',
-    'b0000014-b000-4000-8000-b00000000014',
+    'b0000014-b000-4000-8000-b0000000000e',
     'c000000a-c000-4000-8000-c0000000000a',
     'PENDING'
 );
@@ -334,7 +354,7 @@ INSERT INTO guidelines_document (
     'f1000001-f100-4000-8000-f10000000001',
     'Child Safety Guidelines',
     'Steps for protecting children from abduction.',
-    'https://cdn.example.com/files/guidelines/child-safety.pdf',
+    'Child safety guidelines: 1) Teach children to memorize parents'' phone numbers. 2) Establish a trusted adult network. 3) Never leave children unattended in public. 4) Report any suspicious behavior near schools immediately. 5) Install GPS tracking apps for older children with their knowledge.',
     '2026-03-01 08:00:00+07',
     'c0000001-c000-4000-8000-c00000000001',
     TRUE
@@ -343,7 +363,7 @@ INSERT INTO guidelines_document (
     'f1000002-f100-4000-8000-f10000000002',
     'Elder Care Safety Protocol',
     'Procedures for tracking and protecting elderly citizens.',
-    'https://cdn.example.com/files/guidelines/elder-care.pdf',
+    'Elder care safety procedures: 1) Register elderly relatives with dementia at local community centers. 2) Attach ID bracelets with emergency contact information. 3) Set up regular check-in calls. 4) Install door sensors and notify caregivers of unusual exit times. 5) File a missing report within 2 hours if an elderly person with dementia goes missing.',
     '2026-03-01 09:00:00+07',
     'c0000001-c000-4000-8000-c00000000001',
     FALSE
@@ -352,7 +372,7 @@ INSERT INTO guidelines_document (
     'f1000003-f100-4000-8000-f10000000003',
     'Tourist Safety Manual',
     'Guidance for tourists to stay safe in the city.',
-    'https://cdn.example.com/files/guidelines/tourist-safety.pdf',
+    'Tourist safety in Ho Chi Minh City: 1) Keep copies of your passport in a secure location. 2) Use reputable ride-hailing apps rather than street taxis. 3) Avoid displaying expensive cameras or jewelry in crowded areas. 4) Register with your embassy upon arrival. 5) Save the local emergency number: 113 (police), 114 (fire), 115 (ambulance).',
     '2026-03-02 08:00:00+07',
     'c0000002-c000-4000-8000-c00000000002',
     TRUE
@@ -361,7 +381,7 @@ INSERT INTO guidelines_document (
     'f1000004-f100-4000-8000-f10000000004',
     'Night Safety Tips',
     'Recommendations for staying safe at night.',
-    'https://cdn.example.com/files/guidelines/night-safety.pdf',
+    'Night safety recommendations: 1) Travel in groups whenever possible after 10 PM. 2) Stay on well-lit main streets. 3) Avoid using your phone while walking. 4) Inform someone of your expected route and arrival time. 5) Use tracked ride-hailing services and share trip details with a contact.',
     '2026-03-02 10:00:00+07',
     'c0000002-c000-4000-8000-c00000000002',
     TRUE
@@ -370,7 +390,7 @@ INSERT INTO guidelines_document (
     'f1000005-f100-4000-8000-f10000000005',
     'Vehicle Theft Prevention',
     'Tips to prevent theft of motorbikes and cars.',
-    'https://cdn.example.com/files/guidelines/vehicle-theft-prevention.pdf',
+    'Vehicle theft prevention: 1) Always use disc locks in addition to the standard wheel lock. 2) Park in well-lit, monitored areas. 3) Install GPS trackers on motorbikes. 4) Never leave helmets visible as they indicate the vehicle is unattended. 5) Register your vehicle''s frame number with local police.',
     '2026-03-03 08:00:00+07',
     'c0000003-c000-4000-8000-c00000000003',
     TRUE
@@ -379,7 +399,7 @@ INSERT INTO guidelines_document (
     'f1000006-f100-4000-8000-f10000000006',
     'Digital Safety Guide',
     'How to stay safe online and avoid scams.',
-    'https://cdn.example.com/files/guidelines/digital-safety.pdf',
+    'Digital safety guide: 1) Never share OTP codes received via SMS with anyone. 2) Use two-factor authentication on banking apps. 3) Be suspicious of unsolicited calls claiming to be from banks or police. 4) Report phishing attempts to cybercrime authorities. 5) Regularly update passwords and do not reuse them across platforms.',
     '2026-03-03 11:00:00+07',
     'c0000003-c000-4000-8000-c00000000003',
     FALSE
@@ -388,7 +408,7 @@ INSERT INTO guidelines_document (
     'f1000007-f100-4000-8000-f10000000007',
     'Public Transport Safety',
     'Safety tips when using buses and trains.',
-    'https://cdn.example.com/files/guidelines/public-transport-safety.pdf',
+    'Public transport safety: 1) Keep bags in front of your body on crowded buses. 2) Avoid sleeping on long-distance bus routes. 3) Note the bus number and route when boarding. 4) If you witness theft, alert the driver immediately rather than confronting the suspect. 5) Report broken surveillance cameras to the transport authority.',
     '2026-03-04 08:00:00+07',
     'c0000004-c000-4000-8000-c00000000004',
     TRUE
@@ -397,7 +417,7 @@ INSERT INTO guidelines_document (
     'f1000008-f100-4000-8000-f10000000008',
     'Market Area Crime Watch',
     'Guidance for vendors and shoppers in market areas.',
-    'https://cdn.example.com/files/guidelines/market-area-crime-watch.pdf',
+    'Market area crime watch: 1) Vendors should keep cash in secure lockboxes, not visible drawers. 2) Install visible CCTV cameras at stalls. 3) Form neighborhood watch groups with adjacent vendors. 4) Report strangers loitering near stalls to market security. 5) Do not carry large amounts of cash when closing the stall at night.',
     '2026-03-04 09:30:00+07',
     'c0000004-c000-4000-8000-c00000000004',
     TRUE
@@ -406,7 +426,7 @@ INSERT INTO guidelines_document (
     'f1000009-f100-4000-8000-f10000000009',
     'School Zone Safety',
     'Rules and guidelines for school zone security.',
-    'https://cdn.example.com/files/guidelines/school-zone-safety.pdf',
+    'School zone security guidelines: 1) All visitors must sign in at the school gate. 2) Unknown vehicles loitering near the school should be reported to the principal. 3) Parents must use the designated pickup zone only. 4) Teachers should escort students to the gate during dismissal. 5) Report any suspicious approaches to children immediately to local police.',
     '2026-03-05 08:00:00+07',
     'c0000005-c000-4000-8000-c00000000005',
     TRUE
@@ -415,7 +435,7 @@ INSERT INTO guidelines_document (
     'f100000a-f100-4000-8000-f1000000000a',
     'Domestic Violence Response',
     'Internal procedures for handling domestic violence reports.',
-    'https://cdn.example.com/files/guidelines/domestic-violence-response.pdf',
+    'Domestic violence response procedures: 1) All reports are treated with strict confidentiality. 2) Victims are offered temporary shelter referrals within 24 hours. 3) Officers must document injuries with photographs. 4) Restraining order applications can be initiated by the responding officer. 5) Follow-up welfare checks are scheduled within 72 hours of the initial report.',
     '2026-03-05 14:00:00+07',
     'c0000005-c000-4000-8000-c00000000005',
     FALSE
@@ -424,7 +444,7 @@ INSERT INTO guidelines_document (
     'f100000b-f100-4000-8000-f1000000000b',
     'Fire Safety and Emergency Evacuation',
     'Evacuation procedures for buildings and public spaces.',
-    'https://cdn.example.com/files/guidelines/fire-safety-evacuation.pdf',
+    'Fire safety and evacuation: 1) Know the location of all fire exits before occupying a building. 2) Do not use elevators during a fire alarm. 3) Crawl low under smoke. 4) Meet at the designated assembly point outside. 5) Call 114 only after reaching safety. 6) Do not re-enter the building until cleared by fire authorities.',
     '2026-03-06 08:00:00+07',
     'c0000006-c000-4000-8000-c00000000006',
     TRUE
@@ -433,7 +453,7 @@ INSERT INTO guidelines_document (
     'f100000c-f100-4000-8000-f1000000000c',
     'Flood Safety Protocol',
     'Actions to take during flooding events.',
-    'https://cdn.example.com/files/guidelines/flood-safety.pdf',
+    'Flood safety protocol: 1) Monitor weather alerts and evacuate early when advised. 2) Do not attempt to walk or drive through floodwater. 3) Move valuables and documents to higher ground. 4) Turn off electricity at the mains before water enters the home. 5) Contact emergency services at 115 if trapped. 6) Avoid contact with floodwater as it may be contaminated.',
     '2026-03-06 10:00:00+07',
     'c0000006-c000-4000-8000-c00000000006',
     TRUE
@@ -442,7 +462,7 @@ INSERT INTO guidelines_document (
     'f100000d-f100-4000-8000-f1000000000d',
     'Police Station Locations',
     'Guide to finding and contacting local police stations.',
-    'https://cdn.example.com/files/guidelines/police-stations.pdf',
+    'Key police station contacts in Ho Chi Minh City: District 1 Police - 08 3829 0412; District 3 Police - 08 3932 5551; Thu Duc City Police - 028 3896 3085; Binh Thanh District Police - 028 3899 5251. For emergencies dial 113. All stations accept in-person reports 24 hours a day.',
     '2026-03-07 08:00:00+07',
     'c0000007-c000-4000-8000-c00000000007',
     TRUE
@@ -451,7 +471,7 @@ INSERT INTO guidelines_document (
     'f100000e-f100-4000-8000-f1000000000e',
     'Cybercrime Reporting Steps',
     'How to file a cybercrime report with authorities.',
-    'https://cdn.example.com/files/guidelines/cybercrime-reporting.pdf',
+    'Cybercrime reporting steps: 1) Document all evidence — screenshots, URLs, transaction records. 2) Do not delete any messages or emails from the suspect. 3) File a report at the nearest police station or via the Ministry of Public Security online portal. 4) Contact your bank immediately if financial fraud is involved. 5) Change all compromised passwords and enable two-factor authentication.',
     '2026-03-07 13:00:00+07',
     'c0000007-c000-4000-8000-c00000000007',
     FALSE
@@ -460,7 +480,7 @@ INSERT INTO guidelines_document (
     'f100000f-f100-4000-8000-f1000000000f',
     'Drug Trafficking Reporting',
     'Confidential reporting procedures for drug-related crimes.',
-    'https://cdn.example.com/files/guidelines/drug-trafficking-reporting.pdf',
+    'Confidential drug trafficking reporting: 1) Reports can be submitted anonymously via the national hotline 1800 599 920. 2) Do not attempt to investigate suspects independently. 3) Provide location details, vehicle descriptions, and timing if observed. 4) All reporter identities are protected under witness confidentiality law. 5) Rewards may be available for tips leading to arrests.',
     '2026-03-08 08:00:00+07',
     'c0000008-c000-4000-8000-c00000000008',
     FALSE
@@ -469,7 +489,7 @@ INSERT INTO guidelines_document (
     'f1000010-f100-4000-8000-f10000000010',
     'Road Accident Reporting',
     'Procedures to follow after a road traffic accident.',
-    'https://cdn.example.com/files/guidelines/road-accident-reporting.pdf',
+    'Road accident procedures: 1) Ensure safety — move to the roadside if possible. 2) Call 115 for injuries and 113 for police. 3) Do not move injured persons unless there is immediate danger. 4) Photograph the scene, vehicle positions, and damage before moving vehicles. 5) Exchange insurance and contact details with the other party. 6) File a police report within 24 hours even for minor incidents.',
     '2026-03-08 11:00:00+07',
     'c0000008-c000-4000-8000-c00000000008',
     TRUE
@@ -478,7 +498,7 @@ INSERT INTO guidelines_document (
     'f1000011-f100-4000-8000-f10000000011',
     'Gang Activity Awareness',
     'How to identify and safely report gang activity.',
-    'https://cdn.example.com/files/guidelines/gang-activity-awareness.pdf',
+    'Gang activity awareness: 1) Do not engage or make eye contact with suspected gang members. 2) Note locations where groups congregate regularly at night. 3) Report graffiti tagging to local authorities as it can indicate territorial marking. 4) Submit anonymous reports via the community tip line. 5) Attend local community policing meetings to share observations safely.',
     '2026-03-09 08:00:00+07',
     'c0000009-c000-4000-8000-c00000000009',
     FALSE
@@ -487,7 +507,7 @@ INSERT INTO guidelines_document (
     'f1000012-f100-4000-8000-f10000000012',
     'ATM Security Tips',
     'How to stay safe when using ATM machines.',
-    'https://cdn.example.com/files/guidelines/atm-security.pdf',
+    'ATM security tips: 1) Cover the keypad with your hand when entering your PIN. 2) Inspect the card slot for skimming devices before inserting your card. 3) Use ATMs inside banks or well-lit locations during the day. 4) If your card is retained by the machine, call your bank immediately. 5) Never accept help from strangers at ATMs.',
     '2026-03-09 10:00:00+07',
     'c0000009-c000-4000-8000-c00000000009',
     TRUE
@@ -496,7 +516,7 @@ INSERT INTO guidelines_document (
     'f1000013-f100-4000-8000-f10000000013',
     'Witness Protection Information',
     'Rights and support available for crime witnesses.',
-    'https://cdn.example.com/files/guidelines/witness-protection.pdf',
+    'Witness protection rights: 1) Witnesses have the right to provide testimony confidentially. 2) Your identity can be withheld from the accused in serious crime cases. 3) Relocation assistance may be available for high-risk witnesses. 4) Psychological support services are provided free of charge. 5) Contact the Witness Protection Unit at the Ministry of Public Security for guidance before testifying.',
     '2026-03-10 08:00:00+07',
     'c000000a-c000-4000-8000-c0000000000a',
     FALSE
@@ -505,7 +525,7 @@ INSERT INTO guidelines_document (
     'f1000014-f100-4000-8000-f10000000014',
     'Community Watch Program Guide',
     'How to set up and run a neighborhood watch program.',
-    'https://cdn.example.com/files/guidelines/community-watch.pdf',
+    'Setting up a neighborhood watch: 1) Gather at least 10 interested residents to form a committee. 2) Register with the local ward police station for official support. 3) Establish a group communication channel for incident reporting. 4) Assign patrol volunteers for evening rounds. 5) Hold monthly meetings to review incidents and update procedures. 6) Report all findings to the ward police, not social media.',
     '2026-03-10 14:00:00+07',
     'c000000a-c000-4000-8000-c0000000000a',
     TRUE
@@ -522,7 +542,7 @@ INSERT INTO crime_report (
 (
     'f2000001-f200-4000-8000-f20000000001',
     'ATM Card Skimming',
-    'https://cdn.example.com/files/crime-reports/atm-skimming-f2000001.pdf',
+    'A skimming device was found attached to an ATM on Nguyen Thi Minh Khai Street. Three victims reported unauthorized transactions totaling 15 million VND. The device was removed and submitted as evidence.',
     '2026-03-05', 2, 3, 1, FALSE, 106.6975, 10.7760,
     '2026-03-05 08:30:00+07', '2026-03-05 08:30:00+07',
     'c0000001-c000-4000-8000-c00000000001', TRUE
@@ -530,7 +550,7 @@ INSERT INTO crime_report (
 (
     'f2000002-f200-4000-8000-f20000000002',
     'Residential Break-In',
-    'https://cdn.example.com/files/crime-reports/break-in-f2000002.pdf',
+    'Two suspects broke into a house in District 7 by forcing the back door while the family was away. Electronics and jewelry valued at approximately 80 million VND were stolen. Both suspects were apprehended the following day.',
     '2026-03-05', 4, 0, 2, TRUE, 106.7050, 10.7800,
     '2026-03-05 11:00:00+07', '2026-03-05 11:00:00+07',
     'c0000001-c000-4000-8000-c00000000001', FALSE
@@ -538,7 +558,7 @@ INSERT INTO crime_report (
 (
     'f2000003-f200-4000-8000-f20000000003',
     'Drug Possession Arrest',
-    'https://cdn.example.com/files/crime-reports/drug-possession-f2000003.pdf',
+    'Police conducted a routine check near a park in District 8 and found one individual in possession of 50 grams of methamphetamine. The suspect was arrested on the spot and taken to the station for processing.',
     '2026-03-06', 3, 0, 1, TRUE, 106.6992, 10.7742,
     '2026-03-06 14:20:00+07', '2026-03-06 14:20:00+07',
     'c0000002-c000-4000-8000-c00000000002', TRUE
@@ -546,7 +566,7 @@ INSERT INTO crime_report (
 (
     'f2000004-f200-4000-8000-f20000000004',
     'Online Scam',
-    'https://cdn.example.com/files/crime-reports/online-scam-f2000004.pdf',
+    'Five victims reported losing money to an investment scam operating via social media. The suspect created a fake investment platform promising 20% monthly returns. Total losses exceeded 200 million VND. Investigation is ongoing.',
     '2026-03-06', 2, 5, 1, FALSE, 106.7018, 10.7768,
     '2026-03-06 10:00:00+07', '2026-03-06 10:00:00+07',
     'c0000002-c000-4000-8000-c00000000002', TRUE
@@ -554,7 +574,7 @@ INSERT INTO crime_report (
 (
     'f2000005-f200-4000-8000-f20000000005',
     'Motorbike Street Racing',
-    'https://cdn.example.com/files/crime-reports/racing-f2000005.pdf',
+    'Four individuals were caught conducting illegal street races on a main boulevard in Binh Thanh District at 10:30 PM. All four were arrested, vehicles were impounded, and licenses were suspended pending court proceedings.',
     '2026-03-07', 1, 0, 4, TRUE, 106.7025, 10.7755,
     '2026-03-07 22:30:00+07', '2026-03-07 22:30:00+07',
     'c0000003-c000-4000-8000-c00000000003', TRUE
@@ -562,7 +582,7 @@ INSERT INTO crime_report (
 (
     'f2000006-f200-4000-8000-f20000000006',
     'Knife Threat at Restaurant',
-    'https://cdn.example.com/files/crime-reports/knife-threat-f2000006.pdf',
+    'One suspect entered a restaurant in District 1 and threatened staff and two diners with a knife before fleeing with the cash register contents. The suspect was identified from CCTV footage and arrested the same evening.',
     '2026-03-07', 4, 2, 1, TRUE, 106.7038, 10.7783,
     '2026-03-07 19:45:00+07', '2026-03-07 19:45:00+07',
     'c0000003-c000-4000-8000-c00000000003', FALSE
@@ -570,7 +590,7 @@ INSERT INTO crime_report (
 (
     'f2000007-f200-4000-8000-f20000000007',
     'Shop Vandalism',
-    'https://cdn.example.com/files/crime-reports/vandalism-f2000007.pdf',
+    'Three suspects spray-painted graffiti and smashed the storefront window of a convenience store in Go Vap District at 2 AM. Estimated damage is 5 million VND. Suspects fled before police arrived; identified from CCTV.',
     '2026-03-08', 2, 0, 3, FALSE, 106.6968, 10.7748,
     '2026-03-08 02:15:00+07', '2026-03-08 02:15:00+07',
     'c0000004-c000-4000-8000-c00000000004', TRUE
@@ -578,7 +598,7 @@ INSERT INTO crime_report (
 (
     'f2000008-f200-4000-8000-f20000000008',
     'Land Dispute Assault',
-    'https://cdn.example.com/files/crime-reports/land-dispute-f2000008.pdf',
+    'Two neighbors in a land boundary dispute in District 9 came to blows, resulting in one person being hospitalized with rib injuries. Both parties have been interviewed and the case referred to the civil court.',
     '2026-03-08', 3, 1, 2, FALSE, 106.7055, 10.7812,
     '2026-03-08 09:00:00+07', '2026-03-08 09:00:00+07',
     'c0000004-c000-4000-8000-c00000000004', TRUE
@@ -586,7 +606,7 @@ INSERT INTO crime_report (
 (
     'f2000009-f200-4000-8000-f20000000009',
     'Drunk Driving Accident',
-    'https://cdn.example.com/files/crime-reports/drunk-driving-f2000009.pdf',
+    'A driver with a blood alcohol level three times the legal limit collided with two motorbikes at an intersection in District 2 shortly before midnight. Two riders were injured and taken to hospital. The driver was arrested at the scene.',
     '2026-03-09', 3, 2, 1, TRUE, 106.7003, 10.7763,
     '2026-03-09 23:50:00+07', '2026-03-09 23:50:00+07',
     'c0000005-c000-4000-8000-c00000000005', TRUE
@@ -594,7 +614,7 @@ INSERT INTO crime_report (
 (
     'f200000a-f200-4000-8000-f2000000000a',
     'Counterfeit Currency',
-    'https://cdn.example.com/files/crime-reports/counterfeit-f200000a.pdf',
+    'A shopkeeper in District 5 received four 500,000 VND counterfeit banknotes during a busy afternoon period. The notes were identified by UV scanner. Four additional victims were later identified in the same market block.',
     '2026-03-09', 3, 4, 2, FALSE, 106.7012, 10.7771,
     '2026-03-09 15:30:00+07', '2026-03-09 15:30:00+07',
     'c0000005-c000-4000-8000-c00000000005', FALSE
@@ -602,7 +622,7 @@ INSERT INTO crime_report (
 (
     'f200000b-f200-4000-8000-f2000000000b',
     'Human Trafficking Tip',
-    'https://cdn.example.com/files/crime-reports/trafficking-f200000b.pdf',
+    'A tip was received regarding a suspected trafficking operation using a boarding house in District 12. Three victims were recovered during a police raid. Two suspects were arrested; investigation is ongoing into a wider network.',
     '2026-03-10', 5, 3, 2, FALSE, 106.6980, 10.7735,
     '2026-03-10 07:00:00+07', '2026-03-10 07:00:00+07',
     'c0000006-c000-4000-8000-c00000000006', FALSE
@@ -610,7 +630,7 @@ INSERT INTO crime_report (
 (
     'f200000c-f200-4000-8000-f2000000000c',
     'Apartment Theft',
-    'https://cdn.example.com/files/crime-reports/apartment-theft-f200000c.pdf',
+    'A resident of a high-rise in Binh Thanh District returned from a business trip to find their apartment had been entered via the balcony. A laptop, watch, and cash were missing. The suspect was captured on building CCTV and subsequently arrested.',
     '2026-03-10', 3, 1, 1, TRUE, 106.7042, 10.7794,
     '2026-03-10 11:00:00+07', '2026-03-10 11:00:00+07',
     'c0000006-c000-4000-8000-c00000000006', TRUE
@@ -618,7 +638,7 @@ INSERT INTO crime_report (
 (
     'f200000d-f200-4000-8000-f2000000000d',
     'Bribery Case',
-    'https://cdn.example.com/files/crime-reports/bribery-f200000d.pdf',
+    'A government official was caught accepting a 50 million VND bribe in exchange for approving a construction permit. The incident was recorded by an undercover investigator. The official was arrested and suspended pending investigation.',
     '2026-03-11', 4, 0, 1, TRUE, 106.7019, 10.7758,
     '2026-03-11 09:20:00+07', '2026-03-11 09:20:00+07',
     'c0000007-c000-4000-8000-c00000000007', FALSE
@@ -626,7 +646,7 @@ INSERT INTO crime_report (
 (
     'f200000e-f200-4000-8000-f2000000000e',
     'Illegal Gambling Den',
-    'https://cdn.example.com/files/crime-reports/gambling-f200000e.pdf',
+    'Police raided an illegal gambling establishment operating out of a warehouse in Tan Binh District. Ten individuals including five organizers were arrested. Cash and equipment valued at over 300 million VND were seized.',
     '2026-03-11', 3, 10, 5, TRUE, 106.6995, 10.7751,
     '2026-03-11 21:00:00+07', '2026-03-11 21:00:00+07',
     'c0000007-c000-4000-8000-c00000000007', TRUE
@@ -634,7 +654,7 @@ INSERT INTO crime_report (
 (
     'f200000f-f200-4000-8000-f2000000000f',
     'Bag Snatching on Bridge',
-    'https://cdn.example.com/files/crime-reports/bag-snatch-f200000f.pdf',
+    'A pedestrian crossing a footbridge in District 4 had their bag snatched by a suspect on a bicycle. The bag contained a phone, wallet, and documents. The suspect was not caught but was captured on bridge CCTV.',
     '2026-03-12', 2, 1, 1, FALSE, 106.7007, 10.7767,
     '2026-03-12 17:30:00+07', '2026-03-12 17:30:00+07',
     'c0000008-c000-4000-8000-c00000000008', TRUE
@@ -642,7 +662,7 @@ INSERT INTO crime_report (
 (
     'f2000010-f200-4000-8000-f20000000010',
     'Identity Theft',
-    'https://cdn.example.com/files/crime-reports/identity-theft-f2000010.pdf',
+    'Two individuals used stolen personal ID documents to open fraudulent bank accounts and apply for loans totaling 150 million VND. The victims only discovered the fraud upon receiving debt collection notices. Investigation is ongoing.',
     '2026-03-12', 3, 2, 1, FALSE, 106.7033, 10.7779,
     '2026-03-12 10:00:00+07', '2026-03-12 10:00:00+07',
     'c0000008-c000-4000-8000-c00000000008', FALSE
@@ -650,7 +670,7 @@ INSERT INTO crime_report (
 (
     'f2000011-f200-4000-8000-f20000000011',
     'Arson at Warehouse',
-    'https://cdn.example.com/files/crime-reports/arson-f2000011.pdf',
+    'A warehouse in the industrial zone of Binh Chanh District was deliberately set on fire overnight. Damage is estimated at 2 billion VND. One suspect was arrested after being identified near the scene; investigators believe a business dispute was the motive.',
     '2026-03-13', 5, 0, 1, TRUE, 106.6960, 10.7730,
     '2026-03-13 03:45:00+07', '2026-03-13 03:45:00+07',
     'c0000009-c000-4000-8000-c00000000009', TRUE
@@ -658,7 +678,7 @@ INSERT INTO crime_report (
 (
     'f2000012-f200-4000-8000-f20000000012',
     'Carjacking Attempt',
-    'https://cdn.example.com/files/crime-reports/carjacking-f2000012.pdf',
+    'A driver stopped at a red light in District 2 was confronted by two individuals who attempted to drag them from the vehicle. The driver managed to drive away. Police are reviewing CCTV footage; suspects remain at large.',
     '2026-03-13', 4, 1, 2, FALSE, 106.7047, 10.7803,
     '2026-03-13 20:10:00+07', '2026-03-13 20:10:00+07',
     'c0000009-c000-4000-8000-c00000000009', TRUE
@@ -666,7 +686,7 @@ INSERT INTO crime_report (
 (
     'f2000013-f200-4000-8000-f20000000013',
     'Fake Product Sales',
-    'https://cdn.example.com/files/crime-reports/fake-products-f2000013.pdf',
+    'Two individuals were arrested selling counterfeit branded goods at a street market in District 6. Eight victims have been identified. Goods included fake luxury watches and handbags. All merchandise was confiscated.',
     '2026-03-14', 2, 8, 2, TRUE, 106.7021, 10.7764,
     '2026-03-14 13:00:00+07', '2026-03-14 13:00:00+07',
     'c000000a-c000-4000-8000-c0000000000a', TRUE
@@ -674,7 +694,7 @@ INSERT INTO crime_report (
 (
     'f2000014-f200-4000-8000-f20000000014',
     'Workplace Harassment',
-    'https://cdn.example.com/files/crime-reports/harassment-f2000014.pdf',
+    'An employee filed a report against a manager for repeated verbal and physical harassment over a three-month period in an office in District 1. Witness statements have been collected. The case has been referred to the labor authorities and district police.',
     '2026-03-14', 3, 1, 1, FALSE, 106.7028, 10.7772,
     '2026-03-14 16:00:00+07', '2026-03-14 16:00:00+07',
     'c000000a-c000-4000-8000-c0000000000a', FALSE
