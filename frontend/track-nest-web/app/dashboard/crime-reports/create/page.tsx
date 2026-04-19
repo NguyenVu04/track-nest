@@ -42,6 +42,7 @@ export default function CreateCrimeReportPage() {
       numberOfVictims: report.numberOfVictims,
       numberOfOffenders: report.numberOfOffenders,
       arrested: report.arrested,
+      photos: report.photos,
     };
     await criminalReportsService.createCrimeReport(request);
     toast.success("Report created successfully");

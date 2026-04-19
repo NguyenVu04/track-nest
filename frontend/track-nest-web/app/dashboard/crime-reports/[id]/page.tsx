@@ -35,6 +35,7 @@ export default function CrimeReportDetailPage() {
           numberOfVictims: response.numberOfVictims,
           numberOfOffenders: response.numberOfOffenders,
           arrested: response.arrested,
+          photos: response.photos ?? [],
           createdAt: response.createdAt,
           updatedAt: response.updatedAt,
           reporterId: response.reporterId,
