@@ -25,7 +25,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Server-side only env var — never exposed in the client bundle.
 const UPSTREAM =
-  process.env.KEYCLOAK_UPSTREAM_URL ?? "https://tracknestapp.org/auth";
+  process.env.NEXT_PUBLIC_KEYCLOAK_URL ?? "https://tracknestapp.org/auth";
 
 // Headers we forward to Keycloak (allowlist to avoid leaking internal headers).
 const FORWARDED_REQUEST_HEADERS = [
@@ -65,8 +65,7 @@ async function handleProxy(
   // browser ends up on the production Keycloak page. After successful login
   // Keycloak redirects the user back to localhost:3000 with the auth code.
   const isAuthEndpoint =
-    path.includes("/protocol/openid-connect/auth") &&
-    request.method === "GET";
+    path.includes("/protocol/openid-connect/auth") && request.method === "GET";
   if (isAuthEndpoint) {
     return NextResponse.redirect(targetUrl);
   }
