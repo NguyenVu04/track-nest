@@ -8,7 +8,19 @@ RUN npm ci
 FROM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY app/            ./app/
+COPY components/     ./components/
+COPY contexts/       ./contexts/
+COPY messages/       ./messages/
+COPY mocks/          ./mocks/
+COPY public/         ./public/
+COPY services/       ./services/
+COPY styles/         ./styles/
+COPY types/          ./types/
+COPY next.config.ts  ./
+COPY tsconfig.json   ./
+COPY postcss.config.mjs ./
+COPY package.json    ./
 RUN npm run build
 
 # Production runtime — standalone bundle only (~no node_modules)
