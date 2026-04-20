@@ -145,7 +145,7 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
 
     private LocationBucket getOrCreateBucket(UUID userId, OffsetDateTime timestamp) {
         OffsetDateTime utc = timestamp.withOffsetSameInstant(ZoneOffset.UTC);
-        short dayOfWeek = (short) (utc.getDayOfWeek().getValue() - 1);
+        short dayOfWeek = (short) ((utc.getDayOfWeek().getValue() - 1) % 7);
         short hourOfDay = (short) utc.getHour();
 
         return bucketRepository
