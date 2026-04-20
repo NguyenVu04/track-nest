@@ -49,7 +49,7 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/criminal-analyzer/dashboard")
                     .permitAll()
-                        .anyRequest()
+                    .anyRequest()
                     .authenticated()
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
