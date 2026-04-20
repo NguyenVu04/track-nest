@@ -3,3 +3,6 @@
 certs/
 /**/*/*.prod.*
 /**/*/secrets.yaml
+/**/*/*.tgz
+/**/*/values.yaml
+/**/*/values-*.yaml

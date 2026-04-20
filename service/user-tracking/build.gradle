@@ -38,7 +38,10 @@ repositories {
 }
 
 dependencies {
-    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation 'com.uber:h3:4.4.0'
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.16.5'
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.6.5'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.60.1'
     implementation 'com.google.firebase:firebase-admin:9.7.1'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'io.jsonwebtoken:jjwt-api:0.13.0'

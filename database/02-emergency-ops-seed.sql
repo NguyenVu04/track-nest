@@ -285,7 +285,7 @@ VALUES (
         'dd382dcf-3652-499c-acdb-5d9ce99a67b8',
         '8c52c01e-42a7-45cc-9254-db8a7601c764',
         '0e745cb3-5f38-419b-b446-d204c2e15ba9',
-        'ACCEPTED',
+        'REJECTED',
         106.7018,
         10.7759
     );

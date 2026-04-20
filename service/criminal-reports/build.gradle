@@ -25,6 +25,10 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.ai:spring-ai-starter-model-google-genai:1.1.4'
+	implementation 'io.micrometer:micrometer-registry-prometheus:1.16.5'
+	implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.6.5'
+	implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.60.1'
 	implementation "org.springframework.boot:spring-boot-starter-actuator"
 	implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-security'

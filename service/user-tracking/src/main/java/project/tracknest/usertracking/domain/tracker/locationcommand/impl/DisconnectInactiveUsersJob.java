@@ -12,9 +12,10 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.TrackingNotificationMessage;
-import project.tracknest.usertracking.core.entity.User;
 
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -27,8 +28,11 @@ public class DisconnectInactiveUsersJob implements Job {
     private String TOPIC;
 
     private static final String DISCONNECT_NOTIFICATION_TYPE = "USER_DISCONNECTED";
-    private static final String DISCONNECT_NOTIFICATION_TITLE = "User has been disconnected";
-    private static final String DISCONNECT_NOTIFICATION_BODY_TEMPLATE = "User %s has been disconnected due to inactivity at %s.";
+    private static final String DISCONNECT_NOTIFICATION_TITLE = "Connection temporarily lost";
+    private static final String DISCONNECT_NOTIFICATION_BODY_TEMPLATE = """
+            We haven’t received updates from %s for a short period.
+            This is usually due to signal or battery conditions.
+            """;
 
     private final TrackerUserRepository userRepository;
     private final KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
@@ -36,43 +40,28 @@ public class DisconnectInactiveUsersJob implements Job {
     @Override
     @Transactional
     public void execute(JobExecutionContext context) {
-
+        OffsetDateTime threshold = OffsetDateTime.now().minusSeconds(INACTIVE_SECONDS);
         Pageable pageable = PageRequest.of(0, PAGE_SIZE);
-
-        OffsetDateTime threshold = OffsetDateTime.now()
-                .minusSeconds(INACTIVE_SECONDS);
-
-        Page<User> page;
+        Page<UserDisconnectView> page;
 
         do {
             page = userRepository.findInactiveUsersSince(threshold, pageable);
+            if (page.isEmpty()) break;
 
-            if (page.isEmpty()) {
-                break;
-            }
+            List<UUID> ids = page.getContent().stream()
+                    .map(UserDisconnectView::getId)
+                    .toList();
 
-            for (User user : page.getContent()) {
+            userRepository.disconnectUsersById(ids);
 
-                user.setConnected(false);
+            page.getContent().forEach(user -> {
                 log.info("Disconnected inactive user with id {}", user.getId());
-
-                String body = String.format(DISCONNECT_NOTIFICATION_BODY_TEMPLATE, user.getUsername(), OffsetDateTime.now());
-                TrackingNotificationMessage notification = new TrackingNotificationMessage(
-                        user.getId(),
-                        body,
-                        DISCONNECT_NOTIFICATION_TITLE,
-                        DISCONNECT_NOTIFICATION_TYPE
-                );
-                kafkaTemplate.send(TOPIC, notification);
-
-            }
-
-            userRepository.saveAll(page.getContent());
-
-            pageable = page.nextPageable();
+                String body = String.format(DISCONNECT_NOTIFICATION_BODY_TEMPLATE, user.getUsername());
+                kafkaTemplate.send(TOPIC, new TrackingNotificationMessage(
+                        user.getId(), body, DISCONNECT_NOTIFICATION_TITLE, DISCONNECT_NOTIFICATION_TYPE));
+            });
 
         } while (page.hasNext());
-
     }
 
 }

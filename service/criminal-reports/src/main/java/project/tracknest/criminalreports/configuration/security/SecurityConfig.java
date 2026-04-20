@@ -27,6 +27,8 @@ public class SecurityConfig {
         http
                 .addFilterAfter(new KeycloakFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**")
                         .permitAll()
                         .requestMatchers("/actuator/**")
@@ -45,7 +47,9 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/criminal-analyzer/dashboard")
                     .permitAll()
-                        .anyRequest()
+                    .requestMatchers("/chatbot/**")
+                    .hasRole("USER")
+                    .anyRequest()
                     .authenticated()
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))

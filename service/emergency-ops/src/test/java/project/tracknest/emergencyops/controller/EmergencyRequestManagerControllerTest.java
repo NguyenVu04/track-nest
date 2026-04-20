@@ -11,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.emergencyops.core.entity.EmergencyRequestStatus;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.PatchEmergencyServiceLocationRequest;
-import project.tracknest.emergencyops.utils.SecuritySetup;
 
 import java.util.UUID;
 
@@ -35,9 +34,11 @@ class EmergencyRequestManagerControllerTest {
     class UpdateEmergencyServiceLocation {
         @Test
         void testUpdateEmergencyServiceLocation_success() {
-            PatchEmergencyServiceLocationRequest request = new PatchEmergencyServiceLocationRequest(
-                    37.7749, -122.4194
-            );
+            PatchEmergencyServiceLocationRequest request = PatchEmergencyServiceLocationRequest
+                    .builder()
+                    .latitudeDegrees(37.7749)
+                    .longitudeDegrees(-122.4194)
+                    .build();
 
             assertDoesNotThrow(() -> {
                 var response = controller.updateEmergencyServiceLocation(request);
@@ -66,9 +67,11 @@ class EmergencyRequestManagerControllerTest {
 
         @Test
         void testGetEmergencyServiceLocation_afterUpdate() {
-            PatchEmergencyServiceLocationRequest updateRequest = new PatchEmergencyServiceLocationRequest(
-                    37.7749, -122.4194
-            );
+            PatchEmergencyServiceLocationRequest updateRequest = PatchEmergencyServiceLocationRequest
+                    .builder()
+                    .latitudeDegrees(37.7749)
+                    .longitudeDegrees(-122.4194)
+                    .build();
             controller.updateEmergencyServiceLocation(updateRequest);
 
             assertDoesNotThrow(() -> {

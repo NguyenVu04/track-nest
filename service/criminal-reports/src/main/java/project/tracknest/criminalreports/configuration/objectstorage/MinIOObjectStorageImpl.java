@@ -73,6 +73,26 @@ public class MinIOObjectStorageImpl implements ObjectStorage {
     }
 
     @Override
+    public boolean fileExists(String bucketName, String objectName) {
+        try {
+            client.statObject(StatObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(objectName)
+                    .build());
+            return true;
+        } catch (io.minio.errors.ErrorResponseException e) {
+            if ("NoSuchKey".equals(e.errorResponse().code())) {
+                return false;
+            }
+            log.error("Error checking object existence in MinIO: ", e);
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            log.error("Error checking object existence in MinIO: ", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public InputStream downloadFile(String bucketName, String objectName) {
         try {
             GetObjectResponse response = client.getObject(GetObjectArgs.builder()

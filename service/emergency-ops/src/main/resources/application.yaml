@@ -1,6 +1,9 @@
 spring:
   application:
     name: emergency-ops
+  auto-configure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
   security:
     user:
       name: admin
@@ -14,10 +17,14 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: project.tracknest.emergencyops.core.datatype
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: java.util.HashMap
+        spring.json.trusted.packages: "*"
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
     listener:
       missing-topics-fatal: false
   data:
@@ -43,14 +50,33 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       probes:
         enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
 
 server:
   port: 28080
+  servlet:
+    context-path: /emergency-ops
+  tomcat:
+    max-threads: 50
+    accept-count: 100
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [${spring.application.name}] [trace=%X{traceId} span=%X{spanId}] %-5level %logger - %msg%n"
 
 app:
   kafka:
@@ -71,6 +97,7 @@ app:
       - POST
       - PUT
       - DELETE
+      - OPTIONS
   stomp:
     queue:
       user-location: /queue/user-location

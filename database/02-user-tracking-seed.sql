@@ -7,27 +7,49 @@ INSERT INTO "user" (id, username, connected) VALUES
     ('f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'admin', FALSE)
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO location (longitude, latitude, "timestamp", accuracy, velocity, user_id) VALUES
-    (-73.935242, 40.730610, NOW() - INTERVAL '1 minutes', 5.0, 0.5, 'dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
-    (-73.934000, 40.731000, NOW() - INTERVAL '2 minutes', 6.0, 0.7, 'dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
-    (-73.936500, 40.729500, NOW() - INTERVAL '3 minutes', 4.5, 0.2, 'dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
-    (-73.937000, 40.730000, NOW() - INTERVAL '4 minutes', 5.5, 0.1, 'dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
-    (-0.127758, 51.507351, NOW() - INTERVAL '5 minutes', 8.0, 1.2, '8c52c01e-42a7-45cc-9254-db8a7601c764'),
-    (-0.128500, 51.508000, NOW() - INTERVAL '6 minutes', 7.5, 0.9, '8c52c01e-42a7-45cc-9254-db8a7601c764'),
-    (-0.129000, 51.506500, NOW() - INTERVAL '7 minutes', 6.5, 0.3, '8c52c01e-42a7-45cc-9254-db8a7601c764'),
-    (-0.130000, 51.507900, NOW() - INTERVAL '8 minutes', 9.0, 0.0, '8c52c01e-42a7-45cc-9254-db8a7601c764'),
-    (139.691711, 35.689487, NOW() - INTERVAL '9 minutes', 3.0, 2.0, '4405a37d-bc86-403e-b605-bedd7db88d37'),
-    (139.692500, 35.689900, NOW() - INTERVAL '10 minutes', 3.5, 1.8, '4405a37d-bc86-403e-b605-bedd7db88d37'),
-    (139.690200, 35.688800, NOW() - INTERVAL '11 minutes', 4.0, 0.4, '4405a37d-bc86-403e-b605-bedd7db88d37'),
-    (139.693000, 35.690500, NOW() - INTERVAL '12 minutes', 5.0, 0.6, '4405a37d-bc86-403e-b605-bedd7db88d37'),
-    (2.352222, 48.856613, NOW() - INTERVAL '13 minutes', 6.0, 0.9, '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
-    (2.353000, 48.857000, NOW() - INTERVAL '14 minutes', 5.8, 0.7, '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
-    (2.351000, 48.856000, NOW() - INTERVAL '15 minutes', 7.0, 0.2, '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
-    (2.354000, 48.856500, NOW() - INTERVAL '16 minutes', 6.5, 0.0, '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
-    (151.209290, -33.868820, NOW() - INTERVAL '17 minutes', 10.0, 0.1, 'f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
-    (151.210000, -33.869000, NOW() - INTERVAL '18 minutes', 9.5, 0.3, 'f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
-    (151.208500, -33.868000, NOW() - INTERVAL '19 minutes', 8.0, 0.2, 'f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
-    (151.211000, -33.869500, NOW() - INTERVAL '20 minutes', 7.5, 0.0, 'f8f735b4-549c-4d8c-9e10-15f8c198b71b');
+-- Generate one week of location samples per user at 3-minute intervals (3360 points/user).
+-- Simulates a daily home/work/commute pattern so the anomaly pipeline has usable buckets.
+DO $$
+DECLARE
+    u RECORD;
+BEGIN
+    FOR u IN
+        SELECT * FROM (VALUES
+            ('dd382dcf-3652-499c-acdb-5d9ce99a67b8'::uuid, 106.700981, 10.776889),  -- Ho Chi Minh City, District 1
+            ('8c52c01e-42a7-45cc-9254-db8a7601c764'::uuid, 105.854167, 21.028511),  -- Hanoi, Hoan Kiem
+            ('4405a37d-bc86-403e-b605-bedd7db88d37'::uuid, 108.220833, 16.047079),  -- Da Nang
+            ('2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'::uuid, 107.590866, 16.463713),  -- Hue
+            ('f8f735b4-549c-4d8c-9e10-15f8c198b71b'::uuid, 105.784817, 10.045162)   -- Can Tho
+        ) AS t(user_id, home_lon, home_lat)
+    LOOP
+        INSERT INTO location (longitude, latitude, "timestamp", accuracy, velocity, user_id)
+        SELECT
+            CASE
+                WHEN h >= 8  AND h < 17 THEN u.home_lon + 0.020 + (random() - 0.5) * 0.002
+                WHEN h >= 20 OR  h < 7  THEN u.home_lon         + (random() - 0.5) * 0.002
+                ELSE                         u.home_lon + 0.020 * random() + (random() - 0.5) * 0.002
+            END,
+            CASE
+                WHEN h >= 8  AND h < 17 THEN u.home_lat + 0.015 + (random() - 0.5) * 0.002
+                WHEN h >= 20 OR  h < 7  THEN u.home_lat         + (random() - 0.5) * 0.002
+                ELSE                         u.home_lat + 0.015 * random() + (random() - 0.5) * 0.002
+            END,
+            ts,
+            3.0 + random() * 10,
+            CASE
+                WHEN (h = 7 OR h = 17 OR h = 18 OR h = 19) THEN 5.0 + random() * 10
+                ELSE random() * 2
+            END,
+            u.user_id
+        FROM (
+            SELECT
+                NOW() - (i * INTERVAL '3 minutes') AS ts,
+                EXTRACT(HOUR FROM NOW() - (i * INTERVAL '3 minutes'))::INT AS h
+            FROM generate_series(1, 3360) AS i
+        ) s
+        ON CONFLICT (user_id, "timestamp") DO NOTHING;
+    END LOOP;
+END $$;
 
 INSERT INTO mobile_device (id, language_code, device_token, created_at, user_id) VALUES
     ('11111111-1111-4111-8111-111111111111', 'en', 'token-user1-1', NOW(), 'dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
@@ -102,5 +124,47 @@ INSERT INTO user_in_family_circle (family_circle_id, user_id, role, admin) VALUE
     ('cccccccc-1004-4000-8000-cccccccccccc', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'Child', FALSE),
     ('cccccccc-1004-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'Mother', TRUE)
 ON CONFLICT DO NOTHING;
+
+-- location_bucket: one row per (user, day_of_week, hour_of_day) derived from location data.
+INSERT INTO location_bucket (user_id, day_of_week, hour_of_day, total_num_visits, created_at)
+SELECT
+    user_id,
+    EXTRACT(DOW  FROM "timestamp")::SMALLINT,
+    EXTRACT(HOUR FROM "timestamp")::SMALLINT,
+    COUNT(*)::INTEGER,
+    MIN("timestamp")
+FROM location
+GROUP BY user_id, EXTRACT(DOW FROM "timestamp"), EXTRACT(HOUR FROM "timestamp")
+ON CONFLICT (user_id, day_of_week, hour_of_day) DO NOTHING;
+
+-- cell_visit: aggregate location points into H3 resolution-9 cells (~174m edge) per bucket.
+INSERT INTO cell_visit (user_id, cell_id, bucket_id, first_seen, last_seen, num_visits, mature)
+SELECT
+    l.user_id,
+    h3_lat_lng_to_cell(POINT(l.longitude, l.latitude), 8)::text,
+    b.id,
+    MIN(l."timestamp"),
+    MAX(l."timestamp"),
+    COUNT(*)::INTEGER,
+    COUNT(*) >= 5
+FROM location l
+JOIN location_bucket b
+    ON b.user_id     = l.user_id
+   AND b.day_of_week = EXTRACT(DOW  FROM l."timestamp")::SMALLINT
+   AND b.hour_of_day = EXTRACT(HOUR FROM l."timestamp")::SMALLINT
+GROUP BY l.user_id, h3_lat_lng_to_cell(POINT(l.longitude, l.latitude), 8), b.id
+ON CONFLICT (cell_id, bucket_id) DO NOTHING;
+
+-- anomaly_run: a couple of historical (resolved) and active (unresolved) runs per user.
+INSERT INTO anomaly_run (id, user_id, started_at, resolved, last_seen_at) VALUES
+    ('dddddddd-0000-4000-8000-dddddddddddd', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', NOW() - INTERVAL '3 days',  TRUE,  NOW() - INTERVAL '3 days' + INTERVAL '45 minutes'),
+    ('dddddddd-0001-4000-8000-dddddddddddd', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', NOW() - INTERVAL '2 hours', FALSE, NOW() - INTERVAL '10 minutes'),
+    ('dddddddd-0002-4000-8000-dddddddddddd', '8c52c01e-42a7-45cc-9254-db8a7601c764', NOW() - INTERVAL '5 days',  TRUE,  NOW() - INTERVAL '5 days' + INTERVAL '1 hour'),
+    ('dddddddd-0003-4000-8000-dddddddddddd', '8c52c01e-42a7-45cc-9254-db8a7601c764', NOW() - INTERVAL '30 minutes', FALSE, NOW() - INTERVAL '5 minutes'),
+    ('dddddddd-0004-4000-8000-dddddddddddd', '4405a37d-bc86-403e-b605-bedd7db88d37', NOW() - INTERVAL '6 days',  TRUE,  NOW() - INTERVAL '6 days' + INTERVAL '20 minutes'),
+    ('dddddddd-0005-4000-8000-dddddddddddd', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', NOW() - INTERVAL '1 day',   TRUE,  NOW() - INTERVAL '1 day'  + INTERVAL '2 hours'),
+    ('dddddddd-0006-4000-8000-dddddddddddd', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', NOW() - INTERVAL '15 minutes', FALSE, NOW() - INTERVAL '2 minutes'),
+    ('dddddddd-0007-4000-8000-dddddddddddd', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', NOW() - INTERVAL '4 days',  TRUE,  NOW() - INTERVAL '4 days' + INTERVAL '15 minutes')
+ON CONFLICT (id) DO NOTHING;
 
 COMMIT;

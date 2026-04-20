@@ -68,6 +68,26 @@ CREATE TABLE crime_report (
     CHECK ( number_of_offenders >= 0)
 );
 
+CREATE TABLE chat_message (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID NOT NULL,
+    content TEXT NOT NULL,
+    role VARCHAR(15) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CHECK (role IN ('USER', 'MODEL'))
+);
+
+CREATE TABLE chat_session (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    document_id UUID NOT NULL,
+    message_left SMALLINT NOT NULL DEFAULT 0
+);
+
+ALTER TABLE chat_message
+    ADD FOREIGN KEY (session_id) REFERENCES chat_session(id) ON DELETE CASCADE;
+
 ALTER TABLE missing_person_report
     ADD FOREIGN KEY (status_name) REFERENCES missing_person_report_status(name);
 

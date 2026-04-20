@@ -5,10 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import project.tracknest.emergencyops.configuration.cache.ServerRedisMessage;
 import project.tracknest.emergencyops.configuration.cache.ServerRedisMessagePublisher;
 import project.tracknest.emergencyops.configuration.security.KeycloakService;
@@ -32,15 +34,10 @@ import java.util.UUID;
 @Slf4j
 class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverService, EmergencyRequestReceiverSubscriber {
     private static final String TRACKING_NOTIFICATION_MESSAGE_TYPE = "EMERGENCY_REQUEST_ASSIGNED";
-    private static final String TRACKING_NOTIFICATION_TITLE = "New Emergency Request Assigned";
-    private static final String TRACKING_NOTIFICATION_CONTENT_TEMPLATE = "An emergency request for family member %s has been assigned to emergency service %s.";
-
-    @Value("${app.stomp.queue.emergency-request}")
-    private String emergencyRequestQueue;
-
-    @Value("${app.kafka.topics[1]}")
-    private String TOPIC;
-
+    private static final String TRACKING_NOTIFICATION_TITLE = "Emergency Assistance Dispatched";
+    private static final String TRACKING_NOTIFICATION_CONTENT_TEMPLATE = """
+            Emergency assistance for %s has been assigned to %s.
+            """;
     private final EmergencyRequestReceiverEmergencyRequestRepository emergencyRequestRepository;
     private final EmergencyRequestReceiverEmergencyRequestStatusRepository emergencyRequestStatusRepository;
     private final EmergencyRequestReceiverEmergencyServiceRepository emergencyServiceRepository;
@@ -48,16 +45,25 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
     private final ServerRedisMessagePublisher redisPublisher;
     private final SimpMessagingTemplate messagingTemplate;
     private final KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
+    @Value("${app.stomp.queue.emergency-request}")
+    private String emergencyRequestQueue;
+    @Value("${app.kafka.topics[1]}")
+    private String TOPIC;
 
     @Override
     @Transactional
     public PostEmergencyRequestResponse createEmergencyRequest(UUID userId, PostEmergencyRequestRequest request) {
+        if (!checkNoActiveEmergencyRequest(request.getTargetId())) {
+            log.warn("Attempt to create emergency request for target {} who already has an active request", request.getTargetId());
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An active emergency request already exists for the specified user. Please wait until the current request is resolved before creating a new one.");
+        }
+
         Optional<EmergencyRequestStatus> status = emergencyRequestStatusRepository
                 .findById(EmergencyRequestStatus.Status.PENDING.getValue());
 
         if (status.isEmpty()) {
             log.error("Emergency request status not found: {}", EmergencyRequestStatus.Status.PENDING.getValue());
-            throw new RuntimeException("Emergency request status not found when creating emergency request");
+            throw new IllegalStateException("Emergency request status not found when creating emergency request");
         }
 
         Optional<EmergencyService> emergencyService = emergencyServiceRepository
@@ -68,7 +74,7 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
 
         if (emergencyService.isEmpty()) {
             log.error("No emergency service found near location: ({}, {})", request.getLastLatitudeDegrees(), request.getLastLongitudeDegrees());
-            throw new RuntimeException("No emergency service found near your location");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No emergency service found near your location");
         }
 
         EmergencyService service = emergencyService.get();
@@ -83,7 +89,7 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 .build();
 
         EmergencyRequest savedEmergencyRequest = emergencyRequestRepository
-                .saveAndFlush(emergencyRequest);
+                .save(emergencyRequest);
 
         long createdAtMs = OffsetDateTime.now()
                 .toInstant()
@@ -148,8 +154,8 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 emergencyRequest.getOpenAt().toInstant().toEpochMilli(),
                 emergencyRequest.getCloseAt() != null
                         ? emergencyRequest.getCloseAt()
-                        .toInstant()
-                        .toEpochMilli()
+                          .toInstant()
+                          .toEpochMilli()
                         : null,
                 profile.id(),
                 profile.username(),
@@ -180,5 +186,41 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 emergencyRequestPage.getNumber(),
                 emergencyRequestPage.getSize()
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CheckEmergencyRequestAllowedResponse checkEmergencyRequestAllowed(
+            UUID userId, UUID targetId
+    ) {
+        long now = OffsetDateTime.now()
+                .toInstant()
+                .toEpochMilli();
+
+        return new CheckEmergencyRequestAllowedResponse(
+                checkNoActiveEmergencyRequest(targetId),
+                "No active emergency request exists for the specified user. You can create a new emergency request.",
+                now
+        );
+    }
+
+    private boolean checkNoActiveEmergencyRequest(UUID targetId) {
+        Optional<EmergencyRequest> existingRequestOpt = emergencyRequestRepository
+                .findByTargetId(targetId);
+
+        if (existingRequestOpt.isPresent()) {
+            EmergencyRequest existingRequest = existingRequestOpt.get();
+
+            return !existingRequest.getStatus()
+                    .getName()
+                    .equals(EmergencyRequestStatus
+                            .Status.PENDING.getValue())
+                    && !existingRequest.getStatus()
+                    .getName()
+                    .equals(EmergencyRequestStatus
+                            .Status.ACCEPTED.getValue());
+        }
+
+        return true;
     }
 }

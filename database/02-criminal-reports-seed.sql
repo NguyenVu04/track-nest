@@ -1,36 +1,27 @@
 BEGIN;
-
 ------------------------------------------------
 -- Reporters
 ------------------------------------------------
 INSERT INTO reporter (id)
-VALUES
-('686fce27-64a1-4e3b-a471-b00920717bb1'),
-('766a99f7-7af1-4613-82a4-c303b2e9ee03'),
-('f5aea0e8-5dbf-442d-8c91-d69ec41a198d'),
-('8c1c0a9f-9193-4a02-90ea-7c398f73a3e6'),
-('0e745cb3-5f38-419b-b446-d204c2e15ba9');
-
+VALUES ('686fce27-64a1-4e3b-a471-b00920717bb1'),
+    ('766a99f7-7af1-4613-82a4-c303b2e9ee03'),
+    ('f5aea0e8-5dbf-442d-8c91-d69ec41a198d'),
+    ('8c1c0a9f-9193-4a02-90ea-7c398f73a3e6'),
+    ('0e745cb3-5f38-419b-b446-d204c2e15ba9');
 ------------------------------------------------
 -- Missing person report statuses
 ------------------------------------------------
 INSERT INTO missing_person_report_status (name)
-VALUES
-('PENDING'),
-('REJECTED'),
-('PUBLISHED')
-ON CONFLICT (name) DO NOTHING;
-
+VALUES ('PENDING'),
+    ('REJECTED'),
+    ('PUBLISHED') ON CONFLICT (name) DO NOTHING;
 INSERT INTO missing_person_report_status_translation (status_name, language_code, value)
-VALUES
-('PENDING','en','Pending'),
-('PENDING','vi','Đang chờ'),
-('REJECTED','en','Rejected'),
-('REJECTED','vi','Từ chối'),
-('PUBLISHED','en','Published'),
-('PUBLISHED','vi','Đã xuất bản')
-ON CONFLICT (status_name, language_code) DO NOTHING;
-
+VALUES ('PENDING', 'en', 'Pending'),
+    ('PENDING', 'vi', 'Đang chờ'),
+    ('REJECTED', 'en', 'Rejected'),
+    ('REJECTED', 'vi', 'Từ chối'),
+    ('PUBLISHED', 'en', 'Published'),
+    ('PUBLISHED', 'vi', 'Đã xuất bản') ON CONFLICT (status_name, language_code) DO NOTHING;
 ------------------------------------------------
 -- Missing person reports
 ------------------------------------------------

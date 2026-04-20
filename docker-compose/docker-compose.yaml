@@ -154,12 +154,10 @@ services:
     networks:
       - track_nest
     depends_on:
-      criminal_reports:
-        condition: service_healthy
-      emergency_ops:
-        condition: service_healthy
-      user_tracking:
-        condition: service_healthy
+      - emergency_ops
+      - user_tracking
+      - criminal_reports
+      - keycloak
 
   nginx:
     image: nginx:stable-alpine
@@ -193,6 +191,8 @@ services:
       MINIO_PUBLIC_URL: "http://localhost:38080/file"
       MINIO_ACCESS_KEY: "minioadmin"
       MINIO_SECRET_KEY: "minioadmin"
+      GOOGLE_API_KEY: ""
+      GOOGLE_GEMINI_CHAT_MODEL: "gemini-3-flash-preview"
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:38080"
     networks:
       - track_nest
@@ -200,12 +200,6 @@ services:
     depends_on:
       - criminal_reports_postgres
       - minio
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health/readiness || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
   emergency_ops:
     build:
@@ -231,12 +225,6 @@ services:
       - track_nest
     depends_on:
       - emergency_ops_postgres
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health/readiness || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
   user_tracking:
     build:
@@ -258,13 +246,7 @@ services:
       - track_nest
     depends_on:
       - user_tracking_postgres
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health/readiness || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
- 
+
   user_tracking_postgres:
     image: timescale/timescaledb-ha:pg17
     container_name: user_tracking_postgres

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
+import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.CheckEmergencyRequestAllowedResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.service.EmergencyRequestReceiverService;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.GetTrackerEmergencyRequestsResponse;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.PostEmergencyRequestRequest;
@@ -42,6 +43,17 @@ public class EmergencyRequestReceiverController {
 
         PageResponse<GetTrackerEmergencyRequestsResponse> response = service
                 .retrieveTrackerEmergencyRequests(userId, pageable);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/user/{targetId}/emergency-request-allowed")
+    public ResponseEntity<CheckEmergencyRequestAllowedResponse> checkEmergencyRequestAllowed(
+            @PathVariable UUID targetId
+    ) {
+        UUID userId = getCurrentUserId();
+
+        CheckEmergencyRequestAllowedResponse response = service.checkEmergencyRequestAllowed(userId, targetId);
 
         return ResponseEntity.ok(response);
     }
