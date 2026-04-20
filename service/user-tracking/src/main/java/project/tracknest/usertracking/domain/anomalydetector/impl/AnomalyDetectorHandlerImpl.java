@@ -185,6 +185,7 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
                                 .bucketId(bucketId)
                                 .mature(false)
                                 .lastSeen(timestamp)
+                                .numVisits(1)
                                 .build()
                 );
             }
