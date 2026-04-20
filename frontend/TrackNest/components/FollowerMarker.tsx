@@ -1,7 +1,7 @@
 import { getInitials } from "@/utils";
-import React, { memo, useEffect, useState } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
-import { Marker } from "react-native-maps";
+import React, { memo, useEffect, useRef, useState } from "react";
+import { Image, Platform, StyleSheet, Text, View } from "react-native";
+import { AnimatedRegion, MapMarker, MarkerAnimated } from "react-native-maps";
 
 type Props = {
   latitude: number;
@@ -15,6 +15,9 @@ type Props = {
   handlePresentModalPress?: () => void;
   fetchHistoryForTarget?: (id: string) => void;
 };
+
+const MIN_MARKER_MOVEMENT_DELTA = 0.00003; // ~3m — skip meaningless jitter
+const ANIMATION_DURATION_MS = 800;
 
 function FollowerMarker({
   latitude,
@@ -31,6 +34,55 @@ function FollowerMarker({
   // Leaving `tracksViewChanges` enabled continuously can cause heavy re-rendering
   // on the native side and lead to crashes when the marker is pressed repeatedly.
   const [tracksViewChanges, setTracksViewChanges] = useState<boolean>(!!avatar);
+
+  const markerRef = useRef<MapMarker>(null);
+  const animatedRegionRef = useRef(
+    new AnimatedRegion({
+      latitude,
+      longitude,
+      latitudeDelta: 0,
+      longitudeDelta: 0,
+    }),
+  );
+  const lastAcceptedCoordRef = useRef<{
+    latitude: number;
+    longitude: number;
+  } | null>({ latitude, longitude });
+
+  useEffect(() => {
+    const next = { latitude, longitude };
+    const prev = lastAcceptedCoordRef.current;
+
+    if (prev) {
+      const latDiff = Math.abs(next.latitude - prev.latitude);
+      const lngDiff = Math.abs(next.longitude - prev.longitude);
+      if (
+        latDiff < MIN_MARKER_MOVEMENT_DELTA &&
+        lngDiff < MIN_MARKER_MOVEMENT_DELTA
+      ) {
+        return;
+      }
+    }
+    lastAcceptedCoordRef.current = next;
+
+    if (
+      Platform.OS === "android" &&
+      markerRef.current?.animateMarkerToCoordinate
+    ) {
+      markerRef.current.animateMarkerToCoordinate(next, ANIMATION_DURATION_MS);
+    } else {
+      animatedRegionRef.current
+        .timing({
+          ...next,
+          latitudeDelta: 0,
+          longitudeDelta: 0,
+          duration: ANIMATION_DURATION_MS,
+          useNativeDriver: false,
+          toValue: 0, // unused — AnimatedRegion reads latitude/longitude directly
+        })
+        .start();
+    }
+  }, [latitude, longitude]);
 
   const avatarContent = avatar ? (
     <Image
@@ -67,8 +119,9 @@ function FollowerMarker({
   }, [id]);
 
   return (
-    <Marker
-      coordinate={{ latitude, longitude }}
+    <MarkerAnimated
+      ref={markerRef}
+      coordinate={animatedRegionRef.current}
       anchor={{ x: 0.5, y: 0.5 }}
       tracksViewChanges={tracksViewChanges}
       onPress={() => {
@@ -96,7 +149,7 @@ function FollowerMarker({
           </View>
         </View>
       </View>
-    </Marker>
+    </MarkerAnimated>
   );
 }
 

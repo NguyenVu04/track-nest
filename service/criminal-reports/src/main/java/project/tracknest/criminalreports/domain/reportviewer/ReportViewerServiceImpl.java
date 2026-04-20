@@ -16,6 +16,7 @@ import project.tracknest.criminalreports.domain.reportmanager.dto.GuidelinesDocu
 import project.tracknest.criminalreports.domain.reportmanager.dto.MissingPersonReportResponse;
 import project.tracknest.criminalreports.domain.repository.CrimeReportRepository;
 import project.tracknest.criminalreports.domain.repository.GuidelinesDocumentRepository;
+import project.tracknest.criminalreports.core.datatype.ReportStatusConstants;
 import project.tracknest.criminalreports.domain.repository.MissingPersonReportRepository;
 
 import java.util.UUID;
@@ -109,11 +110,13 @@ class ReportViewerServiceImpl implements ReportViewerService {
                 .content(report.getContent())
                 .contactEmail(report.getContactEmail())
                 .contactPhone(report.getContactPhone())
+                .latitude(report.getLatitude())
+                .longitude(report.getLongitude())
                 .createdAt(report.getCreatedAt())
                 .userId(report.getUserId())
                 .status(report.getStatus() != null ? report.getStatus().getName() : null)
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
-                .publicFlag(false)
+                .publicFlag(report.getStatus() != null && ReportStatusConstants.PUBLISHED.equals(report.getStatus().getName()))
                 .build();
     }
 
@@ -129,6 +132,7 @@ class ReportViewerServiceImpl implements ReportViewerService {
                 .numberOfVictims(report.getNumberOfVictims())
                 .numberOfOffenders(report.getNumberOfOffenders())
                 .arrested(report.isArrested())
+                .photos(report.getPhotos())
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)

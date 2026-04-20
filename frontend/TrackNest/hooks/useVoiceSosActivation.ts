@@ -4,7 +4,7 @@ import {
   useSpeechRecognitionEvent,
 } from "expo-speech-recognition";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { AppState, AppStateStatus } from "react-native";
+import { AppState, AppStateStatus, Keyboard } from "react-native";
 
 const DEFAULT_TRIGGER_PHRASES = [
   "help me",
@@ -26,8 +26,16 @@ export function useVoiceSosActivation(enabled: boolean = true) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Keep refs so event handler callbacks never need to be re-created when
+  // pathname or router identity changes (which happens on every navigation).
+  const routerRef = useRef(router);
+  const pathnameRef = useRef(pathname);
+  useEffect(() => { routerRef.current = router; }, [router]);
+  useEffect(() => { pathnameRef.current = pathname; }, [pathname]);
+
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const shouldListenRef = useRef(false);
+  const keyboardVisibleRef = useRef(false);
   const lastTriggerAtRef = useRef(0);
 
   const normalizedPhrases = useMemo(
@@ -50,6 +58,10 @@ export function useVoiceSosActivation(enabled: boolean = true) {
       console.warn("Speech recognition is not available on this device");
       return;
     }
+
+    // Do not start while keyboard is open — starting the recognizer on Android
+    // requests input focus and causes the system to dismiss the keyboard.
+    if (keyboardVisibleRef.current) return;
 
     shouldListenRef.current = true;
 
@@ -98,7 +110,9 @@ export function useVoiceSosActivation(enabled: boolean = true) {
     }
   });
 
-  useSpeechRecognitionEvent("result", (event) => {
+  // Stable callback with empty deps — reads router/pathname through refs so it
+  // is never re-created on navigation, preventing listener re-registration.
+  const onResult = useCallback((event: { results: { transcript: string }[] }) => {
     const transcript = normalize(event.results[0]?.transcript ?? "");
     if (!transcript) return;
 
@@ -111,15 +125,18 @@ export function useVoiceSosActivation(enabled: boolean = true) {
     if (now - lastTriggerAtRef.current < 3000) return;
     lastTriggerAtRef.current = now;
 
-    if (pathname !== "/sos") {
-      router.push("/sos");
+    if (pathnameRef.current !== "/sos") {
+      routerRef.current.push("/sos");
     }
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedPhrases]); // normalizedPhrases is stable (useMemo with [])
+
+  useSpeechRecognitionEvent("result", onResult);
 
   useEffect(() => {
     startListening();
 
-    const subscription = AppState.addEventListener("change", (nextState) => {
+    const appStateSub = AppState.addEventListener("change", (nextState) => {
       appStateRef.current = nextState;
       if (nextState === "active") {
         if (shouldListenRef.current || enabled) {
@@ -130,8 +147,24 @@ export function useVoiceSosActivation(enabled: boolean = true) {
       }
     });
 
+    // Pause recognition while the keyboard is visible so the recognizer
+    // restart cycle doesn't steal focus and dismiss the keyboard.
+    const keyboardShowSub = Keyboard.addListener("keyboardDidShow", () => {
+      keyboardVisibleRef.current = true;
+      stopListening();
+    });
+
+    const keyboardHideSub = Keyboard.addListener("keyboardDidHide", () => {
+      keyboardVisibleRef.current = false;
+      if (enabled && appStateRef.current === "active") {
+        startListening();
+      }
+    });
+
     return () => {
-      subscription.remove();
+      appStateSub.remove();
+      keyboardShowSub.remove();
+      keyboardHideSub.remove();
       stopListening();
     };
   }, [enabled, startListening, stopListening]);

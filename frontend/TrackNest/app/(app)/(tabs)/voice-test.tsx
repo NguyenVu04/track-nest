@@ -1,4 +1,6 @@
+import { useSettings } from "@/contexts/SettingsContext";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import {
   ExpoSpeechRecognitionModule,
   useSpeechRecognitionEvent,
@@ -16,6 +18,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const VoiceTestScreen = () => {
+  const router = useRouter();
+  const { checkForSOSCommand, voiceSettings } = useSettings();
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
@@ -91,13 +95,23 @@ const VoiceTestScreen = () => {
   }, []);
 
   // Handle incoming results
-  useSpeechRecognitionEvent("result", (event) => {
+  useSpeechRecognitionEvent("result", async (event) => {
     const result = event.results[0];
     if (!result) return;
 
-    setTranscript(result.transcript);
-    setAllResults((prev) => [...prev, result.transcript]);
-    setInterimTranscript(result.transcript);
+    const transcriptText = result.transcript;
+    setTranscript(transcriptText);
+    setAllResults((prev) => [...prev, transcriptText]);
+    setInterimTranscript(transcriptText);
+
+    // Check if this is an SOS command
+    if (voiceSettings.enabled) {
+      const isSOS = await checkForSOSCommand(transcriptText);
+      if (isSOS) {
+        // Navigate to SOS screen with auto-activate
+        router.push("/sos?autoActivate=true");
+      }
+    }
   });
 
   // Handle errors

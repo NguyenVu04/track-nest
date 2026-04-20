@@ -8,6 +8,7 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.modules.core.DeviceEventManagerModule
 
 class NativeLocationModule(private val reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
@@ -15,9 +16,27 @@ class NativeLocationModule(private val reactContext: ReactApplicationContext) :
   companion object {
     private const val PREFS_NAME = "tracknest_native_location"
     private const val BUFFER_KEY = "location_buffer"
+    const val EVENT_MODE_CHANGED = "trackingModeChanged"
+
+    private var instance: NativeLocationModule? = null
+
+    fun emitModeChange(mode: String) {
+      instance?.sendEvent(EVENT_MODE_CHANGED, mode)
+    }
+  }
+
+  init {
+    instance = this
   }
 
   override fun getName(): String = "NativeLocationModule"
+
+  // Required by React Native's NativeEventEmitter protocol
+  @ReactMethod
+  fun addListener(eventName: String) {}
+
+  @ReactMethod
+  fun removeListeners(count: Double) {}
 
   @ReactMethod
   fun start() {
@@ -47,5 +66,13 @@ class NativeLocationModule(private val reactContext: ReactApplicationContext) :
     } catch (e: Exception) {
       promise.reject("NATIVE_LOCATION_CONSUME_FAILED", e)
     }
+  }
+
+  private fun sendEvent(eventName: String, data: Any) {
+    try {
+      reactContext
+        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+        .emit(eventName, data)
+    } catch (_: Exception) {}
   }
 }

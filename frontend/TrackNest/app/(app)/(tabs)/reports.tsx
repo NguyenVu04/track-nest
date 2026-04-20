@@ -21,6 +21,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { colors, radii, spacing } from "@/styles/styles";
 
 // initial empty placeholder; data will be loaded from services
 const INITIAL_REPORTS: Report[] = [];
@@ -133,6 +134,7 @@ function GuideCard({
 }
 
 export default function ReportsScreen() {
+  const router = useRouter();
   const t = useTranslation(reportsLang);
   const [tab, setTab] = useState("Crime Reports");
   const tabs = [
@@ -251,11 +253,36 @@ export default function ReportsScreen() {
     return null;
   };
 
+  const onCreateReport = () => {
+    if (tab === "Crime Reports") {
+      router.push("/(app)/create-report" as any);
+    } else if (tab === "Missing") {
+      router.push("/(app)/create-missing" as any);
+    }
+    // Guide tab: FAB hidden, no action
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f5f7fa" }}>
       <View style={styles.container}>
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>{t.title}</Text>
+          <View style={styles.headerActions}>
+            <Pressable
+              style={styles.headerIconBtn}
+              onPress={() => router.push("/(app)/crime-dashboard" as any)}
+              hitSlop={8}
+            >
+              <Ionicons name="stats-chart-outline" size={20} color="#74becb" />
+            </Pressable>
+            <Pressable
+              style={styles.headerIconBtn}
+              onPress={() => router.push("/(app)/crime-analysis" as any)}
+              hitSlop={8}
+            >
+              <Ionicons name="bar-chart-outline" size={20} color="#74becb" />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.segmentRow}>
@@ -291,12 +318,18 @@ export default function ReportsScreen() {
             data={getCurrentData()}
             keyExtractor={(i) => i.id}
             renderItem={renderItem}
-            contentContainerStyle={{ padding: 12 }}
+            contentContainerStyle={{ padding: 12, paddingBottom: 80 }}
             refreshing={refreshing}
             onRefresh={onRefresh}
             onEndReached={onEndReached}
             onEndReachedThreshold={0.6}
           />
+        )}
+
+        {tab !== "Guide" && (
+          <Pressable style={styles.fab} onPress={onCreateReport}>
+            <Ionicons name="add" size={28} color="#fff" />
+          </Pressable>
         )}
       </View>
     </SafeAreaView>
@@ -308,10 +341,21 @@ const styles = StyleSheet.create({
   headerRow: {
     marginBottom: 12,
     flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "center",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    paddingTop: 4,
   },
   headerTitle: { fontSize: 18, fontWeight: "600" },
+  headerActions: { flexDirection: "row", gap: 4 },
+  headerIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#f0f9ff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   segmentRow: { flexDirection: "row", padding: 12, gap: 8 },
   segmentBtn: {
     paddingVertical: 8,
@@ -350,4 +394,20 @@ const styles = StyleSheet.create({
   sevLow: { backgroundColor: "#f2fff0" },
   cardMeta: { color: "#666", fontSize: 12, marginBottom: 2 },
   cardDesc: { marginTop: 6, color: "#444" },
+  fab: {
+    position: "absolute",
+    bottom: spacing.lg,
+    right: spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
 });

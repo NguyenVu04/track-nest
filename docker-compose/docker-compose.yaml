@@ -188,6 +188,7 @@ services:
       DB_USERNAME: "tracknestadmin"
       DB_PASSWORD: "tracknestadmin"
       MINIO_ENDPOINT: "http://minio:9000"
+      MINIO_PUBLIC_URL: "http://localhost:38080/file"
       MINIO_ACCESS_KEY: "minioadmin"
       MINIO_SECRET_KEY: "minioadmin"
       GOOGLE_API_KEY: ""
@@ -371,15 +372,20 @@ services:
 
   web:
     build:
-      context: ../frontend/track-nets-web
+      context: ../frontend/track-nest-web
       dockerfile: Dockerfile
     container_name: web
     environment:
-      - NODE_ENV=production
+      NODE_ENV: development
+      NEXT_PUBLIC_USER_TRACKING_API_URL: "http://localhost:8800/user-tracking"
+      NEXT_PUBLIC_EMERGENCY_OPS_API_URL: "http://localhost:8800/emergency-ops"
+      NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL: "http://localhost:8800/criminal-reports"
+      NEXT_PUBLIC_KEYCLOAK_URL: "http://localhost/auth"
     ports:
       - "3000:3000"
     networks:
       - track_nest
+
 
 networks:
   track_nest:

@@ -27,16 +27,30 @@ public class SecurityConfig {
         http
                 .addFilterAfter(new KeycloakFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.OPTIONS, "/**")
-                        .permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**")
-                        .permitAll()
-                        .requestMatchers("/actuator/**")
-                        .permitAll()
-                        .requestMatchers("/chatbot/**")
-                        .hasRole("USER")
-                        .anyRequest()
-                        .denyAll()
+                    .requestMatchers(HttpMethod.OPTIONS, "/**")
+                    .permitAll()
+                    .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**")
+                    .permitAll()
+                    .requestMatchers("/actuator/**")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET,
+                        "/report-manager/missing-person-reports",
+                        "/report-manager/crime-reports",
+                        "/report-manager/crime-reports/nearby",
+                        "/report-manager/guidelines",
+                        "/crime-locator/heatmap",
+                        "/crime-locator/high-risk-check")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/report-viewer/**")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/file/**")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/criminal-analyzer/dashboard")
+                    .permitAll()
+                    .requestMatchers("/chatbot/**")
+                    .hasRole("USER")
+                    .anyRequest()
+                    .authenticated()
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)

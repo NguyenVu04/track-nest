@@ -1,3 +1,6 @@
+import { criminalReportsService, CrimeReport, MissingPersonReport, GuidelinesDocument, getSeverityLabel } from "./criminalReports";
+
+// Legacy Types (for backward compatibility with UI components)
 export type Report = {
   id: string;
   title: string;
@@ -5,6 +8,7 @@ export type Report = {
   date: string;
   severity: "High" | "Medium" | "Low";
   description: string;
+  photos?: string[];
 };
 
 export type MissingPerson = {
@@ -25,6 +29,138 @@ export type Guide = {
   icon?: string;
 };
 
+// Adapter functions to convert backend types to UI types
+
+/**
+ * Convert CrimeReport (backend) to Report (UI)
+ */
+function adaptCrimeReportToReport(crimeReport: CrimeReport): Report {
+  const date = new Date(crimeReport.createdAt);
+  return {
+    id: crimeReport.id,
+    title: crimeReport.title,
+    address: `${crimeReport.latitude.toFixed(4)}, ${crimeReport.longitude.toFixed(4)}`,
+    date: date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    severity: getSeverityLabel(crimeReport.severity) as "High" | "Medium" | "Low",
+    description: crimeReport.content || `Victims: ${crimeReport.numberOfVictims}, Offenders: ${crimeReport.numberOfOffenders}`,
+    photos: crimeReport.photos,
+  };
+}
+
+/**
+ * Convert MissingPersonReport (backend) to MissingPerson (UI)
+ */
+function adaptMissingPersonToUI(missingPerson: MissingPersonReport): MissingPerson {
+  const date = missingPerson.date ? new Date(missingPerson.date) : new Date(missingPerson.createdAt);
+  return {
+    id: missingPerson.id,
+    name: missingPerson.fullName,
+    age: 0, // Backend doesn't have age, estimate from personalId or set default
+    description: missingPerson.content,
+    lastSeen: date.toLocaleString("en-US", { 
+      month: "short", 
+      day: "numeric", 
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    }),
+    photo: missingPerson.photo,
+    severity: "High" as const, // Default, can be calculated based on time missing
+  };
+}
+
+/**
+ * Convert GuidelinesDocument (backend) to Guide (UI)
+ */
+function adaptGuidelinesToGuide(guidelines: GuidelinesDocument): Guide {
+  return {
+    id: guidelines.id,
+    title: guidelines.title,
+    category: guidelines.published ? "Published" : "Draft",
+    content: guidelines.content,
+  };
+}
+
+// API functions that use real backend
+
+export async function fetchReports({
+  page = 1,
+  perPage = 10,
+} = {}) {
+  try {
+    const response = await criminalReportsService.getCrimeReports({
+      page: page - 1, // Backend uses 0-indexed pages
+      size: perPage,
+    });
+    
+    const adaptedReports = response.content.map(adaptCrimeReportToReport);
+    return { 
+      data: adaptedReports, 
+      total: response.totalElements, 
+      page 
+    };
+  } catch (error) {
+    console.error("Failed to fetch reports:", error);
+    // Return empty data on error
+    return { data: [] as Report[], total: 0, page };
+  }
+}
+
+export async function getReportById(id: string) {
+  try {
+    const report = await criminalReportsService.getCrimeReportById(id);
+    return adaptCrimeReportToReport(report);
+  } catch (error) {
+    console.error("Failed to get report by ID:", error);
+    return undefined;
+  }
+}
+
+export async function fetchMissingPersons({
+  page = 1,
+  perPage = 10,
+} = {}) {
+  try {
+    const response = await criminalReportsService.getMissingPersonReports(
+      page - 1, // Backend uses 0-indexed pages
+      perPage
+    );
+    
+    const adaptedMissing = response.content.map(adaptMissingPersonToUI);
+    return { 
+      data: adaptedMissing, 
+      total: response.totalElements, 
+      page 
+    };
+  } catch (error) {
+    console.error("Failed to fetch missing persons:", error);
+    return { data: [] as MissingPerson[], total: 0, page };
+  }
+}
+
+export async function fetchGuides({
+  page = 1,
+  perPage = 10,
+} = {}) {
+  try {
+    const response = await criminalReportsService.getGuidelines(
+      page - 1, // Backend uses 0-indexed pages
+      perPage
+    );
+    
+    const adaptedGuides = response.content.map(adaptGuidelinesToGuide);
+    return { 
+      data: adaptedGuides, 
+      total: response.totalElements, 
+      page 
+    };
+  } catch (error) {
+    console.error("Failed to fetch guides:", error);
+    return { data: [] as Guide[], total: 0, page };
+  }
+}
+
+// Keep mock data as fallback for offline/testing
 export const MOCK: Report[] = [
   {
     id: "1",
@@ -204,60 +340,3 @@ export const MOCK_GUIDES: Guide[] = [
       "1. Use strong passwords\n2. Enable two-factor authentication\n3. Be cautious with personal information\n4. Verify links before clicking\n5. Report suspicious activity",
   },
 ];
-
-export async function fetchReports({
-  page = 1,
-  perPage = 10,
-  delay = 400,
-} = {}) {
-  // Simulate network delay
-  return new Promise<{ data: Report[]; total: number; page: number }>(
-    (resolve) => {
-      setTimeout(() => {
-        const start = (page - 1) * perPage;
-        const data = MOCK.slice(start, start + perPage);
-        resolve({ data, total: MOCK.length, page });
-      }, delay);
-    }
-  );
-}
-
-export async function getReportById(id: string) {
-  return new Promise<Report | undefined>((resolve) => {
-    setTimeout(() => resolve(MOCK.find((r) => r.id === id)), 200);
-  });
-}
-
-export async function fetchMissingPersons({
-  page = 1,
-  perPage = 10,
-  delay = 400,
-} = {}) {
-  // Simulate network delay
-  return new Promise<{ data: MissingPerson[]; total: number; page: number }>(
-    (resolve) => {
-      setTimeout(() => {
-        const start = (page - 1) * perPage;
-        const data = MOCK_MISSING.slice(start, start + perPage);
-        resolve({ data, total: MOCK_MISSING.length, page });
-      }, delay);
-    }
-  );
-}
-
-export async function fetchGuides({
-  page = 1,
-  perPage = 10,
-  delay = 400,
-} = {}) {
-  // Simulate network delay
-  return new Promise<{ data: Guide[]; total: number; page: number }>(
-    (resolve) => {
-      setTimeout(() => {
-        const start = (page - 1) * perPage;
-        const data = MOCK_GUIDES.slice(start, start + perPage);
-        resolve({ data, total: MOCK_GUIDES.length, page });
-      }, delay);
-    }
-  );
-}

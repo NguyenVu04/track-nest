@@ -2,6 +2,7 @@
 // Library imports
 // ====================
 import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
@@ -35,18 +36,18 @@ import MapControls from "@/components/MapControls";
 import MapHeader from "@/components/MapHeader";
 import { map as mapLang } from "@/constant/languages";
 import { getMockFollowersForCircle } from "@/constant/mockFamilyCircles";
-import { MOCK_SAFE_ZONES } from "@/constant/mockSafeZones";
-import { FamilyCircle, Follower } from "@/constant/types";
+import { FamilyCircle, Follower, SafeZone } from "@/constant/types";
 import { useMapContext } from "@/contexts/MapContext";
+import { usePOIAnalytics } from "@/contexts/POIAnalyticsContext";
 import { useTracking } from "@/contexts/TrackingContext";
 import { useAddressFromLocation } from "@/hooks/useAddressFromLocation";
 import useDeviceLocation from "@/hooks/useDeviceLocation";
 import { useFamilyCircle } from "@/hooks/useFamilyCircle";
 import { useFollowers } from "@/hooks/useFollowers";
 import { useMapController } from "@/hooks/useMapController";
-import { useMockFollowers } from "@/hooks/useMockFollowers";
 import { useStreamedFollowers } from "@/hooks/useStreamedFollowers";
 import { useTranslation } from "@/hooks/useTranslation";
+import { emergencyService } from "@/services/emergency";
 import { updateUserLocation } from "@/services/tracker";
 import { colors, radii, spacing } from "@/styles/styles";
 
@@ -66,6 +67,15 @@ export default function MapScreen() {
   // State declarations
   // ====================
   const [isMapReady, setIsMapReady] = useState(false);
+  const [showCrimeHeatmap, setShowCrimeHeatmap] = useState(false);
+  const [showPOIs, setShowPOIs] = useState(true);
+
+  // Keep the tab bar visible above any BottomSheetModal opened from this screen
+  const tabBarHeight = useBottomTabBarHeight();
+  const sheetContainerStyle = useMemo(
+    () => ({ bottom: tabBarHeight }),
+    [tabBarHeight],
+  );
 
   // ====================
   // Ref declarations
@@ -76,7 +86,7 @@ export default function MapScreen() {
   const myInfoSheetRef = useRef<BottomSheetModal>(null);
   const mapTypeSheetRef = useRef<BottomSheetModal>(null);
   const familyCircleSheetRef = useRef<BottomSheetModal>(null);
-  const safeZonesRef = useRef(MOCK_SAFE_ZONES);
+  const [safeZones, setSafeZones] = useState<SafeZone[]>([]);
 
   // ====================
   // Hook usages
@@ -86,6 +96,8 @@ export default function MapScreen() {
   const { height: screenHeight } = useWindowDimensions();
   const { mapType, setMapType } = useMapContext();
   const { tracking, shareLocation } = useTracking();
+  const { crimeHeatmapPoints, loadCrimeHeatmap, nearbyPOIs, getPOIColor } =
+    usePOIAnalytics();
   const { circles, selectedCircle, selectCircle, refreshCircles } =
     useFamilyCircle();
   const t = useTranslation(mapLang);
@@ -102,10 +114,6 @@ export default function MapScreen() {
   );
 
   // ── Fallback: mock followers (used when stream has no data yet) ──
-  const mockFollowers = useMockFollowers(
-    location?.latitude,
-    location?.longitude,
-  );
   const circleFollowers: Follower[] = useMemo(() => {
     if (!selectedCircle || !location) return [];
     return getMockFollowersForCircle(
@@ -121,7 +129,7 @@ export default function MapScreen() {
         ? streamedFollowers
         : circleFollowers.length > 0
           ? circleFollowers
-          : mockFollowers;
+          : [];
     return [...baseFollowers].sort((a, b) => {
       // First, sort by active status (active first)
       if (a.sharingActive !== b.sharingActive) {
@@ -132,37 +140,49 @@ export default function MapScreen() {
       const timeB = b.lastActive ? new Date(b.lastActive).getTime() : 0;
       return timeB - timeA;
     });
-  }, [streamedFollowers, circleFollowers, mockFollowers]);
+  }, [streamedFollowers, circleFollowers]);
 
   // ── Upload user location to server when it changes ──
+  const hasAnimatedInitialRef = useRef(false);
   const lastUploadedRef = useRef<{ lat: number; lng: number } | null>(null);
+  const locationRef2 = useRef(location);
+  useEffect(() => {
+    locationRef2.current = location;
+  }, [location]);
 
   useEffect(() => {
-    if (!tracking || !shareLocation || !location) return;
+    if (!tracking || !shareLocation) return;
 
-    // Avoid uploading the same position repeatedly
-    const prev = lastUploadedRef.current;
-    if (
-      prev &&
-      Math.abs(prev.lat - location.latitude) < 0.0001 &&
-      Math.abs(prev.lng - location.longitude) < 0.0001
-    ) {
-      return;
-    }
-
-    lastUploadedRef.current = {
-      lat: location.latitude,
-      lng: location.longitude,
+    const upload = (loc: typeof location) => {
+      if (!loc) return;
+      updateUserLocation([
+        {
+          latitudeDeg: loc.latitude,
+          longitudeDeg: loc.longitude,
+          accuracyMeter: loc.accuracy ?? 10,
+          velocityMps: loc.speed ?? 0,
+        },
+      ]).catch((err) => console.warn("Location upload failed:", err.message));
     };
 
-    updateUserLocation([
-      {
-        latitudeDeg: location.latitude,
-        longitudeDeg: location.longitude,
-        accuracyMeter: 10,
-        velocityMps: location.speed ?? 0,
-      },
-    ]).catch((err) => console.warn("Location upload failed:", err.message));
+    // Upload on meaningful position change
+    const prev = lastUploadedRef.current;
+    if (
+      location &&
+      (!prev ||
+        Math.abs(prev.lat - location.latitude) >= 0.0001 ||
+        Math.abs(prev.lng - location.longitude) >= 0.0001)
+    ) {
+      lastUploadedRef.current = {
+        lat: location.latitude,
+        lng: location.longitude,
+      };
+      upload(location);
+    }
+
+    // Heartbeat: upload current position every 5s regardless of movement
+    const heartbeat = setInterval(() => upload(locationRef2.current), 5000);
+    return () => clearInterval(heartbeat);
   }, [tracking, shareLocation, location]);
 
   useEffect(() => {
@@ -258,6 +278,34 @@ export default function MapScreen() {
     }, 500);
   }, [fadeAnim]);
 
+  // Animate to current location once on first load
+  useEffect(() => {
+    if (!isMapReady || !location || hasAnimatedInitialRef.current) return;
+    hasAnimatedInitialRef.current = true;
+    centerMap(location.latitude, location.longitude);
+  }, [isMapReady, location, centerMap]);
+
+  // Load real safe zones when location is available
+  useEffect(() => {
+    if (!location) return;
+    emergencyService
+      .getNearestSafeZones({
+        lat: location.latitude,
+        lng: location.longitude,
+        maxDistance: 10000,
+        maxNumber: 20,
+      })
+      .then(setSafeZones)
+      .catch((err) => console.warn("Failed to load safe zones:", err.message));
+  }, [location?.latitude, location?.longitude]);
+
+  // Load crime heatmap when toggled on
+  useEffect(() => {
+    if (showCrimeHeatmap && location) {
+      loadCrimeHeatmap(location.latitude, location.longitude);
+    }
+  }, [showCrimeHeatmap, location, loadCrimeHeatmap]);
+
   const generalInfoRenderItem = useCallback(
     ({ item }: { item: Follower }) => (
       <Pressable
@@ -350,21 +398,21 @@ export default function MapScreen() {
             setSelectedFollowerId(null);
           }}
         >
-          {safeZonesRef.current.map((zone) => (
+          {safeZones.map((zone) => (
             <Circle
               key={`safe-zone-area-${zone.id}`}
               center={{
                 latitude: zone.latitude,
                 longitude: zone.longitude,
               }}
-              radius={zone.radiusMeters}
+              radius={zone.radius}
               strokeColor="rgba(46, 204, 113, 0.85)"
               fillColor="rgba(46, 204, 113, 0.18)"
               strokeWidth={2}
             />
           ))}
 
-          {safeZonesRef.current.map((zone) => (
+          {safeZones.map((zone) => (
             <Marker
               key={`safe-zone-marker-${zone.id}`}
               coordinate={{
@@ -372,10 +420,53 @@ export default function MapScreen() {
                 longitude: zone.longitude,
               }}
               title={zone.name}
-              description={`Safe radius: ${zone.radiusMeters}m`}
+              description={`Safe radius: ${zone.radius}m`}
               pinColor="#2ecc71"
             />
           ))}
+
+          {/* POI Markers */}
+          {showPOIs &&
+            nearbyPOIs.map((poi) => (
+              <Marker
+                key={`poi-${poi.id}`}
+                coordinate={{
+                  latitude: poi.latitude,
+                  longitude: poi.longitude,
+                }}
+                title={poi.name}
+                description={poi.description || poi.category}
+                pinColor={getPOIColor(poi.category)}
+              />
+            ))}
+
+          {/* Crime Heatmap Circles */}
+          {showCrimeHeatmap &&
+            crimeHeatmapPoints.map((crime) => (
+              <Circle
+                key={`crime-${crime.id}`}
+                center={{
+                  latitude: crime.latitude,
+                  longitude: crime.longitude,
+                }}
+                radius={100 + crime.severity * 30}
+                strokeColor={
+                  crime.severity >= 4
+                    ? "#e74c3c"
+                    : crime.severity >= 2
+                      ? "#f39c12"
+                      : "#27ae60"
+                }
+                fillColor={
+                  crime.severity >= 4
+                    ? "rgba(231, 76, 60, 0.3)"
+                    : crime.severity >= 2
+                      ? "rgba(243, 156, 18, 0.2)"
+                      : "rgba(39, 174, 96, 0.15)"
+                }
+                strokeWidth={2}
+              />
+            ))}
 
           {followersToRender && followersToRender.length > 0
             ? followersToRender.map((f) => (
@@ -410,7 +501,11 @@ export default function MapScreen() {
           onZoomOut={null}
           onGeneralModalPress={handleGeneralInfoModalPress}
           onMapTypePress={handleMapTypeModalPress}
+          onToggleHeatmap={() => setShowCrimeHeatmap(!showCrimeHeatmap)}
+          onTogglePOIs={() => setShowPOIs(!showPOIs)}
           mapType={mapType}
+          showHeatmap={showCrimeHeatmap}
+          showPOIs={showPOIs}
         />
       </View>
 
@@ -418,6 +513,7 @@ export default function MapScreen() {
         followerInfoSheetRef={followerInfoSheetRef}
         renderBackdrop={renderBackdrop}
         selectedFollower={selectedFollower}
+        tabBarHeight={tabBarHeight}
       />
 
       {generalInfoListData.length > 0 && (
@@ -425,6 +521,7 @@ export default function MapScreen() {
           generalInfoSheetRef={generalInfoSheetRef}
           generalInfoListData={generalInfoListData}
           generalInfoRenderItem={generalInfoRenderItem}
+          tabBarHeight={tabBarHeight}
         />
       )}
 
@@ -434,6 +531,7 @@ export default function MapScreen() {
         enableDynamicSizing={true}
         maxDynamicContentSize={Math.floor(screenHeight * 0.55)}
         index={0}
+        containerStyle={sheetContainerStyle}
       >
         <View style={styles.myInfoContent}>
           <Text style={styles.myInfoTitle}>{t.me}</Text>
@@ -481,6 +579,7 @@ export default function MapScreen() {
         renderBackdrop={renderBackdrop}
         mapType={mapType}
         handleSelectMapType={handleSelectMapType}
+        tabBarHeight={tabBarHeight}
       />
 
       <FamilyCircleListSheet
@@ -490,6 +589,7 @@ export default function MapScreen() {
         handleSelectFamilyCircle={handleSelectFamilyCircle}
         familyCircles={circles}
         onRefresh={refreshCircles}
+        tabBarHeight={tabBarHeight}
       />
     </>
   );

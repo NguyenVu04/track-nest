@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -25,6 +26,7 @@ public class CrimeReportResponse {
     private int numberOfVictims;
     private int numberOfOffenders;
     private boolean arrested;
+    private List<String> photos;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
     private UUID reporterId;

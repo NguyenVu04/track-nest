@@ -9,9 +9,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import project.tracknest.criminalreports.AbstractIntegrationTest;
+import project.tracknest.criminalreports.config.TestSecurityConfig;
 import project.tracknest.criminalreports.domain.reportmanager.dto.CreateCrimeReportRequest;
 import project.tracknest.criminalreports.domain.reportmanager.dto.CreateGuidelinesDocumentRequest;
 import project.tracknest.criminalreports.domain.reportmanager.dto.CreateMissingPersonReportRequest;
@@ -25,7 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class ReportManagerControllerTest {
+@Import(TestSecurityConfig.class)
+class ReportManagerControllerTest extends AbstractIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 

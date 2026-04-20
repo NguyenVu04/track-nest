@@ -1,11 +1,15 @@
 import { missingDetail as missingDetailLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
-import { MissingPerson, MOCK_MISSING } from "@/services/reports";
+import {
+  criminalReportsService,
+  MissingPersonReport,
+} from "@/services/criminalReports";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,28 +18,20 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Mock function to get a missing person by ID
-async function getMissingPersonById(
-  id: string,
-): Promise<MissingPerson | undefined> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_MISSING.find((m) => m.id === id)), 200);
-  });
-}
-
 export default function MissingDetailScreen() {
   const router = useRouter();
   const t = useTranslation(missingDetailLang);
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [person, setPerson] = useState<MissingPerson | null>(null);
+  const [person, setPerson] = useState<MissingPersonReport | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadPerson = async () => {
       if (!id) return;
       try {
-        const data = await getMissingPersonById(id);
-        setPerson(data || null);
+        const data =
+          await criminalReportsService.getMissingPersonReportById(id);
+        setPerson(data);
       } catch (err) {
         console.error("Failed to load missing person:", err);
       } finally {
@@ -96,44 +92,73 @@ export default function MissingDetailScreen() {
               style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
             >
               <Ionicons name="search" size={28} color="#ff4d4f" />
-              <Text style={styles.title}>{person.name}</Text>
+              <Text style={styles.title}>{person.fullName}</Text>
             </View>
             <View
               style={[
                 styles.severityChip,
-                person.severity === "High"
-                  ? styles.sevHigh
-                  : person.severity === "Medium"
-                    ? styles.sevMed
-                    : styles.sevLow,
+                person.status === "PUBLISHED" ? styles.sevHigh : styles.sevLow,
               ]}
             >
-              <Text style={styles.severityText}>{person.severity}</Text>
+              <Text style={styles.severityText}>
+                {person.status ?? "PENDING"}
+              </Text>
             </View>
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t.personalInformation}</Text>
-            <View style={styles.infoRow}>
-              <Ionicons name="person" size={20} color="#74becb" />
-              <Text style={styles.infoText}>
-                {t.age}: {person.age} {t.yearsOld}
-              </Text>
-            </View>
+            {person.personalId ? (
+              <View style={styles.infoRow}>
+                <Ionicons name="card-outline" size={20} color="#74becb" />
+                <Text style={styles.infoText}>ID: {person.personalId}</Text>
+              </View>
+            ) : null}
+            {person.contactPhone ? (
+              <View style={[styles.infoRow, { marginTop: 8 }]}>
+                <Ionicons name="call-outline" size={20} color="#74becb" />
+                <Text style={styles.infoText}>{person.contactPhone}</Text>
+              </View>
+            ) : null}
+            {person.contactEmail ? (
+              <View style={[styles.infoRow, { marginTop: 8 }]}>
+                <Ionicons name="mail-outline" size={20} color="#74becb" />
+                <Text style={styles.infoText}>{person.contactEmail}</Text>
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t.lastSeen}</Text>
             <View style={styles.infoRow}>
               <Ionicons name="time" size={20} color="#74becb" />
-              <Text style={styles.infoText}>{person.lastSeen}</Text>
+              <Text style={styles.infoText}>
+                {person.date
+                  ? new Date(person.date).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "Unknown"}
+              </Text>
             </View>
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t.physicalDescription}</Text>
-            <Text style={styles.description}>{person.description}</Text>
+            <Text style={styles.description}>{person.content}</Text>
           </View>
+
+          {person.photo ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t.photo}</Text>
+              <Image
+                source={{ uri: person.photo }}
+                style={styles.photo}
+                resizeMode="cover"
+              />
+            </View>
+          ) : null}
 
           <View style={styles.actionButtons}>
             <Pressable style={[styles.button, styles.callButton]}>
@@ -282,5 +307,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 14,
     color: "#fff",
+  },
+  photo: {
+    width: "100%",
+    height: 220,
+    borderRadius: 10,
+    marginTop: 8,
   },
 });

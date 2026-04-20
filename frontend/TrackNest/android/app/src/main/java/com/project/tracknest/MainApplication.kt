@@ -27,6 +27,7 @@ class MainApplication : Application(), ReactApplication {
               // add(MyReactNativePackage())
               add(CrashDetectionPackage())
               add(NativeLocationPackage())
+              add(DistractionTrackerPackage())
             }
 
           override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"

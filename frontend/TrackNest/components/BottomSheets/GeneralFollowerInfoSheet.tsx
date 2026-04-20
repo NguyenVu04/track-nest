@@ -6,12 +6,14 @@ type GeneralFollowerInfoSheetProps = {
   generalInfoSheetRef: React.RefObject<BottomSheetModal | null>;
   generalInfoListData: any[];
   generalInfoRenderItem: ({ item }: { item: any }) => React.ReactElement;
+  tabBarHeight?: number;
 };
 
 const GeneralFollowerInfoSheet = ({
   generalInfoSheetRef,
   generalInfoListData,
   generalInfoRenderItem,
+  tabBarHeight = 0,
 }: GeneralFollowerInfoSheetProps) => {
   const { height: screenHeight } = useWindowDimensions();
 
@@ -23,6 +25,7 @@ const GeneralFollowerInfoSheet = ({
       maxDynamicContentSize={Math.floor(screenHeight * 0.45)}
       index={0}
       enableContentPanningGesture={false}
+      containerStyle={{ bottom: tabBarHeight }}
     >
       <BottomSheetFlatList
         data={generalInfoListData}

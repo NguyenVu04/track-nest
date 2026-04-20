@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Email;
-import org.hibernate.validator.constraints.URL;
-
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -34,16 +32,20 @@ public class MissingPersonReport {
     @Column(name = "personal_id", nullable = false)
     private String personalId;
 
-    @URL(message = "Invalid URL format")
     @Column(name = "photo")
     private String photo;
 
     @Column(name = "date", nullable = false)
     private LocalDate date;
 
-    @URL(message = "Invalid URL format")
     @Column(name = "content", nullable = false)
     private String content;
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
 
     @Email(message = "Invalid email format")
     @Column(name = "contact_email")

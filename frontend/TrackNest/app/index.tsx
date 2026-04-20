@@ -1,24 +1,11 @@
 import { BACKGROUND_LOCATION_UPLOAD_TASK_NAME } from "@/constant";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerBackgroundTaskAsync } from "@/utils";
-import {
-  registerForPushNotificationsAsync,
-  setupUploadNotificationChannel,
-} from "@/utils/notifications";
+import { setupUploadNotificationChannel } from "@/utils/notifications";
 import * as Location from "expo-location";
-import * as Notifications from "expo-notifications";
 import { Redirect } from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, Platform, View } from "react-native";
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+import { ActivityIndicator, View } from "react-native";
 
 export default function Index() {
   const { isAuthenticated, isGuestMode, isLoading } = useAuth();
@@ -47,33 +34,6 @@ export default function Index() {
     setupUploadNotificationChannel().catch((err) =>
       console.warn("Failed to set up upload notification channel:", err),
     );
-  }, []);
-
-  useEffect(() => {
-    registerForPushNotificationsAsync().then((token) =>
-      console.log("Push notification token:", token),
-    );
-
-    if (Platform.OS === "android") {
-      Notifications.getNotificationChannelsAsync().then((value) =>
-        console.log("Notification channels:", value),
-      );
-    }
-    const notificationListener = Notifications.addNotificationReceivedListener(
-      (notification) => {
-        console.log("Notification received:", notification);
-      },
-    );
-
-    const responseListener =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log(response);
-      });
-
-    return () => {
-      notificationListener.remove();
-      responseListener.remove();
-    };
   }, []);
 
   // Show loading state while checking authentication

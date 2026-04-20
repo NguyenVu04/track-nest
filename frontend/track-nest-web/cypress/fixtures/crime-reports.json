@@ -1,0 +1,58 @@
+{
+  "content": [
+    {
+      "id": "cr-001",
+      "title": "Vehicle Break-in on Main St",
+      "content": "A vehicle was broken into at the parking lot on Main Street. The thief smashed the passenger window.",
+      "severity": 3,
+      "date": "2026-04-01T10:30:00",
+      "latitude": 10.8231,
+      "longitude": 106.6297,
+      "numberOfVictims": 1,
+      "numberOfOffenders": 1,
+      "arrested": false,
+      "createdAt": "2026-04-01T11:00:00Z",
+      "updatedAt": "2026-04-01T11:00:00Z",
+      "reporterId": "reporter-001",
+      "isPublic": true
+    },
+    {
+      "id": "cr-002",
+      "title": "Assault near Central Park",
+      "content": "A physical altercation was reported near the central park fountain.",
+      "severity": 4,
+      "date": "2026-04-02T18:00:00",
+      "latitude": 10.7769,
+      "longitude": 106.7009,
+      "numberOfVictims": 2,
+      "numberOfOffenders": 3,
+      "arrested": true,
+      "createdAt": "2026-04-02T18:30:00Z",
+      "updatedAt": "2026-04-02T18:30:00Z",
+      "reporterId": "reporter-001",
+      "isPublic": false
+    },
+    {
+      "id": "cr-003",
+      "title": "Minor Vandalism – Bus Stop",
+      "content": "Graffiti was sprayed on a bus stop shelter on Route 9.",
+      "severity": 1,
+      "date": "2026-04-03T09:00:00",
+      "latitude": 10.8000,
+      "longitude": 106.6500,
+      "numberOfVictims": 0,
+      "numberOfOffenders": 1,
+      "arrested": false,
+      "createdAt": "2026-04-03T09:15:00Z",
+      "updatedAt": "2026-04-03T09:15:00Z",
+      "reporterId": "reporter-001",
+      "isPublic": true
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 3,
+  "totalPages": 1,
+  "first": true,
+  "last": true
+}
