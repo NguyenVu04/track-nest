@@ -170,7 +170,7 @@ services:
       - track_nest
     depends_on:
       - keycloak
-      # - web
+      - web
 
   criminal_reports:
     build:
@@ -370,17 +370,21 @@ services:
       retries: 3
       start_period: 10s
 
-  # web:
-  #   build:
-  #     context: ../frontend/track-nest-web
-  #     dockerfile: Dockerfile
-  #   container_name: web
-  #   environment:
-  #     - NODE_ENV=production
-  #   ports:
-  #     - "3000:3000"
-  #   networks:
-  #     - track_nest
+  web:
+    build:
+      context: ../frontend/track-nest-web
+      dockerfile: Dockerfile
+    container_name: web
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_USER_TRACKING_API_URL: "http://localhost:8800/user-tracking"
+      NEXT_PUBLIC_EMERGENCY_OPS_API_URL: "http://localhost:8800/emergency-ops"
+      NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL: "http://localhost:8800/criminal-reports"
+      NEXT_PUBLIC_KEYCLOAK_URL: "http://localhost/auth"
+    ports:
+      - "3000:3000"
+    networks:
+      - track_nest
 
 
 networks:
