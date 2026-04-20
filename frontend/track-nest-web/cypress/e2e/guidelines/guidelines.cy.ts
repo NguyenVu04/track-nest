@@ -21,6 +21,16 @@
  *      Role × Create button visibility (same as other lists)
  */
 
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      mockGuidelinesApi(): Chainable<void>;
+    }
+  }
+}
+
+export {};
+
 describe("Guidelines Page", () => {
   beforeEach(() => {
     cy.mockGuidelinesApi();
@@ -39,7 +49,10 @@ describe("Guidelines Page", () => {
 
     it("shows public/private badge", () => {
       // One is public (isPublic: true) and one is not
-      cy.get("table tbody tr, [data-testid='guideline-row']").should("have.length.at.least", 2);
+      cy.get("table tbody tr, [data-testid='guideline-row']").should(
+        "have.length.at.least",
+        2,
+      );
     });
   });
 
@@ -53,7 +66,9 @@ describe("Guidelines Page", () => {
 
     // BVA – title
     it("BVA-GL-T01 | 1 character title (minimum boundary) is accepted", () => {
-      cy.get("#title, input[placeholder*='title' i], input[name='title']").first().type("A");
+      cy.get("#title, input[placeholder*='title' i], input[name='title']")
+        .first()
+        .type("A");
       cy.get("#title, input[placeholder*='title' i], input[name='title']")
         .first()
         .should("have.value", "A");
@@ -73,7 +88,9 @@ describe("Guidelines Page", () => {
     it("BVA-GL-T03 | empty title (below minimum) prevents submission", () => {
       // Leave title empty, fill content
       cy.get("textarea, #content").first().type("Valid content.");
-      cy.get("button[type='submit'], button").contains(/save|create|submit/i).click();
+      cy.get("button[type='submit'], button")
+        .contains(/save|create|submit/i)
+        .click();
       cy.get("@createGuideline.all").should("have.length", 0);
     });
 
@@ -83,7 +100,9 @@ describe("Guidelines Page", () => {
         .first()
         .type("Safety Procedures Guide");
       cy.get("textarea").first().type("Step 1: Remain calm. Step 2: Evacuate.");
-      cy.get("button[type='submit'], button").contains(/save|create|submit/i).click();
+      cy.get("button[type='submit'], button")
+        .contains(/save|create|submit/i)
+        .click();
       cy.wait("@createGuideline");
     });
 
@@ -92,7 +111,9 @@ describe("Guidelines Page", () => {
         .first()
         .type("Some title");
       // Leave textarea empty
-      cy.get("button[type='submit'], button").contains(/save|create|submit/i).click();
+      cy.get("button[type='submit'], button")
+        .contains(/save|create|submit/i)
+        .click();
       cy.get("@createGuideline.all").should("have.length", 0);
     });
   });
@@ -122,21 +143,27 @@ describe("Guidelines Page", () => {
   // =========================================================================
   context("DT | Role × Create guideline button", () => {
     it("DT-GL-R01 | Reporter sees the Create button", () => {
-      cy.contains(/new guideline|create.*guideline|add guideline/i).should("be.visible");
+      cy.contains(/new guideline|create.*guideline|add guideline/i).should(
+        "be.visible",
+      );
     });
 
     it("DT-GL-R02 | Admin does NOT see the Create button", () => {
       cy.mockGuidelinesApi();
       cy.visitAsRole("/dashboard/guidelines", "Admin");
       cy.wait("@getGuidelines");
-      cy.contains(/new guideline|create.*guideline|add guideline/i).should("not.exist");
+      cy.contains(/new guideline|create.*guideline|add guideline/i).should(
+        "not.exist",
+      );
     });
 
     it("DT-GL-R03 | Emergency Services does NOT see the Create button", () => {
       cy.mockGuidelinesApi();
       cy.visitAsRole("/dashboard/guidelines", "Emergency Services");
       cy.wait("@getGuidelines");
-      cy.contains(/new guideline|create.*guideline|add guideline/i).should("not.exist");
+      cy.contains(/new guideline|create.*guideline|add guideline/i).should(
+        "not.exist",
+      );
     });
   });
 });

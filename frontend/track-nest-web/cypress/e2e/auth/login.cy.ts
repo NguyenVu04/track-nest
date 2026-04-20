@@ -17,13 +17,25 @@
  * └─────────────────────┴─────────────────────────────┴──────────────────────────────┘
  */
 
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      visitAsRole(path: string, role: string): Chainable<void>;
+      mockMissingPersonsApi(): Chainable<void>;
+    }
+  }
+}
+
+export {};
+
 describe("Authentication – Login Page", () => {
   // -------------------------------------------------------------------------
   // UC-01 : Unauthenticated user sees login page
   // -------------------------------------------------------------------------
   context("UC-01 | Unauthenticated access", () => {
     beforeEach(() => {
-      cy.clearAuth();
+      cy.clearCookies();
+      cy.clearAllSessionStorage();
       cy.clearLocalStorage();
       cy.visit("/login");
     });
@@ -53,48 +65,55 @@ describe("Authentication – Login Page", () => {
   // -------------------------------------------------------------------------
   // UC-02 : Unauthenticated user is redirected from protected routes
   // -------------------------------------------------------------------------
-  context("UC-02 | Protected route redirect (ECP – unauthenticated class)", () => {
-    beforeEach(() => {
-      cy.clearAuth();
-      cy.clearLocalStorage();
-    });
-
-    const protectedRoutes = [
-      "/dashboard/missing-persons",
-      "/dashboard/crime-reports",
-      "/dashboard/guidelines",
-      "/dashboard/safe-zones",
-      "/dashboard/emergency-requests",
-    ];
-
-    protectedRoutes.forEach((route) => {
-      it(`redirects ${route} → /login when unauthenticated`, () => {
-        cy.visit(route, { failOnStatusCode: false });
-        cy.url().should("include", "/login");
+  context(
+    "UC-02 | Protected route redirect (ECP – unauthenticated class)",
+    () => {
+      beforeEach(() => {
+        cy.clearCookies();
+        cy.clearAllSessionStorage();
+        cy.clearLocalStorage();
       });
-    });
-  });
+
+      const protectedRoutes = [
+        "/dashboard/missing-persons",
+        "/dashboard/crime-reports",
+        "/dashboard/guidelines",
+        "/dashboard/safe-zones",
+        "/dashboard/emergency-requests",
+      ];
+
+      protectedRoutes.forEach((route) => {
+        it(`redirects ${route} → /login when unauthenticated`, () => {
+          cy.visit(route, { failOnStatusCode: false });
+          cy.url().should("include", "/login");
+        });
+      });
+    },
+  );
 
   // -------------------------------------------------------------------------
   // UC-03 : Authenticated user bypasses the login page
   // -------------------------------------------------------------------------
-  context("UC-03 | Authenticated user access (ECP – authenticated class)", () => {
-    it("redirects authenticated Reporter away from /login", () => {
-      cy.visitAsRole("/login", "Reporter");
-      // Keycloak init will detect existing token and push to dashboard
-      cy.url().should("include", "/dashboard");
-    });
+  context(
+    "UC-03 | Authenticated user access (ECP – authenticated class)",
+    () => {
+      it("redirects authenticated Reporter away from /login", () => {
+        cy.visitAsRole("/login", "Reporter");
+        // Keycloak init will detect existing token and push to dashboard
+        cy.url().should("include", "/dashboard");
+      });
 
-    it("redirects authenticated Admin away from /login", () => {
-      cy.visitAsRole("/login", "Admin");
-      cy.url().should("include", "/dashboard");
-    });
+      it("redirects authenticated Admin away from /login", () => {
+        cy.visitAsRole("/login", "Admin");
+        cy.url().should("include", "/dashboard");
+      });
 
-    it("redirects authenticated Emergency Services user away from /login", () => {
-      cy.visitAsRole("/login", "Emergency Services");
-      cy.url().should("include", "/dashboard");
-    });
-  });
+      it("redirects authenticated Emergency Services user away from /login", () => {
+        cy.visitAsRole("/login", "Emergency Services");
+        cy.url().should("include", "/dashboard");
+      });
+    },
+  );
 
   // -------------------------------------------------------------------------
   // UC-04 : Authenticated user can reach the dashboard directly
@@ -127,11 +146,15 @@ describe("Authentication – Login Page", () => {
 
     it("logout button is visible in the header", () => {
       // The header renders a logout button
-      cy.get("button").contains(/log.?out/i).should("exist");
+      cy.get("button")
+        .contains(/log.?out/i)
+        .should("exist");
     });
 
     it("clicking logout clears localStorage auth keys", () => {
-      cy.get("button").contains(/log.?out/i).click();
+      cy.get("button")
+        .contains(/log.?out/i)
+        .click();
       cy.window().then((win) => {
         expect(win.localStorage.getItem("access_token")).to.be.null;
         expect(win.localStorage.getItem("auth_user")).to.be.null;

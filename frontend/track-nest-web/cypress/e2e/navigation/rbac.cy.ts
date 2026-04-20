@@ -48,6 +48,16 @@
  * └─────────────────────┴─────────────┴────────────────────┴──────────────┴──────────┘
  */
 
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      mockSafeZonesApi(): Chainable<void>;
+    }
+  }
+}
+
+export {};
+
 describe("Navigation & RBAC", () => {
   // =========================================================================
   // UC-NAV-01 : Sidebar items per role
@@ -175,7 +185,9 @@ describe("Navigation & RBAC", () => {
       cy.visitAsRole("/dashboard/missing-persons", "Reporter");
       cy.get("header, [data-testid='header']").then(($header) => {
         if ($header.length) {
-          cy.wrap($header).contains(/reporter/i).should("exist");
+          cy.wrap($header)
+            .contains(/reporter/i)
+            .should("exist");
         } else {
           // Fallback: role badge somewhere on the page
           cy.contains(/reporter/i).should("exist");
@@ -208,17 +220,23 @@ describe("Navigation & RBAC", () => {
     });
 
     it("clicking Crime Reports in sidebar navigates to crime-reports page", () => {
-      cy.get("nav, aside").contains(/crime reports/i).click();
+      cy.get("nav, aside")
+        .contains(/crime reports/i)
+        .click();
       cy.url().should("include", "/dashboard/crime-reports");
     });
 
     it("clicking Guidelines in sidebar navigates to guidelines page", () => {
-      cy.get("nav, aside").contains(/guidelines/i).click();
+      cy.get("nav, aside")
+        .contains(/guidelines/i)
+        .click();
       cy.url().should("include", "/dashboard/guidelines");
     });
 
     it("clicking Missing Persons in sidebar navigates to missing-persons page", () => {
-      cy.get("nav, aside").contains(/missing persons/i).click();
+      cy.get("nav, aside")
+        .contains(/missing persons/i)
+        .click();
       cy.url().should("include", "/dashboard/missing-persons");
     });
   });

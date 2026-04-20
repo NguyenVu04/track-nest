@@ -34,6 +34,17 @@
  *      • status filter: PENDING | ACCEPTED | COMPLETED | ALL
  */
 
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      visitAsRole(path: string, role: string): Chainable<void>;
+      mockEmergencyRequestsApi(): Chainable<void>;
+    }
+  }
+}
+
+export {};
+
 describe("Emergency Requests Page", () => {
   // =========================================================================
   // Decision Table – Role × page access
@@ -95,13 +106,17 @@ describe("Emergency Requests Page", () => {
     context("UC-ER-02 | Accept PENDING request", () => {
       it("accept button is available on a PENDING request", () => {
         cy.contains("tr", "er-001").within(() => {
-          cy.get("button").contains(/accept/i).should("exist");
+          cy.get("button")
+            .contains(/accept/i)
+            .should("exist");
         });
       });
 
       it("clicking Accept calls the accept API", () => {
         cy.contains("tr", "er-001").within(() => {
-          cy.get("button").contains(/accept/i).click();
+          cy.get("button")
+            .contains(/accept/i)
+            .click();
         });
         cy.wait("@acceptEmergencyRequest");
       });
@@ -113,13 +128,17 @@ describe("Emergency Requests Page", () => {
     context("UC-ER-03 | Reject PENDING request", () => {
       it("reject button is available on a PENDING request", () => {
         cy.contains("tr", "er-001").within(() => {
-          cy.get("button").contains(/reject/i).should("exist");
+          cy.get("button")
+            .contains(/reject/i)
+            .should("exist");
         });
       });
 
       it("clicking Reject calls the reject API", () => {
         cy.contains("tr", "er-001").within(() => {
-          cy.get("button").contains(/reject/i).click();
+          cy.get("button")
+            .contains(/reject/i)
+            .click();
         });
         cy.wait("@rejectEmergencyRequest");
       });
@@ -131,21 +150,31 @@ describe("Emergency Requests Page", () => {
     context("DT | Status × action availability", () => {
       it("DT-STATUS-01 | PENDING request has Accept and Reject buttons", () => {
         cy.contains("tr", "er-001").within(() => {
-          cy.get("button").contains(/accept/i).should("exist");
-          cy.get("button").contains(/reject/i).should("exist");
+          cy.get("button")
+            .contains(/accept/i)
+            .should("exist");
+          cy.get("button")
+            .contains(/reject/i)
+            .should("exist");
         });
       });
 
       it("DT-STATUS-02 | ACCEPTED request does NOT have Accept button", () => {
         cy.contains("tr", "er-002").within(() => {
-          cy.get("button").contains(/^accept$/i).should("not.exist");
+          cy.get("button")
+            .contains(/^accept$/i)
+            .should("not.exist");
         });
       });
 
       it("DT-STATUS-03 | COMPLETED request has no Accept or Reject buttons", () => {
         cy.contains("tr", "er-003").within(() => {
-          cy.get("button").contains(/^accept$/i).should("not.exist");
-          cy.get("button").contains(/^reject$/i).should("not.exist");
+          cy.get("button")
+            .contains(/^accept$/i)
+            .should("not.exist");
+          cy.get("button")
+            .contains(/^reject$/i)
+            .should("not.exist");
         });
       });
     });
@@ -170,7 +199,9 @@ describe("Emergency Requests Page", () => {
       });
 
       it("ECP-ER-SEARCH-03 | empty search shows all requests", () => {
-        cy.get("input[placeholder*='Search' i], input[type='text']").first().clear();
+        cy.get("input[placeholder*='Search' i], input[type='text']")
+          .first()
+          .clear();
         cy.contains("er-001").should("be.visible");
         cy.contains("er-002").should("be.visible");
         cy.contains("er-003").should("be.visible");

@@ -13,13 +13,14 @@ import { MissingPersonDashboard } from "../missing-persons/MissingPersonDashboar
 import { CrimeDashboard } from "../crime-reports/CrimeDashboard";
 import { GuidelineDashboard } from "../shared/GuidelineDashboard";
 import { UserProfile } from "../auth/UserProfile";
+import { UserRole } from "@/types";
 
 interface DashboardProps {
   user: {
     id: string;
     email: string;
     fullName: string;
-    role: string;
+    role: UserRole;
   };
   onLogout: () => void;
 }

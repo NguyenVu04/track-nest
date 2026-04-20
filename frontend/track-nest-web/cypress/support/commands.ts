@@ -109,7 +109,10 @@ Cypress.Commands.add("visitAsRole", (path: string, role: string) => {
       win.localStorage.setItem("access_token", "mock-access-token-for-testing");
       win.localStorage.setItem("refresh_token", "mock-refresh-token");
       win.localStorage.setItem("token_type", "Bearer");
-      win.localStorage.setItem("user_role", role.toLowerCase().replace(" ", "_"));
+      win.localStorage.setItem(
+        "user_role",
+        role.toLowerCase().replace(" ", "_"),
+      );
     },
   });
 });
@@ -245,14 +248,16 @@ Cypress.Commands.add("mockGuidelinesApi", () => {
 declare global {
   namespace Cypress {
     interface Chainable {
-      loginAs(role: string): Chainable<void>;
-      clearAuth(): Chainable<void>;
-      visitAsRole(path: string, role: string): Chainable<void>;
-      mockCriminalReportsApi(): Chainable<void>;
-      mockMissingPersonsApi(): Chainable<void>;
-      mockSafeZonesApi(): Chainable<void>;
-      mockEmergencyRequestsApi(): Chainable<void>;
-      mockGuidelinesApi(): Chainable<void>;
+      loginAs(role: string): Chainable;
+      clearAuth(): Chainable;
+      visitAsRole(path: string, role: string): Chainable;
+      mockCriminalReportsApi(): Chainable;
+      mockMissingPersonsApi(): Chainable;
+      mockSafeZonesApi(): Chainable;
+      mockEmergencyRequestsApi(): Chainable;
+      mockGuidelinesApi(): Chainable;
     }
   }
 }
+
+export {};
