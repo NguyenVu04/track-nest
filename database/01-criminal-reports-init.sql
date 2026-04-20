@@ -11,11 +11,13 @@ CREATE TABLE missing_person_report (
     title VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
     personal_id VARCHAR(50) NOT NULL,
-    photo VARCHAR(255),
+    photo TEXT,
     contact_email VARCHAR(255),
     contact_phone VARCHAR(255) NOT NULL,
     date DATE NOT NULL DEFAULT CURRENT_DATE,
     content TEXT NOT NULL,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     user_id UUID NOT NULL,
     reporter_id UUID NOT NULL,
@@ -100,5 +102,10 @@ ALTER TABLE missing_person_report
 
 ALTER TABLE guidelines_document
     ADD FOREIGN KEY (reporter_id) REFERENCES reporter(id);
+
+CREATE TABLE crime_report_photos (
+    crime_report_id UUID NOT NULL REFERENCES crime_report(id) ON DELETE CASCADE,
+    photo_url TEXT NOT NULL
+);
 
 CREATE INDEX idx_crime_report_geom_spgist ON crime_report USING SPGIST (geom);

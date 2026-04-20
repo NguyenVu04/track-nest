@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
@@ -43,4 +44,6 @@ public class CreateCrimeReportRequest {
     private int numberOfOffenders;
     
     private boolean arrested;
+
+    private List<String> photos;
 }

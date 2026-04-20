@@ -66,6 +66,7 @@ export default function useDeviceLocation(tracking: boolean) {
             latitude: coords.latitude,
             longitude: coords.longitude,
             speed: coords.speed,
+            accuracy: coords.accuracy,
           };
 
           locationRef.current = localtionState;
@@ -83,8 +84,8 @@ export default function useDeviceLocation(tracking: boolean) {
       requestPermissionsAndStart().catch((err) => {
         if (!cancelled) setError(err?.message ?? String(err));
       });
-      // Poll for location updates every 3 seconds
-      pollInterval = setInterval(loadAndSetLocation, 3000);
+      // Poll for location updates every 1 second
+      pollInterval = setInterval(loadAndSetLocation, 1000);
     } else {
       stopBackgroundLocationTracking().catch(() => {});
     }

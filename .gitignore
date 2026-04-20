@@ -6,3 +6,4 @@ certs/
 /**/*/*.tgz
 /**/*/values.yaml
 /**/*/values-*.yaml
+.claude/

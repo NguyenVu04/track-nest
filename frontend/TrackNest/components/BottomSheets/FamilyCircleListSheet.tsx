@@ -12,6 +12,7 @@ type FamilyCircleProps = {
   handleSelectFamilyCircle: (circle: FamilyCircle) => void;
   familyCircles: FamilyCircle[];
   onRefresh?: () => Promise<void>;
+  tabBarHeight?: number;
 };
 
 const FamilyCircleListSheet = ({
@@ -21,6 +22,7 @@ const FamilyCircleListSheet = ({
   handleSelectFamilyCircle,
   familyCircles,
   onRefresh,
+  tabBarHeight = 0,
 }: FamilyCircleProps) => {
   const { height: screenHeight } = useWindowDimensions();
   const handleSheetChanges = (index: number) => {};
@@ -34,6 +36,7 @@ const FamilyCircleListSheet = ({
       maxDynamicContentSize={Math.floor(screenHeight * 0.8)}
       index={0}
       enableContentPanningGesture={true}
+      containerStyle={{ bottom: tabBarHeight }}
     >
       <FamilyCircleBottomSheet
         selectedCircleId={selectedCircle?.familyCircleId ?? null}

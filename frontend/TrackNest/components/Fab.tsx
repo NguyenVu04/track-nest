@@ -9,6 +9,7 @@ type FabProps = {
   children?: React.ReactNode;
   onPress?: () => void;
   style?: ViewStyle;
+  color?: string;
 };
 
 export default function Fab({
@@ -17,8 +18,10 @@ export default function Fab({
   children,
   onPress,
   style,
+  color,
 }: FabProps) {
   const isLarge = size === "large";
+  const iconColor = color || (isLarge ? "#fff" : "#333");
   return (
     <Pressable
       onPress={onPress}
@@ -30,7 +33,7 @@ export default function Fab({
         <Ionicons
           name={icon as any}
           size={isLarge ? 28 : 20}
-          color={isLarge ? "#fff" : "#333"}
+          color={iconColor}
         />
       )}
     </Pressable>

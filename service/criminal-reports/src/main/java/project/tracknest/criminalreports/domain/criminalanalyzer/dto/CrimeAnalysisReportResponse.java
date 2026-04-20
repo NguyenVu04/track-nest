@@ -42,6 +42,6 @@ public class CrimeAnalysisReportResponse {
         private double longitude;
         private double latitude;
         private long incidentCount;
-        private int averageSeverity;
+        private double averageSeverity;
     }
 }

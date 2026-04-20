@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+/* ─── TrackNest Brand Colours (synced with mobile app styles.ts) ──────────── */
+@theme {
+  /* Teal primary palette */
+  --color-brand-50:  #f0f8f9;
+  --color-brand-100: #e0f2f5;
+  --color-brand-200: #c0e6ed;
+  --color-brand-300: #93cdd9;
+  --color-brand-400: #5cb5c7;
+  --color-brand-500: #74becb;
+  --color-brand-600: #5aa8b5;
+  --color-brand-700: #4a8a96;
+  --color-brand-800: #3a6b76;
+  --color-brand-900: #253f47;
+
+  /* Sidebar-specific tokens */
+  --color-sidebar-dark: #0d1e2b;
+  --color-sidebar-dark-hover: #142839;
+  --color-sidebar-dark-active: #1a3347;
+  --color-sidebar-muted: #6b8aa0;
+}
+
+/* ─── Shadcn / Radix CSS variable mapping ─────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --background:   180 12% 98%;   /* #f8fafa — very light teal-tinted bg */
+  --foreground:   0   0%  10%;   /* #1a1a1a */
+
+  --card:                0 0% 100%;
+  --card-foreground:     0 0%  10%;
+
+  --popover:             0 0% 100%;
+  --popover-foreground:  0 0%  10%;
+
+  /* Primary = TrackNest teal (#74becb → hsl ≈ 189 46 63) */
+  --primary:             189 46% 63%;
+  --primary-foreground:    0  0% 100%;
+
+  /* Secondary / muted / accent */
+  --secondary:           189 40% 94%;
+  --secondary-foreground:189 46% 30%;
+
+  --muted:               210 20% 96%;
+  --muted-foreground:    215 16% 47%;
+
+  --accent:              189 40% 94%;
+  --accent-foreground:   189 46% 30%;
+
+  /* Destructive */
+  --destructive:           4 76% 56%;   /* #e74c3c */
+  --destructive-foreground: 0  0% 100%;
+
+  /* Borders & inputs */
+  --border: 220 13% 91%;   /* #e5e7eb */
+  --input:  220 13% 91%;
+  --ring:   189 46% 63%;
+
+  /* Recharts palette — teal → red → amber → green → purple */
+  --chart-1: 189 46% 63%;
+  --chart-2:   4 76% 56%;
+  --chart-3:  43 89% 52%;
+  --chart-4: 142 71% 45%;
+  --chart-5: 280 60% 60%;
+
+  --radius: 0.75rem;   /* 12 px */
+
+  /* Sidebar (dark panel) */
+  --sidebar-background:          213 49% 12%;  /* #0d1e2b */
+  --sidebar-foreground:          214 24% 72%;  /* #94a3b8 */
+  --sidebar-primary:             189 46% 63%;
+  --sidebar-primary-foreground:    0  0% 100%;
+  --sidebar-accent:              213 49% 18%;
+  --sidebar-accent-foreground:   189 46% 80%;
+  --sidebar-border:              213 49% 18%;
+  --sidebar-ring:                189 46% 63%;
+}
+
+/* ─── Base styles ─────────────────────────────────────────────────────────── */
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #c0e6ed; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #74becb; }
+
+/* ─── Custom utility helpers ──────────────────────────────────────────────── */
+.card-base {
+  background: white;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.06);
+}
+
+.stat-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Page-level fade-in */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter { animation: fadeUp 0.3s ease both; }

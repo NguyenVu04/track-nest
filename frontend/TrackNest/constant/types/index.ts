@@ -30,6 +30,7 @@ export type LocationState = {
   latitude: number;
   longitude: number;
   speed: number | null;
+  accuracy?: number | null;
   timestamp?: number;
   time_spent?: number;
 };
@@ -39,7 +40,9 @@ export type SafeZone = {
   name: string;
   latitude: number;
   longitude: number;
-  radiusMeters: number;
+  radius: number;
+  createdAt: string;
+  emergencyServiceId: string;
 };
 
 export type DangerStatus = "low" | "medium" | "high" | "critical";
@@ -47,11 +50,15 @@ export type DangerStatus = "low" | "medium" | "high" | "critical";
 export type CrimeReport = {
   id: string;
   title: string;
+  content: string;
+  severity: number;
+  date: string;
   latitude: number;
   longitude: number;
-  numberOfCriminals: number;
-  dangerStatus: DangerStatus;
-  incidentType: string;
-  reportedAt: string;
-  note?: string;
+  numberOfVictims: number;
+  numberOfOffenders: number;
+  arrested: boolean;
+  createdAt: string;
+  reporterId: string;
+  isPublic: boolean;
 };

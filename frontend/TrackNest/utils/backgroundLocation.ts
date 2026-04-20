@@ -47,10 +47,8 @@ export async function requestPermissionsAndStart() {
           notificationColor: "#74becb",
           killServiceOnDestroy: false,
         },
-        // timeInterval: 60000, // milliseconds
-        distanceInterval: 300, // meters
-        deferredUpdatesDistance: 900, // meters - defer updates until user has moved at least this far (saves battery)
-        // deferredUpdatesInterval: 120, // seconds - defer updates until at least this much time has passed
+        timeInterval: 5000, // milliseconds - update every 5 seconds
+        distanceInterval: 10, // meters - update after 10m movement
         showsBackgroundLocationIndicator: true,
       },
     );

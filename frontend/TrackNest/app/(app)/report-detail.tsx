@@ -2,6 +2,7 @@ import { reportDetail as reportDetailLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getReportById, Report } from "@/services/reports";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -124,6 +125,26 @@ export default function ReportDetailScreen() {
             <Text style={styles.description}>{report.description}</Text>
           </View>
 
+          {report.photos && report.photos.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Photos ({report.photos.length})</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.photoRow}
+              >
+                {report.photos.map((url, i) => (
+                  <Image
+                    key={i}
+                    source={{ uri: url }}
+                    style={styles.photo}
+                    contentFit="cover"
+                  />
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           <View style={styles.actionButtons}>
             <Pressable style={[styles.button, styles.callButton]}>
               <Ionicons name="call" size={20} color="#fff" />
@@ -226,6 +247,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     lineHeight: 24,
+  },
+  photoRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingVertical: 4,
+  },
+  photo: {
+    width: 160,
+    height: 120,
+    borderRadius: 10,
+    backgroundColor: "#f0f0f0",
   },
   actionButtons: {
     flexDirection: "row",

@@ -10,6 +10,7 @@ import project.tracknest.criminalreports.core.entity.Reporter;
 import project.tracknest.criminalreports.domain.reportmanager.dto.MissingPersonReportResponse;
 import project.tracknest.criminalreports.domain.repository.MissingPersonReportRepository;
 import project.tracknest.criminalreports.domain.repository.MissingPersonReportStatusRepository;
+import project.tracknest.criminalreports.core.datatype.ReportStatusConstants;
 import project.tracknest.criminalreports.domain.repository.ReporterRepository;
 
 import java.time.OffsetDateTime;
@@ -24,7 +25,7 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
     private final MissingPersonReportStatusRepository statusRepository;
     private final ReporterRepository reporterRepository;
 
-    private static final String DEFAULT_STATUS = "PENDING";
+    private static final String DEFAULT_STATUS = ReportStatusConstants.PENDING;
 
     @Override
     @Transactional

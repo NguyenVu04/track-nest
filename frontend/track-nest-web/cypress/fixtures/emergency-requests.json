@@ -1,0 +1,43 @@
+{
+  "content": [
+    {
+      "id": "er-001",
+      "openAt": "2026-04-06T08:30:00Z",
+      "closeAt": null,
+      "senderId": "user-001",
+      "targetId": "emergency-001",
+      "emergencyServiceId": "emergency-001",
+      "status": "PENDING",
+      "longitude": 106.6297,
+      "latitude": 10.8231
+    },
+    {
+      "id": "er-002",
+      "openAt": "2026-04-05T14:00:00Z",
+      "closeAt": "2026-04-05T15:30:00Z",
+      "senderId": "user-002",
+      "targetId": "emergency-001",
+      "emergencyServiceId": "emergency-001",
+      "status": "ACCEPTED",
+      "longitude": 106.7009,
+      "latitude": 10.7769
+    },
+    {
+      "id": "er-003",
+      "openAt": "2026-04-04T10:00:00Z",
+      "closeAt": "2026-04-04T10:45:00Z",
+      "senderId": "user-003",
+      "targetId": "emergency-001",
+      "emergencyServiceId": "emergency-001",
+      "status": "COMPLETED",
+      "longitude": 106.6686,
+      "latitude": 10.7548
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 3,
+  "totalPages": 1,
+  "first": true,
+  "last": true
+}

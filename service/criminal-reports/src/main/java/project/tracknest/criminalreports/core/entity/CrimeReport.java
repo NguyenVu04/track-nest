@@ -8,11 +8,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Generated;
 import org.hibernate.validator.constraints.Range;
-import org.hibernate.validator.constraints.URL;
 import org.locationtech.jts.geom.Point;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -30,7 +31,6 @@ public class CrimeReport {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @URL(message = "Invalid URL format")
     @Column(name = "content", nullable = false)
     private String content;
 
@@ -72,6 +72,12 @@ public class CrimeReport {
 
     @Column(name = "public", nullable = false)
     private boolean isPublic;
+
+    @Builder.Default
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "crime_report_photos", joinColumns = @JoinColumn(name = "crime_report_id"))
+    @Column(name = "photo_url")
+    private List<String> photos = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reporter_id", nullable = false, updatable = false)

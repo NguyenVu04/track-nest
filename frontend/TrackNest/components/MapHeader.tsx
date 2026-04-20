@@ -1,5 +1,6 @@
 import { MapHeader as mapHeaderLang } from "@/constant/languages";
 import { FamilyCircle } from "@/constant/types";
+import { usePOIAnalytics } from "@/contexts/POIAnalyticsContext";
 import { AppNotification, useNotifications } from "@/hooks/useNotifications";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
@@ -34,6 +35,7 @@ export default function MapHeader({
   handleFamilyCircleModalPress,
 }: Props) {
   const t = useTranslation(mapHeaderLang);
+  const { riskLevel, crimeCount, isHighRiskZone } = usePOIAnalytics();
   const [notificationsVisible, setNotificationsVisible] = useState(false);
   const [notificationTab, setNotificationTab] = useState<"tracking" | "risk">(
     "tracking",
@@ -114,6 +116,23 @@ export default function MapHeader({
         </View>
 
         <View style={styles.headerRight}>
+          {/* Risk Level Indicator */}
+          {riskLevel !== "low" && (
+            <View style={[
+              styles.riskBadge,
+              riskLevel === "high" ? styles.riskBadgeHigh : styles.riskBadgeMedium
+            ]}>
+              <Ionicons 
+                name={riskLevel === "high" ? "warning" : "alert-circle-outline"} 
+                size={14} 
+                color="#fff" 
+              />
+              <Text style={styles.riskText}>
+                {riskLevel === "high" ? "High Risk" : "Medium Risk"}
+              </Text>
+            </View>
+          )}
+          
           <Pressable
             style={styles.iconButton}
             onPress={handleOpenNotifications}
@@ -397,4 +416,23 @@ const styles = StyleSheet.create({
   },
   tabText: { color: "#666", fontSize: 13 },
   tabTextActive: { color: "#74becb", fontWeight: "600", fontSize: 13 },
+  riskBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  riskBadgeHigh: {
+    backgroundColor: "#e74c3c",
+  },
+  riskBadgeMedium: {
+    backgroundColor: "#f39c12",
+  },
+  riskText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "600",
+  },
 });

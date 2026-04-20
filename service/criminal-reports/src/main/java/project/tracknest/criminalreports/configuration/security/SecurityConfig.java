@@ -35,8 +35,22 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/chatbot/**")
                         .hasRole("USER")
+                    .requestMatchers(HttpMethod.GET,
+                        "/report-manager/missing-person-reports",
+                        "/report-manager/crime-reports",
+                        "/report-manager/crime-reports/nearby",
+                        "/report-manager/guidelines",
+                        "/crime-locator/heatmap",
+                        "/crime-locator/high-risk-check")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/report-viewer/**")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/file/**")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/criminal-analyzer/dashboard")
+                    .permitAll()
                         .anyRequest()
-                        .denyAll()
+                    .authenticated()
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)

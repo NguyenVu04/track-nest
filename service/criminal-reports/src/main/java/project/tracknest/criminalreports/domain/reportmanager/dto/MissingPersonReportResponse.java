@@ -24,6 +24,8 @@ public class MissingPersonReportResponse {
     private String content;
     private String contactEmail;
     private String contactPhone;
+    private Double latitude;
+    private Double longitude;
     private OffsetDateTime createdAt;
     private UUID userId;
     private String status;

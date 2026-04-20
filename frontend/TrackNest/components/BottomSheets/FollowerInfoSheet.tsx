@@ -6,12 +6,14 @@ type FollowerInfoSheetProps = {
   followerInfoSheetRef: React.RefObject<BottomSheetModal | null>;
   renderBackdrop: (props: any) => React.ReactElement;
   selectedFollower: any;
+  tabBarHeight?: number;
 };
 
 const FollowerInfoSheet = ({
   followerInfoSheetRef,
   renderBackdrop,
   selectedFollower,
+  tabBarHeight = 0,
 }: FollowerInfoSheetProps) => {
   const handleSheetChanges = (index: number) => {};
 
@@ -20,6 +22,7 @@ const FollowerInfoSheet = ({
       ref={followerInfoSheetRef ?? undefined}
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
+      containerStyle={{ bottom: tabBarHeight }}
     >
       <FollowerBottomSheet follower={selectedFollower} />
     </BottomSheetModal>

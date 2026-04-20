@@ -44,3 +44,36 @@ export const getAuthMetadata = async (): Promise<{ Authorization: string }> => {
     Authorization: `Bearer ${tokens.accessToken}`,
   };
 };
+
+/**
+ * Decodes the JWT access token and returns the Keycloak user UUID (sub claim).
+ * Throws AuthUnavailableError if no valid token is found.
+ */
+export const getUserId = async (): Promise<string> => {
+  const tokensJson = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+  if (!tokensJson) {
+    throw new AuthUnavailableError("No authentication token found.");
+  }
+
+  const tokens: StoredTokens = JSON.parse(tokensJson);
+
+  if (isTokenExpired(tokens)) {
+    throw new AuthUnavailableError("Authentication token expired.");
+  }
+
+  // JWT is base64url encoded — decode the payload (second segment)
+  const parts = tokens.accessToken.split(".");
+  if (parts.length !== 3) {
+    throw new AuthUnavailableError("Malformed access token.");
+  }
+
+  const payload = JSON.parse(
+    atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
+  );
+
+  if (!payload.sub) {
+    throw new AuthUnavailableError("Access token missing sub claim.");
+  }
+
+  return payload.sub as string;
+};
