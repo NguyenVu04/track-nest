@@ -5,10 +5,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import project.tracknest.emergencyops.core.entity.EmergencyRequest;
 
+import java.util.Optional;
 import java.util.UUID;
 
 interface EmergencyRequestReceiverEmergencyRequestRepository extends JpaRepository<EmergencyRequest, UUID> {
 
     Page<EmergencyRequest> findBySenderId(UUID senderId, Pageable pageable);
 
+    Optional<EmergencyRequest> findByTargetId(UUID targetId);
 }

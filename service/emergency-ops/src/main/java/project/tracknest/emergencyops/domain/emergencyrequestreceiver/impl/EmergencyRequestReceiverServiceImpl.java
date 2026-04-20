@@ -38,13 +38,6 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
     private static final String TRACKING_NOTIFICATION_CONTENT_TEMPLATE = """
             Emergency assistance for %s has been assigned to %s.
             """;
-
-    @Value("${app.stomp.queue.emergency-request}")
-    private String emergencyRequestQueue;
-
-    @Value("${app.kafka.topics[1]}")
-    private String TOPIC;
-
     private final EmergencyRequestReceiverEmergencyRequestRepository emergencyRequestRepository;
     private final EmergencyRequestReceiverEmergencyRequestStatusRepository emergencyRequestStatusRepository;
     private final EmergencyRequestReceiverEmergencyServiceRepository emergencyServiceRepository;
@@ -52,10 +45,19 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
     private final ServerRedisMessagePublisher redisPublisher;
     private final SimpMessagingTemplate messagingTemplate;
     private final KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
+    @Value("${app.stomp.queue.emergency-request}")
+    private String emergencyRequestQueue;
+    @Value("${app.kafka.topics[1]}")
+    private String TOPIC;
 
     @Override
     @Transactional
     public PostEmergencyRequestResponse createEmergencyRequest(UUID userId, PostEmergencyRequestRequest request) {
+        if (!checkNoActiveEmergencyRequest(request.getTargetId())) {
+            log.warn("Attempt to create emergency request for target {} who already has an active request", request.getTargetId());
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An active emergency request already exists for the specified user. Please wait until the current request is resolved before creating a new one.");
+        }
+
         Optional<EmergencyRequestStatus> status = emergencyRequestStatusRepository
                 .findById(EmergencyRequestStatus.Status.PENDING.getValue());
 
@@ -87,7 +89,7 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 .build();
 
         EmergencyRequest savedEmergencyRequest = emergencyRequestRepository
-                .saveAndFlush(emergencyRequest);
+                .save(emergencyRequest);
 
         long createdAtMs = OffsetDateTime.now()
                 .toInstant()
@@ -152,8 +154,8 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 emergencyRequest.getOpenAt().toInstant().toEpochMilli(),
                 emergencyRequest.getCloseAt() != null
                         ? emergencyRequest.getCloseAt()
-                        .toInstant()
-                        .toEpochMilli()
+                          .toInstant()
+                          .toEpochMilli()
                         : null,
                 profile.id(),
                 profile.username(),
@@ -184,5 +186,41 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 emergencyRequestPage.getNumber(),
                 emergencyRequestPage.getSize()
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CheckEmergencyRequestAllowedResponse checkEmergencyRequestAllowed(
+            UUID userId, UUID targetId
+    ) {
+        long now = OffsetDateTime.now()
+                .toInstant()
+                .toEpochMilli();
+
+        return new CheckEmergencyRequestAllowedResponse(
+                checkNoActiveEmergencyRequest(targetId),
+                "No active emergency request exists for the specified user. You can create a new emergency request.",
+                now
+        );
+    }
+
+    private boolean checkNoActiveEmergencyRequest(UUID targetId) {
+        Optional<EmergencyRequest> existingRequestOpt = emergencyRequestRepository
+                .findByTargetId(targetId);
+
+        if (existingRequestOpt.isPresent()) {
+            EmergencyRequest existingRequest = existingRequestOpt.get();
+
+            return !existingRequest.getStatus()
+                    .getName()
+                    .equals(EmergencyRequestStatus
+                            .Status.PENDING.getValue())
+                    && !existingRequest.getStatus()
+                    .getName()
+                    .equals(EmergencyRequestStatus
+                            .Status.ACCEPTED.getValue());
+        }
+
+        return true;
     }
 }

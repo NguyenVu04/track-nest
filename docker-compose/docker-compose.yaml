@@ -253,12 +253,6 @@ services:
       POSTGRES_USER: tracknestadmin
       POSTGRES_PASSWORD: tracknestadmin
       POSTGRES_DB: tracknest
-    command:
-      - "postgres"
-      - "-c"
-      - "shared_preload_libraries=timescaledb,pg_cron"
-      - "-c"
-      - "cron.database_name=tracknest"
     ports:
       - "15432:5432"
     volumes:
