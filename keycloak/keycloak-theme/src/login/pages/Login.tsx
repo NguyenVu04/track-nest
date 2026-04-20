@@ -17,14 +17,13 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
 
     const autoCompleteHelper: typeof label = label === "usernameOrEmail" ? "username" : label;
     const inputPlaceholder = label === "email" ? "your@email.com" : label === "username" ? "Username" : "Username or email";
-    const logoSrc = `${url.resourcesPath}/tracknest-logo.png`;
 
     return (
         <Template {...{ kcContext, i18n, doUseDefaultCss, classes }} displayMessage={false} headerNode={null} displayInfo={false} infoNode={null}>
             <div className="tn-login-card">
                 {/* Logo */}
                 <div className="tn-logo-wrap">
-                    <img src={logoSrc} alt="TrackNest" className="tn-logo-img" />
+                    <img src="/tracknest-logo.png" alt="TrackNest" className="tn-logo-img" />
                 </div>
 
                 {/* Heading */}

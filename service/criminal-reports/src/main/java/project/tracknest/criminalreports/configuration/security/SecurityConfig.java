@@ -27,14 +27,12 @@ public class SecurityConfig {
         http
                 .addFilterAfter(new KeycloakFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.OPTIONS, "/**")
-                        .permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**")
-                        .permitAll()
-                        .requestMatchers("/actuator/**")
-                        .permitAll()
-                        .requestMatchers("/chatbot/**")
-                        .hasRole("USER")
+                    .requestMatchers(HttpMethod.OPTIONS, "/**")
+                    .permitAll()
+                    .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**")
+                    .permitAll()
+                    .requestMatchers("/actuator/**")
+                    .permitAll()
                     .requestMatchers(HttpMethod.GET,
                         "/report-manager/missing-person-reports",
                         "/report-manager/crime-reports",
@@ -49,6 +47,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/criminal-analyzer/dashboard")
                     .permitAll()
+                    .requestMatchers("/chatbot/**")
+                    .hasRole("USER")
                     .anyRequest()
                     .authenticated()
                 )
