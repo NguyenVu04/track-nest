@@ -4,10 +4,14 @@ web:
 
   image:
     repository: nguyenvu04/tracknest-web
-    tag: "v1.1"
+    tag: "v1.2.4"
     pullPolicy: IfNotPresent
 
   nodeEnv: production
+  nextPublicUserTrackingApiUrl: "https://api.tracknestapp.org/user-tracking"
+  nextPublicEmergencyOpsApiUrl: "https://api.tracknestapp.org/emergency-ops"
+  nextPublicCriminalReportsApiUrl: "https://api.tracknestapp.org/criminal-reports"
+  nextPublicKeycloakUrl: "https://tracknestapp.org/auth"
 
   resources:
     requests:

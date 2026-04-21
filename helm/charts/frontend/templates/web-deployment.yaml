@@ -40,6 +40,14 @@ spec:
               value: {{ .Values.web.nodeEnv | quote }}
             - name: PORT
               value: {{ .Values.web.port | quote }}
+            - name: NEXT_PUBLIC_USER_TRACKING_API_URL
+              value: {{ .Values.web.nextPublicUserTrackingApiUrl | quote }}
+            - name: NEXT_PUBLIC_EMERGENCY_OPS_API_URL
+              value: {{ .Values.web.nextPublicEmergencyOpsApiUrl | quote }}
+            - name: NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL
+              value: {{ .Values.web.nextPublicCriminalReportsApiUrl | quote }}
+            - name: NEXT_PUBLIC_KEYCLOAK_URL
+              value: {{ .Values.web.nextPublicKeycloakUrl | quote }}
 
           livenessProbe:
             httpGet:

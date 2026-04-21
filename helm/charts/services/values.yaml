@@ -64,7 +64,7 @@ keycloak:
   publicRealm: public-dev
 
 # Comma-separated CORS origins applied to every service.
-origins: "http://localhost:3000,http://localhost,http://localhost:8080,http://localhost:28080,http://localhost:38080,http://tracknestapp.org,http://api.tracknestapp.org,https://tracknestapp.org,https://api.tracknestapp.org"
+origins: "http://localhost:3000,http://localhost,https://tracknestapp.org,https://api.tracknestapp.org"
 
 # Spring profile activated in every service container.
 springProfile: prod
@@ -75,7 +75,7 @@ userTracking:
 
   image:
     repository: nguyenvu04/tracknest-usertracking
-    tag: "v1.2.3"
+    tag: "v1.2.4"
 
   # gRPC (external) and HTTP (internal REST/actuator) ports.
   grpcPort: 19090
@@ -103,7 +103,7 @@ criminalReports:
 
   image:
     repository: nguyenvu04/tracknest-criminalreports
-    tag: "v1.2.3"
+    tag: "v1.2.4"
 
   database:
     host: ep-wispy-math-a1wxwifi-pooler.ap-southeast-1.aws.neon.tech
@@ -130,7 +130,7 @@ emergencyOps:
 
   image:
     repository: nguyenvu04/tracknest-emergencyops
-    tag: "v1.2.3"
+    tag: "v1.2.4"
 
   database:
     host: ep-curly-shadow-a14usu28-pooler.ap-southeast-1.aws.neon.tech

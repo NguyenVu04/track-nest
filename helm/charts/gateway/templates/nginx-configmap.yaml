@@ -99,8 +99,9 @@ data:
 
         # --- Default server: drop unknown Host ---
         server {
-            listen 80 default_server;
-            listen 443 ssl http2 default_server;
+            listen {{ .Values.nginx.plainPort }} default_server;
+            listen {{ .Values.nginx.port }} ssl default_server;
+            http2 on;
             server_name _;
 
             ssl_certificate     /etc/nginx/ssl/tls.crt;
@@ -111,15 +112,16 @@ data:
 
         # --- HTTP -> HTTPS redirect ---
         server {
-            listen 80;
-            server_name _;
+            listen {{ .Values.nginx.plainPort }};
+            server_name tracknestapp.org;
             return 301 https://$host$request_uri;
         }
 
         # --- Main HTTPS server ---
         server {
-            listen 443 ssl http2;
-            server_name _;
+            listen {{ .Values.nginx.port }} ssl;
+            http2 on;
+            server_name tracknestapp.org;
 
             ssl_certificate     /etc/nginx/ssl/tls.crt;
             ssl_certificate_key /etc/nginx/ssl/tls.key;

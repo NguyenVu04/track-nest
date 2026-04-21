@@ -37,6 +37,9 @@ spec:
             - name: https
               containerPort: {{ .Values.nginx.port }}
               protocol: TCP
+            - name: stub-status
+              containerPort: {{ .Values.nginx.stubStatusPort }}
+              protocol: TCP
           volumeMounts:
             - name: nginx-config
               mountPath: /etc/nginx/nginx.conf
@@ -44,6 +47,8 @@ spec:
             - name: cf-cert
               mountPath: /etc/nginx/ssl
               readOnly: true
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
           livenessProbe:
             tcpSocket:
               port: https
@@ -58,7 +63,7 @@ spec:
           image: "{{ .Values.nginx.metrics.image.repository }}:{{ .Values.nginx.metrics.image.tag }}"
           imagePullPolicy: {{ .Values.nginx.image.pullPolicy }}
           args:
-            - --nginx.scrape-uri=http://localhost:{{ .Values.nginx.stubStatusPort }}/stub_status
+            - --nginx.scrape-uri=http://127.0.0.1:{{ .Values.nginx.stubStatusPort }}/stub_status
           ports:
             - name: metrics
               containerPort: {{ .Values.nginx.metricsPort }}
@@ -84,3 +89,5 @@ spec:
         - name: cf-cert
           secret:
             secretName: {{ .Values.tlsSecretName }}
+        - name: nginx-cache
+          emptyDir: {}

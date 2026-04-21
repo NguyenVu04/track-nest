@@ -79,7 +79,7 @@ nginx:
   metrics:
     image:
       repository: nginx/nginx-prometheus-exporter
-      tag: "1.4"
+      tag: "1.5.1"
 
   servicePort: 443
   plainServicePort: 80
@@ -100,11 +100,11 @@ nginx:
       type: RuntimeDefault
 
   containerSecurityContext:
-    allowPrivilegeEscalation: false
+    allowPrivilegeEscalation: true
     readOnlyRootFilesystem: false
     capabilities:
       drop: ["ALL"]
-      add: ["NET_BIND_SERVICE"]
+      add: ["NET_BIND_SERVICE", "CHOWN", "SETUID", "SETGID"]
 
   strategy:
     type: RollingUpdate
