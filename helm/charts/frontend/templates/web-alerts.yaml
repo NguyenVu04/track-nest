@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: web-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: {{ .Release.Name }}
+spec:
+  groups:
+    - name: web.rules
+      rules:
+        - alert: PodDown
+          expr: |
+            kube_deployment_status_replicas_unavailable{
+              namespace="{{ .Release.Namespace }}",
+              deployment="{{ .Release.Name }}-web"
+            } > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Web frontend pod down"

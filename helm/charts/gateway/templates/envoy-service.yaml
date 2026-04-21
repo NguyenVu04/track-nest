@@ -13,3 +13,7 @@ spec:
       port: {{ .Values.envoy.servicePort }}
       targetPort: https
       protocol: TCP
+    - name: admin
+      port: {{ .Values.envoy.adminPort }}
+      targetPort: admin
+      protocol: TCP

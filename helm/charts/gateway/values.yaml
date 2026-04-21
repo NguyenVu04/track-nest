@@ -71,6 +71,16 @@ nginx:
   port: 443
   plainPort: 80
 
+  # Internal stub_status server port (localhost only, for metrics sidecar).
+  stubStatusPort: 9080
+  # nginx-prometheus-exporter metrics port.
+  metricsPort: 9113
+
+  metrics:
+    image:
+      repository: nginx/nginx-prometheus-exporter
+      tag: "1.4"
+
   servicePort: 443
   plainServicePort: 80
 

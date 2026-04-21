@@ -193,4 +193,17 @@ data:
                 proxy_read_timeout    30s;
             }
         }
+
+        # Internal metrics server — localhost only, for nginx-prometheus-exporter sidecar.
+        server {
+            listen {{ .Values.nginx.stubStatusPort }};
+            server_name localhost;
+            access_log off;
+
+            location /stub_status {
+                stub_status;
+                allow 127.0.0.1;
+                deny all;
+            }
+        }
     }

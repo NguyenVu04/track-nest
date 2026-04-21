@@ -1,0 +1,28 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: nginx-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: {{ .Release.Name }}
+spec:
+  groups:
+    - name: nginx.rules
+      rules:
+        - alert: PodDown
+          expr: |
+            up{job="nginx"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Nginx pod down"
+
+        - alert: HighActiveConnections
+          expr: |
+            nginx_connections_active > 1000
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Nginx active connections exceeding 1000"

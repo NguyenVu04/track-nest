@@ -17,3 +17,7 @@ spec:
       port: {{ .Values.nginx.servicePort }}
       targetPort: https
       protocol: TCP
+    - name: metrics
+      port: {{ .Values.nginx.metricsPort }}
+      targetPort: metrics
+      protocol: TCP
