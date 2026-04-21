@@ -167,4 +167,26 @@ INSERT INTO anomaly_run (id, user_id, started_at, resolved, last_seen_at) VALUES
     ('dddddddd-0007-4000-8000-dddddddddddd', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', NOW() - INTERVAL '4 days',  TRUE,  NOW() - INTERVAL '4 days' + INTERVAL '15 minutes')
 ON CONFLICT (id) DO NOTHING;
 
+------------------------------------------------
+-- Family messages
+------------------------------------------------
+INSERT INTO family_message (id, family_circle_id, sender_id, content, created_at)
+VALUES
+    ('eeeeeeee-1000-4000-8000-eeeeeeeeeeee', 'cccccccc-1000-4000-8000-cccccccccccc', '8c52c01e-42a7-45cc-9254-db8a7601c764', 'Everyone please check in when you get home tonight.', NOW() - INTERVAL '5 days'),
+    ('eeeeeeee-1001-4000-8000-eeeeeeeeeeee', 'cccccccc-1000-4000-8000-cccccccccccc', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', 'I am home, just arrived.', NOW() - INTERVAL '5 days' + INTERVAL '30 minutes'),
+    ('eeeeeeee-1002-4000-8000-eeeeeeeeeeee', 'cccccccc-1000-4000-8000-cccccccccccc', '4405a37d-bc86-403e-b605-bedd7db88d37', 'On my way back, will be there in 20 minutes.', NOW() - INTERVAL '5 days' + INTERVAL '45 minutes'),
+    ('eeeeeeee-1003-4000-8000-eeeeeeeeeeee', 'cccccccc-1000-4000-8000-cccccccccccc', '8c52c01e-42a7-45cc-9254-db8a7601c764', 'Good, stay safe.', NOW() - INTERVAL '5 days' + INTERVAL '50 minutes'),
+    ('eeeeeeee-1004-4000-8000-eeeeeeeeeeee', 'cccccccc-1001-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'Dinner is ready, where are you?', NOW() - INTERVAL '3 days'),
+    ('eeeeeeee-1005-4000-8000-eeeeeeeeeeee', 'cccccccc-1001-4000-8000-cccccccccccc', '4405a37d-bc86-403e-b605-bedd7db88d37', 'Still at school, finishing up a project.', NOW() - INTERVAL '3 days' + INTERVAL '10 minutes'),
+    ('eeeeeeee-1006-4000-8000-eeeeeeeeeeee', 'cccccccc-1001-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'Ok, come back by 7 PM.', NOW() - INTERVAL '3 days' + INTERVAL '12 minutes'),
+    ('eeeeeeee-1007-4000-8000-eeeeeeeeeeee', 'cccccccc-1002-4000-8000-cccccccccccc', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'I got an alert that you left the safe zone. Are you okay?', NOW() - INTERVAL '2 hours'),
+    ('eeeeeeee-1008-4000-8000-eeeeeeeeeeee', 'cccccccc-1002-4000-8000-cccccccccccc', '4405a37d-bc86-403e-b605-bedd7db88d37', 'Yes, I am fine. Just went to the convenience store nearby.', NOW() - INTERVAL '2 hours' + INTERVAL '5 minutes'),
+    ('eeeeeeee-1009-4000-8000-eeeeeeeeeeee', 'cccccccc-1002-4000-8000-cccccccccccc', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'Alright, please let me know when you are back.', NOW() - INTERVAL '2 hours' + INTERVAL '7 minutes'),
+    ('eeeeeeee-100a-4000-8000-eeeeeeeeeeee', 'cccccccc-1003-4000-8000-cccccccccccc', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', 'Family meeting this Sunday at 10 AM, do not forget.', NOW() - INTERVAL '1 day'),
+    ('eeeeeeee-100b-4000-8000-eeeeeeeeeeee', 'cccccccc-1003-4000-8000-cccccccccccc', '4405a37d-bc86-403e-b605-bedd7db88d37', 'Got it, I will be there.', NOW() - INTERVAL '1 day' + INTERVAL '20 minutes'),
+    ('eeeeeeee-100c-4000-8000-eeeeeeeeeeee', 'cccccccc-1004-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'SOS drill scheduled for tomorrow morning, please participate.', NOW() - INTERVAL '12 hours'),
+    ('eeeeeeee-100d-4000-8000-eeeeeeeeeeee', 'cccccccc-1004-4000-8000-cccccccccccc', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'Understood, I will be ready.', NOW() - INTERVAL '12 hours' + INTERVAL '15 minutes'),
+    ('eeeeeeee-100e-4000-8000-eeeeeeeeeeee', 'cccccccc-1004-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'Great, stay alert everyone.', NOW() - INTERVAL '12 hours' + INTERVAL '18 minutes')
+ON CONFLICT (id) DO NOTHING;
+
 COMMIT;

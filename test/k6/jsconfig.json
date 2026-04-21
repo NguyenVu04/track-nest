@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2015",
     "lib": ["ES2015"],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "types": ["k6"]
   }
 }

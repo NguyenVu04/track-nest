@@ -78,6 +78,14 @@ CREATE TABLE user_in_family_circle (
     PRIMARY KEY (family_circle_id, user_id)
 );
 
+CREATE TABLE family_message (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    family_circle_id UUID NOT NULL,
+    sender_id UUID NOT NULL,
+    content VARCHAR(1000) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE location_bucket (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,
@@ -142,6 +150,9 @@ ALTER TABLE tracking_notification_alerts_user
 
 ALTER TABLE tracking_notification_alerts_user
     ADD FOREIGN KEY (notification_id) REFERENCES tracking_notification (id) ON DELETE CASCADE;
+
+ALTER TABLE family_message
+    ADD FOREIGN KEY (family_circle_id) REFERENCES family_circle (id) ON DELETE CASCADE;
 
 CREATE INDEX idx_location_user_time_desc ON location (user_id, "timestamp" DESC);
 

@@ -164,7 +164,11 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
     }
 
     private Optional<CellVisit> findMatureVisitInRingOrRegisterCandidate(
-            UUID userId, UUID bucketId, String cellId, List<String> ringCellIds, OffsetDateTime timestamp
+            UUID userId,
+            UUID bucketId,
+            String cellId,
+            List<String> ringCellIds,
+            OffsetDateTime timestamp
     ) {
         Optional<CellVisit> matureVisit = visitRepository
                 .findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(userId, bucketId, ringCellIds);
