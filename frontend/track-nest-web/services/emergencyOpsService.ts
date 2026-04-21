@@ -2,7 +2,7 @@ import axios from "axios";
 import { authService } from "./authService";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_EMERGENCY_OPS_API_URL || "http://localhost:28080";
+  process.env.NEXT_PUBLIC_EMERGENCY_OPS_API_URL || "http://localhost:8800/emergency-ops";
 
 const api = axios.create({
   baseURL: API_URL,
