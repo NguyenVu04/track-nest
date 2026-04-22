@@ -20,8 +20,9 @@ import {
   listCrimeReportsNearby,
 } from '../../lib/scenarios/criminal-reports.js';
 import { thinkTime } from '../../lib/helpers.js';
+import { createStageOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createStageOptions({
   stages: [
     { duration: '1m',  target: 50 },
     { duration: '3m',  target: 50 },
@@ -41,7 +42,7 @@ export const options = {
     custom_read_latency_ms:      ['p(95)<600'],
     custom_write_latency_ms:     ['p(95)<1000'],
   },
-};
+});
 
 export default function () {
   const roll = Math.random();

@@ -31,8 +31,9 @@ import {
   serviceOperationsScenario,
   safeZoneManagementScenario,
 } from '../../lib/scenarios/emergency-ops.js';
+import { createStageOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createStageOptions({
   stages: [
     { duration: '1m',  target: 20   },  // baseline
     { duration: '30s', target: 1000 },  // spike
@@ -50,7 +51,7 @@ export const options = {
     'http_req_duration{name:PATCH /emergency-request-manager/requests/:id/accept}': ['p(95)<5000'],
     custom_error_rate: ['rate<0.15'],
   },
-};
+});
 
 export default function () {
   const roll = Math.random();

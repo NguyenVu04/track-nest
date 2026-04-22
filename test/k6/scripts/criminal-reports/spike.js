@@ -1,13 +1,12 @@
 /**
- * Soak test — criminal-reports service
+ * Spike test — criminal-reports service
  *
- * Purpose : Run sustained moderate load for an extended period to surface
- *           memory leaks, connection-pool exhaustion, and slow DB degradation.
- * Load    : 10 VUs for 30 minutes (ramp 1 min up/down).
- * Pass    : p(95) stays below 1 s throughout, error rate < 2 %
+ * Purpose : Validate sudden demand shock handling and short-term recovery.
+ * Load    : 10 VUs baseline, spike to 300 VUs, then settle.
+ * Pass    : service remains available and error rate stays < 10 % during spike.
  *
  * Run:
- *   k6 run --env-file .env scripts/criminal-reports/soak.js
+ *   k6 run --env-file .env scripts/criminal-reports/spike.js
  */
 
 import {
@@ -17,22 +16,26 @@ import {
   listCrimeReportsNearby,
 } from '../../lib/scenarios/criminal-reports.js';
 import { thinkTime } from '../../lib/helpers.js';
+import { createStageOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createStageOptions({
   stages: [
-    { duration: '1m',  target: 10 },
-    { duration: '28m', target: 10 },
-    { duration: '1m',  target: 0  },
+    { duration: '1m',  target: 10  },
+    { duration: '30s', target: 300 },
+    { duration: '2m',  target: 300 },
+    { duration: '30s', target: 10  },
+    { duration: '2m',  target: 10  },
+    { duration: '1m',  target: 0   },
   ],
 
   thresholds: {
-    http_req_failed:         ['rate<0.02'],
-    http_req_duration:       ['p(95)<1000'],
-    custom_error_rate:       ['rate<0.02'],
-    custom_read_latency_ms:  ['p(95)<800'],
-    custom_write_latency_ms: ['p(95)<1500'],
+    http_req_failed:         ['rate<0.10'],
+    http_req_duration:       ['p(99)<6000'],
+    custom_error_rate:       ['rate<0.10'],
+    custom_read_latency_ms:  ['p(99)<4000'],
+    custom_write_latency_ms: ['p(99)<5000'],
   },
-};
+});
 
 export default function () {
   const roll = Math.random();

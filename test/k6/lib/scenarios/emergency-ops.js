@@ -6,7 +6,7 @@
  *      USER              → emergency-request-receiver, safe-zone-locator
  *      EMERGENCY-SERVICE → emergency-request-manager, emergency-responder, safe-zone-manager
  *  - User accounts come from data/users.json
- *  - Service accounts come from data/services.json  (same {username,password,userId} shape)
+ *  - Service accounts come from data/emergency-services.json (same {username,password,userId} shape)
  *  - User ID is extracted server-side from JWT sub; no extra header needed.
  *
  * Three composite scenarios for ~90% endpoint coverage:
@@ -19,13 +19,13 @@ import http from 'k6/http';
 import { SharedArray } from 'k6/data';
 import exec from 'k6/execution';
 import { check } from 'k6';
-import { getToken, bearerHeaders, decodeUserId } from '../auth.js';
+import { getPublicToken, getRestrictedToken, bearerHeaders, decodeUserId } from '../auth.js';
 import { checkOk, readLatency, writeLatency, thinkTime, randomItem, jitterCoord, errorRate } from '../helpers.js';
 
 const BASE_URL = __ENV.EMERGENCY_OPS_URL || 'http://localhost:28080';
 
 const users    = new SharedArray('eo_users',    () => JSON.parse(open('../data/users.json')));
-const services = new SharedArray('eo_services', () => JSON.parse(open('../data/services.json')));
+const services = new SharedArray('eo_services', () => JSON.parse(open('../data/emergency-services.json')));
 const locations = new SharedArray('eo_locations', () => JSON.parse(open('../data/locations.json')));
 
 // Per-VU state (isolated JS runtime per VU — these are VU-local).
@@ -36,14 +36,14 @@ let _userId       = null;
 function ensureUserAuth() {
   if (_userToken) return;
   const user  = users[exec.vu.idInTest % users.length];
-  _userToken  = getToken(user.username, user.password);
+  _userToken  = getPublicToken(user.username, user.password);
   _userId     = decodeUserId(_userToken) || user.userId;
 }
 
 function ensureServiceAuth() {
   if (_serviceToken) return;
   const svc    = services[exec.vu.idInTest % services.length];
-  _serviceToken = getToken(svc.username, svc.password);
+  _serviceToken = getRestrictedToken(svc.username, svc.password);
 }
 
 function userHeaders()    { return bearerHeaders(_userToken);    }

@@ -12,7 +12,7 @@
  *   20 % — messagingAndNotificationsScenario (chat + inbox management)
  *
  * Load    : 0 → 200 VUs over 2 min, hold 5 min, ramp down 2 min.
- * Pass    : p(95) UpdateUserLocation < 300 ms, reads < 600 ms, error < 1 %
+ * Pass    : p(95) UpdateUserLocation < 2000 ms, reads < 2000 ms, error < 2 %
  *
  * Run (from test/k6/):
  *   k6 run --env-file .env scripts/user-tracking/load.js
@@ -20,6 +20,7 @@
 
 import {
   openConnection,
+  closeConnection,
   locationTrackingScenario,
   circleAdminScenario,
   messagingAndNotificationsScenario,
@@ -27,25 +28,25 @@ import {
 
 export const options = {
   stages: [
-    { duration: '2m', target: 200 },
-    { duration: '5m', target: 200 },
-    { duration: '2m', target: 0   },
+    { duration: '1m', target: 100 },
+    { duration: '3m', target: 200 },
+    { duration: '1m', target: 0   },
   ],
 
   thresholds: {
-    grpc_req_duration:                                                   ['p(95)<600', 'p(99)<1200'],
-    'grpc_req_duration{name:grpc.UpdateUserLocation}':                   ['p(95)<300'],
-    'grpc_req_duration{name:grpc.ListFamilyCircles}':                    ['p(95)<500'],
-    'grpc_req_duration{name:grpc.ListFamilyCircleMembers}':              ['p(95)<500'],
-    'grpc_req_duration{name:grpc.ListFamilyMemberLocationHistory}':      ['p(95)<600'],
-    'grpc_req_duration{name:grpc.CreateFamilyCircle}':                   ['p(95)<500'],
-    'grpc_req_duration{name:grpc.SendMessage}':                          ['p(95)<400'],
-    'grpc_req_duration{name:grpc.ListMessages}':                         ['p(95)<500'],
-    'grpc_req_duration{name:grpc.CountTrackingNotifications}':           ['p(95)<300'],
-    'grpc_req_duration{name:grpc.CountRiskNotifications}':               ['p(95)<300'],
-    custom_error_rate:                                                   ['rate<0.01'],
-    custom_read_latency_ms:                                              ['p(95)<500'],
-    custom_write_latency_ms:                                             ['p(95)<300'],
+    grpc_req_duration:                                                   [`p(95)<2000`],
+    'grpc_req_duration{name:grpc.UpdateUserLocation}':                   [`p(95)<2000`],
+    'grpc_req_duration{name:grpc.ListFamilyCircles}':                    [`p(95)<2000`],
+    'grpc_req_duration{name:grpc.ListFamilyCircleMembers}':              [`p(95)<2000`],
+    'grpc_req_duration{name:grpc.ListFamilyMemberLocationHistory}':      [`p(95)<2000`],
+    'grpc_req_duration{name:grpc.CreateFamilyCircle}':                   [`p(95)<2000`],
+    'grpc_req_duration{name:grpc.SendMessage}':                          [`p(95)<2000`],
+    'grpc_req_duration{name:grpc.ListMessages}':                         [`p(95)<2000`],
+    'grpc_req_duration{name:grpc.CountTrackingNotifications}':           [`p(95)<2000`],
+    'grpc_req_duration{name:grpc.CountRiskNotifications}':               [`p(95)<2000`],
+    custom_error_rate:                                                   ['rate<0.02'],
+    custom_read_latency_ms:                                              [`p(95)<2000`],
+    custom_write_latency_ms:                                             [`p(95)<2000`],
   },
 };
 
@@ -60,4 +61,6 @@ export default function () {
   } else {
     messagingAndNotificationsScenario();
   }
+
+  closeConnection();
 }

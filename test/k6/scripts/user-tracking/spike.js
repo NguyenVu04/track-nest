@@ -33,8 +33,9 @@ import {
   circleAdminScenario,
   messagingAndNotificationsScenario,
 } from '../../lib/scenarios/user-tracking.js';
+import { createStageOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createStageOptions({
   stages: [
     { duration: '1m',  target: 20   },  // baseline
     { duration: '30s', target: 1000 },  // spike
@@ -51,7 +52,7 @@ export const options = {
     'grpc_req_duration{name:grpc.SendMessage}':               ['p(95)<3000'],
     custom_error_rate:                                        ['rate<0.15'],
   },
-};
+});
 
 export default function () {
   openConnection();

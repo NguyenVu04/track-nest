@@ -11,12 +11,12 @@
 import http from 'k6/http';
 import { SharedArray } from 'k6/data';
 import exec from 'k6/execution';
-import { getToken, bearerHeaders, decodeUserId } from '../auth.js';
+import { getRestrictedToken, bearerHeaders, decodeUserId } from '../auth.js';
 import { checkOk, checkStatus, readLatency, writeLatency, thinkTime, randomItem, todayIso, daysAgoIso, jitterCoord } from '../helpers.js';
 
 const BASE_URL  = __ENV.CRIMINAL_REPORTS_URL || 'http://localhost:38080';
 
-const users     = new SharedArray('cr_users', () => JSON.parse(open('../data/users.json')));
+const users     = new SharedArray('cr_users', () => JSON.parse(open('../data/reporters.json')));
 const locations = new SharedArray('cr_locations', () => JSON.parse(open('../data/locations.json')));
 const reports   = new SharedArray('cr_reports', () => JSON.parse(open('../data/reports.json')));
 
@@ -27,7 +27,7 @@ let _userId = null;
 function ensureAuth() {
   if (_token) return;
   const user = users[exec.vu.idInTest % users.length];
-  _token  = getToken(user.username, user.password);
+  _token  = getRestrictedToken(user.username, user.password);
   _userId = decodeUserId(_token) || user.userId;
 }
 

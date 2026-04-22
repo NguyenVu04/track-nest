@@ -16,8 +16,9 @@ import {
   getHomePage,
 } from '../../lib/scenarios/web.js';
 import { thinkTime } from '../../lib/helpers.js';
+import { createStageOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createStageOptions({
   stages: [
     { duration: '1m',  target: 12 },
     { duration: '28m', target: 12 },
@@ -30,7 +31,7 @@ export const options = {
     custom_error_rate:      ['rate<0.02'],
     custom_read_latency_ms: ['p(95)<1200'],
   },
-};
+});
 
 export default function () {
   const roll = Math.random();

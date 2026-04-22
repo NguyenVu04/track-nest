@@ -5,34 +5,39 @@
  * Each VU caches its token for the lifetime of the test iteration loop.
  *
  * Usage:
- *   import { getToken, bearerHeaders, decodeUserId } from '../../lib/auth.js';
+ *   import { getMobileToken, getWebToken, bearerHeaders, decodeUserId } from '../../lib/auth.js';
  *
- *   const token = getToken('username', 'password');
- *   const userId = decodeUserId(token);          // JWT sub claim
- *   const headers = bearerHeaders(token);
- *   const headers = bearerHeaders(token, { 'X-User-Id': userId });
+ *   const mobileToken = getMobileToken('username', 'password');
+ *   const webToken = getWebToken('username', 'password');
+ *   const userId = decodeUserId(mobileToken);    // JWT sub claim
+ *   const headers = bearerHeaders(mobileToken);
+ *   const headers = bearerHeaders(mobileToken, { 'X-User-Id': userId });
  */
 
 import http from 'k6/http';
 import encoding from 'k6/encoding';
 import { check } from 'k6';
 
-const KEYCLOAK_URL = __ENV.KEYCLOAK_URL || 'http://localhost/auth';
-const REALM       = __ENV.KEYCLOAK_REALM || 'public-dev';
-const CLIENT_ID   = __ENV.KEYCLOAK_CLIENT_ID || 'tracknest';
+const env = JSON.parse(open('./data/env.json'));
+const KEYCLOAK_URL = env.KEYCLOAK_URL || 'http://localhost/auth';
+const PUBLIC_REALM = env.KEYCLOAK_PUBLIC_REALM || 'public-dev';
+const RESTRICTED_REALM = env.KEYCLOAK_RESTRICTED_REALM || 'restricted-dev';
+const MOBILE_CLIENT_ID = env.KEYCLOAK_MOBILE_CLIENT_ID || 'mobile';
+const WEB_CLIENT_ID = env.KEYCLOAK_WEB_CLIENT_ID || 'web';
 
-const TOKEN_ENDPOINT = `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/token`;
+const TOKEN_PUBLIC_ENDPOINT = `${KEYCLOAK_URL}/realms/${PUBLIC_REALM}/protocol/openid-connect/token`;
+const TOKEN_RESTRICTED_ENDPOINT = `${KEYCLOAK_URL}/realms/${RESTRICTED_REALM}/protocol/openid-connect/token`;
 
 /**
  * Obtain a Keycloak access token via ROPC grant.
  * Returns the raw JWT string, or null on failure.
  */
-export function getToken(username, password) {
+export function getPublicToken(username, password) {
   const res = http.post(
-    TOKEN_ENDPOINT,
+    TOKEN_PUBLIC_ENDPOINT,
     {
       grant_type: 'password',
-      client_id:  CLIENT_ID,
+      client_id:  MOBILE_CLIENT_ID,
       username,
       password,
       scope: 'openid profile email',
@@ -42,10 +47,50 @@ export function getToken(username, password) {
 
   const ok = check(res, { 'auth: 200 OK': (r) => r.status === 200 });
   if (!ok) {
-    console.error(`getToken failed for ${username}: HTTP ${res.status} – ${res.body}`);
+    console.error(`getPublicToken failed for ${username}: HTTP ${res.status} – ${res.body}`);
     return null;
   }
   return res.json('access_token');
+}
+
+export function getRestrictedToken(username, password) {
+  const res = http.post(
+    TOKEN_RESTRICTED_ENDPOINT,
+    {
+      grant_type: 'password',
+      client_id:  WEB_CLIENT_ID,
+      username,
+      password,
+      scope: 'openid profile email',
+    },
+    { tags: { name: 'keycloak_token' } }
+  );
+
+  const ok = check(res, { 'auth: 200 OK': (r) => r.status === 200 });
+  if (!ok) {
+    console.error(`getRestrictedToken failed for ${username}: HTTP ${res.status} – ${res.body}`);
+    return null;
+  }
+  return res.json('access_token');
+}
+
+// Backward-compatible aliases used in older scripts.
+export function getMobileToken(username, password) {
+  return getPublicToken(username, password);
+}
+
+export function getWebToken(username, password) {
+  return getRestrictedToken(username, password);
+}
+
+/**
+ * Generic token helper with explicit realm selection.
+ * realm: 'public' | 'restricted'
+ */
+export function getToken(username, password, realm = 'public') {
+  return realm === 'restricted'
+    ? getRestrictedToken(username, password)
+    : getPublicToken(username, password);
 }
 
 /**

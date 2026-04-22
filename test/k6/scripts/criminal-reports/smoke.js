@@ -12,8 +12,9 @@
 
 import { publicBrowseJourney, authenticatedReporterJourney } from '../../lib/scenarios/criminal-reports.js';
 import { errorRate } from '../../lib/helpers.js';
+import { createSmokeOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createSmokeOptions({
   vus:      1,
   duration: '1m',
 
@@ -26,7 +27,7 @@ export const options = {
     'http_req_duration{name:POST /report-manager/missing-person-reports}': ['p(95)<800'],
     custom_error_rate:           ['rate<0.01'],
   },
-};
+});
 
 export default function () {
   // Alternate between anonymous and authenticated flows

@@ -19,8 +19,9 @@ import {
   getDashboard,
   getFamilyCirclesPage,
 } from '../../lib/scenarios/web.js';
+import { createSmokeOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createSmokeOptions({
   vus:      1,
   duration: '1m',
 
@@ -32,7 +33,7 @@ export const options = {
     'http_req_duration{name:GET /dashboard/family-circles}':   ['p(95)<800'],
     custom_error_rate: ['rate<0.01'],
   },
-};
+});
 
 export default function () {
   if (__ITER % 3 === 0) {

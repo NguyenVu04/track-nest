@@ -21,8 +21,9 @@ import {
   serviceOperationsScenario,
   safeZoneManagementScenario,
 } from '../../lib/scenarios/emergency-ops.js';
+import { createStageOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createStageOptions({
   stages: [
     { duration: '2m', target: 200 },
     { duration: '5m', target: 200 },
@@ -47,7 +48,7 @@ export const options = {
     custom_read_latency_ms:  ['p(95)<500'],
     custom_write_latency_ms: ['p(95)<800'],
   },
-};
+});
 
 export default function () {
   const roll = Math.random();

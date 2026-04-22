@@ -17,8 +17,9 @@ import {
   anonymousVisitorJourney,
 } from '../../lib/scenarios/web.js';
 import { thinkTime } from '../../lib/helpers.js';
+import { createStageOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createStageOptions({
   stages: [
     { duration: '2m', target: 100 },
     { duration: '3m', target: 100 },
@@ -34,7 +35,7 @@ export const options = {
     http_req_duration: ['p(99)<8000'],
     'http_req_duration{name:GET /}': ['p(95)<3000'],
   },
-};
+});
 
 export default function () {
   const roll = Math.random();

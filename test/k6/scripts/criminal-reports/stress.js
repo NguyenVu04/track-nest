@@ -20,8 +20,9 @@ import {
   createCrimeReport,
 } from '../../lib/scenarios/criminal-reports.js';
 import { thinkTime } from '../../lib/helpers.js';
+import { createStageOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createStageOptions({
   stages: [
     { duration: '2m',  target: 50  },  // warm-up
     { duration: '3m',  target: 50  },  // normal
@@ -39,7 +40,7 @@ export const options = {
     http_req_failed:   ['rate<0.30'],
     http_req_duration: ['p(99)<5000'],
   },
-};
+});
 
 export default function () {
   const roll = Math.random();

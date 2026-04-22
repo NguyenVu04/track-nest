@@ -15,8 +15,9 @@ import {
   serviceOperationsScenario,
   safeZoneManagementScenario,
 } from '../../lib/scenarios/emergency-ops.js';
+import { createSmokeOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createSmokeOptions({
   vus:      1,
   duration: '2m',
 
@@ -31,7 +32,7 @@ export const options = {
     custom_read_latency_ms:  ['p(95)<400'],
     custom_write_latency_ms: ['p(95)<500'],
   },
-};
+});
 
 export default function () {
   // Round-robin through all three scenarios so every endpoint is exercised.

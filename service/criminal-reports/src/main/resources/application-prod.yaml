@@ -1,4 +1,6 @@
 spring:
+  jpa:
+    show-sql: false
   kafka:
     bootstrap-servers: ${KAFKA_SERVER:127.0.0.1:29092}
     properties:
@@ -15,7 +17,7 @@ spring:
 
 logging:
   level:
-    root: INFO
-    org.springframework: INFO
+    root: WARN
+    org.springframework: WARN
     org.hibernate.SQL: WARN
     org.hibernate.orm.jdbc.bind: OFF

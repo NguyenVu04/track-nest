@@ -19,8 +19,9 @@ import {
   getFamilyCirclesPage,
 } from '../../lib/scenarios/web.js';
 import { thinkTime } from '../../lib/helpers.js';
+import { createStageOptions } from '../../lib/options.js';
 
-export const options = {
+export const options = createStageOptions({
   stages: [
     { duration: '1m', target: 60 },
     { duration: '3m', target: 60 },
@@ -36,7 +37,7 @@ export const options = {
     custom_error_rate:       ['rate<0.01'],
     custom_read_latency_ms:  ['p(95)<1000'],
   },
-};
+});
 
 export default function () {
   const roll = Math.random();

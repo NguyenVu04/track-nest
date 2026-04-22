@@ -3,8 +3,8 @@
  *
  * k6 gRPC notes:
  *  - Proto files are loaded at init time via client.load().
- *  - Path is resolved relative to the working directory where k6 is invoked,
- *    NOT relative to this file. Set PROTO_PATH env var accordingly.
+ *  - In this test setup, proto paths are provided module-relative from this
+ *    file via env.json (e.g. ../../../../service/...).
  *  - Run k6 from test/k6/ directory: `k6 run scripts/user-tracking/smoke.js`
  *  - JWT is sent as gRPC metadata: { authorization: 'Bearer <token>' }
  *
@@ -20,18 +20,20 @@ import grpc from 'k6/net/grpc';
 import { SharedArray } from 'k6/data';
 import exec from 'k6/execution';
 import { check } from 'k6';
-import { getToken } from '../auth.js';
+import { getPublicToken } from '../auth.js';
 import { readLatency, writeLatency, thinkTime, randomItem, jitterCoord, errorRate } from '../helpers.js';
 
-const HOST      = __ENV.USER_TRACKING_GRPC_HOST || 'localhost:19090';
-const PROTO_DIR = __ENV.PROTO_PATH || '../../service/user-tracking/src/main/proto';
+const env       = JSON.parse(open('../data/env.json'));
+const HOST      = env.USER_TRACKING_GRPC_HOST || 'localhost:19090';
+const PROTO_DIR = env.PROTO_PATH || '../../../../frontend/TrackNest/proto';
+const GOOGLE_PROTO_DIR = env.GOOGLE_PROTO_PATH || '../../../../frontend/TrackNest/proto';
 
 const users     = new SharedArray('ut_users', () => JSON.parse(open('../data/users.json')));
 const locations = new SharedArray('ut_locations', () => JSON.parse(open('../data/locations.json')));
 
 // ── gRPC client (module scope — shared read-only across iterations within a VU) ─
 export const client = new grpc.Client();
-client.load([PROTO_DIR], 'tracker.proto', 'trackingmanager.proto', 'notifier.proto', 'familymessenger.proto');
+client.load([PROTO_DIR, GOOGLE_PROTO_DIR], 'tracker.proto', 'trackingmanager.proto', 'notifier.proto', 'familymessenger.proto');
 
 // Per-VU state: each VU runs in an isolated JS runtime so these are VU-local.
 let _token    = null;
@@ -40,17 +42,17 @@ let _deviceId = null;
 function ensureAuth() {
   if (_token) return;
   const user = users[exec.vu.idInTest % users.length];
-  _token = getToken(user.username, user.password);
+  _token = getPublicToken(user.username, user.password);
 }
 
 function authMeta() {
-  return _token ? { authorization: `Bearer ${_token}` } : {};
+  return _token ? { Authorization: `Bearer ${_token}` } : {};
 }
 
 // ── Connection lifecycle ──────────────────────────────────────────────────────
 
 export function openConnection() {
-  client.connect(HOST, { plaintext: true });
+  client.connect(HOST, {});
 }
 
 export function closeConnection() {
@@ -92,7 +94,7 @@ export function listLocationHistory(familyCircleId) {
   const res = client.invoke(
     'project.tracknest.usertracking.proto.v1.TrackerController/ListFamilyMemberLocationHistory',
     {
-      family_circle_id:      familyCircleId || '00000000-0000-0000-0000-000000000099',
+      family_circle_id:      familyCircleId || '00000000-0000-0000-0000-000000000000',
       member_id:             user.userId,
       center_latitude_deg:   loc.lat,
       center_longitude_deg:  loc.lng,

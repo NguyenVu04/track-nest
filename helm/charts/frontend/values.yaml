@@ -4,7 +4,7 @@ web:
 
   image:
     repository: nguyenvu04/tracknest-web
-    tag: "v1.2.4"
+    tag: "v1.2.6"
     pullPolicy: IfNotPresent
 
   nodeEnv: production
