@@ -462,6 +462,7 @@ class NotifierServiceImpl implements NotifierService {
     }
 
     @Override
+    @Transactional
     public ClearRiskNotificationsResponse clearRiskNotifications(
             UUID userId,
             ClearRiskNotificationsRequest request
