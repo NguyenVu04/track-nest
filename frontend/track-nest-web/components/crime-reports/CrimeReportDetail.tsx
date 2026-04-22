@@ -139,7 +139,10 @@ export function CrimeReportDetail({
 
               <div className="pt-4 border-t border-gray-200">
                 <p className="text-gray-700 mb-2">{tCommon("description")}</p>
-                <p className="text-gray-900">{report.content}</p>
+                <div
+                  className="text-gray-900 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: report.content || "" }}
+                />
               </div>
 
               <div className="pt-4 border-t border-gray-200">
