@@ -75,7 +75,7 @@ userTracking:
 
   image:
     repository: nguyenvu04/tracknest-usertracking
-    tag: "v1.2.6"
+    tag: "v1.2.7"
 
   # gRPC (external) and HTTP (internal REST/actuator) ports.
   grpcPort: 19090
@@ -103,7 +103,7 @@ criminalReports:
 
   image:
     repository: nguyenvu04/tracknest-criminalreports
-    tag: "v1.2.6"
+    tag: "v1.2.7"
 
   database:
     host: ep-wispy-math-a1wxwifi-pooler.ap-southeast-1.aws.neon.tech
@@ -130,7 +130,7 @@ emergencyOps:
 
   image:
     repository: nguyenvu04/tracknest-emergencyops
-    tag: "v1.2.6"
+    tag: "v1.2.7"
 
   database:
     host: ep-curly-shadow-a14usu28-pooler.ap-southeast-1.aws.neon.tech

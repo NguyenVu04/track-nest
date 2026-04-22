@@ -28,25 +28,25 @@ import {
 
 export const options = {
   stages: [
-    { duration: '1m', target: 100 },
-    { duration: '3m', target: 200 },
+    { duration: '1m', target: 200 },
+    { duration: '3m', target: 500 },
     { duration: '1m', target: 0   },
   ],
 
   thresholds: {
-    grpc_req_duration:                                                   [`p(95)<2000`],
-    'grpc_req_duration{name:grpc.UpdateUserLocation}':                   [`p(95)<2000`],
-    'grpc_req_duration{name:grpc.ListFamilyCircles}':                    [`p(95)<2000`],
-    'grpc_req_duration{name:grpc.ListFamilyCircleMembers}':              [`p(95)<2000`],
-    'grpc_req_duration{name:grpc.ListFamilyMemberLocationHistory}':      [`p(95)<2000`],
-    'grpc_req_duration{name:grpc.CreateFamilyCircle}':                   [`p(95)<2000`],
-    'grpc_req_duration{name:grpc.SendMessage}':                          [`p(95)<2000`],
-    'grpc_req_duration{name:grpc.ListMessages}':                         [`p(95)<2000`],
-    'grpc_req_duration{name:grpc.CountTrackingNotifications}':           [`p(95)<2000`],
-    'grpc_req_duration{name:grpc.CountRiskNotifications}':               [`p(95)<2000`],
-    custom_error_rate:                                                   ['rate<0.02'],
-    custom_read_latency_ms:                                              [`p(95)<2000`],
-    custom_write_latency_ms:                                             [`p(95)<2000`],
+    grpc_req_duration:                                                   [`p(95)<1000`],
+    'grpc_req_duration{name:grpc.UpdateUserLocation}':                   [`p(95)<1000`],
+    'grpc_req_duration{name:grpc.ListFamilyCircles}':                    [`p(95)<1000`],
+    'grpc_req_duration{name:grpc.ListFamilyCircleMembers}':              [`p(95)<1000`],
+    'grpc_req_duration{name:grpc.ListFamilyMemberLocationHistory}':      [`p(95)<1000`],
+    'grpc_req_duration{name:grpc.CreateFamilyCircle}':                   [`p(95)<1000`],
+    'grpc_req_duration{name:grpc.SendMessage}':                          [`p(95)<1000`],
+    'grpc_req_duration{name:grpc.ListMessages}':                         [`p(95)<1000`],
+    'grpc_req_duration{name:grpc.CountTrackingNotifications}':           [`p(95)<1000`],
+    'grpc_req_duration{name:grpc.CountRiskNotifications}':               [`p(95)<1000`],
+    custom_error_rate:                                                   ['rate<0.01'],
+    custom_read_latency_ms:                                              [`p(95)<1000`],
+    custom_write_latency_ms:                                             [`p(95)<1000`],
   },
 };
 
@@ -54,9 +54,9 @@ export default function () {
   openConnection();
 
   const roll = Math.random();
-  if (roll < 0.55) {
+  if (roll < 0.9) {
     locationTrackingScenario();
-  } else if (roll < 0.80) {
+  } else if (roll < 0.95) {
     circleAdminScenario();
   } else {
     messagingAndNotificationsScenario();
