@@ -21,6 +21,18 @@ const LocationPicker = dynamic(
   },
 );
 
+const RichTextEditor = dynamic(
+  () => import("../shared/RichTextEditor").then((mod) => mod.RichTextEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-80 rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center">
+        <span className="text-gray-500">Loading editor...</span>
+      </div>
+    ),
+  },
+);
+
 interface MissingPersonFormProps {
   person: MissingPerson | null;
   onSave: (person: MissingPerson) => void;
@@ -330,16 +342,12 @@ export function MissingPersonForm({
                 {t("formContent")}{tCommon("requiredSuffix")}
               </span>
             </label>
-            <textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) =>
-                setFormData({ ...formData, content: e.target.value })
+            <RichTextEditor
+              value={formData.content || ""}
+              onChange={(html) =>
+                setFormData({ ...formData, content: html })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              rows={4}
               placeholder={t("placeholderContent")}
-              required
             />
           </div>
 
