@@ -48,7 +48,8 @@ class LocationQueryServiceImpl implements LocationQueryService, LocationMessageC
 
                     redisPublisher.publishMessage(
                             redisMessage,
-                            redisMessage.getReceiverId()
+                            redisMessage.getReceiverId(),
+                            false
                     );
                 }
         );

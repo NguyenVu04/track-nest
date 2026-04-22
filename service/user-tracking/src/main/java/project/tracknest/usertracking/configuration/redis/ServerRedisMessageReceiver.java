@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import project.tracknest.usertracking.core.datatype.FamilyMessageEvent;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
+import project.tracknest.usertracking.domain.familymessenger.service.FamilyMessengerEventSubscriber;
 import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationQuerySubscriber;
 
 @Slf4j
@@ -13,6 +15,7 @@ import project.tracknest.usertracking.domain.tracker.locationquery.service.Locat
 public class ServerRedisMessageReceiver {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final LocationQuerySubscriber locationQuerySubscriber;
+    private final FamilyMessengerEventSubscriber familyMessengerEventSubscriber;
 
     public void receiveMessage(String message) {
         try {
@@ -31,6 +34,17 @@ public class ServerRedisMessageReceiver {
                     locationQuerySubscriber.receiveLocationMessage(
                             redisMessage.getReceiverId(),
                             locationMessage
+                    );
+                    break;
+                case "receiveFamilyMessage":
+                    FamilyMessageEvent familyMessageEvent = redisMessage.getPayload() instanceof FamilyMessageEvent
+                            ? (FamilyMessageEvent) redisMessage.getPayload()
+                            : OBJECT_MAPPER.convertValue(
+                                    redisMessage.getPayload(), FamilyMessageEvent.class);
+
+                    familyMessengerEventSubscriber.receiveFamilyMessageEvent(
+                            redisMessage.getReceiverId(),
+                            familyMessageEvent
                     );
                     break;
                 default:

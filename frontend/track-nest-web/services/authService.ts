@@ -15,15 +15,6 @@ const KEYCLOAK_FLOW =
     | "hybrid"
     | undefined) || "standard";
 
-console.log("AuthService config:", {
-  KEYCLOAK_BASE_URL,
-  USER_REALM,
-  REPORTER_REALM,
-  EMERGENCY_REALM,
-  USER_CLIENT_ID,
-  KEYCLOAK_FLOW,
-});
-
 export interface LoginResponse {
   access_token: string;
   expires_in: number;

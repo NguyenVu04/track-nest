@@ -145,7 +145,7 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
 
     private LocationBucket getOrCreateBucket(UUID userId, OffsetDateTime timestamp) {
         OffsetDateTime utc = timestamp.withOffsetSameInstant(ZoneOffset.UTC);
-        short dayOfWeek = (short) (utc.getDayOfWeek().getValue() - 1);
+        short dayOfWeek = (short) ((utc.getDayOfWeek().getValue() - 1) % 7);
         short hourOfDay = (short) utc.getHour();
 
         return bucketRepository
@@ -164,7 +164,11 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
     }
 
     private Optional<CellVisit> findMatureVisitInRingOrRegisterCandidate(
-            UUID userId, UUID bucketId, String cellId, List<String> ringCellIds, OffsetDateTime timestamp
+            UUID userId,
+            UUID bucketId,
+            String cellId,
+            List<String> ringCellIds,
+            OffsetDateTime timestamp
     ) {
         Optional<CellVisit> matureVisit = visitRepository
                 .findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(userId, bucketId, ringCellIds);
