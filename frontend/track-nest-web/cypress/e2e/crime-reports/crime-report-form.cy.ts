@@ -25,17 +25,6 @@
  *      UC-CR-04 : Cancel button navigates back to list
  */
 
-declare global {
-  namespace Cypress {
-    interface Chainable {
-      visitAsRole(path: string, role: string): Chainable<void>;
-      mockCriminalReportsApi(): Chainable<void>;
-    }
-  }
-}
-
-export {};
-
 describe("Crime Report Form", () => {
   beforeEach(() => {
     cy.mockCriminalReportsApi();
@@ -256,7 +245,7 @@ describe("Crime Report Form", () => {
       cy.get("#severity").select("4");
       cy.get("#date").type("2026-04-05T14:30");
       cy.get("#content").type(
-        "Three suspects robbed a stall at the central market. CCTV footage available.",
+        "Three suspects robbed a stall at the central market. CCTV footage available."
       );
       cy.get("#latitude").clear().type("10.8231");
       cy.get("#longitude").clear().type("106.6297");
@@ -310,9 +299,7 @@ describe("Crime Report Form", () => {
   context("UC-CR-04 | Cancel returns to list", () => {
     it("Cancel button is present and navigates away from create form", () => {
       // The MissingPersonForm has a Cancel button; CrimeReportForm does too
-      cy.get("button")
-        .contains(/cancel/i)
-        .should("exist");
+      cy.get("button").contains(/cancel/i).should("exist");
     });
   });
 });
