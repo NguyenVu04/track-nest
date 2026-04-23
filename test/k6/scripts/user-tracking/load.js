@@ -11,7 +11,7 @@
  *   25 % — circleAdminScenario        (setup & admin ops — less frequent)
  *   20 % — messagingAndNotificationsScenario (chat + inbox management)
  *
- * Load    : 0 → 200 VUs over 2 min, hold 5 min, ramp down 2 min.
+ * Load    : 0 → 200 VUs over 5 min, hold 10 min, ramp down 5 min.
  * Pass    : p(95) UpdateUserLocation < 2000 ms, reads < 2000 ms, error < 2 %
  *
  * Run (from test/k6/):
@@ -28,9 +28,9 @@ import {
 
 export const options = {
   stages: [
-    { duration: '1m', target: 200 },
-    { duration: '3m', target: 500 },
-    { duration: '1m', target: 0   },
+    { duration: '5m', target: 200 },
+    { duration: '10m', target: 500 },
+    { duration: '2m', target: 0   },
   ],
 
   thresholds: {
