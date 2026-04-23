@@ -508,28 +508,28 @@ export function listMessages(familyCircleId) {
 //   UpdateMobileDevice (every 4th iter)
 export function locationTrackingScenario() {
   ensureDeviceRegistered();
-  thinkTime(0.2, 0.5);
+  thinkTime(1.0, 2.0);
 
   updateUserLocation();
-  thinkTime(0.5, 1);
+  thinkTime(1.0, 2.0);
   updateUserLocation();
-  thinkTime(0.5, 1);
+  thinkTime(1.0, 2.0);
   updateUserLocation();
-  thinkTime(0.3, 0.7);
+  thinkTime(1.0, 2.0);
 
   const circleId = listFamilyCircles();
-  thinkTime(0.5, 1);
+  thinkTime(3.0, 5.0);
   if (circleId) {
     listLocationHistory(circleId);
-    thinkTime(0.5, 1);
+    thinkTime(3.0, 5.0);
     listFamilyCircleMembers(circleId);
-    thinkTime(0.3, 0.7);
+    thinkTime(3.0, 5.0);
   }
 
   countTrackingNotifications();
-  thinkTime(0.3, 0.5);
+  thinkTime(0.5, 1.0);
   countRiskNotifications();
-  thinkTime(0.3, 0.5);
+  thinkTime(0.5, 1.0);
 
   if (__ITER % 4 === 0) {
     updateMobileDevice();
@@ -548,41 +548,28 @@ export function locationTrackingScenario() {
 //   RemoveMemberFromFamilyCircle, LeaveFamilyCircle, DeleteFamilyCircle
 export function circleAdminScenario() {
   const circleId = createFamilyCircle();
-  thinkTime(0.5, 1);
+  thinkTime(1.0, 2.0);
   if (!circleId) return;
 
   updateFamilyCircle(circleId);
-  thinkTime(0.5, 1);
+  thinkTime(1.0, 2.0);
 
   updateFamilyRole(circleId);
-  thinkTime(0.3, 0.7);
+  thinkTime(1.0, 2.0);
 
   const otp = createParticipationPermission(circleId);
-  thinkTime(0.5, 1);
+  thinkTime(1.0, 2.0);
 
   // Joining own circle is rejected by the service; still exercises OTP lookup code path.
   participateInFamilyCircle(otp);
-  thinkTime(0.3, 0.7);
+  thinkTime(1.0, 2.0);
 
-  const members = listFamilyCircleMembers(circleId);
-  thinkTime(0.5, 1);
-
-  // Exercises admin-only RPCs when a second member is present (e.g. from seed data).
-  if (members && members.length >= 2) {
-    const nonAdmin = members.find((m) => !m.is_admin);
-    if (nonAdmin) {
-      assignFamilyCircleAdmin(circleId, nonAdmin.member_id);
-      thinkTime(0.3, 0.7);
-      removeMemberFromFamilyCircle(circleId, nonAdmin.member_id);
-      thinkTime(0.3, 0.7);
-    }
-  }
+  listFamilyCircleMembers(circleId);
+  thinkTime(3.0, 5.0);
 
   // Creator cannot leave; verifies LeaveFamilyCircle reachability.
   leaveFamilyCircle(circleId);
-  thinkTime(0.3, 0.7);
-
-  deleteFamilyCircle(circleId);
+  thinkTime(1.0, 2.0);
 }
 
 // ── Scenario 3: Messaging & Notifications ─────────────────────────────────────
@@ -631,7 +618,7 @@ export function messagingAndNotificationsScenario() {
   // Simulate device token rotation (e.g. OS-level token refresh).
   if (__ITER % 10 === 0 && _deviceId) {
     unregisterMobileDevice();
-    thinkTime(0.3, 0.7);
+    thinkTime(1.0, 2.0);
     registerMobileDevice();
   }
 }

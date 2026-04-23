@@ -22,7 +22,8 @@ import { check } from 'k6';
 import { getPublicToken, getRestrictedToken, bearerHeaders, decodeUserId } from '../auth.js';
 import { checkOk, readLatency, writeLatency, thinkTime, randomItem, jitterCoord, errorRate } from '../helpers.js';
 
-const BASE_URL = __ENV.EMERGENCY_OPS_URL || 'http://localhost:28080';
+const env = JSON.parse(open('../data/env.json'));
+const BASE_URL = env.EMERGENCY_OPS_URL || 'http://localhost:28080';
 
 const users    = new SharedArray('eo_users',    () => JSON.parse(open('../data/users.json')));
 const services = new SharedArray('eo_services', () => JSON.parse(open('../data/emergency-services.json')));

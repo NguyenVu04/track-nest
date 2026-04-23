@@ -415,7 +415,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
 
     @Override
     @Transactional
-    public AssignFamilyCircleAdminResponse assignFamilyCircleAdmin(UUID userId, AssignFamilyCircleAdminRequest request) {
+    public AssignFamilyCircleAdminResponse  assignFamilyCircleAdmin(UUID userId, AssignFamilyCircleAdminRequest request) {
 
         UUID circleId = UUID.fromString(request.getFamilyCircleId());
 

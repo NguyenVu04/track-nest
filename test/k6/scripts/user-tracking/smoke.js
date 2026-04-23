@@ -34,7 +34,7 @@ const writeP95Ms = Number(env.K6_THRESHOLD_WRITE_P95_MS || (isLocalTarget ? 500 
 
 export const options = createSmokeOptions({
   vus:      1,
-  duration: '1m',
+  duration: '2m',
 
   thresholds: {
     grpc_req_duration:                                              [`p(95)<${grpcP95Ms}`],

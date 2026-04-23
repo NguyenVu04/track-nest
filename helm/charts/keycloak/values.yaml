@@ -8,7 +8,7 @@ keycloak:
 
   image:
     repository: nguyenvu04/tracknest-keycloak
-    tag: "v1.2.7"
+    tag: "v1.2.8"
     pullPolicy: IfNotPresent
 
   # Startup mode: use "start" for production (requires valid hostname/TLS

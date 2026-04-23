@@ -10,7 +10,7 @@ $dockerRepo = "nguyenvu04/tracknest"
 $composeFile = "docker-compose.prod.yaml"
 
 # 🔴 SINGLE SOURCE OF TRUTH
-$version = "v1.2.7"
+$version = "v1.2.8"
 
 if ([string]::IsNullOrWhiteSpace($version)) {
     throw "Version must be explicitly defined."

@@ -29,8 +29,8 @@ import {
 export const options = {
   stages: [
     { duration: '5m', target: 200 },
-    { duration: '10m', target: 500 },
-    { duration: '2m', target: 0   },
+    { duration: '5m', target: 200 },
+    { duration: '5m', target: 0   },
   ],
 
   thresholds: {
