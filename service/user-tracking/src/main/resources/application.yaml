@@ -86,9 +86,6 @@ server:
   port: 18080
   servlet:
     context-path: /user-tracking
-  tomcat:
-    max-threads: 50
-    accept-count: 100
 
 logging:
   level:

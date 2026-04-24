@@ -71,9 +71,6 @@ server:
   port: 38080
   servlet:
     context-path: /criminal-reports
-  tomcat:
-    max-threads: 50
-    accept-count: 100
 
 logging:
   level:
