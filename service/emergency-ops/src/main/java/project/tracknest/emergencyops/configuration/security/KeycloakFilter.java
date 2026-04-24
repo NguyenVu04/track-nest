@@ -44,6 +44,13 @@ public class KeycloakFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
         String authorizationHeader = request.getHeader(AUTHORIZATION_KEY);
+        // Fallback for WebSocket connections — browsers cannot set Authorization headers on WS upgrade requests
+        if (authorizationHeader == null) {
+            String tokenParam = request.getParameter("access_token");
+            if (tokenParam != null && !tokenParam.isBlank()) {
+                authorizationHeader = "Bearer " + tokenParam;
+            }
+        }
         KeycloakAuthorizationHeader decoded = decodeKeycloakauthorizationHeader(authorizationHeader);
 
         if (decoded != null) {
