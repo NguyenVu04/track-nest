@@ -2,15 +2,15 @@
 
 /* ─── TrackNest Brand Colours (synced with mobile app styles.ts) ──────────── */
 @theme {
-  /* Teal primary palette */
+  /* Teal primary palette — mirrors styles.ts exactly */
   --color-brand-50:  #f0f8f9;
-  --color-brand-100: #e0f2f5;
-  --color-brand-200: #c0e6ed;
+  --color-brand-100: #e0f2f5;   /* primaryMuted  */
+  --color-brand-200: #a8d8e0;   /* primaryLight  */
   --color-brand-300: #93cdd9;
-  --color-brand-400: #5cb5c7;
-  --color-brand-500: #74becb;
-  --color-brand-600: #5aa8b5;
-  --color-brand-700: #4a8a96;
+  --color-brand-400: #74becb;   /* primary       */
+  --color-brand-500: #5aa8b5;   /* primaryDark   */
+  --color-brand-600: #5b9aa6;   /* secondary     */
+  --color-brand-700: #4a8a96;   /* accent        */
   --color-brand-800: #3a6b76;
   --color-brand-900: #253f47;
 
@@ -76,6 +76,12 @@
   --sidebar-ring:                189 46% 63%;
 }
 
+/* ─── Smooth scrolling + fixed-navbar offset ─────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 72px; /* matches navbar h-16 (64px) + 8px breathing room */
+}
+
 /* ─── Base styles ─────────────────────────────────────────────────────────── */
 @theme inline {
   --color-background: hsl(var(--background));
@@ -94,7 +100,7 @@ body {
 /* ─── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar        { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: #c0e6ed; border-radius: 99px; }
+::-webkit-scrollbar-thumb  { background: #a8d8e0; border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: #74becb; }
 
 /* ─── Custom utility helpers ──────────────────────────────────────────────── */
