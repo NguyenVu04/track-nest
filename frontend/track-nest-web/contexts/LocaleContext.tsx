@@ -4,7 +4,6 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   ReactNode,
 } from "react";
 import { NextIntlClientProvider } from "next-intl";
@@ -15,9 +14,9 @@ export type Locale = "en" | "vi";
 
 const LOCALE_STORAGE_KEY = "tracknest_locale";
 
-const allMessages: Record<Locale, typeof enMessages> = {
+const allMessages = {
   en: enMessages,
-  vi: viMessages as typeof enMessages,
+  vi: viMessages,
 };
 
 interface LocaleContextType {
@@ -31,15 +30,11 @@ const LocaleContext = createContext<LocaleContextType>({
 });
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
-
-  // Read persisted locale on mount (client-side only)
-  useEffect(() => {
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY) as Locale | null;
-    if (stored === "en" || stored === "vi") {
-      setLocaleState(stored);
-    }
-  }, []);
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    if (typeof window === "undefined") return "en";
+    const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
+    return stored === "en" || stored === "vi" ? stored : "en";
+  });
 
   const setLocale = (next: Locale) => {
     setLocaleState(next);

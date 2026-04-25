@@ -6,7 +6,7 @@ interface LoginPageProps {
     id: string;
     email: string;
     fullName: string;
-    role: string;
+    role: string[];
   }) => void;
 }
 
@@ -24,14 +24,14 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       onLogin({
         id: "1",
         email: "reporter@track.com",
-        role: "Reporter",
+        role: ["Reporter"],
         fullName: "John Reporter",
       });
     } else if (username === "emergency" && password === "demo123") {
       onLogin({
         id: "2",
         email: "emergency@track.com",
-        role: "Emergency Services",
+        role: ["Emergency Service"],
         fullName: "Jane Emergency",
       });
     } else {

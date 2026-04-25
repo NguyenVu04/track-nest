@@ -195,7 +195,7 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
       {!hasGenerated && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 text-center">
           <p className="text-gray-600">
-            Enter a center coordinate and radius, then click "Generate Heatmap"
+            Enter a center coordinate and radius, then click &quot;Generate Heatmap&quot;
             to load public crime data from the server.
           </p>
         </div>

@@ -12,7 +12,7 @@
  * ├──────────────────────┼──────────────────┼─────────────────┼──────────────────┤
  * │ Reporter             │ Visible          │ Visible(PENDING)│ Visible          │
  * │ Admin                │ Not visible      │ Not visible     │ Not visible      │
- * │ Emergency Services   │ Not visible      │ Not visible     │ Not visible      │
+ * │ Emergency Service   │ Not visible      │ Not visible     │ Not visible      │
  * │ User                 │ Not visible      │ Not visible     │ Not visible      │
  * └──────────────────────┴──────────────────┴─────────────────┴──────────────────┘
  */
@@ -134,9 +134,9 @@ describe("Crime Reports – List Page", () => {
       cy.contains(/new crime report|create.*crime/i).should("not.exist");
     });
 
-    it("DT-R03 | Emergency Services does NOT see Create button", () => {
+    it("DT-R03 | Emergency Service does NOT see Create button", () => {
       cy.mockCriminalReportsApi();
-      cy.visitAsRole("/dashboard/crime-reports", "Emergency Services");
+      cy.visitAsRole("/dashboard/crime-reports", "Emergency Service");
       cy.wait("@getCrimeReports");
       cy.contains(/new crime report|create.*crime/i).should("not.exist");
     });

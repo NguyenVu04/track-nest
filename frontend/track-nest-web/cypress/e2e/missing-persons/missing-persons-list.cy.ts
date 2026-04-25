@@ -164,9 +164,9 @@ describe("Missing Persons – List Page", () => {
       cy.contains(/new missing person|create.*missing/i).should("not.exist");
     });
 
-    it("DT-ROLE-03 | Emergency Services does NOT see Create button", () => {
+    it("DT-ROLE-03 | Emergency Service does NOT see Create button", () => {
       cy.mockMissingPersonsApi();
-      cy.visitAsRole("/dashboard/missing-persons", "Emergency Services");
+      cy.visitAsRole("/dashboard/missing-persons", "Emergency Service");
       cy.wait("@getMissingPersons");
       cy.contains(/new missing person|create.*missing/i).should("not.exist");
     });

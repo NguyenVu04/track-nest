@@ -38,7 +38,7 @@ export function EmergencyRequestRealtimeProvider({
   const subscriptionRef = useRef<StompSubscription | null>(null);
 
   useEffect(() => {
-    if (user?.role !== "Emergency Services") return;
+    if (!user?.role?.includes("Emergency Service")) return;
 
     const token = authService.getAccessToken();
     if (!token) return;

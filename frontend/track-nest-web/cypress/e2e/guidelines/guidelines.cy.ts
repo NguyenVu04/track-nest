@@ -132,9 +132,9 @@ describe("Guidelines Page", () => {
       cy.contains(/new guideline|create.*guideline|add guideline/i).should("not.exist");
     });
 
-    it("DT-GL-R03 | Emergency Services does NOT see the Create button", () => {
+    it("DT-GL-R03 | Emergency Service does NOT see the Create button", () => {
       cy.mockGuidelinesApi();
-      cy.visitAsRole("/dashboard/guidelines", "Emergency Services");
+      cy.visitAsRole("/dashboard/guidelines", "Emergency Service");
       cy.wait("@getGuidelines");
       cy.contains(/new guideline|create.*guideline|add guideline/i).should("not.exist");
     });

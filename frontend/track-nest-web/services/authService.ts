@@ -32,7 +32,7 @@ export interface LoginCredentials {
   password: string;
 }
 
-export type UserRole = "user" | "reporter" | "emergency_services" | "admin";
+export type UserRole = "user" | "reporter" | "emergency_service" | "admin";
 
 export interface KeycloakUserInfo {
   sub: string;
@@ -61,14 +61,14 @@ const getKeycloak = (): Keycloak => {
 };
 
 const mapTokenRole = (roles: string[] = []): UserRole => {
-  if (roles.includes("admin")) {
+  if (roles.includes("ADMIN")) {
     return "admin";
   }
-  if (roles.includes("reporter")) {
+  if (roles.includes("REPORTER")) {
     return "reporter";
   }
-  if (roles.includes("emergency_services")) {
-    return "emergency_services";
+  if (roles.includes("EMERGENCY-SERVICE")) {
+    return "emergency_service";
   }
 
   return "user";
@@ -78,7 +78,7 @@ const getRealm = (role: UserRole): string => {
   switch (role) {
     case "reporter":
       return REPORTER_REALM;
-    case "emergency_services":
+    case "emergency_service":
       return EMERGENCY_REALM;
     default:
       return USER_REALM;
@@ -314,6 +314,20 @@ export const authService = {
       return localStorage.getItem("user_role") as UserRole;
     }
     return null;
+  },
+
+  getUserRoles: (): string[] => {
+    const keycloak = getKeycloak();
+    const roles = keycloak.tokenParsed?.realm_access?.roles;
+    if (roles) {
+      return roles;
+    }
+
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("user_role");
+      return stored ? [stored] : [];
+    }
+    return [];
   },
 
   getUserId: (): string | null => {

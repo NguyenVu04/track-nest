@@ -3,9 +3,9 @@
  *
  * Techniques applied:
  *  - Use-case Testing
- *      UC-ER-01 : Emergency Services views request list
- *      UC-ER-02 : Emergency Services accepts a PENDING request
- *      UC-ER-03 : Emergency Services rejects a PENDING request
+ *      UC-ER-01 : Emergency Service views request list
+ *      UC-ER-02 : Emergency Service accepts a PENDING request
+ *      UC-ER-03 : Emergency Service rejects a PENDING request
  *      UC-ER-04 : Filter requests by status
  *
  *  - Decision Table (DT)
@@ -13,7 +13,7 @@
  *      ┌─────────────────────┬────────────────────┐
  *      │ Role                │ Access             │
  *      ├─────────────────────┼────────────────────┤
- *      │ Emergency Services  │ ACCESSIBLE         │
+ *      │ Emergency Service  │ ACCESSIBLE         │
  *      │ Reporter            │ ACCESS DENIED      │
  *      │ Admin               │ ACCESS DENIED      │
  *      │ User                │ ACCESS DENIED      │
@@ -25,13 +25,13 @@
  *      ├─────────────┼──────────┼──────────┼──────────────┤
  *      │ PENDING     │ YES      │ YES      │ NO           │
  *      │ ACCEPTED    │ NO       │ NO       │ YES          │
- *      │ COMPLETED   │ NO       │ NO       │ NO           │
+ *      │ CLOSED      │ NO       │ NO       │ NO           │
  *      │ REJECTED    │ NO       │ NO       │ NO           │
  *      └─────────────┴──────────┴──────────┴──────────────┘
  *
  *  - Equivalence Class Partitioning (ECP)
  *      • search by ID: valid existing ID | non-existing ID | empty
- *      • status filter: PENDING | ACCEPTED | COMPLETED | ALL
+ *      • status filter: PENDING | ACCEPTED | CLOSED | ALL
  */
 
 describe("Emergency Requests Page", () => {
@@ -39,9 +39,9 @@ describe("Emergency Requests Page", () => {
   // Decision Table – Role × page access
   // =========================================================================
   context("DT | Role × access control", () => {
-    it("DT-ER-01 | Emergency Services can access the page", () => {
+    it("DT-ER-01 | Emergency Service can access the page", () => {
       cy.mockEmergencyRequestsApi();
-      cy.visitAsRole("/dashboard/emergency-requests", "Emergency Services");
+      cy.visitAsRole("/dashboard/emergency-requests", "Emergency Service");
       cy.wait("@getEmergencyRequests");
       cy.contains("Access Denied").should("not.exist");
     });
@@ -63,12 +63,12 @@ describe("Emergency Requests Page", () => {
   });
 
   // =========================================================================
-  // Emergency Services tests
+  // Emergency Service tests
   // =========================================================================
-  describe("Emergency Services – full access", () => {
+  describe("Emergency Service – full access", () => {
     beforeEach(() => {
       cy.mockEmergencyRequestsApi();
-      cy.visitAsRole("/dashboard/emergency-requests", "Emergency Services");
+      cy.visitAsRole("/dashboard/emergency-requests", "Emergency Service");
       cy.wait("@getEmergencyRequests");
     });
 
@@ -85,7 +85,7 @@ describe("Emergency Requests Page", () => {
       it("shows status badges for each request", () => {
         cy.contains("PENDING").should("be.visible");
         cy.contains("ACCEPTED").should("be.visible");
-        cy.contains("COMPLETED").should("be.visible");
+        cy.contains("CLOSED").should("be.visible");
       });
     });
 
@@ -142,7 +142,7 @@ describe("Emergency Requests Page", () => {
         });
       });
 
-      it("DT-STATUS-03 | COMPLETED request has no Accept or Reject buttons", () => {
+      it("DT-STATUS-03 | CLOSED request has no Accept or Reject buttons", () => {
         cy.contains("tr", "er-003").within(() => {
           cy.get("button").contains(/^accept$/i).should("not.exist");
           cy.get("button").contains(/^reject$/i).should("not.exist");
@@ -205,7 +205,7 @@ describe("Emergency Requests Page", () => {
             cy.get("select").first().select("", { force: true });
             cy.contains("PENDING").should("be.visible");
             cy.contains("ACCEPTED").should("be.visible");
-            cy.contains("COMPLETED").should("be.visible");
+            cy.contains("CLOSED").should("be.visible");
           }
         });
       });

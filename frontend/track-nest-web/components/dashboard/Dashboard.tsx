@@ -20,7 +20,7 @@ interface DashboardProps {
     id: string;
     email: string;
     fullName: string;
-    role: UserRole;
+    role: UserRole[];
   };
   onLogout: () => void;
 }
@@ -55,7 +55,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
             </button>
             <div>
               <h1 className="text-gray-900">TRACK Dashboard</h1>
-              <p className="text-gray-600 text-sm">{user.role}</p>
+              <p className="text-gray-600 text-sm">{user.role.join(", ")}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

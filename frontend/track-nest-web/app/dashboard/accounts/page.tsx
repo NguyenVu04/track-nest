@@ -14,7 +14,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import type { User } from "@/types";
+import type { User, UserRole } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { toast } from "sonner";
 
@@ -25,7 +25,7 @@ const mockUsers: User[] = [
     username: "admin",
     password: "admin123",
     email: "admin@tracknest.com",
-    role: "Admin",
+    role: ["Admin"],
     fullName: "System Administrator",
     status: "Active",
     createdAt: "2025-01-01T00:00:00Z",
@@ -35,7 +35,7 @@ const mockUsers: User[] = [
     username: "reporter1",
     password: "password123",
     email: "reporter1@tracknest.com",
-    role: "Reporter",
+    role: ["Reporter"],
     fullName: "John Smith",
     status: "Active",
     createdAt: "2025-06-15T10:30:00Z",
@@ -45,7 +45,7 @@ const mockUsers: User[] = [
     username: "reporter2",
     password: "password123",
     email: "reporter2@tracknest.com",
-    role: "Reporter",
+    role: ["Reporter"],
     fullName: "Jane Doe",
     status: "Active",
     createdAt: "2025-07-20T14:45:00Z",
@@ -55,7 +55,7 @@ const mockUsers: User[] = [
     username: "emergency1",
     password: "password123",
     email: "emergency1@tracknest.com",
-    role: "Emergency Services",
+    role: ["Emergency Service"],
     fullName: "Officer Mike Johnson",
     status: "Active",
     createdAt: "2025-08-10T08:00:00Z",
@@ -65,7 +65,7 @@ const mockUsers: User[] = [
     username: "reporter3",
     password: "password123",
     email: "reporter3@tracknest.com",
-    role: "Reporter",
+    role: ["Reporter"],
     fullName: "Sarah Williams",
     status: "Banned",
     createdAt: "2025-09-05T16:20:00Z",
@@ -75,7 +75,7 @@ const mockUsers: User[] = [
     username: "emergency2",
     password: "password123",
     email: "emergency2@tracknest.com",
-    role: "Emergency Services",
+    role: ["Emergency Service"],
     fullName: "Detective Lisa Chen",
     status: "Active",
     createdAt: "2025-10-01T09:15:00Z",
@@ -190,30 +190,30 @@ export default function AccountsPage() {
       account.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
       account.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       account.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === "all" || account.role === roleFilter;
+    const matchesRole = roleFilter === "all" || account.role.includes(roleFilter as UserRole);
     const matchesStatus =
       statusFilter === "all" || account.status === statusFilter;
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const getRoleIcon = (role: User["role"]) => {
+  const getRoleIcon = (role: UserRole) => {
     switch (role) {
       case "Admin":
         return <Shield className="w-4 h-4 text-purple-600" />;
       case "Reporter":
         return <Users className="w-4 h-4 text-blue-600" />;
-      case "Emergency Services":
+      case "Emergency Service":
         return <AlertTriangle className="w-4 h-4 text-orange-600" />;
     }
   };
 
-  const getRoleBadgeColor = (role: User["role"]) => {
+  const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case "Admin":
         return "bg-purple-100 text-purple-700";
       case "Reporter":
         return "bg-blue-100 text-blue-700";
-      case "Emergency Services":
+      case "Emergency Service":
         return "bg-orange-100 text-orange-700";
     }
   };
@@ -264,7 +264,7 @@ export default function AccountsPage() {
               <option value="all">All Roles</option>
               <option value="Admin">Admin</option>
               <option value="Reporter">Reporter</option>
-              <option value="Emergency Services">Emergency Services</option>
+              <option value="Emergency Service">Emergency Service</option>
             </select>
           </div>
           <div className="relative">
@@ -328,14 +328,17 @@ export default function AccountsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm ${getRoleBadgeColor(
-                          account.role,
-                        )}`}
-                      >
-                        {getRoleIcon(account.role)}
-                        {account.role}
-                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {account.role.map((r) => (
+                          <span
+                            key={r}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm ${getRoleBadgeColor(r)}`}
+                          >
+                            {getRoleIcon(r)}
+                            {r}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span

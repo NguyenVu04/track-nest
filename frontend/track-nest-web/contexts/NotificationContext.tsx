@@ -6,7 +6,6 @@ import {
   useState,
   useCallback,
   ReactNode,
-  useEffect,
 } from "react";
 
 export type NotificationType = "crime" | "missing-person" | "emergency";

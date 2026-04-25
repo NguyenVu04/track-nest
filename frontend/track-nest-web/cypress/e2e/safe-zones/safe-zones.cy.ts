@@ -19,14 +19,14 @@
  *      ┌─────────────────────┬────────────────────┬──────────────────┐
  *      │ Role                │ Page accessible    │ Add button shown │
  *      ├─────────────────────┼────────────────────┼──────────────────┤
- *      │ Emergency Services  │ YES                │ YES              │
+ *      │ Emergency Service  │ YES                │ YES              │
  *      │ Reporter            │ NO (Access Denied) │ N/A              │
  *      │ Admin               │ NO (Access Denied) │ N/A              │
  *      │ User                │ NO (Access Denied) │ N/A              │
  *      └─────────────────────┴────────────────────┴──────────────────┘
  *
  *  - Use-case Testing
- *      UC-SZ-01 : Emergency Services user views safe zones list
+ *      UC-SZ-01 : Emergency Service user views safe zones list
  *      UC-SZ-02 : Create safe zone end-to-end
  *      UC-SZ-03 : Delete safe zone with confirmation
  *      UC-SZ-04 : Search safe zones by name
@@ -38,9 +38,9 @@ describe("Safe Zones Page", () => {
   // Decision Table – Role × page access
   // =========================================================================
   context("DT | Role × page access control", () => {
-    it("DT-SZ-01 | Emergency Services can access the page", () => {
+    it("DT-SZ-01 | Emergency Service can access the page", () => {
       cy.mockSafeZonesApi();
-      cy.visitAsRole("/dashboard/safe-zones", "Emergency Services");
+      cy.visitAsRole("/dashboard/safe-zones", "Emergency Service");
       cy.wait("@getSafeZones");
       cy.contains("Safe Zones").should("be.visible");
       cy.contains("Access Denied").should("not.exist");
@@ -63,12 +63,12 @@ describe("Safe Zones Page", () => {
   });
 
   // =========================================================================
-  // Shared setup for Emergency Services tests
+  // Shared setup for Emergency Service tests
   // =========================================================================
-  describe("Emergency Services role – full access", () => {
+  describe("Emergency Service role – full access", () => {
     beforeEach(() => {
       cy.mockSafeZonesApi();
-      cy.visitAsRole("/dashboard/safe-zones", "Emergency Services");
+      cy.visitAsRole("/dashboard/safe-zones", "Emergency Service");
       cy.wait("@getSafeZones");
     });
 

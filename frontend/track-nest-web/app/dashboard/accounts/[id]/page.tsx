@@ -21,7 +21,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import type { User, UserActivity } from "@/types";
+import type { User, UserActivity, UserRole } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
@@ -33,7 +33,7 @@ const mockUsers: User[] = [
     username: "admin",
     password: "admin123",
     email: "admin@tracknest.com",
-    role: "Admin",
+    role: ["Admin"],
     fullName: "System Administrator",
     status: "Active",
     createdAt: "2025-01-01T00:00:00Z",
@@ -43,7 +43,7 @@ const mockUsers: User[] = [
     username: "reporter1",
     password: "password123",
     email: "reporter1@tracknest.com",
-    role: "Reporter",
+    role: ["Reporter"],
     fullName: "John Smith",
     status: "Active",
     createdAt: "2025-06-15T10:30:00Z",
@@ -53,7 +53,7 @@ const mockUsers: User[] = [
     username: "reporter2",
     password: "password123",
     email: "reporter2@tracknest.com",
-    role: "Reporter",
+    role: ["Reporter"],
     fullName: "Jane Doe",
     status: "Active",
     createdAt: "2025-07-20T14:45:00Z",
@@ -63,7 +63,7 @@ const mockUsers: User[] = [
     username: "emergency1",
     password: "password123",
     email: "emergency1@tracknest.com",
-    role: "Emergency Services",
+    role: ["Emergency Service"],
     fullName: "Officer Mike Johnson",
     status: "Active",
     createdAt: "2025-08-10T08:00:00Z",
@@ -73,7 +73,7 @@ const mockUsers: User[] = [
     username: "reporter3",
     password: "password123",
     email: "reporter3@tracknest.com",
-    role: "Reporter",
+    role: ["Reporter"],
     fullName: "Sarah Williams",
     status: "Banned",
     createdAt: "2025-09-05T16:20:00Z",
@@ -83,7 +83,7 @@ const mockUsers: User[] = [
     username: "emergency2",
     password: "password123",
     email: "emergency2@tracknest.com",
-    role: "Emergency Services",
+    role: ["Emergency Service"],
     fullName: "Detective Lisa Chen",
     status: "Active",
     createdAt: "2025-10-01T09:15:00Z",
@@ -307,24 +307,24 @@ export default function AccountDetailPage() {
     }
   };
 
-  const getRoleIcon = (role: User["role"]) => {
+  const getRoleIcon = (role: UserRole) => {
     switch (role) {
       case "Admin":
         return <Shield className="w-5 h-5 text-purple-600" />;
       case "Reporter":
         return <Users className="w-5 h-5 text-blue-600" />;
-      case "Emergency Services":
+      case "Emergency Service":
         return <AlertTriangle className="w-5 h-5 text-orange-600" />;
     }
   };
 
-  const getRoleBadgeColor = (role: User["role"]) => {
+  const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case "Admin":
         return "bg-purple-100 text-purple-700";
       case "Reporter":
         return "bg-blue-100 text-blue-700";
-      case "Emergency Services":
+      case "Emergency Service":
         return "bg-orange-100 text-orange-700";
     }
   };
@@ -447,16 +447,19 @@ export default function AccountDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {getRoleIcon(currentAccount.role)}
+            {getRoleIcon(currentAccount.role[0])}
             <div>
               <p className="text-gray-500 text-sm">Role</p>
-              <span
-                className={`inline-block px-3 py-1 rounded-full text-sm ${getRoleBadgeColor(
-                  currentAccount.role,
-                )}`}
-              >
-                {currentAccount.role}
-              </span>
+              <div className="flex flex-wrap gap-1 mt-0.5">
+                {currentAccount.role.map((r) => (
+                  <span
+                    key={r}
+                    className={`inline-block px-3 py-1 rounded-full text-sm ${getRoleBadgeColor(r)}`}
+                  >
+                    {r}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">

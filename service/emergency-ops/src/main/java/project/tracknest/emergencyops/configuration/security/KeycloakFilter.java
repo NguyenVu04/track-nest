@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.filter.OncePerRequestFilter;
 import project.tracknest.emergencyops.configuration.security.datatype.KeycloakAuthorizationHeader;
+import project.tracknest.emergencyops.configuration.security.datatype.KeycloakAuthorizationHeaderRealmAccess;
 import project.tracknest.emergencyops.core.datatype.KeycloakPrincipal;
 import project.tracknest.emergencyops.core.datatype.KeycloakUserDetails;
 import project.tracknest.emergencyops.core.entity.EmergencyService;
@@ -60,7 +61,7 @@ public class KeycloakFilter extends OncePerRequestFilter {
                 KeycloakPrincipal principal = new KeycloakPrincipal(decoded.getUserId());
 
                 List<SimpleGrantedAuthority> roles = Optional.ofNullable(decoded.getRealmAccess())
-                        .map(ra -> ra.getRoles())
+                        .map(KeycloakAuthorizationHeaderRealmAccess::getRoles)
                         .orElse(Collections.emptyList())
                         .stream()
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
@@ -79,7 +80,7 @@ public class KeycloakFilter extends OncePerRequestFilter {
                 authentication.setDetails(userDetails);
 
                 boolean isEmergencyService = Optional.ofNullable(decoded.getRealmAccess())
-                        .map(ra -> ra.getRoles())
+                        .map(KeycloakAuthorizationHeaderRealmAccess::getRoles)
                         .orElse(Collections.emptyList())
                         .contains("EMERGENCY-SERVICE");
                 if (isEmergencyService) {

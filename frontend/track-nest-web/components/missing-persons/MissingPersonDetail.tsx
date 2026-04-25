@@ -21,7 +21,7 @@ interface MissingPersonDetailProps {
   onEdit: (person: MissingPerson) => void;
   onPublish: (id: string) => void;
   onDelete: (id: string) => void;
-  userRole: UserRole;
+  userRole: UserRole[];
 }
 
 export function MissingPersonDetail({
@@ -89,7 +89,7 @@ export function MissingPersonDetail({
                   {person.status}
                 </span>
               </div>
-              {userRole === "Reporter" || userRole === "User" && (
+              {(userRole.includes("Reporter") || userRole.includes("User")) && (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onEdit(person)}

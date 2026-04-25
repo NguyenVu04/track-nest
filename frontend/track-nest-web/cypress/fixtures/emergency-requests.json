@@ -29,7 +29,7 @@
       "senderId": "user-003",
       "targetId": "emergency-001",
       "emergencyServiceId": "emergency-001",
-      "status": "COMPLETED",
+      "status": "CLOSED",
       "longitude": 106.6686,
       "latitude": 10.7548
     }

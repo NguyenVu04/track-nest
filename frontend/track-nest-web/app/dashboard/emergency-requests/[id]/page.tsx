@@ -93,6 +93,7 @@ export default function EmergencyRequestDetailPage() {
   const [request, setRequest] = useState<EmergencyRequestResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!user || !params.id) {
       setRequest(null);
@@ -116,6 +117,7 @@ export default function EmergencyRequestDetailPage() {
       setIsLoading(false);
     }
   }, [params.id, user]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (!user) return null;
   if (isLoading) return <Loading fullScreen />;

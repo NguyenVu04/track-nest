@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Search, BarChart3 } from "lucide-react";
-import type { CrimeReport } from "@/types";
+import type { CrimeReport, UserRole } from "@/types";
 import {
   criminalReportsService,
   CrimeReportResponse,
@@ -21,7 +21,7 @@ interface CrimeDashboardProps {
     id: string;
     email: string;
     fullName: string;
-    role: string;
+    role: UserRole[];
   };
 }
 

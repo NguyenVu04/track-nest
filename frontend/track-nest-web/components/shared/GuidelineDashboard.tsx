@@ -2,20 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, Search, Upload, FileText, Trash2, Eye, Paperclip, X } from "lucide-react";
 import { ConfirmModal } from "./ConfirmModal";
 import { criminalReportsService, GuidelinesDocumentResponse } from "@/services/criminalReportsService";
+import { UserRole } from "@/types";
 
 interface GuidelineDashboardProps {
   user: {
     id: string;
     email: string;
     fullName: string;
-    role: string;
+    role: UserRole[];
   };
 }
 
-const ALLOWED_ROLES = ["Reporter", "Admin"];
+const ALLOWED_ROLES: UserRole[] = ["Reporter", "Admin"];
 
 export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
-  const canManage = ALLOWED_ROLES.includes(user.role);
+  const canManage = ALLOWED_ROLES.some(role => user.role.includes(role));
   const [guidelines, setGuidelines] = useState<GuidelinesDocumentResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

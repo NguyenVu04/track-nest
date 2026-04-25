@@ -90,8 +90,8 @@ describe("Authentication – Login Page", () => {
       cy.url().should("include", "/dashboard");
     });
 
-    it("redirects authenticated Emergency Services user away from /login", () => {
-      cy.visitAsRole("/login", "Emergency Services");
+    it("redirects authenticated Emergency Service user away from /login", () => {
+      cy.visitAsRole("/login", "Emergency Service");
       cy.url().should("include", "/dashboard");
     });
   });
@@ -110,8 +110,8 @@ describe("Authentication – Login Page", () => {
       cy.url().should("include", "/dashboard");
     });
 
-    it("Emergency Services user lands on safe-zones page", () => {
-      cy.visitAsRole("/dashboard/safe-zones", "Emergency Services");
+    it("Emergency Service user lands on safe-zones page", () => {
+      cy.visitAsRole("/dashboard/safe-zones", "Emergency Service");
       cy.url().should("include", "/dashboard");
     });
   });

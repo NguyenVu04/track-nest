@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { User, Mail, Lock, Save } from "lucide-react";
+import { UserRole } from "@/types";
 
 interface UserProfileProps {
   user: {
     id: string;
     email: string;
     fullName: string;
-    role: string;
+    role: UserRole[];
   };
 }
 

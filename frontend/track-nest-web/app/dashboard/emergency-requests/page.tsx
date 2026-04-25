@@ -38,7 +38,7 @@ export default function EmergencyRequestsPage() {
 
   useEffect(() => {
     const fetchRequests = async () => {
-      if (!user || user.role !== "Emergency Services" && user.role !== "User") {
+      if (!user || !user.role.includes("Emergency Service")) {
         setIsLoading(false);
         return;
       }
@@ -64,7 +64,7 @@ export default function EmergencyRequestsPage() {
 
   if (!user) return null;
 
-  // if (user.role !== "Emergency Services") {
+  // if (user.role !== "Emergency Service") {
   //   return (
   //     <div className="flex items-center justify-center h-64">
   //       <div className="text-center">
@@ -88,7 +88,7 @@ export default function EmergencyRequestsPage() {
       case "PENDING":   return "bg-yellow-100 text-yellow-800";
       case "ACCEPTED":  return "bg-blue-100 text-blue-800";
       case "REJECTED":  return "bg-red-100 text-red-800";
-      case "COMPLETED": return "bg-green-100 text-green-800";
+      case "CLOSED":    return "bg-green-100 text-green-800";
       default:          return "bg-gray-100 text-gray-800";
     }
   };
@@ -148,25 +148,25 @@ export default function EmergencyRequestsPage() {
     }
   };
 
-  const handleComplete = async () => {
+  const handleClose = async () => {
     if (!completing || !completionNote.trim()) return;
     try {
       const response = await emergencyOpsService.closeEmergencyRequest(completing.id);
       setRequests((prev) =>
         prev.map((r) =>
           r.id === completing.id
-            ? { ...r, status: "COMPLETED", closedAt: response.closedAtMs ?? Date.now() }
+            ? { ...r, status: "CLOSED", closedAt: response.closedAtMs ?? Date.now() }
             : r,
         ),
       );
       if (trackingRequest?.id === completing.id) {
         setTrackingRequest(null);
       }
-      toast.success(t("toastCompleted"));
+      toast.success(t("toastClosed"));
       setCompleting(null);
       setCompletionNote("");
     } catch (error) {
-      toast.error(t("toastCompleteError"));
+      toast.error(t("toastCloseError"));
       console.error(error);
     }
   };
@@ -199,7 +199,7 @@ export default function EmergencyRequestsPage() {
             <option value="PENDING">{tStatus("pending")}</option>
             <option value="ACCEPTED">{tStatus("accepted")}</option>
             <option value="REJECTED">{tStatus("rejected")}</option>
-            <option value="COMPLETED">{tStatus("completed")}</option>
+            <option value="CLOSED">{tStatus("closed")}</option>
           </select>
         </div>
       </div>
@@ -210,8 +210,8 @@ export default function EmergencyRequestsPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableId")}</th>
-                <th className="px-6 py-3 text-left text-gray-700">Sender</th>
-                <th className="px-6 py-3 text-left text-gray-700">Target</th>
+                <th className="px-6 py-3 text-left text-gray-700">{t("tableSender")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">{t("tableTarget")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableLocation")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableStatus")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableCreated")}</th>
@@ -284,7 +284,7 @@ export default function EmergencyRequestsPage() {
                         <button
                           onClick={() => setCompleting(request)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title={t("complete")}
+                          title={t("close")}
                         >
                           <ClipboardCheck className="w-4 h-4" />
                         </button>
@@ -359,16 +359,16 @@ export default function EmergencyRequestsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="p-6 border-b border-gray-200">
-              <h3 className="text-gray-900">{t("completeModalTitle")}</h3>
+              <h3 className="text-gray-900">{t("closeModalTitle")}</h3>
             </div>
             <div className="p-6 space-y-4">
-              <label className="block text-gray-700">{t("completeNoteLabel")}{tCommon("requiredSuffix")}</label>
+              <label className="block text-gray-700">{t("clNoteLabel")}{tCommon("requiredSuffix")}</label>
               <textarea
                 value={completionNote}
                 onChange={(e) => setCompletionNote(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
                 rows={4}
-                placeholder={t("completeNotePlaceholder")}
+                placeholder={t("closeNotePlaceholder")}
                 required
               />
             </div>
@@ -383,11 +383,11 @@ export default function EmergencyRequestsPage() {
                 {tCommon("cancel")}
               </button>
               <button
-                onClick={handleComplete}
+                onClick={handleClose}
                 disabled={!completionNote.trim()}
                 className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
               >
-                {t("confirmComplete")}
+                {t("confirmClose")}
               </button>
             </div>
           </div>

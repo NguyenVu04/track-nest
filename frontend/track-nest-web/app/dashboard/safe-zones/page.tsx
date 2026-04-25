@@ -43,7 +43,7 @@ export default function SafeZonesPage() {
 
   useEffect(() => {
     const fetchZones = async () => {
-      // if (!user || user.role !== "Emergency Services") {
+      // if (!user || user.role !== "Emergency Service") {
       //   setIsLoading(false);
       //   return;
       // }
@@ -77,7 +77,7 @@ export default function SafeZonesPage() {
 
   if (!user) return null;
 
-  // if (user.role !== "Emergency Services") {
+  // if (user.role !== "Emergency Service") {
   //   return (
   //     <div className="flex items-center justify-center h-64">
   //       <div className="text-center">

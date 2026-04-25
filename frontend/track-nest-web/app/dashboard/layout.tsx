@@ -7,6 +7,16 @@ import { Loading } from "@/components/loading/Loading";
 import { Header } from "@/components/layout/Header";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import type { UserRole } from "@/types";
+
+const ROLE_ROUTES: Record<string, UserRole[]> = {
+  "/dashboard/missing-persons":    ["Reporter"],
+  "/dashboard/crime-reports":      ["Reporter"],
+  "/dashboard/guidelines":         ["Reporter"],
+  "/dashboard/emergency-requests": ["Emergency Service"],
+  "/dashboard/safe-zones":         ["Emergency Service"],
+  "/dashboard/accounts":           ["Admin"],
+};
 
 export default function DashboardLayout({
   children,
@@ -18,11 +28,22 @@ export default function DashboardLayout({
   const pathname = usePathname();
 
   useEffect(() => {
-    // Wait for auth to finish loading before checking authentication
-    if (!isLoading && !isAuthenticated) {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
       router.push("/login");
+      return;
     }
-  }, [isLoading, isAuthenticated, router]);
+
+    if (user) {
+      const restricted = Object.entries(ROLE_ROUTES).find(([route]) =>
+        pathname.startsWith(route),
+      );
+      if (restricted && !restricted[1].some(r => user.role.includes(r))) {
+        router.replace("/dashboard");
+      }
+    }
+  }, [isLoading, isAuthenticated, user, pathname, router]);
 
   const handleLogout = () => {
     logout();
@@ -40,7 +61,7 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <AppSidebar pathname={pathname} userRole={user.role} />
+      <AppSidebar pathname={pathname} userRoles={user.role} />
       <SidebarInset>
         <Header user={user} onLogout={handleLogout} />
         <main className="flex flex-1 flex-col gap-4 p-4">{children}</main>

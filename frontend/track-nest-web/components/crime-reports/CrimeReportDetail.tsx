@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
-import type { CrimeReport } from "@/types";
+import type { CrimeReport, UserRole } from "@/types";
 import { MapView } from "../shared/MapView";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { useTranslations } from "next-intl";
@@ -20,7 +20,7 @@ interface CrimeReportDetailProps {
   onBack: () => void;
   onEdit: (report: CrimeReport) => void;
   onDelete: (id: string) => void;
-  userRole: string;
+  userRole: UserRole[];
 }
 
 export function CrimeReportDetail({
@@ -96,7 +96,7 @@ export function CrimeReportDetail({
                   </span>
                 </div>
               </div>
-              {(userRole === "Reporter" || userRole === "User") && (
+              {(userRole.includes("Reporter") || userRole.includes("User")) && (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onEdit(report)}

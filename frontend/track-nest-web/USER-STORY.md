@@ -354,7 +354,7 @@ Nhân viên cứu hộ bắt buộc phải nhập thông tin vào trường này
 
 3. Thay đổi trạng thái và Lưu trữ:
 
-Sau khi xác nhận, trạng thái yêu cầu được cập nhật thành "Đã hoàn thành" (Completed).
+Sau khi xác nhận, trạng thái yêu cầu được cập nhật thành "Đã hoàn thành" (Closed).
 
 Nội dung báo cáo kết quả phải được lưu vào lịch sử của yêu cầu đó.
 

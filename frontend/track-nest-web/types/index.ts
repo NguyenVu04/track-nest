@@ -1,11 +1,11 @@
-export type UserRole = "Admin" | "Reporter" | "Emergency Services" | "User";
+export type UserRole = "Admin" | "Reporter" | "Emergency Service" | "User";
 
 export interface User {
   id: string;
   username: string;
   password?: string;
   email: string;
-  role: UserRole;
+  role: UserRole[];
   fullName: string;
   status?: "Active" | "Banned";
   createdAt?: string;
@@ -84,7 +84,7 @@ export type EmergencyRequestStatus =
   | "PENDING"
   | "ACCEPTED"
   | "REJECTED"
-  | "COMPLETED";
+  | "CLOSED";
 
 export interface EmergencyRequest {
   id: string;
@@ -139,27 +139,6 @@ export interface PageInfo {
 export interface ApiResponse<T> {
   content: T[];
   pageInfo: PageInfo;
-}
-
-export type FamilyCircleRole = "OWNER" | "ADMIN" | "MEMBER";
-
-export interface FamilyCircle {
-  id: string;
-  name: string;
-  ownerId: string;
-  createdAt: string;
-}
-
-export interface FamilyCircleMember {
-  id: string;
-  userId: string;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  avatarUrl?: string;
-  role: FamilyCircleRole;
-  joinedAt: string;
 }
 
 export type TrackingNotificationType =

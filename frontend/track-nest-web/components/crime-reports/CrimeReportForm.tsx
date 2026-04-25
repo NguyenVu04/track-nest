@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Save, X, MapPin, Upload, Trash2 } from "lucide-react";
 import Image from "next/image";
-import type { CrimeReport } from "@/types";
+import type { CrimeReport, CrimeSeverity } from "@/types";
 import { criminalReportsService } from "@/services/criminalReportsService";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -183,7 +183,7 @@ export function CrimeReportForm({
               id="severity"
               value={formData.severity}
               onChange={(e) =>
-                setFormData({ ...formData, severity: Number(e.target.value) as any })
+                setFormData({ ...formData, severity: Number(e.target.value) as CrimeSeverity })
               }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
               required

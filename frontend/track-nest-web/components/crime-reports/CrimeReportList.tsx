@@ -2,7 +2,7 @@
 
 import { Eye, Trash2, Shield, CheckCircle, Globe } from "lucide-react";
 import { useState, memo } from "react";
-import type { CrimeReport } from "@/types";
+import type { CrimeReport, UserRole } from "@/types";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { AnimatedListItem } from "../animations/AnimatedListItem";
 import { EmptyState } from "../shared/EmptyState";
@@ -13,7 +13,7 @@ interface CrimeReportListProps {
   onViewDetail: (report: CrimeReport) => void;
   onPublish: (id: string) => void;
   onDelete: (id: string) => void;
-  userRole: string;
+  userRole: UserRole[];
 }
 
 const SEVERITY_STYLE: Record<number, { bg: string; text: string; dot: string }> = {
@@ -124,7 +124,7 @@ export const CrimeReportList = memo(function CrimeReportList({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {(userRole === "Reporter" || userRole === "User") && (
+                      {(userRole.includes("Reporter") || userRole.includes("User")) && (
                         <>
                           {!report.isPublic && (
                             <button

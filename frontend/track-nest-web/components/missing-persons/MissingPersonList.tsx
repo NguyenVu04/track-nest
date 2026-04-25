@@ -2,7 +2,7 @@
 
 import { Eye, CheckCircle, Trash2, Users, Calendar, Phone, Mail } from "lucide-react";
 import { useState, memo } from "react";
-import type { MissingPerson } from "@/types";
+import type { MissingPerson, UserRole } from "@/types";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { AnimatedListItem } from "../animations/AnimatedListItem";
 import { EmptyState } from "../shared/EmptyState";
@@ -13,7 +13,7 @@ interface MissingPersonListProps {
   onViewDetail: (person: MissingPerson) => void;
   onPublish: (id: string) => void;
   onDelete: (id: string) => void;
-  userRole: string;
+  userRole: UserRole[];
 }
 
 const STATUS_STYLE: Record<string, { bg: string; text: string; dot: string }> = {
@@ -118,7 +118,7 @@ export const MissingPersonList = memo(function MissingPersonList({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {(userRole === "Reporter" || userRole === "User") && (
+                      {(userRole.includes("Reporter") || userRole.includes("User")) && (
                         <>
                           {person.status === "PENDING" && (
                             <button

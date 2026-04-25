@@ -54,7 +54,7 @@ export interface EmergencyRequestResponse {
   targetAvatarUrl?: string;
   openedAt: number;
   closedAt?: number;
-  status: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "CLOSED";
   targetLastLatitude: number;
   targetLastLongitude: number;
 }
@@ -167,7 +167,7 @@ export const emergencyOpsService = {
     return response.data;
   },
 
-  // ── Emergency Request Manager (Emergency Services role) ───────────────────
+  // ── Emergency Request Manager (Emergency Service role) ───────────────────
 
   /** List requests assigned to the authenticated emergency service. */
   getEmergencyRequests: async (
@@ -243,7 +243,7 @@ export const emergencyOpsService = {
       return response.data;
     },
 
-  // ── Emergency Responder (Emergency Services role) ─────────────────────────
+  // ── Emergency Responder (Emergency Service role) ─────────────────────────
 
   /** List users (targets) with active accepted requests for this service. */
   getEmergencyServiceTargets: async (
@@ -256,7 +256,7 @@ export const emergencyOpsService = {
     return response.data;
   },
 
-  // ── Safe Zone Manager (Emergency Services role) ───────────────────────────
+  // ── Safe Zone Manager (Emergency Service role) ───────────────────────────
 
   /** Create a new safe zone. */
   createSafeZone: async (

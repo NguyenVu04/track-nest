@@ -28,20 +28,6 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-export interface FamilyCircle {
-  id: string;
-  name: string;
-  ownerId: string;
-  createdAt: string;
-}
-
-export interface FamilyCircleMember {
-  userId: string;
-  username: string;
-  role: string;
-  admin: boolean;
-}
-
 export interface Location {
   longitude: number;
   latitude: number;
@@ -79,19 +65,6 @@ export interface MobileDevice {
   lastActiveAt: string;
 }
 
-export interface CreateFamilyCircleRequest {
-  name: string;
-}
-
-export interface UpdateFamilyCircleRequest {
-  name: string;
-}
-
-export interface CreateParticipationPermissionRequest {
-  familyCircleId: string;
-  expiresAt?: string;
-}
-
 export interface RegisterMobileDeviceRequest {
   deviceToken: string;
   platform: "ANDROID" | "IOS";
@@ -114,116 +87,6 @@ export interface PageResponse<T> {
 }
 
 export const userTrackingService = {
-  familyCircle: {
-    create: async (data: CreateFamilyCircleRequest): Promise<FamilyCircle> => {
-      const response = await api.post<FamilyCircle>(
-        "/tracking-manager/family-circles",
-        data,
-      );
-      return response.data;
-    },
-
-    list: async (
-      page: number = 0,
-      size: number = 10,
-    ): Promise<PageResponse<FamilyCircle>> => {
-      const response = await api.get<PageResponse<FamilyCircle>>(
-        "/tracking-manager/family-circles",
-        { params: { page, size } },
-      );
-      return response.data;
-    },
-
-    get: async (circleId: string): Promise<FamilyCircle> => {
-      const response = await api.get<FamilyCircle>(
-        `/tracking-manager/family-circles/${circleId}`,
-      );
-      return response.data;
-    },
-
-    update: async (
-      circleId: string,
-      data: UpdateFamilyCircleRequest,
-    ): Promise<FamilyCircle> => {
-      const response = await api.put<FamilyCircle>(
-        `/tracking-manager/family-circles/${circleId}`,
-        data,
-      );
-      return response.data;
-    },
-
-    delete: async (circleId: string): Promise<void> => {
-      await api.delete(`/tracking-manager/family-circles/${circleId}`);
-    },
-
-    listMembers: async (
-      circleId: string,
-      page: number = 0,
-      size: number = 10,
-    ): Promise<PageResponse<FamilyCircleMember>> => {
-      const response = await api.get<PageResponse<FamilyCircleMember>>(
-        `/tracking-manager/family-circles/${circleId}/members`,
-        { params: { page, size } },
-      );
-      return response.data;
-    },
-
-    addMember: async (
-      circleId: string,
-      userId: string,
-    ): Promise<FamilyCircleMember> => {
-      const response = await api.post<FamilyCircleMember>(
-        `/tracking-manager/family-circles/${circleId}/members`,
-        { userId },
-      );
-      return response.data;
-    },
-
-    removeMember: async (circleId: string, memberId: string): Promise<void> => {
-      await api.delete(
-        `/tracking-manager/family-circles/${circleId}/members/${memberId}`,
-      );
-    },
-
-    updateMemberRole: async (
-      circleId: string,
-      memberId: string,
-      role: "MEMBER" | "ADMIN",
-    ): Promise<FamilyCircleMember> => {
-      const response = await api.patch<FamilyCircleMember>(
-        `/tracking-manager/family-circles/${circleId}/members/${memberId}/role`,
-        { role },
-      );
-      return response.data;
-    },
-
-    requestJoin: async (circleId: string): Promise<void> => {
-      await api.post(`/tracking-manager/family-circles/${circleId}/join`);
-    },
-
-    leave: async (circleId: string): Promise<void> => {
-      await api.post(`/tracking-manager/family-circles/${circleId}/leave`);
-    },
-
-    createPermission: async (
-      data: CreateParticipationPermissionRequest,
-    ): Promise<{ permissionId: string; code: string }> => {
-      const response = await api.post<{ permissionId: string; code: string }>(
-        "/tracking-manager/permissions",
-        data,
-      );
-      return response.data;
-    },
-
-    joinWithCode: async (code: string): Promise<FamilyCircle> => {
-      const response = await api.post<FamilyCircle>(
-        "/tracking-manager/permissions/join",
-        { code },
-      );
-      return response.data;
-    },
-  },
-
   tracking: {
     enable: async (): Promise<void> => {
       await api.post("/tracking-manager/tracking/enable");

@@ -113,7 +113,7 @@ This document describes the full Cypress end-to-end test suite for the **TrackNe
 | All       | `""` / All  |
 | Pending   | `PENDING`   |
 | Accepted  | `ACCEPTED`  |
-| Completed | `COMPLETED` |
+| CLOSED    | `CLOSED`    |
 
 **Test IDs:** ECP-EMAIL-01 – ECP-EMAIL-04, ECP-PHOTO-01 – ECP-PHOTO-03, ECP-DATE-01 – ECP-DATE-03, ECP-PID-01 – ECP-PID-04, ECP-SEV-LOW / MED / HIGH, ECP-SEARCH-MATCH / PARTIAL / NOMATCH / CLEAR / CASE, ECP-SZ-TYPE-01 – ECP-SZ-TYPE-04, ECP-ER-SEARCH-01 – ECP-ER-SEARCH-03, ECP-STATUS-*
 
@@ -143,8 +143,8 @@ This document describes the full Cypress end-to-end test suite for the **TrackNe
 | Reporter           | `/dashboard/emergency-requests`| ACCESS DENIED       |
 | Admin              | `/dashboard/accounts`         | ACCESSIBLE           |
 | Admin              | `/dashboard/safe-zones`       | ACCESS DENIED        |
-| Emergency Services | `/dashboard/safe-zones`       | ACCESSIBLE           |
-| Emergency Services | `/dashboard/emergency-requests`| ACCESSIBLE          |
+| Emergency Service  | `/dashboard/safe-zones`       | ACCESSIBLE           |
+| Emergency Service  | `/dashboard/emergency-requests`| ACCESSIBLE           |
 | User               | `/dashboard/missing-persons`  | ACCESSIBLE           |
 | User               | `/dashboard/safe-zones`       | ACCESS DENIED        |
 
@@ -184,7 +184,7 @@ This document describes the full Cypress end-to-end test suite for the **TrackNe
 |-----------|--------|--------|----------|
 | PENDING   | YES    | YES    | NO       |
 | ACCEPTED  | NO     | NO     | YES      |
-| COMPLETED | NO     | NO     | NO       |
+| CLOSED    | NO     | NO     | NO       |
 | REJECTED  | NO     | NO     | NO       |
 
 **Test IDs:** DT-R01 – DT-R04, DT-A01 – DT-A02, DT-E01 – DT-E02, DT-U01 – DT-U02, DT-SZ-01 – DT-SZ-04, DT-MP-01 – DT-MP-03, DT-STATUS-01 – DT-STATUS-03, DT-ER-01 – DT-ER-04
@@ -218,21 +218,21 @@ This document describes the full Cypress end-to-end test suite for the **TrackNe
 | UC-MPL-01 | Missing persons list renders                 | Reporter           | Page load → all persons from fixture visible                      |
 | UC-MPL-02 | Search missing persons                       | Reporter           | Search → filtered results                                         |
 | UC-MPL-03 | Navigate to create form                      | Reporter           | Click New → navigates to create page                              |
-| UC-SZ-01  | Emergency Services views safe zones          | Emergency Services | Page loads → zones from fixture listed                            |
-| UC-SZ-02  | Create safe zone                             | Emergency Services | Open modal → fill form → Confirm → API called → toast shown       |
-| UC-SZ-03  | Delete safe zone with confirmation           | Emergency Services | Click delete → confirm → API called; cancel → no call             |
-| UC-SZ-04  | Search safe zones                            | Emergency Services | Type in search → filtered zones visible                           |
-| UC-SZ-05  | Row click selects zone on map                | Emergency Services | Click row → map panel title updates → Show All resets view        |
+| UC-SZ-01  | Emergency Service views safe zones          | Emergency Service | Page loads → zones from fixture listed                            |
+| UC-SZ-02  | Create safe zone                             | Emergency Service | Open modal → fill form → Confirm → API called → toast shown       |
+| UC-SZ-03  | Delete safe zone with confirmation           | Emergency Service | Click delete → confirm → API called; cancel → no call             |
+| UC-SZ-04  | Search safe zones                            | Emergency Service | Type in search → filtered zones visible                           |
+| UC-SZ-05  | Row click selects zone on map                | Emergency Service | Click row → map panel title updates → Show All resets view        |
 | UC-GL-01  | View guidelines list                         | Reporter           | Page load → guideline titles visible                              |
 | UC-GL-02  | Create guideline                             | Reporter           | Fill title/content → Submit → API called                          |
 | UC-GL-04  | Search guidelines                            | Reporter           | Type in search → filtered                                         |
 | UC-NAV-01 | Sidebar per role                             | All roles          | Sidebar items match role permissions                              |
 | UC-NAV-02 | Header shows correct user info               | All roles          | Role badge in header matches logged-in role                       |
 | UC-NAV-03 | Sidebar link navigation                      | Reporter           | Click each sidebar item → URL changes                             |
-| UC-ER-01  | Emergency request list renders               | Emergency Services | Page load → all requests with correct statuses                    |
-| UC-ER-02  | Accept PENDING request                       | Emergency Services | Click Accept on PENDING row → API called                          |
-| UC-ER-03  | Reject PENDING request                       | Emergency Services | Click Reject on PENDING row → API called                          |
-| UC-ER-04  | Filter requests by status                    | Emergency Services | Select status filter → filtered list                              |
+| UC-ER-01  | Emergency request list renders               | Emergency Service | Page load → all requests with correct statuses                    |
+| UC-ER-02  | Accept PENDING request                       | Emergency Service | Click Accept on PENDING row → API called                          |
+| UC-ER-03  | Reject PENDING request                       | Emergency Service | Click Reject on PENDING row → API called                          |
+| UC-ER-04  | Filter requests by status                    | Emergency Service | Select status filter → filtered list                              |
 
 ---
 

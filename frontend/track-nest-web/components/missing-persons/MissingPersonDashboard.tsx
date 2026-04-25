@@ -11,7 +11,7 @@ interface MissingPersonDashboardProps {
     id: string;
     email: string;
     fullName: string;
-    role: UserRole;
+    role: UserRole[];
   };
 }
 

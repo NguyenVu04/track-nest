@@ -26,9 +26,9 @@
  * │ Admin               │ /dashboard/missing-persons│ ACCESSIBLE          │
  * │ Admin               │ /dashboard/safe-zones     │ ACCESS DENIED msg   │
  * ├─────────────────────┼──────────────────────────┼──────────────────────┤
- * │ Emergency Services  │ /dashboard/safe-zones     │ ACCESSIBLE          │
- * │ Emergency Services  │ /dashboard/emergency-req  │ ACCESSIBLE          │
- * │ Emergency Services  │ /dashboard/missing-persons│ ACCESSIBLE          │
+ * │ Emergency Service  │ /dashboard/safe-zones     │ ACCESSIBLE          │
+ * │ Emergency Service  │ /dashboard/emergency-req  │ ACCESSIBLE          │
+ * │ Emergency Service  │ /dashboard/missing-persons│ ACCESSIBLE          │
  * ├─────────────────────┼──────────────────────────┼──────────────────────┤
  * │ User                │ /dashboard/missing-persons│ ACCESSIBLE          │
  * │ User                │ /dashboard/safe-zones     │ ACCESS DENIED msg   │
@@ -36,7 +36,7 @@
  *
  * Sidebar visibility Decision Table:
  * ┌─────────────────────┬─────────────┬────────────────────┬──────────────┬──────────┐
- * │ Sidebar Item        │ Reporter    │ Emergency Services │ Admin        │ User     │
+ * │ Sidebar Item        │ Reporter    │ Emergency Service │ Admin        │ User     │
  * ├─────────────────────┼─────────────┼────────────────────┼──────────────┼──────────┤
  * │ Overview            │ VISIBLE     │ VISIBLE            │ VISIBLE      │ VISIBLE  │
  * │ Missing Persons     │ VISIBLE     │ VISIBLE            │ VISIBLE      │ VISIBLE  │
@@ -67,9 +67,9 @@ describe("Navigation & RBAC", () => {
       });
     });
 
-    it("Emergency Services sees Emergency Requests AND Safe Zones", () => {
+    it("Emergency Service sees Emergency Requests AND Safe Zones", () => {
       cy.mockSafeZonesApi();
-      cy.visitAsRole("/dashboard/safe-zones", "Emergency Services");
+      cy.visitAsRole("/dashboard/safe-zones", "Emergency Service");
       cy.wait("@getSafeZones");
       cy.get("nav, aside").within(() => {
         cy.contains(/emergency requests/i).should("exist");
@@ -138,17 +138,17 @@ describe("Navigation & RBAC", () => {
       cy.contains("Access Denied").should("be.visible");
     });
 
-    // Emergency Services routes
-    it("DT-E01 | Emergency Services → /dashboard/safe-zones → accessible", () => {
+    // Emergency Service routes
+    it("DT-E01 | Emergency Service → /dashboard/safe-zones → accessible", () => {
       cy.mockSafeZonesApi();
-      cy.visitAsRole("/dashboard/safe-zones", "Emergency Services");
+      cy.visitAsRole("/dashboard/safe-zones", "Emergency Service");
       cy.wait("@getSafeZones");
       cy.contains("Access Denied").should("not.exist");
     });
 
-    it("DT-E02 | Emergency Services → /dashboard/emergency-requests → accessible", () => {
+    it("DT-E02 | Emergency Service → /dashboard/emergency-requests → accessible", () => {
       cy.mockEmergencyRequestsApi();
-      cy.visitAsRole("/dashboard/emergency-requests", "Emergency Services");
+      cy.visitAsRole("/dashboard/emergency-requests", "Emergency Service");
       cy.wait("@getEmergencyRequests");
       cy.contains("Access Denied").should("not.exist");
     });
@@ -188,9 +188,9 @@ describe("Navigation & RBAC", () => {
       cy.contains(/admin/i).should("exist");
     });
 
-    it("Emergency Services header displays 'Emergency Services' role badge", () => {
+    it("Emergency Service header displays 'Emergency Service' role badge", () => {
       cy.mockSafeZonesApi();
-      cy.visitAsRole("/dashboard/safe-zones", "Emergency Services");
+      cy.visitAsRole("/dashboard/safe-zones", "Emergency Service");
       cy.wait("@getSafeZones");
       cy.contains(/emergency/i).should("exist");
     });

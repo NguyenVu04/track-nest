@@ -374,13 +374,21 @@ services:
     build:
       context: ../frontend/track-nest-web
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_USER_TRACKING_API_URL: "http://localhost:8800/user-tracking"
+        NEXT_PUBLIC_EMERGENCY_OPS_API_URL: "http://localhost:8800/emergency-ops"
+        NEXT_PUBLIC_EMERGENCY_OPS_WS_URL: "http://localhost:8800/emergency-ops/ws"
+        NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL: "http://localhost:8800/criminal-reports"
+        NEXT_PUBLIC_KEYCLOAK_URL: "http://localhost/auth"
+        NEXT_PUBLIC_USER_REALM: "restricted-dev"
+        NEXT_PUBLIC_REPORTER_REALM: "restricted-dev"
+        NEXT_PUBLIC_EMERGENCY_REALM: "restricted-dev"
+        NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: "web"
+        NEXT_PUBLIC_KEYCLOAK_FLOW: "standard"
+        NEXT_PUBLIC_TINYMCE_API_KEY: ""
     container_name: web
     environment:
-      NODE_ENV: development
-      NEXT_PUBLIC_USER_TRACKING_API_URL: "http://localhost:8800/user-tracking"
-      NEXT_PUBLIC_EMERGENCY_OPS_API_URL: "http://localhost:8800/emergency-ops"
-      NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL: "http://localhost:8800/criminal-reports"
-      NEXT_PUBLIC_KEYCLOAK_URL: "http://localhost/auth"
+      NODE_ENV: production
     ports:
       - "3000:3000"
     networks:

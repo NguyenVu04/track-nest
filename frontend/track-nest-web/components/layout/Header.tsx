@@ -11,7 +11,7 @@ import { useLocale, type Locale } from "@/contexts/LocaleContext";
 interface HeaderProps {
   user: {
     fullName: string;
-    role: string;
+    role: string[];
   };
   onLogout: () => void;
 }
@@ -27,7 +27,7 @@ function getInitials(name: string) {
 
 function getRoleBadgeStyle(role: string) {
   switch (role) {
-    case "Emergency Services":
+    case "Emergency Service":
       return "bg-orange-100 text-orange-700";
     case "Reporter":
       return "bg-brand-100 text-brand-700";
@@ -105,11 +105,16 @@ export const Header = memo(function Header({ user, onLogout }: HeaderProps) {
             <span className="text-sm font-medium text-slate-800 max-w-30 truncate">
               {user.fullName}
             </span>
-            <span
-              className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${getRoleBadgeStyle(user.role)}`}
-            >
-              {user.role}
-            </span>
+            <div className="flex flex-wrap gap-1 mt-0.5">
+              {user.role.map((r) => (
+                <span
+                  key={r}
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${getRoleBadgeStyle(r)}`}
+                >
+                  {r}
+                </span>
+              ))}
+            </div>
           </div>
         </Link>
 
