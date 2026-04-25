@@ -126,5 +126,5 @@ spec:
 
       volumes:
         - name: realm-config
-          configMap:
-            name: keycloak-realm-config
+          secret:
+            secretName: keycloak-realm-config

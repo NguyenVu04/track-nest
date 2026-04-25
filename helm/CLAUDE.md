@@ -105,7 +105,7 @@ The Envoy ConfigMap checksum annotation on the Deployment (`checksum/config`) en
 Shared env vars (Spring profile, CORS, Kafka bootstrap, Redis) come from `services.commonEnv` in `charts/services/templates/_helpers.tpl`. Per-service env vars (DB URL, ports) are inline in each `*-deployment.yaml`. Health probes hit `/actuator/health/{liveness,readiness}` on port **8081** (management port).
 
 ### keycloak/
-Realm JSON files in `charts/keycloak/realms/` are mounted via a ConfigMap. Realm import runs only at first pod start — if you change a realm file, delete the Keycloak pod and its database volume, or use the Admin API to re-import manually. `start` vs `start-dev` is controlled by `.Values.keycloak.keycloak.startCommand`.
+Realm JSON is stored in a Kubernetes Secret (`keycloak-realm-config`), not a ConfigMap. Content is injected at deploy time via `--set-file keycloak.keycloak.realmConfig.public=<path>` and `--set-file keycloak.keycloak.realmConfig.restricted=<path>`, or as literal block scalars in `values-secrets.yaml` (see `values-secrets.example.yaml`). Realm import runs only at first pod start — if you change a realm file, delete the Keycloak pod and its database volume, or use the Admin API to re-import manually. `start` vs `start-dev` is controlled by `.Values.keycloak.keycloak.startCommand`.
 
 ### Observability
 Disabled in dev. In prod: Prometheus scrapes via ServiceMonitor resources, AlertManager routes to Telegram (bot token from `tracknest-secrets`), Loki uses DigitalOcean Spaces (S3 credentials from `values-secrets.yaml` under `loki.loki.storage_config.aws`), Promtail runs as a DaemonSet parsing structured Spring log lines.

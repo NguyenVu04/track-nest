@@ -24,9 +24,14 @@ keycloak:
 
   # database URL injected via KEYCLOAK_DB_URL secret key
 
-  realmFiles:
-    public: public-dev.json
-    restricted: restricted-dev.json
+  # Realm JSON content — never commit real values here.
+  # Supply at deploy time:
+  #   --set-file keycloak.keycloak.realmConfig.public=keycloak/realms/public-dev.json
+  #   --set-file keycloak.keycloak.realmConfig.restricted=keycloak/realms/restricted-dev.json
+  # Or via values-secrets.yaml as YAML literal block scalars.
+  realmConfig:
+    public: ""
+    restricted: ""
 
   resources:
     requests:
