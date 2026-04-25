@@ -1,13 +1,1 @@
-{{- if .Values.web.pdb.enabled }}
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: {{ .Release.Name }}-web
-  labels:
-    {{- include "web.labels" . | nindent 4 }}
-spec:
-  minAvailable: {{ .Values.web.pdb.minAvailable }}
-  selector:
-    matchLabels:
-      {{- include "web.selectorLabels" . | nindent 6 }}
-{{- end }}
+{{- /* frontend subchart removed — web UI is deployed externally */ -}}

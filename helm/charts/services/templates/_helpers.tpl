@@ -44,7 +44,10 @@ Argument: root context (`.`).
       fieldPath: metadata.namespace
 
 - name: KAFKA_SERVER
-  value: {{ .Values.kafka.server | quote }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Release.Name }}-secrets
+      key: KAFKA_BOOTSTRAP_SERVERS
 
 - name: KAFKA_USERNAME
   valueFrom:

@@ -41,13 +41,21 @@ spec:
           env:
             {{- include "services.commonEnv" . | nindent 12 }}
 
-            # --- Database ---
             - name: DB_HOST
-              value: {{ .Values.emergencyOps.database.host | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: EMERGENCY_OPS_DB_HOST
             - name: DB_PORT
-              value: {{ .Values.emergencyOps.database.port | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: EMERGENCY_OPS_DB_PORT
             - name: DB_NAME
-              value: {{ .Values.emergencyOps.database.name | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: EMERGENCY_OPS_DB_NAME
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -59,7 +67,6 @@ spec:
                   name: {{ .Release.Name }}-secrets
                   key: EMERGENCY_OPS_DB_PASSWORD
 
-            # --- Keycloak ---
             - name: KEYCLOAK_AUTH_SERVER_URL
               value: {{ .Values.keycloak.authServerUrl | quote }}
             - name: KEYCLOAK_CLIENT_ID

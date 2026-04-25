@@ -17,7 +17,6 @@ spec:
       labels:
         {{- include "gateway.envoySelector" . | nindent 8 }}
       annotations:
-        # Reload Envoy whenever envoy-config ConfigMap changes.
         checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
     spec:
       terminationGracePeriodSeconds: {{ .Values.envoy.terminationGracePeriodSeconds }}
@@ -34,6 +33,9 @@ spec:
           ports:
             - name: https
               containerPort: {{ .Values.envoy.port }}
+              protocol: TCP
+            - name: http
+              containerPort: {{ .Values.envoy.httpPort }}
               protocol: TCP
             - name: admin
               containerPort: {{ .Values.envoy.adminPort }}

@@ -1,5 +1,6 @@
 package project.tracknest.usertracking.domain.notifier.impl;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
     private static final String TRACKING_NOTIFICATION_TYPE = "TRACKING";
 
     private final FcmService fcmService;
+    private final EntityManager entityManager;
     private final NotificationSentMessageProducer notificationSentMessageProducer;
     private final NotifierUserRepository userRepository;
     private final NotifierMobileDeviceRepository mobileRepository;
@@ -123,6 +125,7 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
 
         RiskNotification savedRiskNotification = riskNotificationRepository
                 .saveAndFlush(riskNotification);
+        entityManager.refresh(savedRiskNotification);
 
         if (sent > 0) {
             NotificationSentMessage sentMessage = NotificationSentMessage

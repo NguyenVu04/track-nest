@@ -22,8 +22,7 @@ keycloak:
   hostnameStrict: false
   hostnameStrictHttps: true
 
-  database:
-    url: jdbc:postgresql://ep-frosty-thunder-a16w6tab-pooler.ap-southeast-1.aws.neon.tech:5432/neondb
+  # database URL injected via KEYCLOAK_DB_URL secret key
 
   realmFiles:
     public: public-dev.json

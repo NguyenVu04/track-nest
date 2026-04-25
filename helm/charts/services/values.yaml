@@ -56,7 +56,7 @@ defaults:
 
 # --- Shared infra wiring ---------------------------------
 kafka:
-  server: kafka-ab0708-tracknest.j.aivencloud.com:25187
+  # server is injected via KAFKA_BOOTSTRAP_SERVERS secret key
   truststorePath: /app/certs/truststore.jks
 
 keycloak:
@@ -80,11 +80,7 @@ userTracking:
   # gRPC (external) and HTTP (internal REST/actuator) ports.
   grpcPort: 19090
   httpPort: 18080
-
-  database:
-    host: ep-little-term-aod6lu6p-pooler.c-2.ap-southeast-1.aws.neon.tech
-    port: 5432
-    name: neondb
+  # database connection injected via USER_TRACKING_DB_HOST/PORT/NAME secret keys
 
   hpa:
     enabled: false
@@ -104,11 +100,7 @@ criminalReports:
   image:
     repository: nguyenvu04/tracknest-criminalreports
     tag: "v1.2.8"
-
-  database:
-    host: ep-wispy-math-a1wxwifi-pooler.ap-southeast-1.aws.neon.tech
-    port: 5432
-    name: neondb
+  # database connection injected via CRIMINAL_REPORTS_DB_HOST/PORT/NAME secret keys
 
   gemini:
     chatModel: gemini-3-flash-preview
@@ -131,11 +123,7 @@ emergencyOps:
   image:
     repository: nguyenvu04/tracknest-emergencyops
     tag: "v1.2.8"
-
-  database:
-    host: ep-curly-shadow-a14usu28-pooler.ap-southeast-1.aws.neon.tech
-    port: 5432
-    name: neondb
+  # database connection injected via EMERGENCY_OPS_DB_HOST/PORT/NAME secret keys
 
   keycloak:
     clientId: emergency-operations

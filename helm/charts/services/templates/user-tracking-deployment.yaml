@@ -44,13 +44,21 @@ spec:
           env:
             {{- include "services.commonEnv" . | nindent 12 }}
 
-            # --- Database (TimescaleDB/Neon) ---
             - name: DB_HOST
-              value: {{ .Values.userTracking.database.host | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: USER_TRACKING_DB_HOST
             - name: DB_PORT
-              value: {{ .Values.userTracking.database.port | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: USER_TRACKING_DB_PORT
             - name: DB_NAME
-              value: {{ .Values.userTracking.database.name | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: USER_TRACKING_DB_NAME
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:

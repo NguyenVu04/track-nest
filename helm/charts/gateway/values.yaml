@@ -1,10 +1,11 @@
 ############################################################
-# Gateway subchart — edge L7 layer.
-#   nginx terminates TLS for the web UI / keycloak
-#   envoy terminates TLS + gRPC-Web + JWT auth for APIs
+# Gateway subchart — single Envoy edge proxy.
+#   Terminates TLS for all traffic on both domains:
+#     tracknestapp.org       → /auth/ proxied to Keycloak
+#     api.tracknestapp.org/* → REST services + gRPC-Web
 ############################################################
 
-# Secret containing tls.crt / tls.key for both gateways.
+# Secret containing tls.crt / tls.key.
 # Provision out-of-band (not managed by this chart).
 tlsSecretName: cf-cert
 
@@ -16,22 +17,25 @@ envoy:
     tag: v1.36-latest
     pullPolicy: IfNotPresent
 
-  # Container-level listening ports.
+  # TLS listener port (container). Service maps servicePort → port.
   port: 8800
+  # HTTP listener port for redirect-to-HTTPS.
+  httpPort: 8080
   adminPort: 9901
 
-  # External LB port (443 → container port).
+  # External service ports.
   servicePort: 443
+  httpServicePort: 80
 
   serviceType: LoadBalancer
 
   resources:
     requests:
       cpu: "100m"
-      memory: "128Mi"
+      memory: "192Mi"
     limits:
       cpu: "500m"
-      memory: "512Mi"
+      memory: "768Mi"
 
   podSecurityContext:
     runAsNonRoot: true
@@ -45,63 +49,6 @@ envoy:
     readOnlyRootFilesystem: true
     capabilities:
       drop: ["ALL"]
-
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-
-  revisionHistoryLimit: 5
-  terminationGracePeriodSeconds: 30
-
-  pdb:
-    enabled: false
-    minAvailable: 1
-
-nginx:
-  replicaCount: 1
-
-  image:
-    repository: nginx
-    tag: stable-alpine
-    pullPolicy: IfNotPresent
-
-  # Container listens on both 80 and 443; 80 redirects.
-  port: 443
-  plainPort: 80
-
-  # Internal stub_status server port (localhost only, for metrics sidecar).
-  stubStatusPort: 9080
-  # nginx-prometheus-exporter metrics port.
-  metricsPort: 9113
-
-  metrics:
-    image:
-      repository: nginx/nginx-prometheus-exporter
-      tag: "1.5.1"
-
-  servicePort: 443
-  plainServicePort: 80
-
-  serviceType: LoadBalancer
-
-  resources:
-    requests:
-      cpu: "100m"
-      memory: "128Mi"
-    limits:
-      cpu: "500m"
-      memory: "256Mi"
-
-  podSecurityContext:
-    runAsNonRoot: false
-    seccompProfile:
-      type: RuntimeDefault
-
-  containerSecurityContext:
-    allowPrivilegeEscalation: true
-    readOnlyRootFilesystem: false
 
   strategy:
     type: RollingUpdate

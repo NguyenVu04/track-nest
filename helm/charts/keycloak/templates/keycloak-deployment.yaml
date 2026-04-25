@@ -55,7 +55,10 @@ spec:
             - name: KC_DB
               value: "postgres"
             - name: KC_DB_URL
-              value: {{ .Values.keycloak.database.url | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KEYCLOAK_DB_URL
             - name: KC_DB_USERNAME
               valueFrom:
                 secretKeyRef:

@@ -41,13 +41,21 @@ spec:
           env:
             {{- include "services.commonEnv" . | nindent 12 }}
 
-            # --- Database ---
             - name: DB_HOST
-              value: {{ .Values.criminalReports.database.host | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_DB_HOST
             - name: DB_PORT
-              value: {{ .Values.criminalReports.database.port | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_DB_PORT
             - name: DB_NAME
-              value: {{ .Values.criminalReports.database.name | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_DB_NAME
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -59,24 +67,6 @@ spec:
                   name: {{ .Release.Name }}-secrets
                   key: CRIMINAL_REPORTS_DB_PASSWORD
 
-            # --- Object storage (DO Spaces / S3-compatible) ---
-            - name: MINIO_ENDPOINT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secrets
-                  key: MINIO_ENDPOINT
-            - name: MINIO_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secrets
-                  key: MINIO_ACCESS_KEY
-            - name: MINIO_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secrets
-                  key: MINIO_SECRET_KEY
-
-            # --- Gemini (vision/chat) ---
             - name: GOOGLE_API_KEY
               valueFrom:
                 secretKeyRef:
