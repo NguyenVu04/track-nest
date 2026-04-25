@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -9,6 +10,21 @@ import {
   criminalReportsService,
   CreateGuidelinesDocumentRequest,
 } from "@/services/criminalReportsService";
+
+const RichTextEditor = dynamic(
+  () =>
+    import("@/components/shared/RichTextEditor").then(
+      (mod) => mod.RichTextEditor,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-80 rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center">
+        <span className="text-gray-500">Loading editor...</span>
+      </div>
+    ),
+  },
+);
 
 export default function CreateGuidelinePage() {
   const router = useRouter();
@@ -100,9 +116,14 @@ export default function CreateGuidelinePage() {
             </div>
           </div>
           <div className="prose max-w-none mb-6">
-            <div className="whitespace-pre-wrap text-gray-900">
-              {formData.content || "(No content)"}
-            </div>
+            {formData.content ? (
+              <div
+                className="text-gray-900"
+                dangerouslySetInnerHTML={{ __html: formData.content }}
+              />
+            ) : (
+              <div className="text-gray-500">(No content)</div>
+            )}
           </div>
           <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
             <button
@@ -167,14 +188,11 @@ export default function CreateGuidelinePage() {
           </div>
           <div>
             <label htmlFor="content" className="block text-gray-700 mb-2">Content *</label>
-            <textarea
-              id="content"
+            <RichTextEditor
               value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              rows={12}
-              placeholder="Enter the guideline content. You can use Markdown formatting."
-              required
+              onChange={(html) => setFormData({ ...formData, content: html })}
+              placeholder="Enter the guideline content."
+              height={420}
             />
           </div>
           <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
