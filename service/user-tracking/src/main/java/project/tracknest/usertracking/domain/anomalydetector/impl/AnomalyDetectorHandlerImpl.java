@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.usertracking.core.datatype.TrackingNotificationMessage;
 import project.tracknest.usertracking.core.entity.AnomalyRun;
@@ -36,7 +38,7 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
             This may be normal, but you may want to check in.
             """;
 
-    @Value("${app.kafka.topics[2]}")
+    @Value("${app.kafka.topics.tracking-notification}")
     private String anomalyNotificationTopic;
 
     private final H3Core h3Core;
@@ -46,7 +48,8 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
     private final AnomalyDetectorHandlerCellVisitRepository visitRepository;
     private final AnomalyDetectorHandlerAnomalyRunRepository anomalyRunRepository;
 
-    @Transactional
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
     public void detectAnomaly(
             UUID userId,
@@ -55,8 +58,8 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
             double longitudeDeg,
             OffsetDateTime timestamp
     ) {
-        Optional<AnomalyRun> openRun = anomalyRunRepository
-                .findFirstByUserIdAndResolvedFalseOrderByLastSeenAtDesc(userId);
+        Optional<AnomalyRun> latestRun = anomalyRunRepository
+                .findFirstByUserIdOrderByLastSeenAtDesc(userId);
         LocationBucket bucket = getOrCreateBucket(userId, timestamp);
 
         if (bucket.getTotalNumVisits() < MIN_TOTAL_NUM_VISITS) {
@@ -64,7 +67,7 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
                     "Skipping anomaly detection for user {} at timestamp {} due to insufficient data (totalNumVisits={})",
                     userId, timestamp, bucket.getTotalNumVisits()
             );
-            openRun.ifPresent(run -> markResolved(run, timestamp));
+            latestRun.filter(run -> !run.isResolved()).ifPresent(run -> markResolved(run, timestamp));
             return;
         }
 
@@ -83,32 +86,27 @@ class AnomalyDetectorHandlerImpl implements AnomalyDetectorHandler {
                     "No anomaly detected for user {} at timestamp {} (matureCellId={})",
                     userId, timestamp, matureVisit.get().getCellId()
             );
-            openRun.ifPresent(run -> markResolved(run, timestamp));
+            latestRun.filter(run -> !run.isResolved()).ifPresent(run -> markResolved(run, timestamp));
             return;
         }
 
-        if (openRun.isPresent() && shouldSuppress(openRun.get(), timestamp, userId, timestamp)) {
+        if (latestRun.isPresent() && shouldSuppress(latestRun.get(), timestamp)) {
             return;
         }
 
         raiseAnomaly(userId, username, timestamp);
     }
 
-    private boolean shouldSuppress(AnomalyRun run, OffsetDateTime now, UUID userId, OffsetDateTime timestamp) {
+    private boolean shouldSuppress(AnomalyRun run, OffsetDateTime now) {
         if (!run.isResolved()) {
-            log.info(
-                    "Skipping anomaly detection for user {} at timestamp {} due to unresolved anomaly run (lastSeenAt={})",
-                    userId, timestamp, run.getLastSeenAt()
-            );
+            log.info("Suppressing anomaly: unresolved run already open (lastSeenAt={})", run.getLastSeenAt());
             return true;
         }
 
         long secondsSinceLastSeen = Duration.between(run.getLastSeenAt(), now).toSeconds();
         if (secondsSinceLastSeen < MIN_ANOMALY_INTERVAL_SECONDS) {
-            log.info(
-                    "Skipping anomaly detection for user {} at timestamp {} due to recent anomaly run (lastSeenAt={})",
-                    userId, timestamp, run.getLastSeenAt()
-            );
+            log.info("Suppressing anomaly: resolved run too recent (lastSeenAt={}, secondsAgo={})",
+                    run.getLastSeenAt(), secondsSinceLastSeen);
             return true;
         }
         return false;

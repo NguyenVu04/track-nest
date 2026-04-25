@@ -19,11 +19,10 @@ public class KafkaTopicConfig {
 
     @Bean
     public List<NewTopic> newTopics() {
-        List<String> topics = props.getTopics();
-        if (topics == null || topics.isEmpty()) {
+        if (props.getTopics() == null || props.getTopics().isEmpty()) {
             return Collections.emptyList();
         }
-        return topics.stream()
+        return props.getTopics().values().stream()
                 .map(name -> new NewTopic(
                         name, props.getPartitions(), props.getReplicationFactor()))
                 .collect(Collectors.toList());

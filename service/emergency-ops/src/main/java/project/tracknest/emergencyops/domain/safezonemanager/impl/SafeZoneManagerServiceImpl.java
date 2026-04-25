@@ -63,13 +63,17 @@ class SafeZoneManagerServiceImpl implements SafeZoneManagerService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<GetServiceSafeZonesResponse> retrieveServiceSafeZones(
             UUID serviceId,
             String nameFilter,
             Pageable pageable
     ){
+        String escapedFilter = nameFilter == null ? null
+                : nameFilter.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+
         Page<SafeZone> safeZonePage = safeZoneRepository
-                .findByEmergencyService_Id(serviceId, nameFilter, pageable);
+                .findByEmergencyService_Id(serviceId, escapedFilter, pageable);
 
         List<GetServiceSafeZonesResponse> safeZoneResponses = safeZonePage
                 .map(sz -> new GetServiceSafeZonesResponse(
@@ -92,6 +96,7 @@ class SafeZoneManagerServiceImpl implements SafeZoneManagerService {
     }
 
     @Override
+    @Transactional
     public PutSafeZoneResponse updateSafeZone(UUID serviceId, UUID safeZoneId, PutSafeZoneRequest request) {
         Optional<SafeZone> safeZoneOpt = safeZoneRepository
                 .findByIdAndEmergencyService_Id(safeZoneId, serviceId);
@@ -124,6 +129,7 @@ class SafeZoneManagerServiceImpl implements SafeZoneManagerService {
     }
 
     @Override
+    @Transactional
     public DeleteSafeZoneResponse deleteSafeZone(UUID serviceId, UUID safeZoneId) {
         Optional<SafeZone> safeZoneOpt = safeZoneRepository
                 .findByIdAndEmergencyService_Id(safeZoneId, serviceId);

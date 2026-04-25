@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 class LocationMessageProducerImpl implements LocationMessageProducer {
 
-    @Value("${app.kafka.topics[0]}")
+    @Value("${app.kafka.topics.location-updated}")
     private String TOPIC;
 
     private final KafkaTemplate<String, LocationMessage> kafkaTemplate;

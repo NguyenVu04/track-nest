@@ -16,12 +16,12 @@ public interface SafeZoneManagerSafeZoneRepository extends JpaRepository<SafeZon
             value = """
         SELECT sz.* FROM safe_zone sz
         WHERE sz.emergency_service_id = :serviceId
-            AND (CAST(:nameFilter AS text) IS NULL OR LOWER(sz.name) LIKE LOWER(CONCAT('%', CAST(:nameFilter AS text), '%')))
+            AND (CAST(:nameFilter AS text) IS NULL OR LOWER(sz.name) LIKE LOWER(CONCAT('%', CAST(:nameFilter AS text), '%')) ESCAPE '\\')
         """,
             countQuery = """
         SELECT count(*) FROM safe_zone sz
         WHERE sz.emergency_service_id = :serviceId
-            AND (CAST(:nameFilter AS text) IS NULL OR LOWER(sz.name) LIKE LOWER(CONCAT('%', CAST(:nameFilter AS text), '%')))
+            AND (CAST(:nameFilter AS text) IS NULL OR LOWER(sz.name) LIKE LOWER(CONCAT('%', CAST(:nameFilter AS text), '%')) ESCAPE '\\')
         """,
             nativeQuery = true
     )

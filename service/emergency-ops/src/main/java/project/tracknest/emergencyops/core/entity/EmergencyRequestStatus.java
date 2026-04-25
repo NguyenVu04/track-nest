@@ -17,6 +17,10 @@ public class EmergencyRequestStatus {
     @Column(name = "name", nullable = false, updatable = false, length = 15)
     private String name;
 
+    public boolean is(Status status) {
+        return this.name.equals(status.getValue());
+    }
+
     @Getter
     public enum Status {
         PENDING("PENDING"),

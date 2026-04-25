@@ -12,7 +12,10 @@ import project.tracknest.usertracking.core.entity.*;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -52,13 +55,18 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
         List<User> familyMembers = userRepository
                 .findAllUserFamilyMembers(target.getId());
 
+        List<UUID> memberIds = familyMembers.stream().map(User::getId).toList();
+        Map<UUID, List<String>> tokensByMember = mobileRepository.findAllByUserIdIn(memberIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        MobileDevice::getUserId,
+                        Collectors.mapping(MobileDevice::getDeviceToken, Collectors.toList())));
+
+        boolean anyDelivered = false;
         for (User member : familyMembers) {
-            List<MobileDevice> devices = mobileRepository
-                    .findByTargetId(member.getId());
-            List<String> deviceTokens = devices.stream()
-                    .map(MobileDevice::getDeviceToken)
-                    .toList();
-            fcmService.sendToTokens(deviceTokens, message.title(), message.content());
+            List<String> deviceTokens = tokensByMember.getOrDefault(member.getId(), List.of());
+            int sent = fcmService.sendToTokens(deviceTokens, message.title(), message.content());
+            if (sent > 0) anyDelivered = true;
 
             TrackerTrackingNotification.TrackerTrackingNotificationId trackerTrackingNotificationId =
                     TrackerTrackingNotification.TrackerTrackingNotificationId
@@ -71,19 +79,20 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                     .id(trackerTrackingNotificationId)
                     .build();
             trackerTrackingNotificationRepository.save(trackerTrackingNotification);
-
         }
 
-        NotificationSentMessage sentMessage = NotificationSentMessage
-                .builder()
-                .notificationId(savedTrackingNotification.getId())
-                .type(TRACKING_NOTIFICATION_TYPE)
-                .sent_at_ms(OffsetDateTime.now()
-                        .toInstant()
-                        .toEpochMilli())
-                .build();
-
-        notificationSentMessageProducer.produce(sentMessage);
+        if (anyDelivered) {
+            NotificationSentMessage sentMessage = NotificationSentMessage
+                    .builder()
+                    .notificationId(savedTrackingNotification.getId())
+                    .type(TRACKING_NOTIFICATION_TYPE)
+                    .sent_at_ms(OffsetDateTime.now().toInstant().toEpochMilli())
+                    .build();
+            notificationSentMessageProducer.produce(sentMessage);
+        } else {
+            log.warn("Skipping notification-sent audit for tracking notification {}: no FCM delivery succeeded",
+                    savedTrackingNotification.getId());
+        }
     }
 
     @Override
@@ -102,7 +111,7 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                 .map(MobileDevice::getDeviceToken)
                 .toList();
 
-        fcmService.sendToTokens(deviceTokens, message.title(), message.content());
+        int sent = fcmService.sendToTokens(deviceTokens, message.title(), message.content());
 
         RiskNotification riskNotification = RiskNotification
                 .builder()
@@ -115,15 +124,17 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
         RiskNotification savedRiskNotification = riskNotificationRepository
                 .saveAndFlush(riskNotification);
 
-        NotificationSentMessage sentMessage = NotificationSentMessage
-                .builder()
-                .type(RISK_NOTIFICATION_TYPE)
-                .notificationId(savedRiskNotification.getId())
-                .sent_at_ms(OffsetDateTime.now()
-                        .toInstant()
-                        .toEpochMilli())
-                .build();
-
-        notificationSentMessageProducer.produce(sentMessage);
+        if (sent > 0) {
+            NotificationSentMessage sentMessage = NotificationSentMessage
+                    .builder()
+                    .type(RISK_NOTIFICATION_TYPE)
+                    .notificationId(savedRiskNotification.getId())
+                    .sent_at_ms(OffsetDateTime.now().toInstant().toEpochMilli())
+                    .build();
+            notificationSentMessageProducer.produce(sentMessage);
+        } else {
+            log.warn("Skipping notification-sent audit for risk notification {}: no FCM delivery succeeded",
+                    savedRiskNotification.getId());
+        }
     }
 }

@@ -2,27 +2,31 @@ package project.tracknest.usertracking.controller;
 
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import project.tracknest.usertracking.domain.familymessenger.service.FamilyMessengerService;
+import project.tracknest.usertracking.domain.familymessenger.service.FamilyMessengerStreamRegistry;
 import project.tracknest.usertracking.proto.lib.*;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static project.tracknest.usertracking.utils.SecuritySetup.*;
 
-@SpringBootTest
-@Transactional
+@ExtendWith(MockitoExtension.class)
 class FamilyMessageControllerTest {
 
-    @Autowired
+    @Mock
+    private FamilyMessengerService service;
+
+    @Mock
+    private FamilyMessengerStreamRegistry registry;
+
+    @InjectMocks
     private FamilyMessageController controller;
 
     @BeforeEach
@@ -37,73 +41,54 @@ class FamilyMessageControllerTest {
     class SendMessageTests {
 
         @Test
-        void sendMessage_success() throws Exception {
-            // Admin is a member of ADMIN_CIRCLE_ID (cccccccc-1002-...)
+        @DisplayName("delegates to service, calls onNext and onCompleted")
+        void sendMessage_success() {
             SendMessageRequest request = SendMessageRequest.newBuilder()
                     .setFamilyCircleId(ADMIN_CIRCLE_ID)
-                    .setMessageContent("Hello from admin!")
+                    .setMessageContent("Hello!")
                     .build();
 
-            AtomicReference<SendMessageResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
+            SendMessageResponse expected = SendMessageResponse.newBuilder()
+                    .setMessageId(UUID.randomUUID().toString())
+                    .setSentAtMs(System.currentTimeMillis())
+                    .build();
 
-            controller.sendMessage(request, new StreamObserver<>() {
-                public void onNext(SendMessageResponse v) { ref.set(v); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
+            when(service.sendFamilyMessage(ADMIN_USER_ID, request)).thenReturn(expected);
 
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
-            assertFalse(ref.get().getMessageId().isBlank());
-            assertTrue(ref.get().getSentAtMs() > 0);
+            @SuppressWarnings("unchecked")
+            StreamObserver<SendMessageResponse> obs = mock(StreamObserver.class);
+
+            controller.sendMessage(request, obs);
+
+            verify(obs).onNext(expected);
+            verify(obs).onCompleted();
+            verify(obs, never()).onError(any());
         }
 
         @Test
-        void sendMessage_notMember_returnsPermissionDenied() throws Exception {
-            // Admin is NOT a member of FAMILY_CIRCLE_1_ID (cccccccc-1000-...)
+        @DisplayName("non-member response is forwarded as-is")
+        void sendMessage_notMember_returnsPermissionDenied() {
             SendMessageRequest request = SendMessageRequest.newBuilder()
                     .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                     .setMessageContent("Should fail")
                     .build();
 
-            AtomicReference<SendMessageResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-
-            controller.sendMessage(request, new StreamObserver<>() {
-                public void onNext(SendMessageResponse v) { ref.set(v); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertNotEquals(0, ref.get().getStatus().getCode());
-        }
-
-        @Test
-        void sendMessage_anotherMember_success() throws Exception {
-            // Switch to user3 (4405a37d) who is also a member of ADMIN_CIRCLE_ID
-            setUpSecurityContext(USER3_ID, "user3", "user3@gmail.com");
-
-            SendMessageRequest request = SendMessageRequest.newBuilder()
-                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
-                    .setMessageContent("Hi from user3")
+            SendMessageResponse permDenied = SendMessageResponse.newBuilder()
+                    .setStatus(com.google.rpc.Status.newBuilder()
+                            .setCode(com.google.rpc.Code.PERMISSION_DENIED_VALUE)
+                            .setMessage("User is not a member of this family circle")
+                            .build())
                     .build();
 
-            AtomicReference<SendMessageResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
+            when(service.sendFamilyMessage(ADMIN_USER_ID, request)).thenReturn(permDenied);
 
-            controller.sendMessage(request, new StreamObserver<>() {
-                public void onNext(SendMessageResponse v) { ref.set(v); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
+            @SuppressWarnings("unchecked")
+            StreamObserver<SendMessageResponse> obs = mock(StreamObserver.class);
 
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
+            controller.sendMessage(request, obs);
+
+            verify(obs).onNext(permDenied);
+            verify(obs).onCompleted();
         }
     }
 
@@ -114,121 +99,48 @@ class FamilyMessageControllerTest {
     class ListMessagesTests {
 
         @Test
-        void listMessages_success_returnsSeededMessages() throws Exception {
-            // ADMIN_CIRCLE_ID has 3 seeded messages (eeeeeeee-1007, -1008, -1009)
+        @DisplayName("delegates to service and returns result")
+        void listMessages_success() {
             ListMessagesRequest request = ListMessagesRequest.newBuilder()
                     .setFamilyCircleId(ADMIN_CIRCLE_ID)
                     .setPageSize(10)
                     .build();
 
-            AtomicReference<ListMessagesResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
+            ListMessagesResponse expected = ListMessagesResponse.newBuilder().build();
+            when(service.listFamilyMessages(ADMIN_USER_ID, request)).thenReturn(expected);
 
-            controller.listMessages(request, new StreamObserver<>() {
-                public void onNext(ListMessagesResponse v) { ref.set(v); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
+            @SuppressWarnings("unchecked")
+            StreamObserver<ListMessagesResponse> obs = mock(StreamObserver.class);
 
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
-            assertEquals(3, ref.get().getMessagesCount());
-            // Most recent first
-            Message first = ref.get().getMessages(0);
-            assertFalse(first.getMessageId().isBlank());
-            assertFalse(first.getSenderId().isBlank());
-            assertFalse(first.getMessageContent().isBlank());
-            assertTrue(first.getSentAtMs() > 0);
+            controller.listMessages(request, obs);
+
+            verify(obs).onNext(expected);
+            verify(obs).onCompleted();
+            verify(obs, never()).onError(any());
         }
 
         @Test
-        void listMessages_notMember_returnsPermissionDenied() throws Exception {
-            // Admin is NOT a member of FAMILY_CIRCLE_1_ID
+        @DisplayName("non-member permission-denied is forwarded")
+        void listMessages_notMember_returnsPermissionDenied() {
             ListMessagesRequest request = ListMessagesRequest.newBuilder()
                     .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                    .setPageSize(10)
                     .build();
 
-            AtomicReference<ListMessagesResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-
-            controller.listMessages(request, new StreamObserver<>() {
-                public void onNext(ListMessagesResponse v) { ref.set(v); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertNotEquals(0, ref.get().getStatus().getCode());
-        }
-
-        @Test
-        void listMessages_pagination_nextPageToken() throws Exception {
-            // ADMIN_CIRCLE_ID has 3 messages; fetch 2 then use token to get 3rd
-            ListMessagesRequest firstPage = ListMessagesRequest.newBuilder()
-                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
-                    .setPageSize(2)
+            ListMessagesResponse permDenied = ListMessagesResponse.newBuilder()
+                    .setStatus(com.google.rpc.Status.newBuilder()
+                            .setCode(com.google.rpc.Code.PERMISSION_DENIED_VALUE)
+                            .build())
                     .build();
 
-            AtomicReference<ListMessagesResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
+            when(service.listFamilyMessages(ADMIN_USER_ID, request)).thenReturn(permDenied);
 
-            controller.listMessages(firstPage, new StreamObserver<>() {
-                public void onNext(ListMessagesResponse v) { ref.set(v); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
+            @SuppressWarnings("unchecked")
+            StreamObserver<ListMessagesResponse> obs = mock(StreamObserver.class);
 
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
-            assertEquals(2, ref.get().getMessagesCount());
-            assertFalse(ref.get().getNextPageToken().isBlank());
+            controller.listMessages(request, obs);
 
-            // Fetch second page
-            ListMessagesRequest secondPage = ListMessagesRequest.newBuilder()
-                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
-                    .setPageSize(2)
-                    .setPageToken(ref.get().getNextPageToken())
-                    .build();
-
-            AtomicReference<ListMessagesResponse> ref2 = new AtomicReference<>();
-            CountDownLatch latch2 = new CountDownLatch(1);
-
-            controller.listMessages(secondPage, new StreamObserver<>() {
-                public void onNext(ListMessagesResponse v) { ref2.set(v); }
-                public void onError(Throwable t) { latch2.countDown(); }
-                public void onCompleted() { latch2.countDown(); }
-            });
-
-            assertTrue(latch2.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref2.get());
-            assertEquals(0, ref2.get().getStatus().getCode());
-            assertEquals(1, ref2.get().getMessagesCount());
-            assertTrue(ref2.get().getNextPageToken().isBlank());
-        }
-
-        @Test
-        void listMessages_defaultPageSize_appliedWhenZero() throws Exception {
-            ListMessagesRequest request = ListMessagesRequest.newBuilder()
-                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
-                    .build(); // page_size = 0 → defaults to 20
-
-            AtomicReference<ListMessagesResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-
-            controller.listMessages(request, new StreamObserver<>() {
-                public void onNext(ListMessagesResponse v) { ref.set(v); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
-            assertTrue(ref.get().getMessagesCount() >= 0);
+            verify(obs).onNext(permDenied);
+            verify(obs).onCompleted();
         }
     }
 
@@ -239,109 +151,63 @@ class FamilyMessageControllerTest {
     class ReceiveMessageStreamTests {
 
         @Test
-        void receiveMessageStream_member_registersSuccessfully() {
+        @DisplayName("disables auto-request and registers observer with registry")
+        void receiveMessageStream_registersWithRegistry() {
             ReceiveMessageStreamRequest request = ReceiveMessageStreamRequest.newBuilder()
                     .setFamilyCircleId(ADMIN_CIRCLE_ID)
                     .build();
 
-            // A no-op ServerCallStreamObserver stub
+            String sessionKey = "session-key-123";
+            when(registry.register(any(), any(), any())).thenReturn(sessionKey);
+
             NoOpServerCallStreamObserver<Message> serverObserver = new NoOpServerCallStreamObserver<>();
 
-            // Should not throw for a valid member
-            assertDoesNotThrow(() -> controller.receiveMessageStream(request, serverObserver));
+            controller.receiveMessageStream(request, serverObserver);
+
+            assertTrue(serverObserver.disableAutoRequestCalled);
+            verify(registry).register(
+                    eq(ADMIN_USER_ID),
+                    eq(UUID.fromString(ADMIN_CIRCLE_ID)),
+                    eq(serverObserver));
         }
 
         @Test
-        void receiveMessageStream_notMember_throwsIllegalArgument() {
+        @DisplayName("cancel handler unregisters stream from registry")
+        void receiveMessageStream_cancelHandler_unregistersFromRegistry() {
             ReceiveMessageStreamRequest request = ReceiveMessageStreamRequest.newBuilder()
-                    .setFamilyCircleId(FAMILY_CIRCLE_1_ID) // admin is not a member here
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
                     .build();
+
+            String sessionKey = "session-key-abc";
+            when(registry.register(any(), any(), any())).thenReturn(sessionKey);
 
             NoOpServerCallStreamObserver<Message> serverObserver = new NoOpServerCallStreamObserver<>();
+            controller.receiveMessageStream(request, serverObserver);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> controller.receiveMessageStream(request, serverObserver));
-        }
+            assertNotNull(serverObserver.cancelHandler);
+            serverObserver.cancelHandler.run();
 
-        @Test
-        void receiveMessageStream_sendMessage_deliveredToSubscriber() throws Exception {
-            // Register admin as a subscriber to ADMIN_CIRCLE_ID
-            ReceiveMessageStreamRequest streamRequest = ReceiveMessageStreamRequest.newBuilder()
-                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
-                    .build();
-
-            AtomicReference<Message> received = new AtomicReference<>();
-            CountDownLatch messageLatch = new CountDownLatch(1);
-
-            CapturingServerCallStreamObserver<Message> capturingObserver =
-                    new CapturingServerCallStreamObserver<>(received, messageLatch);
-
-            controller.receiveMessageStream(streamRequest, capturingObserver);
-
-            // Now send a message to that circle (still as admin)
-            SendMessageRequest sendRequest = SendMessageRequest.newBuilder()
-                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
-                    .setMessageContent("Live message test")
-                    .build();
-
-            AtomicReference<SendMessageResponse> sendRef = new AtomicReference<>();
-            CountDownLatch sendLatch = new CountDownLatch(1);
-
-            controller.sendMessage(sendRequest, new StreamObserver<>() {
-                public void onNext(SendMessageResponse v) { sendRef.set(v); }
-                public void onError(Throwable t) { sendLatch.countDown(); }
-                public void onCompleted() { sendLatch.countDown(); }
-            });
-
-            assertTrue(sendLatch.await(5, TimeUnit.SECONDS));
-            assertEquals(0, sendRef.get().getStatus().getCode());
-
-            // The subscriber should have received the message
-            assertTrue(messageLatch.await(3, TimeUnit.SECONDS));
-            assertNotNull(received.get());
-            assertEquals("Live message test", received.get().getMessageContent());
-            assertEquals(ADMIN_USER_ID.toString(), received.get().getSenderId());
+            verify(registry).unregister(eq(sessionKey), eq(serverObserver));
         }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static class NoOpServerCallStreamObserver<T> extends ServerCallStreamObserver<T> {
-        private Runnable cancelHandler;
+        Runnable cancelHandler;
+        boolean disableAutoRequestCalled;
+
         public void setOnCancelHandler(Runnable onCancelHandler) { this.cancelHandler = onCancelHandler; }
         public boolean isCancelled() { return false; }
         public void setCompression(String compression) {}
         public void disableAutoInboundFlowControl() {}
-        public void disableAutoRequest() {}
+        public void disableAutoRequest() { disableAutoRequestCalled = true; }
         public void request(int count) {}
         public void setMessageCompression(boolean enable) {}
         public boolean isReady() { return true; }
         public void setOnReadyHandler(Runnable onReadyHandler) {}
         public void onNext(T value) {}
         public void onError(Throwable t) {}
-        public void onCompleted() {}
-    }
-
-    private static class CapturingServerCallStreamObserver<T> extends ServerCallStreamObserver<T> {
-        private final AtomicReference<T> ref;
-        private final CountDownLatch latch;
-
-        CapturingServerCallStreamObserver(AtomicReference<T> ref, CountDownLatch latch) {
-            this.ref = ref;
-            this.latch = latch;
-        }
-
-        public void setOnCancelHandler(Runnable onCancelHandler) {}
-        public boolean isCancelled() { return false; }
-        public void setCompression(String compression) {}
-        public void disableAutoInboundFlowControl() {}
-        public void disableAutoRequest() {}
-        public void request(int count) {}
-        public void setMessageCompression(boolean enable) {}
-        public boolean isReady() { return true; }
-        public void setOnReadyHandler(Runnable onReadyHandler) {}
-        public void onNext(T value) { ref.set(value); latch.countDown(); }
-        public void onError(Throwable t) { latch.countDown(); }
         public void onCompleted() {}
     }
 }

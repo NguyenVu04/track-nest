@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, X, Trash2 } from "lucide-react";
+import { Bell, X } from "lucide-react";
 import { useNotification } from "@/contexts/NotificationContext";
-import { mockNotifications } from "@/mocks/notifications";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,29 +14,15 @@ export function NotificationButton() {
   const {
     notifications,
     unreadCount,
-    addNotification,
     markAsRead,
     removeNotification,
     clearAll,
   } = useNotification();
   const [isOpen, setIsOpen] = useState(false);
-  const [notificationsLoaded, setNotificationsLoaded] = useState(false);
   const router = useRouter();
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    // Load mock notifications on first open
-    if (open && !notificationsLoaded) {
-      mockNotifications.forEach((notif) => {
-        addNotification({
-          type: notif.type,
-          title: notif.title,
-          description: notif.description,
-          reportId: notif.reportId,
-        });
-      });
-      setNotificationsLoaded(true);
-    }
   };
 
   const handleNotificationClick = (

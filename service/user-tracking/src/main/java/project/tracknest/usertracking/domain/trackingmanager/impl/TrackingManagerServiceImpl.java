@@ -8,8 +8,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import project.tracknest.usertracking.core.datatype.PageToken;
 import project.tracknest.usertracking.core.entity.FamilyCircle;
 import project.tracknest.usertracking.core.entity.FamilyCircleMember;
@@ -23,7 +27,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,9 +37,11 @@ import static project.tracknest.usertracking.core.utils.OtpGenerator.OTP_TTL_SEC
 @RequiredArgsConstructor
 @Slf4j
 class TrackingManagerServiceImpl implements TrackingManagerService {
-    public static final String PARTICIPATION_PERMISSION_KEY_PREFIX = "family_circle:participation_permission:";
-
+    private static final String PARTICIPATION_PERMISSION_KEY_PREFIX = "family_circle:participation_permission:";
     private static final int DEFAULT_PAGE_SIZE = 32;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private final StringRedisTemplate redisTemplate;
 
@@ -52,6 +57,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                 .name(request.getName())
                 .build();
         FamilyCircle savedCircle = familyCircleRepository.saveAndFlush(circle);
+        entityManager.refresh(savedCircle);
 
         User user = userRepository
                 .findById(userId)
@@ -71,9 +77,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                 .role(request.getFamilyRole())
                 .build();
 
-        List<FamilyCircleMember> members = new ArrayList<>();
-        members.add(member);
-        savedCircle.setMembers(members);
+        familyCircleMemberRepository.save(member);
 
         return CreateFamilyCircleResponse
                 .newBuilder()
@@ -83,7 +87,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                         .setMessage("Family circle created successfully")
                         .build())
                 .setFamilyCircleId(savedCircle.getId().toString())
-                .setCreatedAtMs(Instant.now().toEpochMilli())
+                .setCreatedAtMs(savedCircle.getCreatedAt().toInstant().toEpochMilli())
                 .build();
     }
 
@@ -179,6 +183,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                         .setCode(Code.OK_VALUE)
                         .setMessage("Family circle deleted successfully")
                         .build())
+                .setDeletedAtMs(Instant.now().toEpochMilli())
                 .build();
     }
 
@@ -204,8 +209,20 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                     .build();
         }
 
+        String name = request.getName();
+        if (name == null || name.isBlank() || name.length() < 8 || name.length() > 50) {
+            return UpdateFamilyCircleResponse
+                    .newBuilder()
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.INVALID_ARGUMENT_VALUE)
+                            .setMessage("Circle name must be between 8 and 50 characters")
+                            .build())
+                    .build();
+        }
+
         FamilyCircle circle = circleOpt.get();
-        circle.setName(request.getName());
+        circle.setName(name);
         familyCircleRepository.save(circle);
         return UpdateFamilyCircleResponse
                 .newBuilder()
@@ -214,6 +231,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                         .setCode(Code.OK_VALUE)
                         .setMessage("Family circle updated successfully")
                         .build())
+                .setUpdatedAtMs(Instant.now().toEpochMilli())
                 .build();
     }
 
@@ -247,6 +265,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                         .setCode(Code.OK_VALUE)
                         .setMessage("Family role updated successfully")
                         .build())
+                .setUpdatedAtMs(Instant.now().toEpochMilli())
                 .build();
     }
 
@@ -306,12 +325,19 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                 .build();
     }
 
+    private static final String OTP_FETCH_AND_DELETE_SCRIPT =
+            "local v = redis.call('GET', KEYS[1])\n" +
+            "if v then redis.call('DEL', KEYS[1]) end\n" +
+            "return v";
+
     @Override
     @Transactional
     public ParticipateInFamilyCircleResponse participateInFamilyCircle(UUID userId, ParticipateInFamilyCircleRequest request) {
         String redisKey = getRedisKeyForParticipationPermission(request.getOtp());
-        // OTP value is family circle ID
-        String otpValue = redisTemplate.opsForValue().get(redisKey);
+        // Atomically fetch and delete so the OTP can only be used once
+        String otpValue = redisTemplate.execute(
+                RedisScript.of(OTP_FETCH_AND_DELETE_SCRIPT, String.class),
+                List.of(redisKey));
 
         if (otpValue == null) {
             log.warn("Invalid or expired OTP {} used by user {}", request.getOtp(), userId);
@@ -385,7 +411,6 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                             .setCode(Code.NOT_FOUND_VALUE)
                             .setMessage("User is not a member of the family circle")
                             .build())
-                    .setLeftAtMs(Instant.now().toEpochMilli())
                     .build();
         }
 

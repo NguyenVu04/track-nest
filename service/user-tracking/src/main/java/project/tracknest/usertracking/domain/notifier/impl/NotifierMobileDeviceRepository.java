@@ -26,4 +26,7 @@ interface NotifierMobileDeviceRepository extends JpaRepository<MobileDevice, UUI
       AND fcm1.id.memberId <> :targetId
     """)
     List<MobileDevice> findByTargetId(@Param("targetId") UUID targetId);
+
+    @Query("SELECT d FROM MobileDevice d WHERE d.userId IN :userIds")
+    List<MobileDevice> findAllByUserIdIn(@Param("userIds") List<UUID> userIds);
 }

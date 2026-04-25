@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle, XCircle, ClipboardCheck, Search, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useEmergencyRequestRealtime } from "@/contexts/EmergencyRequestRealtimeContext";
 import { MapView } from "@/components/shared/MapView";
 import { toast } from "sonner";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -20,6 +21,7 @@ export default function EmergencyRequestsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { addNotification } = useNotification();
+  const { refresh } = useEmergencyRequestRealtime();
   const t = useTranslations("emergencyRequests");
   const tCommon = useTranslations("common");
   const tStatus = useTranslations("status");
@@ -58,7 +60,7 @@ export default function EmergencyRequestsPage() {
     };
 
     fetchRequests();
-  }, [user, t, statusFilter]);
+  }, [user, t, statusFilter, refresh]);
 
   if (!user) return null;
 

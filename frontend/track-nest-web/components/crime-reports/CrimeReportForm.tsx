@@ -21,6 +21,18 @@ const LocationPicker = dynamic(
   },
 );
 
+const RichTextEditor = dynamic(
+  () => import("../shared/RichTextEditor").then((mod) => mod.RichTextEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-80 rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center">
+        <span className="text-gray-500">Loading editor...</span>
+      </div>
+    ),
+  },
+);
+
 const MAX_IMAGES = 5;
 
 interface CrimeReportFormProps {
@@ -204,16 +216,12 @@ export function CrimeReportForm({
             <label htmlFor="content" className="block text-gray-700 mb-2">
               {t("formContent")}{tCommon("requiredSuffix")}
             </label>
-            <textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) =>
-                setFormData({ ...formData, content: e.target.value })
+            <RichTextEditor
+              value={formData.content || ""}
+              onChange={(html) =>
+                setFormData({ ...formData, content: html })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              rows={4}
               placeholder={t("placeholderContent")}
-              required
             />
           </div>
 
@@ -415,9 +423,10 @@ export function CrimeReportForm({
               </div>
               <div>
                 <p className="text-gray-600 text-sm">{tCommon("description")}</p>
-                <p className="text-gray-900 whitespace-pre-wrap">
-                  {formData.content}
-                </p>
+                <div
+                  className="text-gray-900 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: formData.content || "" }}
+                />
               </div>
               <div>
                 <p className="text-gray-600 text-sm">{t("reviewOffenders")}</p>

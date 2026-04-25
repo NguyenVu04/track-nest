@@ -1,10 +1,9 @@
-package project.tracknest.usertracking.controller;
+package project.tracknest.usertracking.configuration.grpc;
 
 import io.grpc.*;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.stereotype.Component;
 
 @Slf4j
 public class GrpcGlobalExceptionHandler implements ServerInterceptor {
@@ -25,7 +24,6 @@ public class GrpcGlobalExceptionHandler implements ServerInterceptor {
                     super.onMessage(message);
                 } catch (Throwable t) {
                     handleAndClose(t, safeCall);
-                    throw t instanceof RuntimeException ? (RuntimeException) t : new RuntimeException(t);
                 }
             }
 
@@ -35,7 +33,6 @@ public class GrpcGlobalExceptionHandler implements ServerInterceptor {
                     super.onHalfClose();
                 } catch (Throwable t) {
                     handleAndClose(t, safeCall);
-                    throw t instanceof RuntimeException ? (RuntimeException) t : new RuntimeException(t);
                 }
             }
         };

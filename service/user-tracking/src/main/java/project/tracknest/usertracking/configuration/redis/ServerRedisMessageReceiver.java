@@ -24,31 +24,22 @@ public class ServerRedisMessageReceiver {
 
             log.info("Received Redis message: {}", redisMessage);
 
-            switch (redisMessage.getMethod()) {
-                case "receiveLocationMessage":
-                    LocationMessage locationMessage = redisMessage.getPayload() instanceof LocationMessage
-                            ? (LocationMessage) redisMessage.getPayload()
-                            : OBJECT_MAPPER.convertValue(
-                                    redisMessage.getPayload(), LocationMessage.class);
+            String method = redisMessage.getMethod();
+            if (RedisMessageMethod.RECEIVE_LOCATION.equals(method)) {
+                LocationMessage locationMessage = redisMessage.getPayload() instanceof LocationMessage
+                        ? (LocationMessage) redisMessage.getPayload()
+                        : OBJECT_MAPPER.convertValue(redisMessage.getPayload(), LocationMessage.class);
+                locationQuerySubscriber.receiveLocationMessage(redisMessage.getReceiverId(), locationMessage);
 
-                    locationQuerySubscriber.receiveLocationMessage(
-                            redisMessage.getReceiverId(),
-                            locationMessage
-                    );
-                    break;
-                case "receiveFamilyMessage":
-                    FamilyMessageEvent familyMessageEvent = redisMessage.getPayload() instanceof FamilyMessageEvent
-                            ? (FamilyMessageEvent) redisMessage.getPayload()
-                            : OBJECT_MAPPER.convertValue(
-                                    redisMessage.getPayload(), FamilyMessageEvent.class);
+            } else if (RedisMessageMethod.RECEIVE_FAMILY_MESSAGE.equals(method)) {
+                FamilyMessageEvent familyMessageEvent = redisMessage.getPayload() instanceof FamilyMessageEvent
+                        ? (FamilyMessageEvent) redisMessage.getPayload()
+                        : OBJECT_MAPPER.convertValue(redisMessage.getPayload(), FamilyMessageEvent.class);
+                familyMessengerEventSubscriber.receiveFamilyMessageEvent(
+                        redisMessage.getReceiverId(), familyMessageEvent);
 
-                    familyMessengerEventSubscriber.receiveFamilyMessageEvent(
-                            redisMessage.getReceiverId(),
-                            familyMessageEvent
-                    );
-                    break;
-                default:
-                    log.warn("Unknown method in Redis message: {}", redisMessage.getMethod());
+            } else {
+                log.warn("Unknown method in Redis message: {}", method);
             }
         } catch (Exception e) {
             log.error("Failed to process message: {}", message, e);

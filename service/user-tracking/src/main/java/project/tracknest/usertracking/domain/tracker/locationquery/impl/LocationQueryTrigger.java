@@ -14,7 +14,7 @@ import java.util.Map;
 class LocationQueryTrigger {
     private final LocationMessageConsumer service;
 
-    @KafkaListener(topics = "${app.kafka.topics[0]}")
+    @KafkaListener(topics = "${app.kafka.topics.location-updated}")
     private void consumeLocationMessage(Map<String, Object> messageMap) {
         LocationMessage message = LocationMessage.from(messageMap);
         service.trackTaget(message);

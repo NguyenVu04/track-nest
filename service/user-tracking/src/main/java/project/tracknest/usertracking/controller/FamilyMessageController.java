@@ -22,13 +22,15 @@ public class FamilyMessageController extends FamilyMessengerControllerGrpc.Famil
 
     @Override
     public void sendMessage(SendMessageRequest request, StreamObserver<SendMessageResponse> responseObserver) {
-        responseObserver.onNext(service.sendFamilyMessage(request));
+        UUID userId = getCurrentUserId();
+        responseObserver.onNext(service.sendFamilyMessage(userId, request));
         responseObserver.onCompleted();
     }
 
     @Override
     public void listMessages(ListMessagesRequest request, StreamObserver<ListMessagesResponse> responseObserver) {
-        responseObserver.onNext(service.listFamilyMessages(request));
+        UUID userId = getCurrentUserId();
+        responseObserver.onNext(service.listFamilyMessages(userId, request));
         responseObserver.onCompleted();
     }
 

@@ -3,12 +3,12 @@ package project.tracknest.usertracking.configuration.kafka;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.List;
+import java.util.Map;
 
 @Data
 @ConfigurationProperties(prefix = "app.kafka")
 public class KafkaProperties {
-    private List<String> topics;
+    private Map<String, String> topics;
 
     private int partitions;
 

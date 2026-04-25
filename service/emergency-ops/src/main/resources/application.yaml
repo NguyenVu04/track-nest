@@ -19,7 +19,7 @@ spring:
       properties:
         spring.json.use.type.headers: false
         spring.json.value.default.type: java.util.HashMap
-        spring.json.trusted.packages: "*"
+        spring.json.trusted.packages: "project.tracknest.emergencyops.core.datatype"
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -64,9 +64,6 @@ server:
   port: 28080
   servlet:
     context-path: /emergency-ops
-  tomcat:
-    max-threads: 50
-    accept-count: 100
 
 logging:
   level:

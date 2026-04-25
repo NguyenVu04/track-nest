@@ -22,8 +22,11 @@ import project.tracknest.emergencyops.domain.emergencyresponder.service.Emergenc
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +41,7 @@ public class EmergencyResponderServiceImpl implements EmergencyResponderService,
 
     @Override
     @Transactional
-    public void trackTaget(LocationMessage message) {
+    public void trackTarget(LocationMessage message) {
         Optional<EmergencyServiceUser> emergencyServiceUserOpt = emergencyServiceUserRepository
                 .findById(message.userId());
 
@@ -79,9 +82,10 @@ public class EmergencyResponderServiceImpl implements EmergencyResponderService,
     }
 
     private GetEmergencyServiceTargetsResponse mapToGetEmergencyServiceTargetsResponse(
-            EmergencyServiceUser user
+            EmergencyServiceUser user,
+            Map<UUID, KeycloakUserProfile> profiles
     ) {
-        KeycloakUserProfile profile = keycloakService.getUserProfile(user.getUserId());
+        KeycloakUserProfile profile = profiles.get(user.getUserId());
         return new GetEmergencyServiceTargetsResponse(
                 user.getUserId(),
                 profile.username(),
@@ -107,10 +111,13 @@ public class EmergencyResponderServiceImpl implements EmergencyResponderService,
         Page<EmergencyServiceUser> page = emergencyServiceUserRepository
                 .findByEmergencyService_Id(userId, pageable);
 
-        List<GetEmergencyServiceTargetsResponse> content = page
-                .getContent()
-                .stream()
-                .map(this::mapToGetEmergencyServiceTargetsResponse)
+        List<EmergencyServiceUser> users = page.getContent();
+        Set<UUID> userIds = users.stream().map(EmergencyServiceUser::getUserId).collect(Collectors.toSet());
+        Map<UUID, KeycloakUserProfile> profiles = userIds.parallelStream()
+                .collect(Collectors.toMap(id -> id, keycloakService::getUserProfile));
+
+        List<GetEmergencyServiceTargetsResponse> content = users.stream()
+                .map(u -> mapToGetEmergencyServiceTargetsResponse(u, profiles))
                 .toList();
 
         return new PageResponse<>(

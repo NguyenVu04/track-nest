@@ -147,7 +147,10 @@ export function MissingPersonDetail({
 
               <div className="pt-4 border-t border-gray-200">
                 <p className="text-gray-700 mb-2">{t("detailDescription")}</p>
-                <p className="text-gray-900">{person.content}</p>
+                <div
+                  className="text-gray-900 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: person.content || "" }}
+                />
               </div>
 
               {person.photo && (

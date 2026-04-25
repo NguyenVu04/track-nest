@@ -15,13 +15,13 @@ import java.util.Map;
 class NotificationTrigger {
     private final NotificationMessageConsumer service;
 
-    @KafkaListener(topics = "${app.kafka.topics[2]}")
+    @KafkaListener(topics = "${app.kafka.topics.tracking-notification}")
     private void consumeTrackingNotificationMessage(Map<String, Object> messageMap) {
         TrackingNotificationMessage message = TrackingNotificationMessage.from(messageMap);
         service.sendTrackingNotification(message);
     }
 
-    @KafkaListener(topics = "${app.kafka.topics[3]}")
+    @KafkaListener(topics = "${app.kafka.topics.risk-notification}")
     private void consumeRiskNotificationMessage(Map<String, Object> messageMap) {
         RiskNotificationMessage message = RiskNotificationMessage.from(messageMap);
         service.sendRiskNotification(message);

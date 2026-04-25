@@ -4,7 +4,6 @@ import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import project.tracknest.usertracking.configuration.common.ServerIdProvider;
-import project.tracknest.usertracking.configuration.redis.GrpcSession;
 import project.tracknest.usertracking.configuration.redis.GrpcSessionService;
 import project.tracknest.usertracking.core.datatype.FamilyMessageEvent;
 import project.tracknest.usertracking.domain.familymessenger.service.FamilyMessengerStreamRegistry;
@@ -69,9 +68,7 @@ class FamilyMessageObserverImpl implements FamilyMessageObserver, FamilyMessenge
         String sessionKey = buildSessionKey(userId, circleId);
         observers.computeIfAbsent(sessionKey, _ -> ConcurrentHashMap.newKeySet()).add(observer);
 
-        GrpcSession session = grpcSessionService.getSession(userId);
-        session.serverIds().add(serverIdProvider.getServerId());
-        grpcSessionService.updateSession(session);
+        grpcSessionService.addServer(userId, serverIdProvider.getServerId());
 
         log.info("Registered family message stream for userId={} circleId={}", userId, circleId);
         return sessionKey;

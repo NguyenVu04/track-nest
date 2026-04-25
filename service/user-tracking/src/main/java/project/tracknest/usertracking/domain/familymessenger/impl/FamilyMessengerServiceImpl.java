@@ -15,7 +15,6 @@ import project.tracknest.usertracking.core.datatype.PageToken;
 import project.tracknest.usertracking.core.entity.FamilyCircleMember;
 import project.tracknest.usertracking.core.entity.FamilyMessage;
 import project.tracknest.usertracking.core.utils.PageTokenCodec;
-import project.tracknest.usertracking.domain.familymessenger.service.FamilyMessengerEventSubscriber;
 import project.tracknest.usertracking.domain.familymessenger.service.FamilyMessengerService;
 import project.tracknest.usertracking.proto.lib.*;
 
@@ -25,21 +24,18 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
-import static project.tracknest.usertracking.configuration.security.SecurityUtils.getCurrentUserId;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-class FamilyMessengerServiceImpl implements FamilyMessengerService, FamilyMessengerEventSubscriber {
+class FamilyMessengerServiceImpl implements FamilyMessengerService {
     private final FamilyMessengerFamilyMessageRepository messageRepository;
     private final FamilyMessengerFamilyCircleMemberRepository memberRepository;
     private final ServerRedisMessagePublisher redisPublisher;
-    private final FamilyMessageObserver observer;
 
     @Override
     @Transactional
-    public SendMessageResponse sendFamilyMessage(SendMessageRequest request) {
-        UUID userId = getCurrentUserId();
+    public SendMessageResponse sendFamilyMessage(UUID userId, SendMessageRequest request) {
         UUID circleId = UUID.fromString(request.getFamilyCircleId());
 
         if (memberRepository.findById_FamilyCircleIdAndId_MemberId(circleId, userId).isEmpty()) {
@@ -81,8 +77,7 @@ class FamilyMessengerServiceImpl implements FamilyMessengerService, FamilyMessen
 
     @Override
     @Transactional(readOnly = true)
-    public ListMessagesResponse listFamilyMessages(ListMessagesRequest request) {
-        UUID userId = getCurrentUserId();
+    public ListMessagesResponse listFamilyMessages(UUID userId, ListMessagesRequest request) {
         UUID circleId = UUID.fromString(request.getFamilyCircleId());
 
         if (memberRepository.findById_FamilyCircleIdAndId_MemberId(circleId, userId).isEmpty()) {
@@ -136,15 +131,6 @@ class FamilyMessengerServiceImpl implements FamilyMessengerService, FamilyMessen
         }
 
         return builder.build();
-    }
-
-    @Override
-    public void receiveFamilyMessageEvent(UUID receiverId, FamilyMessageEvent event) {
-        try {
-            observer.deliverToUser(receiverId, event);
-        } catch (Exception e) {
-            log.error("Failed to deliver family message event to user {}: {}", receiverId, e.getMessage(), e);
-        }
     }
 
     private void publishToCircleMembers(UUID circleId, FamilyMessageEvent event) {

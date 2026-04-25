@@ -38,15 +38,21 @@ class LocationCommandServiceImpl implements LocationCommandService {
                     return new RuntimeException("User not found");
                 });
 
-        OffsetDateTime timestamp = OffsetDateTime.ofInstant(
-                Instant.now(),
-                ZoneOffset.UTC);
-
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
         user.setConnected(true);
-        user.setLastActive(timestamp);
+        user.setLastActive(now);
         userRepository.save(user);
 
         for (UserLocation userLocation : request.getLocationsList()) {
+            OffsetDateTime timestamp = OffsetDateTime.ofInstant(
+                    Instant.ofEpochMilli(userLocation.getTimestampMs()),
+                    ZoneOffset.UTC);
+
+            if (timestamp.isAfter(now.plusMinutes(5))) {
+                log.warn("Rejecting future timestamp {} from user {}", timestamp, userId);
+                continue;
+            }
+
             Location location = Location.builder()
                     .latitude(userLocation.getLatitudeDeg())
                     .longitude(userLocation.getLongitudeDeg())
@@ -59,7 +65,7 @@ class LocationCommandServiceImpl implements LocationCommandService {
                             .build())
                     .build();
 
-            locationRepository.saveAndFlush(location);
+            locationRepository.save(location);
 
             LocationMessage message = LocationMessage.builder()
                     .userId(userId)

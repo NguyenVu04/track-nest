@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.grpc.server.GlobalServerInterceptor;
-import project.tracknest.usertracking.controller.GrpcGlobalExceptionHandler;
+import project.tracknest.usertracking.configuration.grpc.GrpcGlobalExceptionHandler;
 
 @Configuration
 @RequiredArgsConstructor

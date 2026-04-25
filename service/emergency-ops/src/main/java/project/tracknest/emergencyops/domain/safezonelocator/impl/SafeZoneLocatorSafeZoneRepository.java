@@ -4,6 +4,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import project.tracknest.emergencyops.core.entity.SafeZone;
 
 import java.util.UUID;
@@ -17,9 +18,9 @@ public interface SafeZoneLocatorSafeZoneRepository extends JpaRepository<SafeZon
             nativeQuery = true
     )
     Slice<SafeZone> findNearestSafeZones(
-            double latitude,
-            double longitude,
-            float radius,
+            @Param("latitude") double latitude,
+            @Param("longitude") double longitude,
+            @Param("radius") float radius,
             Pageable pageable
     );
 }

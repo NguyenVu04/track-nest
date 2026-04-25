@@ -19,6 +19,7 @@ import project.tracknest.emergencyops.core.entity.EmergencyService;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -44,6 +45,13 @@ public class KeycloakFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
         String authorizationHeader = request.getHeader(AUTHORIZATION_KEY);
+        // Fallback for WebSocket connections — browsers cannot set Authorization headers on WS upgrade requests
+        if (authorizationHeader == null) {
+            String tokenParam = request.getParameter("access_token");
+            if (tokenParam != null && !tokenParam.isBlank()) {
+                authorizationHeader = "Bearer " + tokenParam;
+            }
+        }
         KeycloakAuthorizationHeader decoded = decodeKeycloakauthorizationHeader(authorizationHeader);
 
         if (decoded != null) {
@@ -51,9 +59,9 @@ public class KeycloakFilter extends OncePerRequestFilter {
                 // build principal and user details (same mapping as KeycloakFilter)
                 KeycloakPrincipal principal = new KeycloakPrincipal(decoded.getUserId());
 
-                List<SimpleGrantedAuthority> roles = decoded
-                        .getRealmAccess()
-                        .getRoles()
+                List<SimpleGrantedAuthority> roles = Optional.ofNullable(decoded.getRealmAccess())
+                        .map(ra -> ra.getRoles())
+                        .orElse(Collections.emptyList())
                         .stream()
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                         .toList();
@@ -70,10 +78,11 @@ public class KeycloakFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(principal, authorizationHeader, roles);
                 authentication.setDetails(userDetails);
 
-                if (decoded.getRealmAccess()
-                        .getRoles()
-                        .contains("EMERGENCY-SERVICE")
-                ) {
+                boolean isEmergencyService = Optional.ofNullable(decoded.getRealmAccess())
+                        .map(ra -> ra.getRoles())
+                        .orElse(Collections.emptyList())
+                        .contains("EMERGENCY-SERVICE");
+                if (isEmergencyService) {
 
                     Optional<EmergencyService> serviceOpt = serviceRepository
                             .findById(decoded.getUserId());
@@ -129,6 +138,10 @@ public class KeycloakFilter extends OncePerRequestFilter {
             String jwt = authorizationHeader.substring(7); // Remove "Bearer " prefix
 
             String[] parts = jwt.split("\\."); // JWT has three parts: header, payload, signature
+            if (parts.length < 2) {
+                log.warn("Authorization header token has invalid structure");
+                return null;
+            }
 
             String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
 

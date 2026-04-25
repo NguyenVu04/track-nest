@@ -3,18 +3,17 @@ package project.tracknest.usertracking.domain.anomalydetector.impl;
 import com.uber.h3core.H3Core;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.*;
-import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.util.ReflectionTestUtils;
 import project.tracknest.usertracking.core.datatype.TrackingNotificationMessage;
 import project.tracknest.usertracking.core.entity.AnomalyRun;
 import project.tracknest.usertracking.core.entity.CellVisit;
 import project.tracknest.usertracking.core.entity.LocationBucket;
-import project.tracknest.usertracking.domain.anomalydetector.service.AnomalyDetectorHandler;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -22,448 +21,439 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Integration tests for {@link AnomalyDetectorHandler}.
- *
- * KafkaTemplate is the only mock — everything else (H3, JPA, EntityManager) uses
- * the real Spring context wired against the test database seeded by 02-user-tracking-seed.sql.
- *
- * Seed coverage relevant to these tests:
- *   - location_bucket: one row per (user, dow, hour) derived from 3 360 location points/user.
- *   - cell_visit: H3 resolution-8 cells aggregated per bucket; mature = numVisits >= 5.
- *   - anomaly_run: user1 (dddddddd-0001) and user2 (dddddddd-0003) have active (unresolved) runs.
- *                  user3 and admin have no active run.
- *
- * Each test is @Transactional so all mutations (setup + handler call) are rolled back.
- */
-@SpringBootTest
-@Transactional
+@ExtendWith(MockitoExtension.class)
 class AnomalyDetectorHandlerTest {
 
-    @Autowired private AnomalyDetectorHandler handler;
+    @Mock
+    AnomalyDetectorHandlerAnomalyRunRepository anomalyRunRepository;
 
-    // Only Kafka is mocked — no broker is available in the test environment.
-    @MockitoBean private KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
+    @Mock
+    AnomalyDetectorLocationBucketRepository bucketRepository;
 
-    @Autowired private AnomalyDetectorHandlerAnomalyRunRepository anomalyRunRepository;
-    @Autowired private AnomalyDetectorLocationBucketRepository bucketRepository;
-    @Autowired private AnomalyDetectorHandlerCellVisitRepository visitRepository;
-    @Autowired private H3Core h3Core;
-    @Autowired private EntityManager em;
+    @Mock
+    AnomalyDetectorHandlerCellVisitRepository visitRepository;
 
-    // -------------------------------------------------------------------------
-    // Seed users (from 02-user-tracking-seed.sql)
-    // -------------------------------------------------------------------------
-    static final UUID USER1_ID = UUID.fromString("dd382dcf-3652-499c-acdb-5d9ce99a67b8");
-    static final UUID USER2_ID = UUID.fromString("8c52c01e-42a7-45cc-9254-db8a7601c764");
-    static final UUID USER3_ID = UUID.fromString("4405a37d-bc86-403e-b605-bedd7db88d37");
-    static final UUID ADMIN_ID = UUID.fromString("f8f735b4-549c-4d8c-9e10-15f8c198b71b");
+    @Mock
+    EntityManager entityManager;
 
-    // Home coordinates from seed (lon, lat pairs → lat, lon for H3)
-    static final double USER1_LAT =  10.776889; static final double USER1_LON = 106.700981;
-    static final double USER2_LAT =  21.028511; static final double USER2_LON = 105.854167;
-    static final double USER3_LAT =  16.047079; static final double USER3_LON = 108.220833;
-    static final double ADMIN_LAT =  10.045162; static final double ADMIN_LON = 105.784817;
-    // Anomalous location: Singapore — far outside every user's seed pattern
-    static final double ANOMALY_LAT =  1.352083; static final double ANOMALY_LON = 103.819839;
+    @Mock
+    @SuppressWarnings("unchecked")
+    KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
 
-    // Seed anomaly-run IDs
-    static final UUID RUN_USER1_ACTIVE = UUID.fromString("dddddddd-0001-4000-8000-dddddddddddd");
-    static final UUID RUN_USER2_ACTIVE = UUID.fromString("dddddddd-0003-4000-8000-dddddddddddd");
+    AnomalyDetectorHandlerImpl handler;
 
-    // Fixed slot: Monday 2026-04-14 10:00 UTC — inside seed range (seed covers 2026-04-13..2026-04-20)
-    // DayOfWeek.MONDAY.getValue() % 7 = 1; hour = 10
-    static final OffsetDateTime SLOT_TS     = OffsetDateTime.of(2026, 4, 14, 10, 0, 0, 0, ZoneOffset.UTC);
-    static final short          SLOT_DOW    = 1;
-    static final short          SLOT_HOUR   = 10;
+    // Coordinates that map to a deterministic H3 cell at resolution 8
+    // Hanoi, Vietnam
+    private static final double LAT = 21.0278;
+    private static final double LON = 105.8342;
 
-    // =========================================================================
-    // Setup helpers
-    // =========================================================================
+    private static final UUID USER_ID = UUID.fromString("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    private static final String USERNAME = "testuser";
 
-    /**
-     * Returns the bucket for (userId, SLOT_DOW, SLOT_HOUR), creating one if absent,
-     * and forces its totalNumVisits to the requested value.
-     */
-    private LocationBucket prepBucket(UUID userId, int totalNumVisits) {
-        LocationBucket b = bucketRepository
-                .findByUserIdAndDayOfWeekAndHourOfDay(userId, SLOT_DOW, SLOT_HOUR)
-                .orElseGet(() -> bucketRepository.saveAndFlush(
-                        LocationBucket.builder()
-                                .userId(userId)
-                                .dayOfWeek(SLOT_DOW)
-                                .hourOfDay(SLOT_HOUR)
-                                .totalNumVisits(0)
-                                .build()));
-        b.setTotalNumVisits(totalNumVisits);
-        bucketRepository.saveAndFlush(b);
-        em.flush();
-        return b;
+    @BeforeEach
+    void setUp() throws IOException {
+        H3Core h3Core = H3Core.newInstance();
+        handler = new AnomalyDetectorHandlerImpl(
+                h3Core, entityManager, kafkaTemplate,
+                bucketRepository, visitRepository, anomalyRunRepository);
+        ReflectionTestUtils.setField(handler, "anomalyNotificationTopic", "tracking-notification");
     }
 
-    /** Removes every CellVisit belonging to this bucket so tests start from a clean slate. */
-    private void clearVisits(UUID bucketId) {
-        em.createQuery("DELETE FROM CellVisit cv WHERE cv.bucketId = :bid")
-                .setParameter("bid", bucketId)
-                .executeUpdate();
-        em.flush();
+    // ── Helper builders ───────────────────────────────────────────────────────
+
+    private LocationBucket bucketWithVisits(int totalVisits) {
+        return LocationBucket.builder()
+                .id(UUID.randomUUID())
+                .userId(USER_ID)
+                .dayOfWeek((short) 1)
+                .hourOfDay((short) 10)
+                .totalNumVisits(totalVisits)
+                .build();
     }
 
-    /** Inserts a single CellVisit for the given bucket and cell. */
-    private CellVisit insertVisit(UUID userId, UUID bucketId, String cellId, boolean mature, int numVisits) {
-        return visitRepository.saveAndFlush(
-                CellVisit.builder()
-                        .userId(userId)
-                        .bucketId(bucketId)
-                        .cellId(cellId)
-                        .mature(mature)
-                        .numVisits(numVisits)
-                        .lastSeen(SLOT_TS.minusHours(1))
-                        .build());
+    private AnomalyRun openRun() {
+        return AnomalyRun.builder()
+                .id(UUID.randomUUID())
+                .userId(USER_ID)
+                .resolved(false)
+                .lastSeenAt(OffsetDateTime.now(ZoneOffset.UTC))
+                .build();
     }
 
-    // =========================================================================
-    // 1. Insufficient data — totalNumVisits < 20
-    // =========================================================================
+    private AnomalyRun resolvedRun(long secondsAgo) {
+        return AnomalyRun.builder()
+                .id(UUID.randomUUID())
+                .userId(USER_ID)
+                .resolved(true)
+                .lastSeenAt(OffsetDateTime.now(ZoneOffset.UTC).minusSeconds(secondsAgo))
+                .build();
+    }
+
+    private CellVisit matureCellVisit(String cellId, UUID bucketId) {
+        return CellVisit.builder()
+                .id(UUID.randomUUID())
+                .userId(USER_ID)
+                .bucketId(bucketId)
+                .cellId(cellId)
+                .mature(true)
+                .numVisits(10)
+                .lastSeen(OffsetDateTime.now(ZoneOffset.UTC))
+                .build();
+    }
+
+    private CellVisit candidateCellVisit(String cellId, UUID bucketId, int numVisits) {
+        return CellVisit.builder()
+                .id(UUID.randomUUID())
+                .userId(USER_ID)
+                .bucketId(bucketId)
+                .cellId(cellId)
+                .mature(false)
+                .numVisits(numVisits)
+                .lastSeen(OffsetDateTime.now(ZoneOffset.UTC))
+                .build();
+    }
+
+    private OffsetDateTime nowUtc() {
+        return OffsetDateTime.now(ZoneOffset.UTC);
+    }
+
+    // ── InsufficientData ──────────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("Insufficient data (totalNumVisits < 20)")
+    @DisplayName("InsufficientData Tests")
     class InsufficientDataTests {
 
-        /**
-         * user3 has no active anomaly run.
-         * A bucket with only 5 visits must cause detection to be skipped —
-         * no AnomalyRun created, no Kafka event.
-         */
         @Test
-        @DisplayName("user3 — skips detection silently when bucket has only 5 visits")
+        @DisplayName("skips detection when totalNumVisits < 20 and no open run")
         void skipsDetection_whenInsufficientData_noOpenRun() {
-            prepBucket(USER3_ID, 5);
+            LocationBucket bucket = bucketWithVisits(5);
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.empty());
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
 
-            handler.detectAnomaly(USER3_ID, "user3", USER3_LAT, USER3_LON, SLOT_TS);
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
 
-            assertTrue(anomalyRunRepository
-                    .findFirstByUserIdAndResolvedFalseOrderByLastSeenAtDesc(USER3_ID)
-                    .isEmpty());
-            verify(kafkaTemplate, never()).send(anyString(), any());
+            verify(kafkaTemplate, never()).send(anyString(), any(TrackingNotificationMessage.class));
+            verify(anomalyRunRepository, never()).save(any(AnomalyRun.class));
         }
 
-        /**
-         * user1 has an active run (dddddddd-0001).
-         * Insufficient data must resolve that run (the user is back to normal)
-         * and must not fire a new notification.
-         */
         @Test
-        @DisplayName("user1 — resolves active run dddddddd-0001 when bucket has 0 visits")
+        @DisplayName("resolves active run when totalNumVisits < 20")
         void resolvesActiveRun_whenInsufficientData() {
-            prepBucket(USER1_ID, 0);
+            LocationBucket bucket = bucketWithVisits(0);
+            AnomalyRun activeRun = openRun();
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.of(activeRun));
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
 
-            handler.detectAnomaly(USER1_ID, "user1", USER1_LAT, USER1_LON, SLOT_TS);
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
 
-            AnomalyRun run = anomalyRunRepository
-                    .findById(RUN_USER1_ACTIVE)
-                    .orElseThrow();
-            assertTrue(run.isResolved(), "run dddddddd-0001 must be resolved");
-            assertEquals(SLOT_TS, run.getLastSeenAt());
-            verify(kafkaTemplate, never()).send(anyString(), any());
+            ArgumentCaptor<AnomalyRun> captor = ArgumentCaptor.forClass(AnomalyRun.class);
+            verify(anomalyRunRepository).save(captor.capture());
+            assertTrue(captor.getValue().isResolved());
+            verify(kafkaTemplate, never()).send(anyString(), any(TrackingNotificationMessage.class));
         }
     }
 
-    // =========================================================================
-    // 2. Mature visit found in ring
-    // =========================================================================
+    // ── MatureVisitFound ──────────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("Mature visit found in ring")
+    @DisplayName("MatureVisitFound Tests")
     class MatureVisitFoundTests {
 
-        /**
-         * user3 (no active run) is at their known Da Nang home cell.
-         * A mature CellVisit for that exact cell exists — no anomaly should fire,
-         * and the mature visit's counter must be incremented.
-         */
         @Test
-        @DisplayName("user3 at known Da Nang home cell — no anomaly, mature visit count incremented")
+        @DisplayName("no anomaly and increments mature cell visit count")
         void noAnomaly_andMatureVisitCountIncremented() {
-            LocationBucket bucket = prepBucket(USER3_ID, 30);
-            clearVisits(bucket.getId());
+            LocationBucket bucket = bucketWithVisits(30);
+            H3Core h3;
+            try { h3 = H3Core.newInstance(); } catch (IOException e) { throw new RuntimeException(e); }
 
-            String cell = h3Core.latLngToCellAddress(USER3_LAT, USER3_LON, 8);
-            CellVisit mature = insertVisit(USER3_ID, bucket.getId(), cell, true, 7);
+            String cellId = h3.latLngToCellAddress(LAT, LON, 8);
+            CellVisit mature = matureCellVisit(cellId, bucket.getId());
 
-            handler.detectAnomaly(USER3_ID, "user3", USER3_LAT, USER3_LON, SLOT_TS);
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.empty());
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(any(), any(), anyList()))
+                    .thenReturn(Optional.of(mature));
 
-            CellVisit updated = visitRepository.findById(mature.getId()).orElseThrow();
-            assertEquals(8, updated.getNumVisits(), "visit count must be incremented from 7 to 8");
-            assertTrue(anomalyRunRepository
-                    .findFirstByUserIdAndResolvedFalseOrderByLastSeenAtDesc(USER3_ID)
-                    .isEmpty());
-            verify(kafkaTemplate, never()).send(anyString(), any());
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
+
+            verify(kafkaTemplate, never()).send(anyString(), any(TrackingNotificationMessage.class));
+            // mature visit count should be incremented
+            ArgumentCaptor<CellVisit> visitCaptor = ArgumentCaptor.forClass(CellVisit.class);
+            verify(visitRepository).save(visitCaptor.capture());
+            assertEquals(11, visitCaptor.getValue().getNumVisits());
         }
 
-        /**
-         * user1 has active run dddddddd-0001 and returns to their known HCMC home cell.
-         * A mature visit exists for that cell — the run must be resolved.
-         */
         @Test
-        @DisplayName("user1 returns to known HCMC cell — resolves active run dddddddd-0001")
+        @DisplayName("resolves active run when user returns to known cell")
         void resolvesActiveRun_whenReturnToKnownCell() {
-            LocationBucket bucket = prepBucket(USER1_ID, 28);
-            clearVisits(bucket.getId());
+            LocationBucket bucket = bucketWithVisits(25);
+            H3Core h3;
+            try { h3 = H3Core.newInstance(); } catch (IOException e) { throw new RuntimeException(e); }
 
-            String cell = h3Core.latLngToCellAddress(USER1_LAT, USER1_LON, 8);
-            insertVisit(USER1_ID, bucket.getId(), cell, true, 5);
+            String cellId = h3.latLngToCellAddress(LAT, LON, 8);
+            CellVisit mature = matureCellVisit(cellId, bucket.getId());
+            AnomalyRun activeRun = openRun();
 
-            handler.detectAnomaly(USER1_ID, "user1", USER1_LAT, USER1_LON, SLOT_TS);
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.of(activeRun));
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(any(), any(), anyList()))
+                    .thenReturn(Optional.of(mature));
 
-            AnomalyRun run = anomalyRunRepository.findById(RUN_USER1_ACTIVE).orElseThrow();
-            assertTrue(run.isResolved());
-            verify(kafkaTemplate, never()).send(anyString(), any());
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
+
+            ArgumentCaptor<AnomalyRun> captor = ArgumentCaptor.forClass(AnomalyRun.class);
+            // one save for the run (resolve) + one for the mature visit (increment)
+            verify(anomalyRunRepository).save(captor.capture());
+            assertTrue(captor.getValue().isResolved());
+            verify(kafkaTemplate, never()).send(anyString(), any(TrackingNotificationMessage.class));
         }
 
-        /**
-         * user3's ring contains a mature visit for a neighbouring cell but not the exact one.
-         * The handler must register a new candidate for the exact cell yet still suppress
-         * the anomaly (a ring member is known).
-         */
         @Test
-        @DisplayName("user3 — mature visit in ring neighbour: registers candidate for exact cell, no anomaly")
+        @DisplayName("registers candidate visit when only a neighbour cell is mature")
         void registersCandidateForExactCell_whenNeighbourIsMature() {
-            LocationBucket bucket = prepBucket(USER3_ID, 30);
-            clearVisits(bucket.getId());
+            LocationBucket bucket = bucketWithVisits(30);
+            H3Core h3;
+            try { h3 = H3Core.newInstance(); } catch (IOException e) { throw new RuntimeException(e); }
 
-            String exactCell     = h3Core.latLngToCellAddress(USER3_LAT, USER3_LON, 8);
-            List<String> ring    = h3Core.gridDisk(exactCell, 1);
-            // Pick the first ring member that is NOT the exact cell to be the mature one
-            String neighbourCell = ring.stream().filter(c -> !c.equals(exactCell)).findFirst().orElseThrow();
-            insertVisit(USER3_ID, bucket.getId(), neighbourCell, true, 6);
+            String cellId = h3.latLngToCellAddress(LAT, LON, 8);
+            List<String> ring = h3.gridDisk(cellId, 1);
+            // Use a neighbour cell as the "mature" one (not the exact cell)
+            String neighbourCell = ring.stream().filter(c -> !c.equals(cellId)).findFirst().orElseThrow();
+            CellVisit neighbourMature = matureCellVisit(neighbourCell, bucket.getId());
 
-            handler.detectAnomaly(USER3_ID, "user3", USER3_LAT, USER3_LON, SLOT_TS);
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.empty());
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(any(), any(), anyList()))
+                    .thenReturn(Optional.of(neighbourMature));
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdAndMatureFalse(any(), any(), eq(cellId)))
+                    .thenReturn(Optional.empty());
 
-            // Anomaly must be suppressed
-            assertTrue(anomalyRunRepository
-                    .findFirstByUserIdAndResolvedFalseOrderByLastSeenAtDesc(USER3_ID)
-                    .isEmpty());
-            verify(kafkaTemplate, never()).send(anyString(), any());
-            // A candidate must have been registered for the exact cell
-            Optional<CellVisit> candidate = visitRepository
-                    .findFirstByUserIdAndBucketIdAndCellIdAndMatureFalse(USER3_ID, bucket.getId(), exactCell);
-            assertTrue(candidate.isPresent(), "candidate must be registered for exact cell");
-            assertFalse(candidate.get().isMature());
-            assertEquals(1, candidate.get().getNumVisits());
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
+
+            // A candidate (immature) cell visit for the exact cell should be created
+            ArgumentCaptor<CellVisit> visitCaptor = ArgumentCaptor.forClass(CellVisit.class);
+            verify(visitRepository, atLeastOnce()).save(visitCaptor.capture());
+            boolean newCandidateSaved = visitCaptor.getAllValues().stream()
+                    .anyMatch(v -> !v.isMature() && v.getCellId().equals(cellId) && v.getNumVisits() == 1);
+            assertTrue(newCandidateSaved, "Expected a new candidate CellVisit to be saved for the exact cell");
         }
     }
 
-    // =========================================================================
-    // 3. No mature visit — anomaly raised or suppressed
-    // =========================================================================
+    // ── NoMatureVisit ─────────────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("No mature visit in ring")
+    @DisplayName("NoMatureVisit Tests")
     class NoMatureVisitTests {
 
-        /**
-         * admin has no active run and is at an anomalous location (Singapore).
-         * A new unresolved AnomalyRun must be persisted and a Kafka notification sent.
-         */
         @Test
-        @DisplayName("admin at anomalous location (Singapore) — raises AnomalyRun and sends Kafka")
+        @DisplayName("raises anomaly and sends Kafka when no open run exists")
         void raisesAnomaly_andSendsKafka_whenNoOpenRun() {
-            LocationBucket bucket = prepBucket(ADMIN_ID, 25);
-            clearVisits(bucket.getId());
-            // No mature visits inserted — location is anomalous
+            LocationBucket bucket = bucketWithVisits(25);
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.empty());
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(any(), any(), anyList()))
+                    .thenReturn(Optional.empty());
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdAndMatureFalse(any(), any(), anyString()))
+                    .thenReturn(Optional.empty());
 
-            handler.detectAnomaly(ADMIN_ID, "admin", ANOMALY_LAT, ANOMALY_LON, SLOT_TS);
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
 
-            // A new unresolved run must exist for admin
-            Optional<AnomalyRun> newRun = anomalyRunRepository
-                    .findFirstByUserIdAndResolvedFalseOrderByLastSeenAtDesc(ADMIN_ID);
-            assertTrue(newRun.isPresent(), "a new unresolved AnomalyRun must be created for admin");
-            assertEquals(ADMIN_ID, newRun.get().getUserId());
-            assertFalse(newRun.get().isResolved());
-            assertEquals(SLOT_TS, newRun.get().getLastSeenAt());
+            ArgumentCaptor<AnomalyRun> runCaptor = ArgumentCaptor.forClass(AnomalyRun.class);
+            verify(anomalyRunRepository).save(runCaptor.capture());
+            assertFalse(runCaptor.getValue().isResolved());
+            assertEquals(USER_ID, runCaptor.getValue().getUserId());
 
-            // Kafka notification must be sent to admin's user ID
-            ArgumentCaptor<TrackingNotificationMessage> captor =
-                    ArgumentCaptor.forClass(TrackingNotificationMessage.class);
-            verify(kafkaTemplate).send(anyString(), captor.capture());
-            TrackingNotificationMessage msg = captor.getValue();
-            assertEquals(ADMIN_ID, msg.targetId());
-            assertEquals("ANOMALY_DETECTED", msg.type());
-            assertEquals("Unusual movement detected", msg.title());
-            assertTrue(msg.content().contains("admin"));
+            verify(kafkaTemplate).send(eq("tracking-notification"), any(TrackingNotificationMessage.class));
         }
 
-        /**
-         * user1 already has an active run (dddddddd-0001).
-         * A second anomalous location must be suppressed — no new run, no Kafka.
-         */
         @Test
-        @DisplayName("user1 — suppresses second anomaly because run dddddddd-0001 is still open")
+        @DisplayName("suppresses anomaly when an active (unresolved) run already exists")
         void suppressesAnomaly_whenActiveRunAlreadyOpen() {
-            LocationBucket bucket = prepBucket(USER1_ID, 25);
-            clearVisits(bucket.getId());
+            LocationBucket bucket = bucketWithVisits(25);
+            AnomalyRun activeRun = openRun();
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.of(activeRun));
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(any(), any(), anyList()))
+                    .thenReturn(Optional.empty());
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdAndMatureFalse(any(), any(), anyString()))
+                    .thenReturn(Optional.empty());
 
-            long runCountBefore = anomalyRunRepository.count();
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
 
-            handler.detectAnomaly(USER1_ID, "user1", ANOMALY_LAT, ANOMALY_LON, SLOT_TS);
-
-            assertEquals(runCountBefore, anomalyRunRepository.count(),
-                    "no new AnomalyRun must be created when an open run already exists");
-            verify(kafkaTemplate, never()).send(anyString(), any());
+            verify(kafkaTemplate, never()).send(anyString(), any(TrackingNotificationMessage.class));
+            // The existing run must NOT be saved as a new one
+            verify(anomalyRunRepository, never()).save(argThat(r -> !r.isResolved() && r.getId() == null));
         }
 
-        /**
-         * user2 also has an active run (dddddddd-0003).
-         * Independently verifies the same suppression contract.
-         */
         @Test
-        @DisplayName("user2 — suppresses anomaly because run dddddddd-0003 is still open")
-        void suppressesAnomaly_user2_activeRundddddddd0003() {
-            LocationBucket bucket = prepBucket(USER2_ID, 22);
-            clearVisits(bucket.getId());
+        @DisplayName("suppresses anomaly when resolved run is too recent (< 3600s ago)")
+        void suppressesAnomaly_resolvedRunTooRecent() {
+            LocationBucket bucket = bucketWithVisits(25);
+            AnomalyRun recentResolved = resolvedRun(1000); // 1000s ago < 3600s threshold
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.of(recentResolved));
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(any(), any(), anyList()))
+                    .thenReturn(Optional.empty());
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdAndMatureFalse(any(), any(), anyString()))
+                    .thenReturn(Optional.empty());
 
-            long runCountBefore = anomalyRunRepository.count();
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
 
-            handler.detectAnomaly(USER2_ID, "user2", ANOMALY_LAT, ANOMALY_LON, SLOT_TS);
-
-            assertEquals(runCountBefore, anomalyRunRepository.count());
-            verify(kafkaTemplate, never()).send(anyString(), any());
+            verify(kafkaTemplate, never()).send(anyString(), any(TrackingNotificationMessage.class));
         }
 
-        /**
-         * user3 is at the anomalous Singapore location for the first time in this slot.
-         * A new immature CellVisit with numVisits=1 must be created.
-         */
         @Test
-        @DisplayName("user3 first visit to anomalous cell — creates CellVisit candidate (numVisits=1)")
+        @DisplayName("raises anomaly when resolved run is old enough (>= 3600s ago)")
+        void raisesAnomaly_resolvedRunOldEnough() {
+            LocationBucket bucket = bucketWithVisits(25);
+            AnomalyRun oldResolved = resolvedRun(4000); // 4000s ago > 3600s threshold
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.of(oldResolved));
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(any(), any(), anyList()))
+                    .thenReturn(Optional.empty());
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdAndMatureFalse(any(), any(), anyString()))
+                    .thenReturn(Optional.empty());
+
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
+
+            verify(kafkaTemplate).send(eq("tracking-notification"), any(TrackingNotificationMessage.class));
+        }
+
+        @Test
+        @DisplayName("creates new candidate visit on first anomalous cell visit")
         void createsNewCandidateVisit_onFirstVisitToAnomalousCell() {
-            LocationBucket bucket = prepBucket(USER3_ID, 25);
-            clearVisits(bucket.getId());
+            LocationBucket bucket = bucketWithVisits(25);
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.empty());
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(any(), any(), anyList()))
+                    .thenReturn(Optional.empty());
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdAndMatureFalse(any(), any(), anyString()))
+                    .thenReturn(Optional.empty());
 
-            String anomalousCell = h3Core.latLngToCellAddress(ANOMALY_LAT, ANOMALY_LON, 8);
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
 
-            handler.detectAnomaly(USER3_ID, "user3", ANOMALY_LAT, ANOMALY_LON, SLOT_TS);
-
-            Optional<CellVisit> candidate = visitRepository
-                    .findFirstByUserIdAndBucketIdAndCellIdAndMatureFalse(USER3_ID, bucket.getId(), anomalousCell);
-            assertTrue(candidate.isPresent(), "a candidate CellVisit must be created");
-            assertFalse(candidate.get().isMature());
-            assertEquals(1, candidate.get().getNumVisits());
-            assertEquals(SLOT_TS, candidate.get().getLastSeen());
+            ArgumentCaptor<CellVisit> visitCaptor = ArgumentCaptor.forClass(CellVisit.class);
+            verify(visitRepository).save(visitCaptor.capture());
+            CellVisit saved = visitCaptor.getValue();
+            assertFalse(saved.isMature());
+            assertEquals(1, saved.getNumVisits());
         }
 
-        /**
-         * user3 has already visited the anomalous cell 3 times (existing candidate).
-         * A fourth visit must increment numVisits to 4 and update lastSeen.
-         */
         @Test
-        @DisplayName("user3 fourth visit to anomalous cell — increments existing candidate 3 → 4")
+        @DisplayName("increments existing candidate visit on repeated anomalous visit")
         void incrementsExistingCandidateVisit_onRepeatedVisit() {
-            LocationBucket bucket = prepBucket(USER3_ID, 25);
-            clearVisits(bucket.getId());
+            LocationBucket bucket = bucketWithVisits(25);
+            H3Core h3;
+            try { h3 = H3Core.newInstance(); } catch (IOException e) { throw new RuntimeException(e); }
+            String cellId = h3.latLngToCellAddress(LAT, LON, 8);
+            CellVisit existing = candidateCellVisit(cellId, bucket.getId(), 3);
 
-            String anomalousCell = h3Core.latLngToCellAddress(ANOMALY_LAT, ANOMALY_LON, 8);
-            CellVisit existing = insertVisit(USER3_ID, bucket.getId(), anomalousCell, false, 3);
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.empty());
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdInAndMatureTrue(any(), any(), anyList()))
+                    .thenReturn(Optional.empty());
+            when(visitRepository.findFirstByUserIdAndBucketIdAndCellIdAndMatureFalse(any(), any(), anyString()))
+                    .thenReturn(Optional.of(existing));
 
-            handler.detectAnomaly(USER3_ID, "user3", ANOMALY_LAT, ANOMALY_LON, SLOT_TS);
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
 
-            CellVisit updated = visitRepository.findById(existing.getId()).orElseThrow();
-            assertEquals(4, updated.getNumVisits());
-            assertEquals(SLOT_TS, updated.getLastSeen());
+            ArgumentCaptor<CellVisit> visitCaptor = ArgumentCaptor.forClass(CellVisit.class);
+            verify(visitRepository).save(visitCaptor.capture());
+            assertEquals(4, visitCaptor.getValue().getNumVisits());
         }
     }
 
-    // =========================================================================
-    // 4. Bucket lifecycle
-    // =========================================================================
+    // ── BucketLifecycle ───────────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("Bucket lifecycle")
+    @DisplayName("BucketLifecycle Tests")
     class BucketLifecycleTests {
 
-        /**
-         * When no bucket exists for the (user, dow, hour) slot the handler must create one,
-         * then immediately skip detection (0 visits < 20) without errors.
-         */
         @Test
-        @DisplayName("user3 — creates a new LocationBucket when none exists for the slot")
+        @DisplayName("creates new bucket when slot absent")
         void createsNewBucket_whenSlotAbsent() {
-            // Remove the existing seed bucket for this slot so the handler must create a new one.
-            bucketRepository
-                    .findByUserIdAndDayOfWeekAndHourOfDay(USER3_ID, SLOT_DOW, SLOT_HOUR)
-                    .ifPresent(b -> {
-                        em.createQuery("DELETE FROM CellVisit cv WHERE cv.bucketId = :bid")
-                                .setParameter("bid", b.getId())
-                                .executeUpdate();
-                        bucketRepository.delete(b);
-                        em.flush();
-                    });
+            LocationBucket newBucket = bucketWithVisits(0);
+            newBucket.setId(UUID.randomUUID());
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.empty());
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.empty());
+            when(bucketRepository.saveAndFlush(any(LocationBucket.class))).thenReturn(newBucket);
+            doNothing().when(entityManager).refresh(any());
 
-            handler.detectAnomaly(USER3_ID, "user3", USER3_LAT, USER3_LON, SLOT_TS);
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, nowUtc());
 
-            assertTrue(
-                    bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(USER3_ID, SLOT_DOW, SLOT_HOUR).isPresent(),
-                    "a new LocationBucket must have been created for the slot");
+            verify(bucketRepository).saveAndFlush(any(LocationBucket.class));
+            verify(entityManager).refresh(newBucket);
+            // No anomaly since totalNumVisits == 0 < 20
+            verify(kafkaTemplate, never()).send(anyString(), any(TrackingNotificationMessage.class));
         }
 
-        /**
-         * On Sunday 2026-04-19 DayOfWeek.SUNDAY.getValue() = 7; 7 % 7 = 0.
-         * The handler must look up the bucket with dayOfWeek=0 (PostgreSQL DOW convention).
-         */
         @Test
-        @DisplayName("user1 on Sunday 2026-04-19 — bucket looked up with dayOfWeek=0")
-        void sundayTimestamp_usesDayOfWeekZero() {
-            OffsetDateTime sunday = OffsetDateTime.of(2026, 4, 19, 15, 0, 0, 0, ZoneOffset.UTC);
-            short sundayDow  = 0;
-            short sundayHour = 15;
+        @DisplayName("Sunday timestamp maps to dayOfWeek=6 (ISO: (getValue()-1)%7, Sun=7 → 6)")
+        void sundayTimestamp_usesDayOfWeekSix() {
+            // 2025-01-05 is a Sunday. DayOfWeek.SUNDAY.getValue() = 7.
+            // Formula: (7 - 1) % 7 = 6
+            OffsetDateTime sunday = OffsetDateTime.of(2025, 1, 5, 10, 0, 0, 0, ZoneOffset.UTC);
 
-            // Ensure a seeded bucket exists for (user1, Sunday, 15h)
-            bucketRepository
-                    .findByUserIdAndDayOfWeekAndHourOfDay(USER1_ID, sundayDow, sundayHour)
-                    .ifPresent(b -> {
-                        b.setTotalNumVisits(0); // force insufficient-data path
-                        bucketRepository.saveAndFlush(b);
-                    });
+            LocationBucket bucket = bucketWithVisits(0);
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.empty());
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
 
-            // Should not throw — just skips detection (0 visits)
-            assertDoesNotThrow(() ->
-                    handler.detectAnomaly(USER1_ID, "user1", USER1_LAT, USER1_LON, sunday));
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, sunday);
 
-            // Verify the bucket key used matches Sunday = 0
-            assertTrue(
-                    bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(USER1_ID, sundayDow, sundayHour).isPresent());
+            ArgumentCaptor<Short> dowCaptor = ArgumentCaptor.forClass(Short.class);
+            verify(bucketRepository).findByUserIdAndDayOfWeekAndHourOfDay(
+                    eq(USER_ID), dowCaptor.capture(), anyShort());
+            assertEquals((short) 6, dowCaptor.getValue());
         }
 
-        /**
-         * user2 sends location at 17:00+07:00 (ICT) which is 10:00 UTC Monday.
-         * The bucket lookup must use the UTC hour (10), not the local hour (17).
-         */
         @Test
-        @DisplayName("user2 at 17:00 ICT (+07:00) — bucket resolved against UTC hour 10, not local 17")
+        @DisplayName("non-UTC timestamp is normalised to UTC for bucket lookup")
         void nonUtcTimestamp_normalisedToUtcForBucketLookup() {
-            // 2026-04-14 17:00+07:00 = 2026-04-14 10:00 UTC → Monday, hour 10 (= SLOT_DOW / SLOT_HOUR)
-            OffsetDateTime ict = OffsetDateTime.of(2026, 4, 14, 17, 0, 0, 0, ZoneOffset.ofHours(7));
+            // 17:00 +07:00 = 10:00 UTC → hourOfDay should be 10
+            OffsetDateTime localTime = OffsetDateTime.of(2025, 6, 16, 17, 0, 0, 0,
+                    ZoneOffset.ofHours(7));
 
-            prepBucket(USER2_ID, 0); // ensures bucket (dow=1, hour=10) exists; totalNumVisits=0 → skip path
+            LocationBucket bucket = bucketWithVisits(0);
+            when(anomalyRunRepository.findFirstByUserIdOrderByLastSeenAtDesc(USER_ID))
+                    .thenReturn(Optional.empty());
+            when(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(any(), anyShort(), anyShort()))
+                    .thenReturn(Optional.of(bucket));
 
-            assertDoesNotThrow(() ->
-                    handler.detectAnomaly(USER2_ID, "user2", USER2_LAT, USER2_LON, ict));
+            handler.detectAnomaly(USER_ID, USERNAME, LAT, LON, localTime);
 
-            // The handler must have used the SLOT_DOW/SLOT_HOUR bucket (UTC hour 10)
-            // rather than local hour 17 (which would be a different bucket)
-            assertTrue(
-                    bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(USER2_ID, SLOT_DOW, SLOT_HOUR).isPresent(),
-                    "bucket for UTC hour 10 must exist (local hour 17 would be a separate bucket)");
-            assertTrue(
-                    bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(USER2_ID, SLOT_DOW, (short) 17).isEmpty()
-                            || !bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(USER2_ID, SLOT_DOW, (short) 17)
-                            .equals(bucketRepository.findByUserIdAndDayOfWeekAndHourOfDay(USER2_ID, SLOT_DOW, SLOT_HOUR)),
-                    "UTC hour-10 and local hour-17 buckets are distinct slots");
+            ArgumentCaptor<Short> hourCaptor = ArgumentCaptor.forClass(Short.class);
+            verify(bucketRepository).findByUserIdAndDayOfWeekAndHourOfDay(
+                    eq(USER_ID), anyShort(), hourCaptor.capture());
+            assertEquals((short) 10, hourCaptor.getValue());
         }
     }
 }

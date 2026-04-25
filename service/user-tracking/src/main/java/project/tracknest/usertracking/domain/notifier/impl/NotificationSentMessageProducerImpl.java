@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @RequiredArgsConstructor
 class NotificationSentMessageProducerImpl implements NotificationSentMessageProducer {
-    @Value("${app.kafka.topics[1]}")
+    @Value("${app.kafka.topics.notification-sent}")
     private String TOPIC;
 
     private final KafkaTemplate<String, NotificationSentMessage> kafkaTemplate;

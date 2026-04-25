@@ -85,3 +85,5 @@ CREATE INDEX idx_safe_zone_geom_spgist ON safe_zone USING SPGIST (geom);
 CREATE INDEX idx_emergency_request_geom_spgist ON emergency_request USING SPGIST (geom);
 
 CREATE INDEX idx_emergency_request_user_time_desc ON emergency_request (emergency_service_id, open_at DESC);
+
+CREATE UNIQUE INDEX uq_emergency_request_active_target ON emergency_request (target_id) WHERE status_name IN ('PENDING', 'ACCEPTED');

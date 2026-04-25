@@ -1,16 +1,17 @@
 package project.tracknest.usertracking.domain.tracker.locationquery.impl;
 
 import io.grpc.stub.StreamObserver;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import project.tracknest.usertracking.configuration.common.ServerIdProvider;
-import project.tracknest.usertracking.configuration.redis.GrpcSession;
 import project.tracknest.usertracking.configuration.redis.GrpcSessionService;
 import project.tracknest.usertracking.core.datatype.LocationMessage;
 import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationStreamObserverRegistry;
 import project.tracknest.usertracking.proto.lib.FamilyMemberLocation;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -90,21 +91,18 @@ class LocationObserverImpl implements LocationObserver, LocationStreamObserverRe
 
     @Override
     public List<UUID> listConnectedUsers() {
-        List<UUID> userIds = new ArrayList<>();
+        Set<UUID> userIds = new HashSet<>();
 
         for (String sessionId : observers.keySet()) {
             String userIdStr = sessionId.split(SEPARATOR)[0];
             try {
-                UUID userId = UUID.fromString(userIdStr);
-                if (!userIds.contains(userId)) {
-                    userIds.add(userId);
-                }
+                userIds.add(UUID.fromString(userIdStr));
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid session ID format: {}", sessionId);
             }
         }
 
-        return userIds;
+        return new ArrayList<>(userIds);
     }
 
     @Override
@@ -114,13 +112,7 @@ class LocationObserverImpl implements LocationObserver, LocationStreamObserverRe
         observers.computeIfAbsent(sessionId, _ -> ConcurrentHashMap.newKeySet())
                 .add(observer);
 
-        GrpcSession session = grpcSessionService.getSession(userId);
-        if (session.serverIds().isEmpty()) {
-            log.info("No active servers for session {}. Adding current server: {}",
-                    sessionId, serverIdProvider.getServerId());
-        }
-        session.serverIds().add(serverIdProvider.getServerId());
-        grpcSessionService.updateSession(session);
+        grpcSessionService.addServer(userId, serverIdProvider.getServerId());
 
         log.info("Observer registered for userId: {}", userId);
         log.info("Number of observers after registration {}", observers.size());
@@ -135,5 +127,13 @@ class LocationObserverImpl implements LocationObserver, LocationStreamObserverRe
         });
         log.info("Observer unregistered with Session ID: {}", sessionId);
         log.info("Number of observers after unregistration {}", observers.size());
+    }
+
+    @PreDestroy
+    public void onShutdown() {
+        String serverId = serverIdProvider.getServerId();
+        listConnectedUsers().forEach(userId ->
+                grpcSessionService.removeServer(userId, serverId));
+        log.info("Removed server {} from all gRPC sessions on shutdown", serverId);
     }
 }

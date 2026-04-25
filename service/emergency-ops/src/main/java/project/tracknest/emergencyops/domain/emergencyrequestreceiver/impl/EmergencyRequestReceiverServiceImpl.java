@@ -3,6 +3,7 @@ package project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -26,8 +27,11 @@ import project.tracknest.emergencyops.domain.emergencyrequestreceiver.service.Em
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -88,8 +92,13 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 .emergencyService(service)
                 .build();
 
-        EmergencyRequest savedEmergencyRequest = emergencyRequestRepository
-                .save(emergencyRequest);
+        EmergencyRequest savedEmergencyRequest;
+        try {
+            savedEmergencyRequest = emergencyRequestRepository.save(emergencyRequest);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Concurrent emergency request creation detected for target {}", request.getTargetId());
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An active emergency request already exists for the specified user. Please wait until the current request is resolved before creating a new one.");
+        }
 
         long createdAtMs = OffsetDateTime.now()
                 .toInstant()
@@ -141,10 +150,12 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
                 message);
     }
 
-    private GetTrackerEmergencyRequestsResponse mapToGetTrackerEmergencyRequestsResponse(EmergencyRequest emergencyRequest) {
+    private GetTrackerEmergencyRequestsResponse mapToGetTrackerEmergencyRequestsResponse(
+            EmergencyRequest emergencyRequest,
+            Map<UUID, KeycloakUserProfile> profiles
+    ) {
         EmergencyService service = emergencyRequest.getEmergencyService();
-
-        KeycloakUserProfile profile = keycloakService.getUserProfile(emergencyRequest.getTargetId());
+        KeycloakUserProfile profile = profiles.get(emergencyRequest.getTargetId());
 
         return new GetTrackerEmergencyRequestsResponse(
                 emergencyRequest.getId(),
@@ -174,9 +185,13 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
         Page<EmergencyRequest> emergencyRequestPage = emergencyRequestRepository
                 .findBySenderId(userId, pageable);
 
-        List<GetTrackerEmergencyRequestsResponse> emergencyRequestResponses = emergencyRequestPage
-                .stream()
-                .map(this::mapToGetTrackerEmergencyRequestsResponse)
+        List<EmergencyRequest> requests = emergencyRequestPage.getContent();
+        Set<UUID> targetIds = requests.stream().map(EmergencyRequest::getTargetId).collect(Collectors.toSet());
+        Map<UUID, KeycloakUserProfile> profiles = targetIds.parallelStream()
+                .collect(Collectors.toMap(id -> id, keycloakService::getUserProfile));
+
+        List<GetTrackerEmergencyRequestsResponse> emergencyRequestResponses = requests.stream()
+                .map(r -> mapToGetTrackerEmergencyRequestsResponse(r, profiles))
                 .toList();
 
         return new PageResponse<>(
@@ -211,14 +226,8 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
         if (existingRequestOpt.isPresent()) {
             EmergencyRequest existingRequest = existingRequestOpt.get();
 
-            return !existingRequest.getStatus()
-                    .getName()
-                    .equals(EmergencyRequestStatus
-                            .Status.PENDING.getValue())
-                    && !existingRequest.getStatus()
-                    .getName()
-                    .equals(EmergencyRequestStatus
-                            .Status.ACCEPTED.getValue());
+            return !existingRequest.getStatus().is(EmergencyRequestStatus.Status.PENDING)
+                    && !existingRequest.getStatus().is(EmergencyRequestStatus.Status.ACCEPTED);
         }
 
         return true;

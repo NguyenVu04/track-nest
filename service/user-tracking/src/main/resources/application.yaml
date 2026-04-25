@@ -86,9 +86,6 @@ server:
   port: 18080
   servlet:
     context-path: /user-tracking
-  tomcat:
-    max-threads: 50
-    accept-count: 100
 
 logging:
   level:
@@ -103,10 +100,10 @@ logging:
 app:
   kafka:
     topics:
-      - location-updated
-      - notification-sent
-      - tracking-notification
-      - risk-notification
+      location-updated: location-updated
+      notification-sent: notification-sent
+      tracking-notification: tracking-notification
+      risk-notification: risk-notification
     partitions: 3
     replication-factor: 1
   server-name: ${POD_NAME:user-tracking}

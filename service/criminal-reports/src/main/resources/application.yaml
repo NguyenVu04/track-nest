@@ -71,9 +71,6 @@ server:
   port: 38080
   servlet:
     context-path: /criminal-reports
-  tomcat:
-    max-threads: 50
-    accept-count: 100
 
 logging:
   level:
@@ -102,7 +99,7 @@ app:
       - OPTIONS
   minio:
     endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
-    public-url: ${MINIO_PUBLIC_URL:http://localhost:38080/file}
+    public-url: ${MINIO_PUBLIC_URL:http://localhost:38080/criminal-reports/file}
     credentials:
       access-key: ${MINIO_ACCESS_KEY:minioadmin}
       secret-key: ${MINIO_SECRET_KEY:minioadmin}

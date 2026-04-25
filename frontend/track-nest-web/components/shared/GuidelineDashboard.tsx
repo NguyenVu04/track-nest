@@ -158,9 +158,10 @@ export function GuidelineDashboard({ user }: GuidelineDashboardProps) {
             </span>
           </div>
           <div className="prose max-w-none">
-            <div className="whitespace-pre-wrap text-gray-900">
-              {selectedGuideline.content}
-            </div>
+            <div
+              className="text-gray-900"
+              dangerouslySetInnerHTML={{ __html: selectedGuideline.content || "" }}
+            />
           </div>
         </div>
         {confirmDelete && (
