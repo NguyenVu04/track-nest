@@ -7,7 +7,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.stereotype.Component;
 import project.tracknest.usertracking.configuration.common.ServerIdProvider;
-import project.tracknest.usertracking.configuration.redis.GrpcSession;
 import project.tracknest.usertracking.configuration.redis.GrpcSessionService;
 import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationStreamObserverRegistry;
 
@@ -27,9 +26,7 @@ public class UpdateGrpcSessionsJob implements Job {
         List<UUID> userIds = registry.listConnectedUsers();
 
         for (UUID userId : userIds) {
-            GrpcSession session = grpcSessionService.getSession(userId);
-            session.serverIds().add(serverIdProvider.getServerId());
-            grpcSessionService.updateSession(session);
+            grpcSessionService.addServer(userId, serverIdProvider.getServerId());
         }
 
         log.info("Updated gRPC sessions for {} connected users on server {}",

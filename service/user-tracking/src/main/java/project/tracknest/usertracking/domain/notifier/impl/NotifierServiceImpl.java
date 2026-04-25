@@ -42,6 +42,32 @@ class NotifierServiceImpl implements NotifierService {
             UUID userId,
             RegisterMobileDeviceRequest request
     ) {
+        String token = request.getDeviceToken();
+        if (token.isBlank() || token.length() > 512) {
+            return RegisterMobileDeviceResponse.newBuilder()
+                    .setStatus(Status.newBuilder()
+                            .setCode(Code.INVALID_ARGUMENT_VALUE)
+                            .setMessage("Device token must be between 1 and 512 characters")
+                            .build())
+                    .build();
+        }
+        if (request.getPlatform().isBlank() || request.getPlatform().length() > 32) {
+            return RegisterMobileDeviceResponse.newBuilder()
+                    .setStatus(Status.newBuilder()
+                            .setCode(Code.INVALID_ARGUMENT_VALUE)
+                            .setMessage("Platform must be between 1 and 32 characters")
+                            .build())
+                    .build();
+        }
+        if (request.getLanguageCode().length() > 10) {
+            return RegisterMobileDeviceResponse.newBuilder()
+                    .setStatus(Status.newBuilder()
+                            .setCode(Code.INVALID_ARGUMENT_VALUE)
+                            .setMessage("Language code must be at most 10 characters")
+                            .build())
+                    .build();
+        }
+
         if (!userRepository.existsById(userId)) {
             log.error("User with ID {} not found for mobile device registration", userId);
             return RegisterMobileDeviceResponse
@@ -66,9 +92,8 @@ class NotifierServiceImpl implements NotifierService {
 
         return RegisterMobileDeviceResponse
                 .newBuilder()
-                .setId(savedDevice
-                        .getId()
-                        .toString())
+                .setId(savedDevice.getId().toString())
+                .setCreatedAtMs(Instant.now().toEpochMilli())
                 .setStatus(Status
                         .newBuilder()
                         .setCode(Code.OK_VALUE)

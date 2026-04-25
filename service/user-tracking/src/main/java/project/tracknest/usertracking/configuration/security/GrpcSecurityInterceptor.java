@@ -101,6 +101,15 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
 
         return new SimpleForwardingServerCallListener<>(delegate) {
             @Override
+            public void onHalfClose() {
+                try {
+                    super.onHalfClose();
+                } finally {
+                    SecurityContextHolder.clearContext();
+                }
+            }
+
+            @Override
             public void onComplete() {
                 try {
                     super.onComplete();

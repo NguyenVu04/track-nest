@@ -17,6 +17,6 @@ public class EmergencyResponderTrigger {
     @KafkaListener(topics = "${app.kafka.topics[0]}")
     public void consumeLocationMessage(Map<String, Object> messageMap) {
         LocationMessage message = LocationMessage.from(messageMap);
-        consumer.trackTaget(message);
+        consumer.trackTarget(message);
     }
 }

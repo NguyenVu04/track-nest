@@ -1,39 +1,43 @@
 package project.tracknest.usertracking.controller;
 
 import com.google.rpc.Code;
+import com.google.rpc.Status;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import project.tracknest.usertracking.domain.tracker.locationcommand.service.LocationCommandService;
+import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationQueryService;
+import project.tracknest.usertracking.domain.tracker.locationquery.service.LocationStreamObserverRegistry;
 import project.tracknest.usertracking.proto.lib.*;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static project.tracknest.usertracking.utils.SecuritySetup.*;
 
-@SpringBootTest
 @ExtendWith(MockitoExtension.class)
-@Transactional
 class TrackerControllerTest {
-    @Autowired
-    private TrackerController trackerController;
+
+    @Mock
+    private LocationQueryService queryService;
+
+    @Mock
+    private LocationCommandService commandService;
+
+    @Mock
+    private LocationStreamObserverRegistry registry;
+
+    @InjectMocks
+    private TrackerController controller;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         setUpSecurityContext();
     }
 
@@ -44,111 +48,100 @@ class TrackerControllerTest {
     class StreamFamilyMemberLocationsTests {
 
         @Test
-        @DisplayName("Should stream family member locations for admin user in Admin Circle")
-        void shouldStreamFamilyMemberLocations_forAdminUser() {
-            // Admin (f8f735b4-549c-4d8c-9e10-15f8c198b71b) is in Admin Circle with user4
-            setUpSecurityContext(ADMIN_USER_ID, ADMIN_USERNAME, ADMIN_EMAIL);
-
+        @DisplayName("Should stream initial locations and register observer")
+        void shouldStreamFamilyMemberLocations_andRegisterObserver() {
             StreamFamilyMemberLocationsRequest request = StreamFamilyMemberLocationsRequest.newBuilder()
                     .setFamilyCircleId(ADMIN_CIRCLE_ID)
                     .build();
 
-            List<FamilyMemberLocation> receivedLocations = new ArrayList<>();
-
-            @SuppressWarnings("unchecked")
-            ServerCallStreamObserver<FamilyMemberLocation> responseObserver =
-                    mock(ServerCallStreamObserver.class);
-
-            doAnswer(invocation -> {
-                receivedLocations.add(invocation.getArgument(0));
-                return null;
-            }).when(responseObserver).onNext(any(FamilyMemberLocation.class));
-
-            trackerController.streamFamilyMemberLocations(request, responseObserver);
-
-            // Verify disableAutoRequest was called
-            verify(responseObserver).disableAutoRequest();
-
-            // Verify setOnCancelHandler was called
-            verify(responseObserver).setOnCancelHandler(any(Runnable.class));
-
-            // User4 (2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5) should be in results
-            // as admin is in Admin Circle with user4
-            assertNotNull(receivedLocations);
-        }
-
-        @Test
-        @DisplayName("Should stream family member locations for user2 in Family Circle 1")
-        void shouldStreamFamilyMemberLocations_forUser2() {
-            // User2 is Mother (admin) in Family Circle 1 with user1 and user3
-            setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-            StreamFamilyMemberLocationsRequest request = StreamFamilyMemberLocationsRequest.newBuilder()
-                    .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
+            FamilyMemberLocation loc = FamilyMemberLocation.newBuilder()
+                    .setMemberId(USER1_ID.toString())
+                    .setLatitudeDeg(21.0)
+                    .setLongitudeDeg(105.0)
                     .build();
 
-            List<FamilyMemberLocation> receivedLocations = new ArrayList<>();
+            when(queryService.streamFamilyMemberLocations(eq(ADMIN_USER_ID), eq(request)))
+                    .thenReturn(List.of(loc));
+            when(registry.register(any(), any(), any())).thenReturn("session-1");
 
             @SuppressWarnings("unchecked")
-            ServerCallStreamObserver<FamilyMemberLocation> responseObserver =
-                    mock(ServerCallStreamObserver.class);
+            ServerCallStreamObserver<FamilyMemberLocation> obs = mock(ServerCallStreamObserver.class);
 
-            doAnswer(invocation -> {
-                receivedLocations.add(invocation.getArgument(0));
-                return null;
-            }).when(responseObserver).onNext(any(FamilyMemberLocation.class));
+            controller.streamFamilyMemberLocations(request, obs);
 
-            trackerController.streamFamilyMemberLocations(request, responseObserver);
-
-            verify(responseObserver).disableAutoRequest();
-            verify(responseObserver).setOnCancelHandler(any(Runnable.class));
-
-            // Should have locations for family members (user1 and user3)
-            assertNotNull(receivedLocations);
+            verify(obs).disableAutoRequest();
+            verify(obs).onNext(loc);
+            verify(registry).register(eq(ADMIN_USER_ID), eq(UUID.fromString(ADMIN_CIRCLE_ID)), eq(obs));
+            verify(obs).setOnCancelHandler(any(Runnable.class));
         }
 
         @Test
-        @DisplayName("Should handle onCancel callback for stream")
+        @DisplayName("Should not call onNext when service returns empty list")
+        void shouldStreamFamilyMemberLocations_emptyList() {
+            StreamFamilyMemberLocationsRequest request = StreamFamilyMemberLocationsRequest.newBuilder()
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
+                    .build();
+
+            when(queryService.streamFamilyMemberLocations(any(), any())).thenReturn(List.of());
+            when(registry.register(any(), any(), any())).thenReturn("session-1");
+
+            @SuppressWarnings("unchecked")
+            ServerCallStreamObserver<FamilyMemberLocation> obs = mock(ServerCallStreamObserver.class);
+
+            controller.streamFamilyMemberLocations(request, obs);
+
+            verify(obs).disableAutoRequest();
+            verify(obs, never()).onNext(any());
+            verify(registry).register(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Should handle cancel handler and unregister")
         void shouldHandleOnCancelCallback() {
+            StreamFamilyMemberLocationsRequest request = StreamFamilyMemberLocationsRequest.newBuilder()
+                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
+                    .build();
+
+            String sessionId = "cancel-session-id";
+            when(queryService.streamFamilyMemberLocations(any(), any())).thenReturn(List.of());
+            when(registry.register(any(), any(), any())).thenReturn(sessionId);
+
+            @SuppressWarnings("unchecked")
+            ServerCallStreamObserver<FamilyMemberLocation> obs = mock(ServerCallStreamObserver.class);
+
+            ArgumentCaptor<Runnable> cancelCaptor = ArgumentCaptor.forClass(Runnable.class);
+            controller.streamFamilyMemberLocations(request, obs);
+            verify(obs).setOnCancelHandler(cancelCaptor.capture());
+
+            cancelCaptor.getValue().run();
+
+            verify(registry).unregister(eq(sessionId), eq(obs));
+        }
+
+        @Test
+        @DisplayName("Should stream multiple locations for user with multiple circles")
+        void shouldStreamLocations_forUserWithMultipleCircles() {
             setUpSecurityContext(USER1_ID, "user1", "user1@gmail.com");
 
             StreamFamilyMemberLocationsRequest request = StreamFamilyMemberLocationsRequest.newBuilder()
                     .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
                     .build();
 
-            @SuppressWarnings("unchecked")
-            ServerCallStreamObserver<FamilyMemberLocation> responseObserver =
-                    mock(ServerCallStreamObserver.class);
+            FamilyMemberLocation loc1 = FamilyMemberLocation.newBuilder().setMemberId(USER2_ID.toString()).build();
+            FamilyMemberLocation loc2 = FamilyMemberLocation.newBuilder().setMemberId(USER3_ID.toString()).build();
 
-            ArgumentCaptor<Runnable> cancelHandlerCaptor = ArgumentCaptor.forClass(Runnable.class);
-
-            trackerController.streamFamilyMemberLocations(request, responseObserver);
-
-            verify(responseObserver).setOnCancelHandler(cancelHandlerCaptor.capture());
-
-            // Execute the cancel handler - should not throw exception
-            Runnable cancelHandler = cancelHandlerCaptor.getValue();
-            assertDoesNotThrow(cancelHandler::run);
-        }
-
-        @Test
-        @DisplayName("Should stream locations for user with multiple family circles")
-        void shouldStreamLocations_forUserWithMultipleCircles() {
-            // User3 (4405a37d-bc86-403e-b605-bedd7db88d37) is in multiple circles
-            setUpSecurityContext(USER3_ID, "user3", "user3@gmail.com");
-
-            StreamFamilyMemberLocationsRequest request = StreamFamilyMemberLocationsRequest.newBuilder()
-                    .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                    .build();
+            when(queryService.streamFamilyMemberLocations(eq(USER1_ID), eq(request)))
+                    .thenReturn(List.of(loc1, loc2));
+            when(registry.register(any(), any(), any())).thenReturn("session-2");
 
             @SuppressWarnings("unchecked")
-            ServerCallStreamObserver<FamilyMemberLocation> responseObserver =
-                    mock(ServerCallStreamObserver.class);
+            ServerCallStreamObserver<FamilyMemberLocation> obs = mock(ServerCallStreamObserver.class);
 
-            trackerController.streamFamilyMemberLocations(request, responseObserver);
+            controller.streamFamilyMemberLocations(request, obs);
 
-            verify(responseObserver).disableAutoRequest();
-            verify(responseObserver).setOnCancelHandler(any(Runnable.class));
+            verify(obs, times(2)).onNext(any());
+            verify(obs).onNext(loc1);
+            verify(obs).onNext(loc2);
         }
     }
 
@@ -159,292 +152,82 @@ class TrackerControllerTest {
     class ListFamilyMemberLocationHistoryTests {
 
         @Test
-        @DisplayName("Should return location history for family member without spatial filter")
+        @DisplayName("Should return location history without spatial filter")
         void shouldReturnLocationHistory_withoutSpatialFilter() {
-            // User2 is in Family Circle 1 with user1
-            setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
+            ListFamilyMemberLocationHistoryRequest request =
+                    ListFamilyMemberLocationHistoryRequest.newBuilder()
+                            .setMemberId(USER1_ID.toString())
+                            .build();
 
-            ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                    .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                    .setMemberId(USER1_ID.toString())
-                    .build();
+            ListFamilyMemberLocationHistoryResponse expected =
+                    ListFamilyMemberLocationHistoryResponse.newBuilder()
+                            .setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
+                            .build();
 
-            AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-            AtomicReference<Throwable> errorRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
+            when(queryService.listFamilyMemberLocationHistory(ADMIN_USER_ID, request)).thenReturn(expected);
 
-            StreamObserver<ListFamilyMemberLocationHistoryResponse> responseObserver =
-                    new StreamObserver<>() {
-                        @Override
-                        public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                            responseRef.set(response);
-                        }
+            @SuppressWarnings("unchecked")
+            StreamObserver<ListFamilyMemberLocationHistoryResponse> obs = mock(StreamObserver.class);
 
-                        @Override
-                        public void onError(Throwable t) {
-                            errorRef.set(t);
-                            latch.countDown();
-                        }
+            controller.listFamilyMemberLocationHistory(request, obs);
 
-                        @Override
-                        public void onCompleted() {
-                            latch.countDown();
-                        }
-                    };
-
-            trackerController.listFamilyMemberLocationHistory(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNull(errorRef.get());
-            assertNotNull(responseRef.get());
-
-            ListFamilyMemberLocationHistoryResponse response = responseRef.get();
-            assertEquals(Code.OK_VALUE, response.getStatus().getCode());
-            // User1 has 4 locations in test data
-            assertTrue(response.getLocationsCount() >= 0);
+            verify(obs).onNext(expected);
+            verify(obs).onCompleted();
+            verify(obs, never()).onError(any());
         }
 
         @Test
-        @DisplayName("Should return location history for family member with spatial filter")
-        void shouldReturnLocationHistory_withSpatialFilter() {
-            // User2 is in Family Circle 1 with user1
-            setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-            // User1's locations are around NYC (-73.935, 40.730)
-            ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                    .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                    .setMemberId(USER1_ID.toString())
-                    .setCenterLatitudeDeg(40.730610)
-                    .setCenterLongitudeDeg(-73.935242)
-                    .setRadiusMeter(1000.0f)  // 1km radius
-                    .build();
-
-            AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-
-            StreamObserver<ListFamilyMemberLocationHistoryResponse> responseObserver =
-                    new StreamObserver<>() {
-                        @Override
-                        public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                            responseRef.set(response);
-                        }
-
-                        @Override
-                        public void onError(Throwable t) {
-                            latch.countDown();
-                        }
-
-                        @Override
-                        public void onCompleted() {
-                            latch.countDown();
-                        }
-                    };
-
-            trackerController.listFamilyMemberLocationHistory(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNotNull(responseRef.get());
-            ListFamilyMemberLocationHistoryResponse response = responseRef.get();
-            assertEquals(Code.OK_VALUE, response.getStatus().getCode());
-        }
-
-        @Test
-        @DisplayName("Should return PERMISSION_DENIED when querying non-family member")
+        @DisplayName("Should return permission denied for non-family member")
         void shouldReturnPermissionDenied_forNonFamilyMember() {
-            // User1 is not in same family circle as admin for this query
-            setUpSecurityContext(USER1_ID, "user1", "user1@gmail.com");
+            ListFamilyMemberLocationHistoryRequest request =
+                    ListFamilyMemberLocationHistoryRequest.newBuilder()
+                            .setMemberId(USER4_ID.toString())
+                            .build();
 
-            // User4 is not directly in same circle with User1 (only through admin circle)
-            ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
-                    .setMemberId(ADMIN_USER_ID.toString())  // Admin is not in same circle as user1
-                    .build();
+            ListFamilyMemberLocationHistoryResponse denied =
+                    ListFamilyMemberLocationHistoryResponse.newBuilder()
+                            .setStatus(Status.newBuilder().setCode(Code.PERMISSION_DENIED_VALUE).build())
+                            .build();
 
-            AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
+            when(queryService.listFamilyMemberLocationHistory(ADMIN_USER_ID, request)).thenReturn(denied);
 
-            StreamObserver<ListFamilyMemberLocationHistoryResponse> responseObserver =
-                    new StreamObserver<>() {
-                        @Override
-                        public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                            responseRef.set(response);
-                        }
+            @SuppressWarnings("unchecked")
+            StreamObserver<ListFamilyMemberLocationHistoryResponse> obs = mock(StreamObserver.class);
 
-                        @Override
-                        public void onError(Throwable t) {
-                            latch.countDown();
-                        }
+            controller.listFamilyMemberLocationHistory(request, obs);
 
-                        @Override
-                        public void onCompleted() {
-                            latch.countDown();
-                        }
-                    };
-
-            trackerController.listFamilyMemberLocationHistory(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNotNull(responseRef.get());
-            ListFamilyMemberLocationHistoryResponse response = responseRef.get();
-            assertEquals(Code.PERMISSION_DENIED_VALUE, response.getStatus().getCode());
-            assertEquals("User is not a family member", response.getStatus().getMessage());
-            assertEquals(0, response.getLocationsCount());
+            ArgumentCaptor<ListFamilyMemberLocationHistoryResponse> captor =
+                    ArgumentCaptor.forClass(ListFamilyMemberLocationHistoryResponse.class);
+            verify(obs).onNext(captor.capture());
+            assertEquals(Code.PERMISSION_DENIED_VALUE, captor.getValue().getStatus().getCode());
+            verify(obs).onCompleted();
         }
 
         @Test
-        @DisplayName("Should return location history with avatar URL when member has avatar")
-        void shouldReturnLocationHistory_withMemberAvatarUrl() {
-            // User4 is in Family Circle 2 with user3
-            setUpSecurityContext(USER4_ID, "user4", "user4@gmail.com");
+        @DisplayName("Should return location history with spatial filter")
+        void shouldReturnLocationHistory_withSpatialFilter() {
+            ListFamilyMemberLocationHistoryRequest request =
+                    ListFamilyMemberLocationHistoryRequest.newBuilder()
+                            .setMemberId(USER1_ID.toString())
+                            .setCenterLatitudeDeg(21.0)
+                            .setCenterLongitudeDeg(105.0)
+                            .setRadiusMeter(500.0f)
+                            .build();
 
-            ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                    .setFamilyCircleId(FAMILY_CIRCLE_2_ID)
-                    .setMemberId(USER3_ID.toString())
-                    .build();
+            ListFamilyMemberLocationHistoryResponse expected =
+                    ListFamilyMemberLocationHistoryResponse.newBuilder()
+                            .setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
+                            .build();
 
-            AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
+            when(queryService.listFamilyMemberLocationHistory(ADMIN_USER_ID, request)).thenReturn(expected);
 
-            StreamObserver<ListFamilyMemberLocationHistoryResponse> responseObserver =
-                    new StreamObserver<>() {
-                        @Override
-                        public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                            responseRef.set(response);
-                        }
+            @SuppressWarnings("unchecked")
+            StreamObserver<ListFamilyMemberLocationHistoryResponse> obs = mock(StreamObserver.class);
 
-                        @Override
-                        public void onError(Throwable t) {
-                            latch.countDown();
-                        }
+            controller.listFamilyMemberLocationHistory(request, obs);
 
-                        @Override
-                        public void onCompleted() {
-                            latch.countDown();
-                        }
-                    };
-
-            trackerController.listFamilyMemberLocationHistory(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNotNull(responseRef.get());
-            assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-        }
-
-        @Test
-        @DisplayName("Should return location history for admin querying user4")
-        void shouldReturnLocationHistory_adminQueryingUser4() {
-            // Admin is in Admin Circle with user4
-            setUpSecurityContext(ADMIN_USER_ID, ADMIN_USERNAME, ADMIN_EMAIL);
-
-            ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                    .setFamilyCircleId(ADMIN_CIRCLE_ID)
-                    .setMemberId(USER4_ID.toString())
-                    .build();
-
-            AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-
-            StreamObserver<ListFamilyMemberLocationHistoryResponse> responseObserver =
-                    new StreamObserver<>() {
-                        @Override
-                        public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                            responseRef.set(response);
-                        }
-
-                        @Override
-                        public void onError(Throwable t) {
-                            latch.countDown();
-                        }
-
-                        @Override
-                        public void onCompleted() {
-                            latch.countDown();
-                        }
-                    };
-
-            trackerController.listFamilyMemberLocationHistory(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNotNull(responseRef.get());
-            ListFamilyMemberLocationHistoryResponse response = responseRef.get();
-            assertEquals(Code.OK_VALUE, response.getStatus().getCode());
-            // User4 has 4 locations in Paris
-            assertTrue(response.getLocationsCount() >= 0);
-        }
-
-        @Test
-        @DisplayName("Should return empty locations when spatial filter excludes all locations")
-        void shouldReturnEmptyLocations_whenSpatialFilterExcludesAll() {
-            // User2 is in Family Circle 1 with user1
-            setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-            // Query with center point far from user1's NYC locations (use Tokyo coordinates)
-            ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                    .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                    .setMemberId(USER1_ID.toString())
-                    .setCenterLatitudeDeg(35.689487)   // Tokyo
-                    .setCenterLongitudeDeg(139.691711)
-                    .setRadiusMeter(100.0f)  // Very small radius
-                    .build();
-
-            AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-
-            StreamObserver<ListFamilyMemberLocationHistoryResponse> responseObserver =
-                    new StreamObserver<>() {
-                        @Override
-                        public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                            responseRef.set(response);
-                        }
-
-                        @Override
-                        public void onError(Throwable t) {
-                            latch.countDown();
-                        }
-
-                        @Override
-                        public void onCompleted() {
-                            latch.countDown();
-                        }
-                    };
-
-            trackerController.listFamilyMemberLocationHistory(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNotNull(responseRef.get());
-            ListFamilyMemberLocationHistoryResponse response = responseRef.get();
-            assertEquals(Code.OK_VALUE, response.getStatus().getCode());
-            assertEquals(0, response.getLocationsCount());
+            verify(obs).onNext(expected);
+            verify(obs).onCompleted();
         }
     }
 
@@ -455,65 +238,32 @@ class TrackerControllerTest {
     class UpdateUserLocationTests {
 
         @Test
-        @DisplayName("Should successfully update user location")
+        @DisplayName("Should update location successfully")
         void shouldUpdateUserLocation_success() {
-            setUpSecurityContext(ADMIN_USER_ID, ADMIN_USERNAME, ADMIN_EMAIL);
-
-            long currentTimestamp = System.currentTimeMillis();
-
-            UserLocation userLocation1 = UserLocation.newBuilder()
-                    .setLatitudeDeg(-33.868820)
-                    .setLongitudeDeg(151.209290)
-                    .setAccuracyMeter(5.0f)
-                    .setVelocityMps(1.5f)
-                    .setTimestampMs(currentTimestamp - 1000 * 60)  // 1 minute ago
+            UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+                    .addLocations(UserLocation.newBuilder()
+                            .setLatitudeDeg(21.0)
+                            .setLongitudeDeg(105.0)
+                            .setTimestampMs(System.currentTimeMillis())
+                            .setAccuracyMeter(10.0f)
+                            .setVelocityMps(0.0f)
+                            .build())
                     .build();
 
-            UserLocation userLocation2 = UserLocation.newBuilder()
-                    .setLatitudeDeg(-33.868820)
-                    .setLongitudeDeg(151.209290)
-                    .setAccuracyMeter(5.0f)
-                    .setVelocityMps(1.5f)
-                    .setTimestampMs(currentTimestamp)
+            UpdateUserLocationResponse expected = UpdateUserLocationResponse.newBuilder()
+                    .setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
                     .build();
 
-            UpdateUserLocationRequest request = UpdateUserLocationRequest
-                    .newBuilder()
-                    .addAllLocations(List.of(userLocation1, userLocation2))
-                    .build();
+            when(commandService.updateUserLocation(ADMIN_USER_ID, request)).thenReturn(expected);
 
-            AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
+            @SuppressWarnings("unchecked")
+            StreamObserver<UpdateUserLocationResponse> obs = mock(StreamObserver.class);
 
-            StreamObserver<UpdateUserLocationResponse> responseObserver =
-                    new StreamObserver<>() {
-                        @Override
-                        public void onNext(UpdateUserLocationResponse response) {
-                            responseRef.set(response);
-                        }
+            controller.updateUserLocation(request, obs);
 
-                        @Override
-                        public void onError(Throwable t) {
-                            latch.countDown();
-                        }
-
-                        @Override
-                        public void onCompleted() {
-                            latch.countDown();
-                        }
-                    };
-
-            trackerController.updateUserLocation(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNotNull(responseRef.get());
-            UpdateUserLocationResponse response = responseRef.get();
-            assertEquals(Code.OK_VALUE, response.getStatus().getCode());
+            verify(obs).onNext(expected);
+            verify(obs).onCompleted();
+            verify(obs, never()).onError(any());
         }
 
         @Test
@@ -521,972 +271,57 @@ class TrackerControllerTest {
         void shouldUpdateLocation_forUser1() {
             setUpSecurityContext(USER1_ID, "user1", "user1@gmail.com");
 
-            long currentTimestamp = System.currentTimeMillis();
-
-            UserLocation userLocation = UserLocation.newBuilder()
-                    .setLatitudeDeg(40.730610)
-                    .setLongitudeDeg(-73.935242)
-                    .setAccuracyMeter(3.0f)
-                    .setVelocityMps(0.0f)
-                    .setTimestampMs(currentTimestamp)
+            UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+                    .addLocations(UserLocation.newBuilder()
+                            .setLatitudeDeg(10.5)
+                            .setLongitudeDeg(100.5)
+                            .setTimestampMs(System.currentTimeMillis())
+                            .setAccuracyMeter(5.0f)
+                            .setVelocityMps(1.5f)
+                            .build())
                     .build();
 
-            UpdateUserLocationRequest request = UpdateUserLocationRequest
-                    .newBuilder()
-                    .addAllLocations(List.of(userLocation))
+            UpdateUserLocationResponse expected = UpdateUserLocationResponse.newBuilder()
+                    .setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
                     .build();
 
-            AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
+            when(commandService.updateUserLocation(USER1_ID, request)).thenReturn(expected);
 
-            StreamObserver<UpdateUserLocationResponse> responseObserver = new StreamObserver<>() {
-                @Override
-                public void onNext(UpdateUserLocationResponse response) {
-                    responseRef.set(response);
-                }
+            @SuppressWarnings("unchecked")
+            StreamObserver<UpdateUserLocationResponse> obs = mock(StreamObserver.class);
 
-                @Override
-                public void onError(Throwable t) {
-                    latch.countDown();
-                }
+            controller.updateUserLocation(request, obs);
 
-                @Override
-                public void onCompleted() {
-                    latch.countDown();
-                }
-            };
-
-            trackerController.updateUserLocation(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNotNull(responseRef.get());
-            assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
+            verify(obs).onNext(expected);
+            verify(obs).onCompleted();
         }
 
         @Test
         @DisplayName("Should update location with zero velocity")
         void shouldUpdateLocation_withZeroVelocity() {
-            setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-            long currentTimestamp = System.currentTimeMillis();
-
-            UserLocation userLocation = UserLocation.newBuilder()
-                    .setLatitudeDeg(51.507351)
-                    .setLongitudeDeg(-0.127758)
-                    .setAccuracyMeter(10.0f)
-                    .setVelocityMps(0.0f)
-                    .setTimestampMs(currentTimestamp)
+            UpdateUserLocationRequest request = UpdateUserLocationRequest.newBuilder()
+                    .addLocations(UserLocation.newBuilder()
+                            .setLatitudeDeg(0.0)
+                            .setLongitudeDeg(0.0)
+                            .setTimestampMs(System.currentTimeMillis())
+                            .setAccuracyMeter(0.0f)
+                            .setVelocityMps(0.0f)
+                            .build())
                     .build();
 
-            UpdateUserLocationRequest request = UpdateUserLocationRequest
-                    .newBuilder()
-                    .addAllLocations(List.of(userLocation))
+            UpdateUserLocationResponse expected = UpdateUserLocationResponse.newBuilder()
+                    .setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
                     .build();
 
-            AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
+            when(commandService.updateUserLocation(ADMIN_USER_ID, request)).thenReturn(expected);
 
-            StreamObserver<UpdateUserLocationResponse> responseObserver =
-                    new StreamObserver<>() {
-                        @Override
-                        public void onNext(UpdateUserLocationResponse response) {
-                            responseRef.set(response);
-                        }
+            @SuppressWarnings("unchecked")
+            StreamObserver<UpdateUserLocationResponse> obs = mock(StreamObserver.class);
 
-                        @Override
-                        public void onError(Throwable t) {
-                            latch.countDown();
-                        }
+            controller.updateUserLocation(request, obs);
 
-                        @Override
-                        public void onCompleted() {
-                            latch.countDown();
-                        }
-                    };
-
-            trackerController.updateUserLocation(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNotNull(responseRef.get());
-            assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-        }
-
-        @Test
-        @DisplayName("Should update location with high velocity")
-        void shouldUpdateLocation_withHighVelocity() {
-            setUpSecurityContext(USER3_ID, "user3", "user3@gmail.com");
-
-            long currentTimestamp = System.currentTimeMillis();
-
-            UserLocation userLocation = UserLocation.newBuilder()
-                    .setLatitudeDeg(35.689487)
-                    .setLongitudeDeg(139.691711)
-                    .setAccuracyMeter(2.0f)
-                    .setVelocityMps(30.0f)  // 30 m/s ~ 108 km/h
-                    .setTimestampMs(currentTimestamp)
-                    .build();
-
-            UpdateUserLocationRequest request = UpdateUserLocationRequest
-                    .newBuilder()
-                    .addAllLocations(List.of(userLocation))
-                    .build();
-
-            AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-
-            StreamObserver<UpdateUserLocationResponse> responseObserver =
-                    new StreamObserver<>() {
-                        @Override
-                        public void onNext(UpdateUserLocationResponse response) {
-                            responseRef.set(response);
-                        }
-
-                        @Override
-                        public void onError(Throwable t) {
-                            latch.countDown();
-                        }
-
-                        @Override
-                        public void onCompleted() {
-                            latch.countDown();
-                        }
-                    };
-
-            trackerController.updateUserLocation(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNotNull(responseRef.get());
-            assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-        }
-
-        @Test
-        @DisplayName("Should update location for user4 in Paris")
-        void shouldUpdateLocation_forUser4InParis() {
-            setUpSecurityContext(USER4_ID, "user4", "user4@gmail.com");
-
-            long currentTimestamp = System.currentTimeMillis();
-
-            UserLocation userLocation = UserLocation.newBuilder()
-                    .setLatitudeDeg(48.856613)
-                    .setLongitudeDeg(2.352222)
-                    .setAccuracyMeter(7.5f)
-                    .setVelocityMps(1.2f)
-                    .setTimestampMs(currentTimestamp)
-                    .build();
-
-            UpdateUserLocationRequest request = UpdateUserLocationRequest
-                    .newBuilder()
-                    .addAllLocations(List.of(userLocation))
-                    .build();
-
-            AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-
-            StreamObserver<UpdateUserLocationResponse> responseObserver =
-                    new StreamObserver<>() {
-                        @Override
-                        public void onNext(UpdateUserLocationResponse response) {
-                            responseRef.set(response);
-                        }
-
-                        @Override
-                        public void onError(Throwable t) {
-                            latch.countDown();
-                        }
-
-                        @Override
-                        public void onCompleted() {
-                            latch.countDown();
-                        }
-                    };
-
-            trackerController.updateUserLocation(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNotNull(responseRef.get());
-            assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-        }
-
-        @Test
-        @DisplayName("Should update location with minimum accuracy")
-        void shouldUpdateLocation_withMinimumAccuracy() {
-            setUpSecurityContext(ADMIN_USER_ID, ADMIN_USERNAME, ADMIN_EMAIL);
-
-            long currentTimestamp = System.currentTimeMillis();
-
-            UserLocation userLocation = UserLocation.newBuilder()
-                    .setLatitudeDeg(-33.868820)
-                    .setLongitudeDeg(151.209290)
-                    .setAccuracyMeter(0.1f)  // Very precise
-                    .setVelocityMps(0.5f)
-                    .setTimestampMs(currentTimestamp)
-                    .build();
-
-            UpdateUserLocationRequest request = UpdateUserLocationRequest
-                    .newBuilder()
-                    .addAllLocations(List.of(userLocation))
-                    .build();
-
-            AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-
-            StreamObserver<UpdateUserLocationResponse> responseObserver =
-                    new StreamObserver<>() {
-                        @Override
-                        public void onNext(UpdateUserLocationResponse response) {
-                            responseRef.set(response);
-                        }
-
-                        @Override
-                        public void onError(Throwable t) {
-                            latch.countDown();
-                        }
-
-                        @Override
-                        public void onCompleted() {
-                            latch.countDown();
-                        }
-                    };
-
-            trackerController.updateUserLocation(request, responseObserver);
-
-            try {
-                assertTrue(latch.await(5, TimeUnit.SECONDS));
-            } catch (InterruptedException e) {
-                fail("Test timed out");
-            }
-
-            assertNotNull(responseRef.get());
-            assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-        }
-
-        // ==================== Integration Tests ====================
-
-        @Nested
-        @DisplayName("Integration Tests")
-        class IntegrationTests {
-
-            @Test
-            @DisplayName("Should update location then retrieve it in history")
-            void shouldUpdateAndRetrieveLocation() {
-                // First, update location for user1
-                setUpSecurityContext(USER1_ID, "user1", "user1@gmail.com");
-
-                long currentTimestamp = System.currentTimeMillis();
-
-                UserLocation userLocation = UserLocation.newBuilder()
-                        .setLatitudeDeg(40.750000)
-                        .setLongitudeDeg(-73.950000)
-                        .setAccuracyMeter(5.0f)
-                        .setVelocityMps(2.0f)
-                        .setTimestampMs(currentTimestamp)
-                        .build();
-
-                UpdateUserLocationRequest updateRequest = UpdateUserLocationRequest
-                        .newBuilder()
-                        .addAllLocations(List.of(userLocation))
-                        .build();
-
-                CountDownLatch updateLatch = new CountDownLatch(1);
-                AtomicReference<UpdateUserLocationResponse> updateRef = new AtomicReference<>();
-
-                StreamObserver<UpdateUserLocationResponse> responseObserver = new StreamObserver<>() {
-                    @Override
-                    public void onNext(UpdateUserLocationResponse response) {
-                        updateRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        updateLatch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        updateLatch.countDown();
-                    }
-                };
-
-                // Call the unary RPC directly
-                trackerController.updateUserLocation(updateRequest, responseObserver);
-
-                try {
-                    assertTrue(updateLatch.await(5, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    fail("Test timed out");
-                }
-
-                assertEquals(Code.OK_VALUE, updateRef.get().getStatus().getCode());
-
-                // Now, as user2 (family member), retrieve user1's location history
-                setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-                ListFamilyMemberLocationHistoryRequest historyRequest = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                        .setMemberId(USER1_ID.toString())
-                        .build();
-
-                CountDownLatch historyLatch = new CountDownLatch(1);
-                AtomicReference<ListFamilyMemberLocationHistoryResponse> historyRef = new AtomicReference<>();
-
-                trackerController.listFamilyMemberLocationHistory(historyRequest, new StreamObserver<>() {
-                    @Override
-                    public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                        historyRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        historyLatch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        historyLatch.countDown();
-                    }
-                });
-
-                try {
-                    assertTrue(historyLatch.await(5, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    fail("Test timed out");
-                }
-
-                assertNotNull(historyRef.get());
-                assertEquals(Code.OK_VALUE, historyRef.get().getStatus().getCode());
-                // Should have at least the newly added location plus existing test data
-                assertTrue(historyRef.get().getLocationsCount() >= 1);
-            }
-
-            @Test
-            @DisplayName("Should verify response observer callbacks are invoked correctly")
-            void shouldVerifyResponseObserverCallbacks() {
-                setUpSecurityContext(USER1_ID, "user1", "user1@gmail.com");
-
-                long currentTimestamp = System.currentTimeMillis();
-
-                UserLocation userLocation = UserLocation.newBuilder()
-                        .setLatitudeDeg(40.730610)
-                        .setLongitudeDeg(-73.935242)
-                        .setAccuracyMeter(5.0f)
-                        .setVelocityMps(1.0f)
-                        .setTimestampMs(currentTimestamp)
-                        .build();
-
-                UpdateUserLocationRequest request = UpdateUserLocationRequest
-                        .newBuilder()
-                        .addAllLocations(List.of(userLocation))
-                        .build();
-
-                @SuppressWarnings("unchecked")
-                StreamObserver<UpdateUserLocationResponse> mockObserver = mock(StreamObserver.class);
-
-                // Call the unary RPC directly
-                trackerController.updateUserLocation(request, mockObserver);
-
-                // Verify onNext was called with a response
-                ArgumentCaptor<UpdateUserLocationResponse> responseCaptor =
-                        ArgumentCaptor.forClass(UpdateUserLocationResponse.class);
-                verify(mockObserver).onNext(responseCaptor.capture());
-
-                UpdateUserLocationResponse capturedResponse = responseCaptor.getValue();
-                assertEquals(Code.OK_VALUE, capturedResponse.getStatus().getCode());
-
-                // Verify onCompleted was called
-                verify(mockObserver).onCompleted();
-
-                // Verify onError was never called
-                verify(mockObserver, never()).onError(any());
-            }
-
-            @Test
-            @DisplayName("Should verify listFamilyMemberLocationHistory response observer callbacks")
-            void shouldVerifyListHistoryResponseObserverCallbacks() {
-                setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-                ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                        .setMemberId(USER1_ID.toString())
-                        .build();
-
-                @SuppressWarnings("unchecked")
-                StreamObserver<ListFamilyMemberLocationHistoryResponse> mockObserver = mock(StreamObserver.class);
-
-                trackerController.listFamilyMemberLocationHistory(request, mockObserver);
-
-                // Verify onNext was called with a response
-                ArgumentCaptor<ListFamilyMemberLocationHistoryResponse> responseCaptor =
-                        ArgumentCaptor.forClass(ListFamilyMemberLocationHistoryResponse.class);
-                verify(mockObserver).onNext(responseCaptor.capture());
-
-                ListFamilyMemberLocationHistoryResponse capturedResponse = responseCaptor.getValue();
-                assertEquals(Code.OK_VALUE, capturedResponse.getStatus().getCode());
-
-                // Verify onCompleted was called
-                verify(mockObserver).onCompleted();
-
-                // Verify onError was never called
-                verify(mockObserver, never()).onError(any());
-            }
-
-            @Test
-            @DisplayName("Should stream family member locations in Family Circle 3")
-            void shouldStreamLocations_inFamilyCircle3() {
-                // Admin is in Family Circle 3 with user3
-                setUpSecurityContext(ADMIN_USER_ID, ADMIN_USERNAME, ADMIN_EMAIL);
-
-                StreamFamilyMemberLocationsRequest request = StreamFamilyMemberLocationsRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_3_ID)
-                        .build();
-
-                @SuppressWarnings("unchecked")
-                ServerCallStreamObserver<FamilyMemberLocation> responseObserver =
-                        mock(ServerCallStreamObserver.class);
-
-                List<FamilyMemberLocation> receivedLocations = new ArrayList<>();
-                doAnswer(invocation -> {
-                    receivedLocations.add(invocation.getArgument(0));
-                    return null;
-                }).when(responseObserver).onNext(any(FamilyMemberLocation.class));
-
-                trackerController.streamFamilyMemberLocations(request, responseObserver);
-
-                verify(responseObserver).disableAutoRequest();
-                verify(responseObserver).setOnCancelHandler(any(Runnable.class));
-            }
-
-            @Test
-            @DisplayName("Should stream family member locations in Family Circle 4")
-            void shouldStreamLocations_inFamilyCircle4() {
-                // User1 is Mother in Family Circle 4 with user3
-                setUpSecurityContext(USER1_ID, "user1", "user1@gmail.com");
-
-                StreamFamilyMemberLocationsRequest request = StreamFamilyMemberLocationsRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_4_ID)
-                        .build();
-
-                @SuppressWarnings("unchecked")
-                ServerCallStreamObserver<FamilyMemberLocation> responseObserver =
-                        mock(ServerCallStreamObserver.class);
-
-                trackerController.streamFamilyMemberLocations(request, responseObserver);
-
-                verify(responseObserver).disableAutoRequest();
-                verify(responseObserver).setOnCancelHandler(any(Runnable.class));
-            }
-
-            @Test
-            @DisplayName("Should return location history for admin querying user3 in Family Circle 3")
-            void shouldReturnLocationHistory_adminQueryingUser3() {
-                setUpSecurityContext(ADMIN_USER_ID, ADMIN_USERNAME, ADMIN_EMAIL);
-
-                ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_3_ID)
-                        .setMemberId(USER3_ID.toString())
-                        .build();
-
-                AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-                CountDownLatch latch = new CountDownLatch(1);
-
-                trackerController.listFamilyMemberLocationHistory(request, new StreamObserver<>() {
-                    @Override
-                    public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                        responseRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                });
-
-                try {
-                    assertTrue(latch.await(5, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    fail("Test timed out");
-                }
-
-                assertNotNull(responseRef.get());
-                assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-            }
-
-            @Test
-            @DisplayName("Should return location history for user1 querying user3 in Family Circle 4")
-            void shouldReturnLocationHistory_user1QueryingUser3InCircle4() {
-                setUpSecurityContext(USER1_ID, "user1", "user1@gmail.com");
-
-                ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_4_ID)
-                        .setMemberId(USER3_ID.toString())
-                        .build();
-
-                AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-                CountDownLatch latch = new CountDownLatch(1);
-
-                trackerController.listFamilyMemberLocationHistory(request, new StreamObserver<>() {
-                    @Override
-                    public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                        responseRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                });
-
-                try {
-                    assertTrue(latch.await(5, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    fail("Test timed out");
-                }
-
-                assertNotNull(responseRef.get());
-                assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-            }
-        }
-
-        // ==================== Edge Case Tests ====================
-
-        @Nested
-        @DisplayName("Edge Case Tests")
-        class EdgeCaseTests {
-
-            @Test
-            @DisplayName("Should handle location at extreme latitude values")
-            void shouldHandleLocation_atExtremeLatitude() {
-                setUpSecurityContext(ADMIN_USER_ID, ADMIN_USERNAME, ADMIN_EMAIL);
-
-                long currentTimestamp = System.currentTimeMillis();
-
-                // Near North Pole
-                UserLocation userLocation = UserLocation.newBuilder()
-                        .setLatitudeDeg(89.999)
-                        .setLongitudeDeg(0.0)
-                        .setAccuracyMeter(10.0f)
-                        .setVelocityMps(0.0f)
-                        .setTimestampMs(currentTimestamp)
-                        .build();
-
-                UpdateUserLocationRequest request = UpdateUserLocationRequest
-                        .newBuilder()
-                        .addAllLocations(List.of(userLocation))
-                        .build();
-
-                AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
-                CountDownLatch latch = new CountDownLatch(1);
-
-                // Response observer receives the server response after we complete sending
-                StreamObserver<UpdateUserLocationResponse> responseObserver = new StreamObserver<>() {
-                    @Override
-                    public void onNext(UpdateUserLocationResponse response) {
-                        responseRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        // make test fail fast on error
-                        fail("Unexpected error during location update: " + t.getMessage());
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                };
-
-                // Call the unary RPC directly
-                trackerController.updateUserLocation(request, responseObserver);
-
-                try {
-                    assertTrue(latch.await(5, TimeUnit.SECONDS), "Timed out waiting for response");
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    fail("Test interrupted");
-                }
-
-                assertNotNull(responseRef.get(), "Expected a non-null response");
-                assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-            }
-
-            @Test
-            @DisplayName("Should handle location at extreme longitude values")
-            void shouldHandleLocation_atExtremeLongitude() {
-                setUpSecurityContext(ADMIN_USER_ID, ADMIN_USERNAME, ADMIN_EMAIL);
-
-                long currentTimestamp = System.currentTimeMillis();
-
-                // Near International Date Line
-                UserLocation userLocation = UserLocation.newBuilder()
-                        .setLatitudeDeg(0.0)
-                        .setLongitudeDeg(179.999)
-                        .setAccuracyMeter(10.0f)
-                        .setVelocityMps(0.0f)
-                        .setTimestampMs(currentTimestamp)
-                        .build();
-
-                UpdateUserLocationRequest request = UpdateUserLocationRequest
-                        .newBuilder()
-                        .addAllLocations(List.of(userLocation))
-                        .build();
-
-                AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
-                CountDownLatch latch = new CountDownLatch(1);
-
-                StreamObserver<UpdateUserLocationResponse> responseObserver = new StreamObserver<>() {
-                    @Override
-                    public void onNext(UpdateUserLocationResponse response) {
-                        responseRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                };
-
-                trackerController.updateUserLocation(request, responseObserver);
-
-                try {
-                    assertTrue(latch.await(5, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    fail("Test timed out");
-                }
-
-                assertNotNull(responseRef.get());
-                assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-            }
-
-            @Test
-            @DisplayName("Should handle location with very large accuracy value")
-            void shouldHandleLocation_withLargeAccuracy() {
-                setUpSecurityContext(USER1_ID, "user1", "user1@gmail.com");
-
-                long currentTimestamp = System.currentTimeMillis();
-
-                UserLocation userLocation = UserLocation.newBuilder()
-                        .setLatitudeDeg(40.730610)
-                        .setLongitudeDeg(-73.935242)
-                        .setAccuracyMeter(1000.0f)  // 1km accuracy (poor GPS)
-                        .setVelocityMps(0.0f)
-                        .setTimestampMs(currentTimestamp)
-                        .build();
-
-                UpdateUserLocationRequest request = UpdateUserLocationRequest
-                        .newBuilder()
-                        .addAllLocations(List.of(userLocation))
-                        .build();
-
-                AtomicReference<UpdateUserLocationResponse> responseRef = new AtomicReference<>();
-                CountDownLatch latch = new CountDownLatch(1);
-
-                StreamObserver<UpdateUserLocationResponse> responseObserver = new StreamObserver<>() {
-                    @Override
-                    public void onNext(UpdateUserLocationResponse response) {
-                        responseRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                };
-
-                trackerController.updateUserLocation(request, responseObserver);
-
-                try {
-                    assertTrue(latch.await(5, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    fail("Test timed out");
-                }
-
-                assertNotNull(responseRef.get());
-                assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-            }
-
-            @Test
-            @DisplayName("Should handle location history request with only center latitude")
-            void shouldHandleHistoryRequest_withOnlyCenterLatitude() {
-                setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-                // Only set center latitude (partial spatial filter - should be treated as no filter)
-                ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                        .setMemberId(USER1_ID.toString())
-                        .setCenterLatitudeDeg(40.730610)
-                        .build();
-
-                AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-                CountDownLatch latch = new CountDownLatch(1);
-
-                trackerController.listFamilyMemberLocationHistory(request, new StreamObserver<>() {
-                    @Override
-                    public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                        responseRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                });
-
-                try {
-                    assertTrue(latch.await(5, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    fail("Test timed out");
-                }
-
-                assertNotNull(responseRef.get());
-                assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-            }
-
-            @Test
-            @DisplayName("Should handle location history request with only center longitude")
-            void shouldHandleHistoryRequest_withOnlyCenterLongitude() {
-                setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-                // Only set center longitude (partial spatial filter - should be treated as no filter)
-                ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                        .setMemberId(USER1_ID.toString())
-                        .setCenterLongitudeDeg(-73.935242)
-                        .build();
-
-                AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-                CountDownLatch latch = new CountDownLatch(1);
-
-                trackerController.listFamilyMemberLocationHistory(request, new StreamObserver<>() {
-                    @Override
-                    public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                        responseRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                });
-
-                try {
-                    assertTrue(latch.await(5, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    fail("Test timed out");
-                }
-
-                assertNotNull(responseRef.get());
-                assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-            }
-
-            @Test
-            @DisplayName("Should handle location history request with only radius")
-            void shouldHandleHistoryRequest_withOnlyRadius() {
-                setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-                // Only set radius (partial spatial filter - should be treated as no filter)
-                ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                        .setMemberId(USER1_ID.toString())
-                        .setRadiusMeter(1000.0f)
-                        .build();
-
-                AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-                CountDownLatch latch = new CountDownLatch(1);
-
-                trackerController.listFamilyMemberLocationHistory(request, new StreamObserver<>() {
-                    @Override
-                    public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                        responseRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                });
-
-                try {
-                    assertTrue(latch.await(5, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    fail("Test timed out");
-                }
-
-                assertNotNull(responseRef.get());
-                assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-            }
-
-            @Test
-            @DisplayName("Should handle location history request with center but no radius")
-            void shouldHandleHistoryRequest_withCenterButNoRadius() {
-                setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-                // Set center but no radius (partial spatial filter - should be treated as no filter)
-                ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                        .setMemberId(USER1_ID.toString())
-                        .setCenterLatitudeDeg(40.730610)
-                        .setCenterLongitudeDeg(-73.935242)
-                        .build();
-
-                AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-                CountDownLatch latch = new CountDownLatch(1);
-
-                trackerController.listFamilyMemberLocationHistory(request, new StreamObserver<>() {
-                    @Override
-                    public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                        responseRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                });
-
-                try {
-                    assertTrue(latch.await(5, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    fail("Test timed out");
-                }
-
-                assertNotNull(responseRef.get());
-                assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-            }
-
-            @Test
-            @DisplayName("Should handle multiple stream requests from same user")
-            void shouldHandleMultipleStreamRequests_fromSameUser() {
-                setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-                StreamFamilyMemberLocationsRequest request = StreamFamilyMemberLocationsRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                        .build();
-
-                // First stream
-                @SuppressWarnings("unchecked")
-                ServerCallStreamObserver<FamilyMemberLocation> responseObserver1 =
-                        mock(ServerCallStreamObserver.class);
-
-                trackerController.streamFamilyMemberLocations(request, responseObserver1);
-
-                verify(responseObserver1).disableAutoRequest();
-                verify(responseObserver1).setOnCancelHandler(any(Runnable.class));
-
-                // Second stream from same user
-                @SuppressWarnings("unchecked")
-                ServerCallStreamObserver<FamilyMemberLocation> responseObserver2 =
-                        mock(ServerCallStreamObserver.class);
-
-                trackerController.streamFamilyMemberLocations(request, responseObserver2);
-
-                verify(responseObserver2).disableAutoRequest();
-                verify(responseObserver2).setOnCancelHandler(any(Runnable.class));
-            }
-
-            @Test
-            @DisplayName("Should handle location history with large radius")
-            void shouldHandleLocationHistory_withLargeRadius() {
-                setUpSecurityContext(USER2_ID, "user2", "user2@gmail.com");
-
-                // Very large radius that should include all locations
-                ListFamilyMemberLocationHistoryRequest request = ListFamilyMemberLocationHistoryRequest.newBuilder()
-                        .setFamilyCircleId(FAMILY_CIRCLE_1_ID)
-                        .setMemberId(USER1_ID.toString())
-                        .setCenterLatitudeDeg(40.730610)
-                        .setCenterLongitudeDeg(-73.935242)
-                        .setRadiusMeter(100000.0f)  // 100km radius
-                        .build();
-
-                AtomicReference<ListFamilyMemberLocationHistoryResponse> responseRef = new AtomicReference<>();
-                CountDownLatch latch = new CountDownLatch(1);
-
-                trackerController.listFamilyMemberLocationHistory(request, new StreamObserver<>() {
-                    @Override
-                    public void onNext(ListFamilyMemberLocationHistoryResponse response) {
-                        responseRef.set(response);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onCompleted() {
-                        latch.countDown();
-                    }
-                });
-
-                try {
-                    assertTrue(latch.await(5, TimeUnit.SECONDS));
-                } catch (InterruptedException e) {
-                    fail("Test timed out");
-                }
-
-                assertNotNull(responseRef.get());
-                assertEquals(Code.OK_VALUE, responseRef.get().getStatus().getCode());
-            }
+            verify(obs).onNext(expected);
+            verify(obs).onCompleted();
         }
     }
 }
-

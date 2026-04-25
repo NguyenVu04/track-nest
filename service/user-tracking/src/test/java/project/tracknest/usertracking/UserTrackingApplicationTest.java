@@ -1,9 +1,13 @@
 package project.tracknest.usertracking;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class UserTrackingApplicationTest {
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+class UserTrackingApplicationTest {
+
     @Test
-    public void contextLoads() {
+    void applicationClass_isPresent() {
+        assertNotNull(UserTrackingApplication.class);
     }
 }

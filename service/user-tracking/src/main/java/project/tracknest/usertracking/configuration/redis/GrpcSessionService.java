@@ -1,29 +1,34 @@
 package project.tracknest.usertracking.configuration.redis;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class GrpcSessionService {
-    @Cacheable(value = "grpc-sessions", key = "#sessionId")
-    public GrpcSession getSession(UUID sessionId) {
-        log.info("Creating new gRPC session for sessionId: {}", sessionId);
-        return new GrpcSession(
-                sessionId,
-                new HashSet<>()
-        );
+    private static final String SESSION_KEY_PREFIX = "grpc:session:";
+
+    private final StringRedisTemplate redisTemplate;
+
+    public void addServer(UUID userId, String serverId) {
+        redisTemplate.opsForSet().add(SESSION_KEY_PREFIX + userId, serverId);
+        log.debug("Added server {} to session for userId {}", serverId, userId);
     }
 
-    @CachePut(value = "grpc-sessions", key = "#session.sessionId")
-    public GrpcSession updateSession(GrpcSession session) {
-        log.info("Updating gRPC session for sessionId: {} with serverIds: {}",
-                session.sessionId(), session.serverIds());
-        return session;
+    public void removeServer(UUID userId, String serverId) {
+        redisTemplate.opsForSet().remove(SESSION_KEY_PREFIX + userId, serverId);
+        log.debug("Removed server {} from session for userId {}", serverId, userId);
+    }
+
+    public Set<String> getServerIds(UUID userId) {
+        Set<String> members = redisTemplate.opsForSet().members(SESSION_KEY_PREFIX + userId);
+        return members != null ? members : Collections.emptySet();
     }
 }

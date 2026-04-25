@@ -16,6 +16,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 class SafeZoneLocatorServiceImpl implements SafeZoneLocatorService {
+    private static final int MAX_SAFE_ZONES = 100;
+
     private final SafeZoneLocatorSafeZoneRepository safeZoneRepository;
 
     @Override
@@ -26,7 +28,7 @@ class SafeZoneLocatorServiceImpl implements SafeZoneLocatorService {
             float maxDistanceMeters,
             int maxNumberOfSafeZones
     ) {
-        Pageable pageable = Pageable.ofSize(maxNumberOfSafeZones);
+        Pageable pageable = Pageable.ofSize(Math.min(maxNumberOfSafeZones, MAX_SAFE_ZONES));
 
         Slice<SafeZone> safeZoneSlice = safeZoneRepository.findNearestSafeZones(
                 latitudeDegrees,
@@ -40,7 +42,7 @@ class SafeZoneLocatorServiceImpl implements SafeZoneLocatorService {
                         .safeZoneId(safeZone.getId())
                         .safeZoneName(safeZone.getName())
                         .latitudeDegrees(safeZone.getLatitude())
-                        .longitudeDegrees(safeZone.getLatitude())
+                        .longitudeDegrees(safeZone.getLongitude())
                         .radiusMeters(safeZone.getRadius())
                         .build()
                 )

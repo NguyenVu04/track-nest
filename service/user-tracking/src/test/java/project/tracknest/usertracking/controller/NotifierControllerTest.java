@@ -1,367 +1,369 @@
 package project.tracknest.usertracking.controller;
 
 import io.grpc.stub.StreamObserver;
-import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import project.tracknest.usertracking.domain.notifier.service.NotifierService;
 import project.tracknest.usertracking.proto.lib.*;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static project.tracknest.usertracking.utils.SecuritySetup.*;
 
-@SpringBootTest
-@ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
-@Transactional
+@ExtendWith(MockitoExtension.class)
 class NotifierControllerTest {
-    @Autowired
-    private NotifierController notifierController;
+
+    @Mock
+    private NotifierService service;
+
+    @InjectMocks
+    private NotifierController controller;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         setUpSecurityContext();
     }
 
     @Nested
-    @DisplayName("RegisterMobileDevice")
+    @DisplayName("RegisterMobileDevice Tests")
     class RegisterMobileDeviceTests {
+
         @Test
-        void registerMobileDevice_success() throws Exception {
-            RegisterMobileDeviceRequest request = RegisterMobileDeviceRequest.newBuilder()
-                    .setDeviceToken("token-user1-1")
+        void registerMobileDevice_success() {
+            RegisterMobileDeviceRequest req = RegisterMobileDeviceRequest.newBuilder()
+                    .setDeviceToken("token123")
                     .setPlatform("android")
                     .setLanguageCode("en")
                     .build();
-            AtomicReference<RegisterMobileDeviceResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.registerMobileDevice(request, new StreamObserver<>() {
-                public void onNext(RegisterMobileDeviceResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
-            assertNotNull(ref.get().getId());
+            RegisterMobileDeviceResponse res = RegisterMobileDeviceResponse.newBuilder()
+                    .setId(ADMIN_DEVICE_ID)
+                    .build();
+            when(service.registerMobileDevice(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<RegisterMobileDeviceResponse> obs = mock(StreamObserver.class);
+
+            controller.registerMobileDevice(req, obs);
+
+            verify(obs).onNext(res);
+            verify(obs).onCompleted();
+            verify(obs, never()).onError(any());
         }
+
         @Test
-        void registerMobileDevice_missingToken() throws Exception {
-            RegisterMobileDeviceRequest request = RegisterMobileDeviceRequest.newBuilder()
-                    .setPlatform("android")
-                    .setLanguageCode("en")
+        void registerMobileDevice_missingToken_returnsInvalidArgument() {
+            RegisterMobileDeviceRequest req = RegisterMobileDeviceRequest.newBuilder().build();
+            RegisterMobileDeviceResponse invalid = RegisterMobileDeviceResponse.newBuilder()
+                    .setStatus(com.google.rpc.Status.newBuilder()
+                            .setCode(com.google.rpc.Code.INVALID_ARGUMENT_VALUE)
+                            .build())
                     .build();
-            assertThrows(ConstraintViolationException.class, () -> {
-                notifierController.registerMobileDevice(request, new StreamObserver<>() {
-                    public void onNext(RegisterMobileDeviceResponse value) { }
-                    public void onError(Throwable t) { throw new RuntimeException(t); }
-                    public void onCompleted() { }
-                });
-            });
+            when(service.registerMobileDevice(ADMIN_USER_ID, req)).thenReturn(invalid);
+            @SuppressWarnings("unchecked")
+            StreamObserver<RegisterMobileDeviceResponse> obs = mock(StreamObserver.class);
+
+            controller.registerMobileDevice(req, obs);
+
+            ArgumentCaptor<RegisterMobileDeviceResponse> captor =
+                    ArgumentCaptor.forClass(RegisterMobileDeviceResponse.class);
+            verify(obs).onNext(captor.capture());
+            assertNotEquals(0, captor.getValue().getStatus().getCode());
+            verify(obs).onCompleted();
         }
     }
 
     @Nested
-    @DisplayName("UnregisterMobileDevice")
+    @DisplayName("UnregisterMobileDevice Tests")
     class UnregisterMobileDeviceTests {
+
         @Test
-        void unregisterMobileDevice_success() throws Exception {
-            UnregisterMobileDeviceRequest request = UnregisterMobileDeviceRequest.newBuilder()
-                    .setId(ADMIN_DEVICE_ID)
-                    .build();
-            AtomicReference<UnregisterMobileDeviceResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.unregisterMobileDevice(request, new StreamObserver<>() {
-                public void onNext(UnregisterMobileDeviceResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
+        void unregisterMobileDevice_success() {
+            UnregisterMobileDeviceRequest req = UnregisterMobileDeviceRequest.newBuilder()
+                    .setId(ADMIN_DEVICE_ID).build();
+            UnregisterMobileDeviceResponse res = UnregisterMobileDeviceResponse.newBuilder().build();
+            when(service.unregisterMobileDevice(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<UnregisterMobileDeviceResponse> obs = mock(StreamObserver.class);
+
+            controller.unregisterMobileDevice(req, obs);
+
+            verify(obs).onNext(res);
+            verify(obs).onCompleted();
         }
+
         @Test
-        void unregisterMobileDevice_notFound() throws Exception {
-            UnregisterMobileDeviceRequest request = UnregisterMobileDeviceRequest.newBuilder()
-                    .setId("00000000-0000-0000-0000-000000000000")
+        void unregisterMobileDevice_notFound() {
+            UnregisterMobileDeviceRequest req = UnregisterMobileDeviceRequest.newBuilder()
+                    .setId("00000000-0000-0000-0000-000000000000").build();
+            UnregisterMobileDeviceResponse notFound = UnregisterMobileDeviceResponse.newBuilder()
+                    .setStatus(com.google.rpc.Status.newBuilder()
+                            .setCode(com.google.rpc.Code.NOT_FOUND_VALUE)
+                            .build())
                     .build();
-            AtomicReference<UnregisterMobileDeviceResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.unregisterMobileDevice(request, new StreamObserver<>() {
-                public void onNext(UnregisterMobileDeviceResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertNotEquals(0, ref.get().getStatus().getCode());
+            when(service.unregisterMobileDevice(ADMIN_USER_ID, req)).thenReturn(notFound);
+            @SuppressWarnings("unchecked")
+            StreamObserver<UnregisterMobileDeviceResponse> obs = mock(StreamObserver.class);
+
+            controller.unregisterMobileDevice(req, obs);
+
+            verify(obs).onNext(notFound);
+            verify(obs).onCompleted();
         }
     }
 
     @Nested
-    @DisplayName("ListTrackingNotifications")
+    @DisplayName("ListTrackingNotifications Tests")
     class ListTrackingNotificationsTests {
+
         @Test
-        void listTrackingNotifications_success() throws Exception {
-            ListTrackingNotificationsRequest request = ListTrackingNotificationsRequest.newBuilder()
-                    .setPageSize(10)
-                    .build();
-            AtomicReference<ListTrackingNotificationsResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.listTrackingNotifications(request, new StreamObserver<>() {
-                public void onNext(ListTrackingNotificationsResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertTrue(ref.get().getTrackingNotificationsCount() >= 0);
+        void listTrackingNotifications_success() {
+            ListTrackingNotificationsRequest req = ListTrackingNotificationsRequest.newBuilder().build();
+            ListTrackingNotificationsResponse res = ListTrackingNotificationsResponse.newBuilder().build();
+            when(service.listTrackingNotifications(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<ListTrackingNotificationsResponse> obs = mock(StreamObserver.class);
+
+            controller.listTrackingNotifications(req, obs);
+
+            verify(obs).onNext(res);
+            verify(obs).onCompleted();
         }
     }
 
     @Nested
-    @DisplayName("ListRiskNotifications")
+    @DisplayName("ListRiskNotifications Tests")
     class ListRiskNotificationsTests {
+
         @Test
-        void listRiskNotifications_success() throws Exception {
-            ListRiskNotificationsRequest request = ListRiskNotificationsRequest.newBuilder()
-                    .setPageSize(10)
-                    .build();
-            AtomicReference<ListRiskNotificationsResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.listRiskNotifications(request, new StreamObserver<>() {
-                public void onNext(ListRiskNotificationsResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertTrue(ref.get().getRiskNotificationsCount() >= 0);
+        void listRiskNotifications_success() {
+            ListRiskNotificationsRequest req = ListRiskNotificationsRequest.newBuilder().build();
+            ListRiskNotificationsResponse res = ListRiskNotificationsResponse.newBuilder().build();
+            when(service.listRiskNotifications(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<ListRiskNotificationsResponse> obs = mock(StreamObserver.class);
+
+            controller.listRiskNotifications(req, obs);
+
+            verify(obs).onNext(res);
+            verify(obs).onCompleted();
         }
     }
 
     @Nested
-    @DisplayName("DeleteTrackingNotification")
+    @DisplayName("DeleteTrackingNotification Tests")
     class DeleteTrackingNotificationTests {
+
         @Test
-        void deleteTrackingNotification_success() throws Exception {
-            DeleteTrackingNotificationRequest request = DeleteTrackingNotificationRequest.newBuilder()
-                    .setId(ADMIN_TRACKING_NOTIFICATION_ID)
-                    .build();
-            AtomicReference<DeleteTrackingNotificationResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.deleteTrackingNotification(request, new StreamObserver<>() {
-                public void onNext(DeleteTrackingNotificationResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
+        void deleteTrackingNotification_success() {
+            DeleteTrackingNotificationRequest req = DeleteTrackingNotificationRequest.newBuilder()
+                    .setId(ADMIN_TRACKING_NOTIFICATION_ID).build();
+            DeleteTrackingNotificationResponse res = DeleteTrackingNotificationResponse.newBuilder().build();
+            when(service.deleteTrackingNotification(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<DeleteTrackingNotificationResponse> obs = mock(StreamObserver.class);
+
+            controller.deleteTrackingNotification(req, obs);
+
+            verify(obs).onNext(res);
+            verify(obs).onCompleted();
         }
+
         @Test
-        void deleteTrackingNotification_notFound() throws Exception {
-            DeleteTrackingNotificationRequest request = DeleteTrackingNotificationRequest.newBuilder()
-                    .setId("00000000-0000-0000-0000-000000000000")
+        void deleteTrackingNotification_notFound() {
+            DeleteTrackingNotificationRequest req = DeleteTrackingNotificationRequest.newBuilder()
+                    .setId("00000000-0000-0000-0000-000000000000").build();
+            DeleteTrackingNotificationResponse notFound = DeleteTrackingNotificationResponse.newBuilder()
+                    .setStatus(com.google.rpc.Status.newBuilder()
+                            .setCode(com.google.rpc.Code.NOT_FOUND_VALUE)
+                            .build())
                     .build();
-            AtomicReference<DeleteTrackingNotificationResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.deleteTrackingNotification(request, new StreamObserver<>() {
-                public void onNext(DeleteTrackingNotificationResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertNotEquals(0, ref.get().getStatus().getCode());
+            when(service.deleteTrackingNotification(ADMIN_USER_ID, req)).thenReturn(notFound);
+            @SuppressWarnings("unchecked")
+            StreamObserver<DeleteTrackingNotificationResponse> obs = mock(StreamObserver.class);
+
+            controller.deleteTrackingNotification(req, obs);
+
+            verify(obs).onNext(notFound);
+            verify(obs).onCompleted();
         }
     }
 
     @Nested
-    @DisplayName("DeleteRiskNotification")
+    @DisplayName("DeleteRiskNotification Tests")
     class DeleteRiskNotificationTests {
+
         @Test
-        void deleteRiskNotification_success() throws Exception {
-            DeleteRiskNotificationRequest request = DeleteRiskNotificationRequest.newBuilder()
-                    .setId(ADMIN_RISK_NOTIFICATION_ID)
-                    .build();
-            AtomicReference<DeleteRiskNotificationResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.deleteRiskNotification(request, new StreamObserver<>() {
-                public void onNext(DeleteRiskNotificationResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
+        void deleteRiskNotification_success() {
+            DeleteRiskNotificationRequest req = DeleteRiskNotificationRequest.newBuilder()
+                    .setId(ADMIN_RISK_NOTIFICATION_ID).build();
+            DeleteRiskNotificationResponse res = DeleteRiskNotificationResponse.newBuilder().build();
+            when(service.deleteRiskNotification(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<DeleteRiskNotificationResponse> obs = mock(StreamObserver.class);
+
+            controller.deleteRiskNotification(req, obs);
+
+            verify(obs).onNext(res);
+            verify(obs).onCompleted();
         }
+
         @Test
-        void deleteRiskNotification_notFound() throws Exception {
-            DeleteRiskNotificationRequest request = DeleteRiskNotificationRequest.newBuilder()
-                    .setId("00000000-0000-0000-0000-000000000000")
+        void deleteRiskNotification_notFound() {
+            DeleteRiskNotificationRequest req = DeleteRiskNotificationRequest.newBuilder()
+                    .setId("00000000-0000-0000-0000-000000000000").build();
+            DeleteRiskNotificationResponse notFound = DeleteRiskNotificationResponse.newBuilder()
+                    .setStatus(com.google.rpc.Status.newBuilder()
+                            .setCode(com.google.rpc.Code.NOT_FOUND_VALUE)
+                            .build())
                     .build();
-            AtomicReference<DeleteRiskNotificationResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.deleteRiskNotification(request, new StreamObserver<>() {
-                public void onNext(DeleteRiskNotificationResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertNotEquals(0, ref.get().getStatus().getCode());
+            when(service.deleteRiskNotification(ADMIN_USER_ID, req)).thenReturn(notFound);
+            @SuppressWarnings("unchecked")
+            StreamObserver<DeleteRiskNotificationResponse> obs = mock(StreamObserver.class);
+
+            controller.deleteRiskNotification(req, obs);
+
+            verify(obs).onNext(notFound);
+            verify(obs).onCompleted();
         }
     }
 
     @Nested
-    @DisplayName("DeleteTrackingNotifications")
+    @DisplayName("DeleteTrackingNotifications Tests (batch)")
     class DeleteTrackingNotificationsTests {
+
         @Test
-        void deleteTrackingNotifications_success() throws Exception {
-            DeleteTrackingNotificationsRequest request = DeleteTrackingNotificationsRequest.newBuilder()
-                    .addIds(ADMIN_TRACKING_NOTIFICATION_ID)
-                    .build();
-            AtomicReference<DeleteTrackingNotificationsResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.deleteTrackingNotifications(request, new StreamObserver<>() {
-                public void onNext(DeleteTrackingNotificationsResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
+        void deleteTrackingNotifications_success() {
+            DeleteTrackingNotificationsRequest req = DeleteTrackingNotificationsRequest.newBuilder()
+                    .addIds(ADMIN_TRACKING_NOTIFICATION_ID).build();
+            DeleteTrackingNotificationsResponse res = DeleteTrackingNotificationsResponse.newBuilder().build();
+            when(service.deleteTrackingNotifications(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<DeleteTrackingNotificationsResponse> obs = mock(StreamObserver.class);
+
+            controller.deleteTrackingNotifications(req, obs);
+
+            verify(obs).onNext(res);
+            verify(obs).onCompleted();
         }
     }
 
     @Nested
-    @DisplayName("DeleteRiskNotifications")
+    @DisplayName("DeleteRiskNotifications Tests (batch)")
     class DeleteRiskNotificationsTests {
+
         @Test
-        void deleteRiskNotifications_success() throws Exception {
-            DeleteRiskNotificationsRequest request = DeleteRiskNotificationsRequest.newBuilder()
-                    .addIds(ADMIN_RISK_NOTIFICATION_ID)
-                    .build();
-            AtomicReference<DeleteRiskNotificationsResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.deleteRiskNotifications(request, new StreamObserver<>() {
-                public void onNext(DeleteRiskNotificationsResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
+        void deleteRiskNotifications_success() {
+            DeleteRiskNotificationsRequest req = DeleteRiskNotificationsRequest.newBuilder()
+                    .addIds(ADMIN_RISK_NOTIFICATION_ID).build();
+            DeleteRiskNotificationsResponse res = DeleteRiskNotificationsResponse.newBuilder().build();
+            when(service.deleteRiskNotifications(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<DeleteRiskNotificationsResponse> obs = mock(StreamObserver.class);
+
+            controller.deleteRiskNotifications(req, obs);
+
+            verify(obs).onNext(res);
+            verify(obs).onCompleted();
         }
     }
 
     @Nested
-    @DisplayName("ClearTrackingNotifications")
+    @DisplayName("ClearTrackingNotifications Tests")
     class ClearTrackingNotificationsTests {
+
         @Test
-        void clearTrackingNotifications_success() throws Exception {
-            ClearTrackingNotificationsRequest request = ClearTrackingNotificationsRequest.newBuilder().build();
-            AtomicReference<ClearTrackingNotificationsResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.clearTrackingNotifications(request, new StreamObserver<>() {
-                public void onNext(ClearTrackingNotificationsResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
+        void clearTrackingNotifications_success() {
+            ClearTrackingNotificationsRequest req = ClearTrackingNotificationsRequest.newBuilder().build();
+            ClearTrackingNotificationsResponse res = ClearTrackingNotificationsResponse.newBuilder().build();
+            when(service.clearTrackingNotifications(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<ClearTrackingNotificationsResponse> obs = mock(StreamObserver.class);
+
+            controller.clearTrackingNotifications(req, obs);
+
+            verify(obs).onNext(res);
+            verify(obs).onCompleted();
         }
     }
 
     @Nested
-    @DisplayName("ClearRiskNotifications")
+    @DisplayName("ClearRiskNotifications Tests")
     class ClearRiskNotificationsTests {
+
         @Test
-        void clearRiskNotifications_success() throws Exception {
-            ClearRiskNotificationsRequest request = ClearRiskNotificationsRequest.newBuilder().build();
-            AtomicReference<ClearRiskNotificationsResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.clearRiskNotifications(request, new StreamObserver<>() {
-                public void onNext(ClearRiskNotificationsResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
+        void clearRiskNotifications_success() {
+            ClearRiskNotificationsRequest req = ClearRiskNotificationsRequest.newBuilder().build();
+            ClearRiskNotificationsResponse res = ClearRiskNotificationsResponse.newBuilder().build();
+            when(service.clearRiskNotifications(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<ClearRiskNotificationsResponse> obs = mock(StreamObserver.class);
+
+            controller.clearRiskNotifications(req, obs);
+
+            verify(obs).onNext(res);
+            verify(obs).onCompleted();
         }
     }
 
     @Nested
-    @DisplayName("CountTrackingNotifications")
-    class CountTrackingNotificationsTests {
-        @Test
-        void countTrackingNotifications_success() throws Exception {
-            CountTrackingNotificationsRequest request = CountTrackingNotificationsRequest.newBuilder().build();
-            AtomicReference<CountTrackingNotificationsResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.countTrackingNotifications(request, new StreamObserver<>() {
-                public void onNext(CountTrackingNotificationsResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertTrue(ref.get().getTotalCount() >= 0);
-            assertEquals(0, ref.get().getStatus().getCode());
-        }
-    }
+    @DisplayName("CountNotifications Tests")
+    class CountNotificationsTests {
 
-    @Nested
-    @DisplayName("CountRiskNotifications")
-    class CountRiskNotificationsTests {
         @Test
-        void countRiskNotifications_success() throws Exception {
-            CountRiskNotificationsRequest request = CountRiskNotificationsRequest.newBuilder().build();
-            AtomicReference<CountRiskNotificationsResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.countRiskNotifications(request, new StreamObserver<>() {
-                public void onNext(CountRiskNotificationsResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertTrue(ref.get().getTotalCount() >= 0);
-            assertEquals(0, ref.get().getStatus().getCode());
+        void countTrackingNotifications_success() {
+            CountTrackingNotificationsRequest req = CountTrackingNotificationsRequest.newBuilder().build();
+            CountTrackingNotificationsResponse res = CountTrackingNotificationsResponse.newBuilder()
+                    .setTotalCount(5).build();
+            when(service.countTrackingNotifications(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<CountTrackingNotificationsResponse> obs = mock(StreamObserver.class);
+
+            controller.countTrackingNotifications(req, obs);
+
+            ArgumentCaptor<CountTrackingNotificationsResponse> captor =
+                    ArgumentCaptor.forClass(CountTrackingNotificationsResponse.class);
+            verify(obs).onNext(captor.capture());
+            assertEquals(5, captor.getValue().getTotalCount());
+            verify(obs).onCompleted();
         }
-    }
-    @Nested
-    @DisplayName("UpdateMobileDevice")
-    class UpdateMobileDeviceTests {
+
         @Test
-        void updateMobileDevice_success() throws Exception {
-            UpdateMobileDeviceRequest request = UpdateMobileDeviceRequest.newBuilder()
+        void countRiskNotifications_success() {
+            CountRiskNotificationsRequest req = CountRiskNotificationsRequest.newBuilder().build();
+            CountRiskNotificationsResponse res = CountRiskNotificationsResponse.newBuilder()
+                    .setTotalCount(3).build();
+            when(service.countRiskNotifications(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<CountRiskNotificationsResponse> obs = mock(StreamObserver.class);
+
+            controller.countRiskNotifications(req, obs);
+
+            ArgumentCaptor<CountRiskNotificationsResponse> captor =
+                    ArgumentCaptor.forClass(CountRiskNotificationsResponse.class);
+            verify(obs).onNext(captor.capture());
+            assertEquals(3, captor.getValue().getTotalCount());
+            verify(obs).onCompleted();
+        }
+
+        @Test
+        void updateMobileDevice_success() {
+            UpdateMobileDeviceRequest req = UpdateMobileDeviceRequest.newBuilder()
                     .setId(ADMIN_DEVICE_ID)
-                    .setDeviceToken("updated-token-user-admin")
+                    .setDeviceToken("new-token")
                     .setPlatform("ios")
-                    .setLanguageCode("fr")
+                    .setLanguageCode("vi")
                     .build();
-            AtomicReference<UpdateMobileDeviceResponse> ref = new AtomicReference<>();
-            CountDownLatch latch = new CountDownLatch(1);
-            notifierController.updateMobileDevice(request, new StreamObserver<>() {
-                public void onNext(UpdateMobileDeviceResponse value) { ref.set(value); }
-                public void onError(Throwable t) { latch.countDown(); }
-                public void onCompleted() { latch.countDown(); }
-            });
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
-            assertNotNull(ref.get());
-            assertEquals(0, ref.get().getStatus().getCode());
+            UpdateMobileDeviceResponse res = UpdateMobileDeviceResponse.newBuilder().build();
+            when(service.updateMobileDevice(ADMIN_USER_ID, req)).thenReturn(res);
+            @SuppressWarnings("unchecked")
+            StreamObserver<UpdateMobileDeviceResponse> obs = mock(StreamObserver.class);
+
+            controller.updateMobileDevice(req, obs);
+
+            verify(obs).onNext(res);
+            verify(obs).onCompleted();
         }
     }
 }

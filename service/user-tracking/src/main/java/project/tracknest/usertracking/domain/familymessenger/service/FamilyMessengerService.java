@@ -5,8 +5,10 @@ import project.tracknest.usertracking.proto.lib.ListMessagesResponse;
 import project.tracknest.usertracking.proto.lib.SendMessageRequest;
 import project.tracknest.usertracking.proto.lib.SendMessageResponse;
 
-public interface FamilyMessengerService {
-    SendMessageResponse sendFamilyMessage(SendMessageRequest request);
+import java.util.UUID;
 
-    ListMessagesResponse listFamilyMessages(ListMessagesRequest request);
+public interface FamilyMessengerService {
+    SendMessageResponse sendFamilyMessage(UUID userId, SendMessageRequest request);
+
+    ListMessagesResponse listFamilyMessages(UUID userId, ListMessagesRequest request);
 }

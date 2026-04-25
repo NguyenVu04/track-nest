@@ -13,6 +13,8 @@ import java.util.UUID;
 public interface AnomalyDetectorHandlerAnomalyRunRepository extends JpaRepository<AnomalyRun, UUID> {
     Optional<AnomalyRun> findFirstByUserIdAndResolvedFalseOrderByLastSeenAtDesc(UUID userId);
 
+    Optional<AnomalyRun> findFirstByUserIdOrderByLastSeenAtDesc(UUID userId);
+
     @Modifying
     @Query("DELETE FROM AnomalyRun ar WHERE ar.resolved = true AND ar.lastSeenAt < :threshold")
     int deleteResolvedBefore(@Param("threshold") OffsetDateTime threshold);

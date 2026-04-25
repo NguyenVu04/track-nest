@@ -22,8 +22,8 @@ public final class PageTokenCodec {
             byte[] decoded = Base64.getUrlDecoder().decode(token);
             return MAPPER.readValue(decoded, PageToken.class);
         } catch (Exception e) {
-            log.warn("Invalid page_token: {}", token, e);
-            throw new IllegalArgumentException("Invalid page_token", e);
+            log.warn("Invalid page_token — treating as first page");
+            return null;
         }
     }
 

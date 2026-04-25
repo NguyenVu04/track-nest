@@ -18,8 +18,12 @@ import project.tracknest.emergencyops.domain.emergencyrequestmanager.service.Eme
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -32,9 +36,12 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
 
     private final KeycloakService keycloakService;
 
-    private GetEmergencyRequestsResponse mapToGetEmergencyRequestsResponse(EmergencyRequest request) {
-        KeycloakUserProfile senderProfile = keycloakService.getUserProfile(request.getSenderId());
-        KeycloakUserProfile targetProfile = keycloakService.getUserProfile(request.getTargetId());
+    private GetEmergencyRequestsResponse mapToGetEmergencyRequestsResponse(
+            EmergencyRequest request,
+            Map<UUID, KeycloakUserProfile> profiles
+    ) {
+        KeycloakUserProfile senderProfile = profiles.get(request.getSenderId());
+        KeycloakUserProfile targetProfile = profiles.get(request.getTargetId());
 
         return new GetEmergencyRequestsResponse(
             request.getId(),
@@ -65,6 +72,7 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
     }
 
     @Override
+    @Transactional(readOnly = true)
     public GetRequestCountResponse getEmergencyRequestCount(UUID userId, EmergencyRequestStatus.Status status) {
         String statusValue = status != null ? status.getValue() : null;
 
@@ -84,8 +92,15 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
         Page<EmergencyRequest> emergencyRequestPage = emergencyRequestRepository
                 .findServiceEmergencyRequests(userId, statusValue, pageable);
 
-        List<GetEmergencyRequestsResponse> responseContent = emergencyRequestPage.stream()
-                .map(this::mapToGetEmergencyRequestsResponse)
+        List<EmergencyRequest> requests = emergencyRequestPage.getContent();
+        Set<UUID> userIds = requests.stream()
+                .flatMap(r -> Stream.of(r.getSenderId(), r.getTargetId()))
+                .collect(Collectors.toSet());
+        Map<UUID, KeycloakUserProfile> profiles = userIds.parallelStream()
+                .collect(Collectors.toMap(id -> id, keycloakService::getUserProfile));
+
+        List<GetEmergencyRequestsResponse> responseContent = requests.stream()
+                .map(r -> mapToGetEmergencyRequestsResponse(r, profiles))
                 .toList();
 
         return new PageResponse<>(
@@ -110,11 +125,7 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
         }
 
         EmergencyRequest request = requestOpt.get();
-        if (!request.getStatus()
-                .getName()
-                .equals(EmergencyRequestStatus.Status.PENDING
-                        .getValue())
-        ) {
+        if (!request.getStatus().is(EmergencyRequestStatus.Status.PENDING)) {
             log.warn("Emergency request with ID {} for service ID {} is not in PENDING status when trying to accept request", requestId, userId);
             throw new IllegalArgumentException("Only emergency requests in PENDING status can be accepted");
         }
@@ -156,6 +167,7 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
     }
 
     @Override
+    @Transactional
     public RejectEmergencyRequestResponse rejectEmergencyRequest(UUID userId, UUID requestId) {
         Optional<EmergencyRequest> requestOpt = emergencyRequestRepository
                 .findByIdAndEmergencyService_Id(requestId, userId);
@@ -166,11 +178,7 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
         }
 
         EmergencyRequest request = requestOpt.get();
-        if (!request.getStatus()
-                .getName()
-                .equals(EmergencyRequestStatus.Status.PENDING
-                        .getValue())
-        ) {
+        if (!request.getStatus().is(EmergencyRequestStatus.Status.PENDING)) {
             log.warn("Emergency request with ID {} for service ID {} is not in PENDING status when trying to reject request", requestId, userId);
             throw new IllegalArgumentException("Only emergency requests in PENDING status can be rejected");
         }
@@ -213,11 +221,7 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
         }
 
         EmergencyRequest request = requestOpt.get();
-        if (!request.getStatus()
-                .getName()
-                .equals(EmergencyRequestStatus.Status.ACCEPTED
-                        .getValue())
-        ) {
+        if (!request.getStatus().is(EmergencyRequestStatus.Status.ACCEPTED)) {
             log.warn("Emergency request with ID {} for service ID {} is not in ACCEPTED status when trying to close request", requestId, userId);
             throw new IllegalArgumentException("Only emergency requests in ACCEPTED status can be closed");
         }
@@ -285,6 +289,7 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
     }
 
     @Override
+    @Transactional(readOnly = true)
     public GetEmergencyServiceLocationResponse getEmergencyServiceLocation(UUID userId) {
         Optional<EmergencyService> serviceOpt = emergencyServiceRepository
                 .findById(userId);
