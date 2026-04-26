@@ -178,7 +178,7 @@ jobs:
       - name: Run Jest
         working-directory: frontend/track-nest-web
         run: |
-          output=$(npm test 2>&1) || true
+          output=$(npm test -- --coverage 2>&1) || true
           echo "$output"
           if echo "$output" | grep -q "No tests found"; then
             echo "No test files found yet — passing as placeholder."
@@ -191,6 +191,7 @@ jobs:
         with:
           name: track-nest-web-coverage
           path: frontend/track-nest-web/coverage/lcov.info
+          if-no-files-found: ignore
           retention-days: 1
 
   # ── 6. TrackNest mobile ───────────────────────────────────────────
@@ -233,9 +234,8 @@ jobs:
 
   # ── 7. Aggregate SonarCloud scan (single project) ─────────────────
   # Always runs after test jobs (unless workflow is cancelled).
-  # Recompiles all Java services (no tests) to produce class files for
-  # deep sonar analysis, then downloads available coverage artifacts.
-  # Missing artifacts (component not tested this run) are skipped silently.
+  # Runs all Java tests inline (guarantees fresh JaCoCo on every scan).
+  # Frontend lcov artifacts are downloaded only when the test job ran.
   sonar-scan:
     name: SonarCloud Scan
     needs:
@@ -263,35 +263,19 @@ jobs:
           chmod +x service/emergency-ops/gradlew
           chmod +x service/user-tracking/gradlew
 
-      - name: Compile criminal-reports
+      - name: Test + JaCoCo – criminal-reports
         working-directory: service/criminal-reports
-        run: ./gradlew compileJava compileTestJava --no-daemon
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: 'true'
+        run: ./gradlew test jacocoTestReport --no-daemon
 
-      - name: Compile emergency-ops
+      - name: Test + JaCoCo – emergency-ops
         working-directory: service/emergency-ops
-        run: ./gradlew compileJava compileTestJava --no-daemon
+        run: ./gradlew test jacocoTestReport --no-daemon
 
-      - name: Generate protos + compile user-tracking
+      - name: Generate protos + test + JaCoCo – user-tracking
         working-directory: service/user-tracking
-        run: ./gradlew generateProto compileJava compileTestJava --no-daemon
-
-      - uses: actions/download-artifact@v4
-        if: needs.test-criminal-reports.result == 'success'
-        with:
-          name: jacoco-criminal-reports
-          path: service/criminal-reports/build/reports/jacoco/test/
-
-      - uses: actions/download-artifact@v4
-        if: needs.test-emergency-ops.result == 'success'
-        with:
-          name: jacoco-emergency-ops
-          path: service/emergency-ops/build/reports/jacoco/test/
-
-      - uses: actions/download-artifact@v4
-        if: needs.test-user-tracking.result == 'success'
-        with:
-          name: jacoco-user-tracking
-          path: service/user-tracking/build/reports/jacoco/test/
+        run: ./gradlew generateProto test jacocoTestReport --no-daemon
 
       - uses: actions/download-artifact@v4
         if: needs.test-track-nest-web.result == 'success'

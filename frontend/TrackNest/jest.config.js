@@ -9,4 +9,14 @@ module.exports = {
   collectCoverage: true,
   coverageReporters: ['lcov', 'text'],
   coverageDirectory: 'coverage',
+  collectCoverageFrom: [
+    'app/**/*.{ts,tsx}',
+    'components/**/*.{ts,tsx}',
+    'contexts/**/*.{ts,tsx}',
+    'services/**/*.{ts,tsx}',
+    'hooks/**/*.{ts,tsx}',
+    'utils/**/*.{ts,tsx}',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+  ],
 }
