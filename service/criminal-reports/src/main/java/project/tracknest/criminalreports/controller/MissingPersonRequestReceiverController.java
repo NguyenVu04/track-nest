@@ -2,7 +2,11 @@ package project.tracknest.criminalreports.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import project.tracknest.criminalreports.configuration.security.SecurityUtils;
 import project.tracknest.criminalreports.domain.missingpersonrequestreceiver.MissingPersonRequestReceiverService;
 import project.tracknest.criminalreports.domain.reportmanager.dto.MissingPersonReportResponse;
 
@@ -17,7 +21,6 @@ public class MissingPersonRequestReceiverController {
 
     @PostMapping("/submit")
     public ResponseEntity<MissingPersonReportResponse> submitMissingPersonReport(
-            @RequestParam UUID userId,
             @RequestParam UUID reporterId,
             @RequestParam String title,
             @RequestParam String fullName,
@@ -25,11 +28,18 @@ public class MissingPersonRequestReceiverController {
             @RequestParam(required = false) String photo,
             @RequestParam(required = false) String contactEmail,
             @RequestParam String contactPhone,
-            @RequestParam LocalDate date,
-            @RequestParam String content) {
+            @RequestParam LocalDate date) {
+        UUID userId = SecurityUtils.getCurrentUserId();
         MissingPersonReportResponse response = service.submitMissingPersonReport(
-                userId, reporterId, title, fullName, personalId, photo, 
-                contactEmail, contactPhone, date, content);
+                userId,
+                reporterId,
+                title,
+                fullName,
+                personalId,
+                photo,
+                contactEmail,
+                contactPhone,
+                date);
         return ResponseEntity.ok(response);
     }
 }

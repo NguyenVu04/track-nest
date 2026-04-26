@@ -13,10 +13,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import project.tracknest.criminalreports.core.datatype.KeycloakPrincipal;
 import project.tracknest.criminalreports.core.datatype.KeycloakUserDetails;
+import project.tracknest.criminalreports.core.entity.Reporter;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -25,6 +28,12 @@ public class KeycloakFilter extends OncePerRequestFilter {
     private static final int MAX_HEADER_LENGTH = 4096;
     private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer [A-Za-z0-9\\-_=]+\\.[A-Za-z0-9\\-_=]+\\.?[A-Za-z0-9\\-_.+/=]*$");
     private static final String AUTHORIZATION_KEY = "Authorization";
+
+    private final SecurityReporterRepository reporterRepository;
+
+    public KeycloakFilter(SecurityReporterRepository reporterRepository) {
+        this.reporterRepository = reporterRepository;
+    }
 
     @Override
     protected void doFilterInternal(
@@ -58,6 +67,26 @@ public class KeycloakFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(principal, authorizationHeader, roles);
                 authentication.setDetails(userDetails);
+
+                boolean isReporter = Optional.ofNullable(decoded.getRealmAccess())
+                        .map(KeycloakAuthorizationHeaderRealmAccess::getRoles)
+                        .orElse(Collections.emptyList())
+                        .contains("REPORTER");
+
+                if (isReporter) {
+                    Optional<Reporter> serviceOpt = reporterRepository
+                            .findById(decoded.getUserId());
+                    if (serviceOpt.isEmpty()) {
+                        log.warn("No emergency service found for ID: {}", decoded.getUserId());
+
+                        Reporter reporter = Reporter
+                                .builder()
+                                .id(decoded.getUserId())
+                                .build();
+                        reporterRepository.save(reporter);
+                    }
+                }
+
                 log.info("Setting security context with user: {}", principal.getName());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception ex) {

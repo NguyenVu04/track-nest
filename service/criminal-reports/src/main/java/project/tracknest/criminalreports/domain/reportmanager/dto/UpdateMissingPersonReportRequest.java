@@ -30,9 +30,6 @@ public class UpdateMissingPersonReportRequest {
     @NotNull(message = "Date is required")
     private LocalDate date;
 
-    @NotBlank(message = "Content is required")
-    private String content;
-
     private Double latitude;
 
     private Double longitude;

@@ -2,11 +2,14 @@ package project.tracknest.criminalreports.domain.reportmanager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import project.tracknest.criminalreports.configuration.objectstorage.ObjectStorage;
 import project.tracknest.criminalreports.core.datatype.PageResponse;
 import project.tracknest.criminalreports.core.datatype.ReportStatusConstants;
@@ -29,7 +32,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 class ReportManagerServiceImpl implements ReportManagerService {
-    
+
     private final MissingPersonReportRepository missingPersonReportRepository;
     private final CrimeReportRepository crimeReportRepository;
     private final GuidelinesDocumentRepository guidelinesDocumentRepository;
@@ -37,27 +40,36 @@ class ReportManagerServiceImpl implements ReportManagerService {
     private final MissingPersonReportStatusRepository statusRepository;
     private final ObjectStorage objectStorage;
 
-    @org.springframework.beans.factory.annotation.Value("${app.minio.buckets.criminal-reports:criminal-reports}")
+    @Value("${app.minio.buckets.criminal-reports:criminal-reports}")
     private String bucketName;
 
+    @Value("${app.minio.public-url:http://localhost:38080/criminal-reports/file}")
+    private String publicUrl;
+
     private static final String DEFAULT_STATUS = ReportStatusConstants.PENDING;
-    
+
+    // ── Missing Person Reports ────────────────────────────────────────────────
+
     @Override
     @Transactional
     public MissingPersonReportResponse createMissingPersonReport(UUID reporterId, CreateMissingPersonReportRequest request) {
         Reporter reporter = reporterRepository.findById(reporterId)
                 .orElseGet(() -> reporterRepository.save(Reporter.builder().id(reporterId).build()));
-        
+
         MissingPersonReportStatus status = statusRepository.findByName(DEFAULT_STATUS)
                 .orElseGet(() -> statusRepository.save(MissingPersonReportStatus.builder().name(DEFAULT_STATUS).build()));
-        
+
+        UUID reportId = UUID.randomUUID();
+        String contentUrl = buildContentUrl(reportId);
+
         MissingPersonReport report = MissingPersonReport.builder()
+                .id(reportId)
                 .title(request.getTitle())
                 .fullName(request.getFullName())
                 .personalId(request.getPersonalId())
                 .photo(request.getPhoto() != null ? request.getPhoto() : "")
                 .date(request.getDate())
-                .content(request.getContent())
+                .content(contentUrl)
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
                 .contactEmail(request.getContactEmail())
@@ -67,86 +79,79 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .status(status)
                 .createdAt(OffsetDateTime.now())
                 .build();
-        
-        MissingPersonReport saved = missingPersonReportRepository.save(report);
-        return mapToMissingPersonReportResponse(saved);
+
+        return mapToMissingPersonReportResponse(missingPersonReportRepository.save(report));
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public MissingPersonReportResponse getMissingPersonReport(UUID reporterId, UUID reportId) {
-        MissingPersonReport report = missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
-                .orElseThrow(() -> new RuntimeException("Missing person report not found"));
-        return mapToMissingPersonReportResponse(report);
+        return mapToMissingPersonReportResponse(findMissingPersonReportOwned(reporterId, reportId));
     }
-    
+
     @Override
     @Transactional
     public MissingPersonReportResponse updateMissingPersonReport(UUID reporterId, UUID reportId, UpdateMissingPersonReportRequest request) {
-        MissingPersonReport report = missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
-                .orElseThrow(() -> new RuntimeException("Missing person report not found"));
+        MissingPersonReport report = findMissingPersonReportOwned(reporterId, reportId);
+        String currentStatus = report.getStatus() != null ? report.getStatus().getName() : null;
+        if (ReportStatusConstants.PUBLISHED.equals(currentStatus) || ReportStatusConstants.REJECTED.equals(currentStatus)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cannot update a report that is already " + currentStatus);
+        }
         report.setTitle(request.getTitle());
         report.setFullName(request.getFullName());
         report.setPersonalId(request.getPersonalId());
-        report.setPhoto(request.getPhoto() != null ? request.getPhoto() : report.getPhoto());
+        if (request.getPhoto() != null) report.setPhoto(request.getPhoto());
         report.setDate(request.getDate());
-        report.setContent(request.getContent());
         if (request.getLatitude() != null) report.setLatitude(request.getLatitude());
         if (request.getLongitude() != null) report.setLongitude(request.getLongitude());
         report.setContactEmail(request.getContactEmail());
         report.setContactPhone(request.getContactPhone());
-        MissingPersonReport saved = missingPersonReportRepository.save(report);
-        return mapToMissingPersonReportResponse(saved);
+        return mapToMissingPersonReportResponse(missingPersonReportRepository.save(report));
     }
 
     @Override
     @Transactional
     public void deleteMissingPersonReport(UUID reporterId, UUID reportId) {
-        MissingPersonReport report = missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
-                .orElseThrow(() -> new RuntimeException("Missing person report not found"));
-        missingPersonReportRepository.delete(report);
-    }
-    
-    @Override
-    @Transactional
-    public MissingPersonReportResponse publishMissingPersonReport(UUID reporterId, UUID reportId) {
-        MissingPersonReport report = missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
-                .orElseThrow(() -> new RuntimeException("Missing person report not found"));
-        
-        MissingPersonReportStatus publishedStatus = statusRepository.findByName(ReportStatusConstants.PUBLISHED)
-                .orElseThrow(() -> new RuntimeException("PUBLISHED status not found"));
-        report.setStatus(publishedStatus);
-        
-        MissingPersonReport saved = missingPersonReportRepository.save(report);
-        return mapToMissingPersonReportResponse(saved);
-    }
-    
-    @Override
-    @Transactional
-    public MissingPersonReportResponse rejectMissingPersonReport(UUID reporterId, UUID reportId) {
-        MissingPersonReport report = missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
-                .orElseThrow(() -> new RuntimeException("Missing person report not found"));
-        MissingPersonReportStatus rejectedStatus = statusRepository.findByName(ReportStatusConstants.REJECTED)
-                .orElseThrow(() -> new RuntimeException("REJECTED status not found"));
-        report.setStatus(rejectedStatus);
-        MissingPersonReport saved = missingPersonReportRepository.save(report);
-        return mapToMissingPersonReportResponse(saved);
+        missingPersonReportRepository.delete(findMissingPersonReportOwned(reporterId, reportId));
     }
 
     @Override
     @Transactional
-    public void deleteMissingPersonReportAsAdmin(UUID reportId) {
-        MissingPersonReport report = missingPersonReportRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Missing person report not found"));
-        missingPersonReportRepository.delete(report);
+    public MissingPersonReportResponse publishMissingPersonReport(UUID reporterId, UUID reportId) {
+        MissingPersonReport report = findMissingPersonReportOwned(reporterId, reportId);
+        String currentStatus = report.getStatus() != null ? report.getStatus().getName() : null;
+        if (ReportStatusConstants.PUBLISHED.equals(currentStatus) || ReportStatusConstants.REJECTED.equals(currentStatus)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cannot publish a report that is already " + currentStatus);
+        }
+        MissingPersonReportStatus publishedStatus = statusRepository.findByName(ReportStatusConstants.PUBLISHED)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "PUBLISHED status not found"));
+        report.setStatus(publishedStatus);
+        return mapToMissingPersonReportResponse(missingPersonReportRepository.save(report));
     }
-    
+
+    @Override
+    @Transactional
+    public MissingPersonReportResponse rejectMissingPersonReport(UUID reporterId, UUID reportId) {
+        MissingPersonReport report = findMissingPersonReportOwned(reporterId, reportId);
+        String currentStatus = report.getStatus() != null ? report.getStatus().getName() : null;
+        if (ReportStatusConstants.PUBLISHED.equals(currentStatus) || ReportStatusConstants.REJECTED.equals(currentStatus)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cannot reject a report that is already " + currentStatus);
+        }
+        MissingPersonReportStatus rejectedStatus = statusRepository.findByName(ReportStatusConstants.REJECTED)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "REJECTED status not found"));
+        report.setStatus(rejectedStatus);
+        return mapToMissingPersonReportResponse(missingPersonReportRepository.save(report));
+    }
+
     @Override
     @Transactional(readOnly = true)
     public PageResponse<MissingPersonReportResponse> listMissingPersonReports(UUID reporterId, String status, boolean isPublic, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<MissingPersonReport> reports;
-        
+
         if (reporterId != null) {
             if (status != null && !status.isEmpty()) {
                 reports = missingPersonReportRepository.findByReporterIdAndStatus(reporterId, status, pageRequest);
@@ -162,19 +167,25 @@ class ReportManagerServiceImpl implements ReportManagerService {
         } else {
             reports = missingPersonReportRepository.findAll(pageRequest);
         }
-        
+
         return mapToPageResponse(reports.map(this::mapToMissingPersonReportResponse));
     }
-    
+
+    // ── Crime Reports ─────────────────────────────────────────────────────────
+
     @Override
     @Transactional
     public CrimeReportResponse createCrimeReport(UUID reporterId, CreateCrimeReportRequest request) {
         Reporter reporter = reporterRepository.findById(reporterId)
                 .orElseGet(() -> reporterRepository.save(Reporter.builder().id(reporterId).build()));
-        
+
+        UUID reportId = UUID.randomUUID();
+        String contentUrl = buildContentUrl(reportId);
+
         CrimeReport report = CrimeReport.builder()
+                .id(reportId)
                 .title(request.getTitle())
-                .content(request.getContent())
+                .content(contentUrl)
                 .severity(request.getSeverity())
                 .date(request.getDate())
                 .longitude(request.getLongitude())
@@ -188,26 +199,24 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .build();
-        
-        CrimeReport saved = crimeReportRepository.save(report);
-        return mapToCrimeReportResponse(saved);
+
+        return mapToCrimeReportResponse(crimeReportRepository.save(report));
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public CrimeReportResponse getCrimeReport(UUID reporterId, UUID reportId) {
-        CrimeReport report = crimeReportRepository.findByReporterIdAndId(reporterId, reportId)
-                .orElseThrow(() -> new RuntimeException("Crime report not found"));
-        return mapToCrimeReportResponse(report);
+        return mapToCrimeReportResponse(findCrimeReportOwned(reporterId, reportId));
     }
 
     @Override
     @Transactional
     public CrimeReportResponse updateCrimeReport(UUID reporterId, UUID reportId, UpdateCrimeReportRequest request) {
-        CrimeReport report = crimeReportRepository.findByReporterIdAndId(reporterId, reportId)
-                .orElseThrow(() -> new RuntimeException("Crime report not found"));
+        CrimeReport report = findCrimeReportOwned(reporterId, reportId);
+        if (report.isPublic()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot update a published crime report");
+        }
         report.setTitle(request.getTitle());
-        report.setContent(request.getContent());
         report.setSeverity(request.getSeverity());
         report.setDate(request.getDate());
         report.setNumberOfVictims(request.getNumberOfVictims());
@@ -215,47 +224,37 @@ class ReportManagerServiceImpl implements ReportManagerService {
         report.setArrested(request.isArrested());
         if (request.getPhotos() != null) report.setPhotos(request.getPhotos());
         report.setUpdatedAt(OffsetDateTime.now());
-        CrimeReport saved = crimeReportRepository.save(report);
-        return mapToCrimeReportResponse(saved);
+        return mapToCrimeReportResponse(crimeReportRepository.save(report));
     }
 
     @Override
     @Transactional
     public CrimeReportResponse publishCrimeReport(UUID reporterId, UUID reportId) {
-        CrimeReport report = crimeReportRepository.findByReporterIdAndId(reporterId, reportId)
-                .orElseThrow(() -> new RuntimeException("Crime report not found"));
+        CrimeReport report = findCrimeReportOwned(reporterId, reportId);
+        if (report.isPublic()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Crime report is already published");
+        }
         report.setPublic(true);
-        CrimeReport saved = crimeReportRepository.save(report);
-        return mapToCrimeReportResponse(saved);
+        return mapToCrimeReportResponse(crimeReportRepository.save(report));
     }
-    
+
     @Override
     @Transactional
     public void deleteCrimeReport(UUID reporterId, UUID reportId) {
-        CrimeReport report = crimeReportRepository.findByReporterIdAndId(reporterId, reportId)
-                .orElseThrow(() -> new RuntimeException("Crime report not found"));
-        crimeReportRepository.delete(report);
+        crimeReportRepository.delete(findCrimeReportOwned(reporterId, reportId));
     }
-    
-    @Override
-    @Transactional
-    public void deleteCrimeReportAsAdmin(UUID reportId) {
-        CrimeReport report = crimeReportRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Crime report not found"));
-        crimeReportRepository.delete(report);
-    }
-    
+
     @Override
     @Transactional(readOnly = true)
     public PageResponse<CrimeReportResponse> listCrimeReports(UUID reporterId, Integer minSeverity, boolean isPublic, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<CrimeReport> reports;
-        
+
         if (reporterId != null) {
             if (minSeverity != null) {
                 reports = crimeReportRepository.findByReporterIdAndMinSeverity(reporterId, minSeverity, pageRequest);
             } else if (isPublic) {
-                reports = crimeReportRepository.findAllPublic(pageRequest);
+                reports = crimeReportRepository.findByReporterIdAndIsPublic(reporterId, true, pageRequest);
             } else {
                 reports = crimeReportRepository.findByReporterId(reporterId, pageRequest);
             }
@@ -268,110 +267,121 @@ class ReportManagerServiceImpl implements ReportManagerService {
         } else {
             reports = crimeReportRepository.findAll(pageRequest);
         }
-        
+
         return mapToPageResponse(reports.map(this::mapToCrimeReportResponse));
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public PageResponse<CrimeReportResponse> listCrimeReportsWithinRadius(double longitude, double latitude, double radius, int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size);
-        Page<CrimeReport> reports = crimeReportRepository.findAllPublicWithinRadius(longitude, latitude, radius, pageRequest);
-        return mapToPageResponse(reports.map(this::mapToCrimeReportResponse));
+        return mapToPageResponse(
+                crimeReportRepository.findAllPublicWithinRadius(longitude, latitude, radius, PageRequest.of(page, size))
+                        .map(this::mapToCrimeReportResponse));
     }
-    
+
+    // ── Guidelines Documents ─────────────────────────────────────────────────
+
     @Override
     @Transactional
     public GuidelinesDocumentResponse createGuidelinesDocument(UUID reporterId, CreateGuidelinesDocumentRequest request) {
         Reporter reporter = reporterRepository.findById(reporterId)
                 .orElseGet(() -> reporterRepository.save(Reporter.builder().id(reporterId).build()));
-        
+
+        UUID documentId = UUID.randomUUID();
+        String contentUrl = buildContentUrl(documentId);
+
         GuidelinesDocument document = GuidelinesDocument.builder()
+                .id(documentId)
                 .title(request.getTitle())
                 .abstractText(request.getAbstractText())
-                .content(request.getContent())
+                .content(contentUrl)
                 .isPublic(request.isPublic())
                 .reporter(reporter)
                 .createdAt(OffsetDateTime.now())
                 .build();
-        
-        GuidelinesDocument saved = guidelinesDocumentRepository.save(document);
-        return mapToGuidelinesDocumentResponse(saved);
+
+        return mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public GuidelinesDocumentResponse getGuidelinesDocument(UUID reporterId, UUID documentId) {
-        GuidelinesDocument document = guidelinesDocumentRepository.findByReporterIdAndId(reporterId, documentId)
-                .orElseThrow(() -> new RuntimeException("Guidelines document not found"));
-        return mapToGuidelinesDocumentResponse(document);
+        return mapToGuidelinesDocumentResponse(findGuidelinesDocumentOwned(reporterId, documentId));
     }
-    
+
     @Override
     @Transactional
     public GuidelinesDocumentResponse updateGuidelinesDocument(UUID reporterId, UUID documentId, UpdateGuidelinesDocumentRequest request) {
-        GuidelinesDocument document = guidelinesDocumentRepository.findByReporterIdAndId(reporterId, documentId)
-                .orElseThrow(() -> new RuntimeException("Guidelines document not found"));
+        GuidelinesDocument document = findGuidelinesDocumentOwned(reporterId, documentId);
+        if (document.isPublic()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot update a published guidelines document");
+        }
         document.setTitle(request.getTitle());
         document.setAbstractText(request.getAbstractText());
-        document.setContent(request.getContent());
-        GuidelinesDocument saved = guidelinesDocumentRepository.save(document);
-        return mapToGuidelinesDocumentResponse(saved);
+        return mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
     }
 
     @Override
     @Transactional
     public GuidelinesDocumentResponse publishGuidelinesDocument(UUID reporterId, UUID documentId) {
-        GuidelinesDocument document = guidelinesDocumentRepository.findByReporterIdAndId(reporterId, documentId)
-                .orElseThrow(() -> new RuntimeException("Guidelines document not found"));
+        GuidelinesDocument document = findGuidelinesDocumentOwned(reporterId, documentId);
+        if (document.isPublic()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Guidelines document is already published");
+        }
         document.setPublic(true);
-        GuidelinesDocument saved = guidelinesDocumentRepository.save(document);
-        return mapToGuidelinesDocumentResponse(saved);
+        return mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
     }
-    
+
     @Override
     @Transactional
     public void deleteGuidelinesDocument(UUID reporterId, UUID documentId) {
-        GuidelinesDocument document = guidelinesDocumentRepository.findByReporterIdAndId(reporterId, documentId)
-                .orElseThrow(() -> new RuntimeException("Guidelines document not found"));
+        GuidelinesDocument document = findGuidelinesDocumentOwned(reporterId, documentId);
         guidelinesDocumentRepository.delete(document);
         objectStorage.deleteFolder(bucketName, documentId + "/");
     }
 
     @Override
-    @Transactional
-    public void deleteGuidelinesDocumentAsAdmin(UUID documentId) {
-        GuidelinesDocument document = guidelinesDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Guidelines document not found"));
-        guidelinesDocumentRepository.delete(document);
-        objectStorage.deleteFolder(bucketName, documentId + "/");
-    }
-    
-    @Override
     @Transactional(readOnly = true)
     public PageResponse<GuidelinesDocumentResponse> listGuidelinesDocuments(UUID reporterId, boolean isPublic, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<GuidelinesDocument> documents;
-        
+
         if (reporterId != null) {
-            if (isPublic) {
-                documents = guidelinesDocumentRepository.findAllPublic(pageRequest);
-            } else {
-                documents = guidelinesDocumentRepository.findByReporterId(reporterId, pageRequest);
-            }
+            documents = isPublic
+                    ? guidelinesDocumentRepository.findByReporterIdAndIsPublic(reporterId, true, pageRequest)
+                    : guidelinesDocumentRepository.findByReporterId(reporterId, pageRequest);
         } else if (isPublic) {
             documents = guidelinesDocumentRepository.findAllPublic(pageRequest);
         } else {
             documents = guidelinesDocumentRepository.findAll(pageRequest);
         }
-        
+
         return mapToPageResponse(documents.map(this::mapToGuidelinesDocumentResponse));
     }
-    
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private MissingPersonReport findMissingPersonReportOwned(UUID reporterId, UUID reportId) {
+        return missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Missing person report not found"));
+    }
+
+    private CrimeReport findCrimeReportOwned(UUID reporterId, UUID reportId) {
+        return crimeReportRepository.findByReporterIdAndId(reporterId, reportId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Crime report not found"));
+    }
+
+    private GuidelinesDocument findGuidelinesDocumentOwned(UUID reporterId, UUID documentId) {
+        return guidelinesDocumentRepository.findByReporterIdAndId(reporterId, documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Guidelines document not found"));
+    }
+
+    private String buildContentUrl(UUID entityId) {
+        return publicUrl + "/" + bucketName + "/" + entityId + "/index.html";
+    }
+
     private MissingPersonReportResponse mapToMissingPersonReportResponse(MissingPersonReport report) {
         String statusName = report.getStatus() != null ? report.getStatus().getName() : null;
-        boolean isPublished = ReportStatusConstants.PUBLISHED.equals(statusName);
-        
         return MissingPersonReportResponse.builder()
                 .id(report.getId())
                 .title(report.getTitle())
@@ -388,10 +398,10 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .userId(report.getUserId())
                 .status(statusName)
                 .reporterId(report.getReporter() != null ? report.getReporter().getId() : null)
-                .publicFlag(isPublished)
+                .publicFlag(ReportStatusConstants.PUBLISHED.equals(statusName))
                 .build();
     }
-    
+
     private CrimeReportResponse mapToCrimeReportResponse(CrimeReport report) {
         return CrimeReportResponse.builder()
                 .id(report.getId())
@@ -423,7 +433,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .publicFlag(document.isPublic())
                 .build();
     }
-    
+
     private <T> PageResponse<T> mapToPageResponse(Page<T> page) {
         return PageResponse.<T>builder()
                 .content(page.getContent())

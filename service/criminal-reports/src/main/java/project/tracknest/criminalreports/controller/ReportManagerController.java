@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import project.tracknest.criminalreports.configuration.security.SecurityUtils;
 import project.tracknest.criminalreports.core.datatype.PageResponse;
 import project.tracknest.criminalreports.domain.reportmanager.ReportManagerService;
 import project.tracknest.criminalreports.domain.reportmanager.dto.*;
@@ -18,63 +19,51 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReportManagerController {
     private final ReportManagerService service;
-    
+
     @PostMapping("/missing-person-reports")
     public ResponseEntity<MissingPersonReportResponse> createMissingPersonReport(
-            @Valid @RequestBody CreateMissingPersonReportRequest request,
-            @RequestHeader("X-User-Id") UUID userId) {
-        MissingPersonReportResponse response = service.createMissingPersonReport(userId, request);
-        return ResponseEntity.ok(response);
+            @Valid @RequestBody CreateMissingPersonReportRequest request) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.createMissingPersonReport(userId, request));
     }
-    
+
     @GetMapping("/missing-person-reports/{reportId}")
     public ResponseEntity<MissingPersonReportResponse> getMissingPersonReport(
-            @PathVariable UUID reportId,
-            @RequestHeader("X-User-Id") UUID userId) {
-        MissingPersonReportResponse response = service.getMissingPersonReport(userId, reportId);
-        return ResponseEntity.ok(response);
+            @PathVariable UUID reportId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.getMissingPersonReport(userId, reportId));
     }
-    
+
     @PutMapping("/missing-person-reports/{reportId}")
     public ResponseEntity<MissingPersonReportResponse> updateMissingPersonReport(
             @PathVariable UUID reportId,
-            @Valid @RequestBody UpdateMissingPersonReportRequest request,
-            @RequestHeader("X-User-Id") UUID userId) {
-        MissingPersonReportResponse response = service.updateMissingPersonReport(userId, reportId, request);
-        return ResponseEntity.ok(response);
+            @Valid @RequestBody UpdateMissingPersonReportRequest request) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.updateMissingPersonReport(userId, reportId, request));
     }
 
     @DeleteMapping("/missing-person-reports/{reportId}")
     public ResponseEntity<Void> deleteMissingPersonReport(
-            @PathVariable UUID reportId,
-            @RequestHeader("X-User-Id") UUID userId) {
+            @PathVariable UUID reportId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
         service.deleteMissingPersonReport(userId, reportId);
         return ResponseEntity.noContent().build();
     }
-    
+
     @PostMapping("/missing-person-reports/{reportId}/publish")
     public ResponseEntity<MissingPersonReportResponse> publishMissingPersonReport(
-            @PathVariable UUID reportId,
-            @RequestHeader("X-User-Id") UUID userId) {
-        MissingPersonReportResponse response = service.publishMissingPersonReport(userId, reportId);
-        return ResponseEntity.ok(response);
-    }
-    
-    @PostMapping("/missing-person-reports/{reportId}/reject")
-    public ResponseEntity<MissingPersonReportResponse> rejectMissingPersonReport(
-            @PathVariable UUID reportId,
-            @RequestHeader("X-User-Id") UUID userId) {
-        MissingPersonReportResponse response = service.rejectMissingPersonReport(userId, reportId);
-        return ResponseEntity.ok(response);
+            @PathVariable UUID reportId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.publishMissingPersonReport(userId, reportId));
     }
 
-    @DeleteMapping("/admin/missing-person-reports/{reportId}")
-    public ResponseEntity<Void> deleteMissingPersonReportAsAdmin(
+    @PostMapping("/missing-person-reports/{reportId}/reject")
+    public ResponseEntity<MissingPersonReportResponse> rejectMissingPersonReport(
             @PathVariable UUID reportId) {
-        service.deleteMissingPersonReportAsAdmin(reportId);
-        return ResponseEntity.noContent().build();
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.rejectMissingPersonReport(userId, reportId));
     }
-    
+
     @GetMapping("/missing-person-reports")
     public ResponseEntity<PageResponse<MissingPersonReportResponse>> listMissingPersonReports(
             @RequestParam(required = false) UUID reporterId,
@@ -82,58 +71,46 @@ public class ReportManagerController {
             @RequestParam(defaultValue = "false") boolean isPublic,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageResponse<MissingPersonReportResponse> response = service.listMissingPersonReports(reporterId, status, isPublic, page, size);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(service.listMissingPersonReports(reporterId, status, isPublic, page, Math.min(size, 100)));
     }
-    
+
     @PostMapping("/crime-reports")
     public ResponseEntity<CrimeReportResponse> createCrimeReport(
-            @Valid @RequestBody CreateCrimeReportRequest request,
-            @RequestHeader("X-User-Id") UUID userId) {
-        CrimeReportResponse response = service.createCrimeReport(userId, request);
-        return ResponseEntity.ok(response);
+            @Valid @RequestBody CreateCrimeReportRequest request) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.createCrimeReport(userId, request));
     }
-    
+
     @GetMapping("/crime-reports/{reportId}")
     public ResponseEntity<CrimeReportResponse> getCrimeReport(
-            @PathVariable UUID reportId,
-            @RequestHeader("X-User-Id") UUID userId) {
-        CrimeReportResponse response = service.getCrimeReport(userId, reportId);
-        return ResponseEntity.ok(response);
+            @PathVariable UUID reportId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.getCrimeReport(userId, reportId));
     }
-    
+
     @PutMapping("/crime-reports/{reportId}")
     public ResponseEntity<CrimeReportResponse> updateCrimeReport(
             @PathVariable UUID reportId,
-            @Valid @RequestBody UpdateCrimeReportRequest request,
-            @RequestHeader("X-User-Id") UUID userId) {
-        CrimeReportResponse response = service.updateCrimeReport(userId, reportId, request);
-        return ResponseEntity.ok(response);
+            @Valid @RequestBody UpdateCrimeReportRequest request) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.updateCrimeReport(userId, reportId, request));
     }
 
     @PostMapping("/crime-reports/{reportId}/publish")
     public ResponseEntity<CrimeReportResponse> publishCrimeReport(
-            @PathVariable UUID reportId,
-            @RequestHeader("X-User-Id") UUID userId) {
-        CrimeReportResponse response = service.publishCrimeReport(userId, reportId);
-        return ResponseEntity.ok(response);
+            @PathVariable UUID reportId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.publishCrimeReport(userId, reportId));
     }
-    
+
     @DeleteMapping("/crime-reports/{reportId}")
     public ResponseEntity<Void> deleteCrimeReport(
-            @PathVariable UUID reportId,
-            @RequestHeader("X-User-Id") UUID userId) {
+            @PathVariable UUID reportId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
         service.deleteCrimeReport(userId, reportId);
         return ResponseEntity.noContent().build();
     }
-    
-    @DeleteMapping("/admin/crime-reports/{reportId}")
-    public ResponseEntity<Void> deleteCrimeReportAsAdmin(
-            @PathVariable UUID reportId) {
-        service.deleteCrimeReportAsAdmin(reportId);
-        return ResponseEntity.noContent().build();
-    }
-    
+
     @GetMapping("/crime-reports")
     public ResponseEntity<PageResponse<CrimeReportResponse>> listCrimeReports(
             @RequestParam(required = false) UUID reporterId,
@@ -141,10 +118,9 @@ public class ReportManagerController {
             @RequestParam(defaultValue = "false") boolean isPublic,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageResponse<CrimeReportResponse> response = service.listCrimeReports(reporterId, minSeverity, isPublic, page, size);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(service.listCrimeReports(reporterId, minSeverity, isPublic, page, Math.min(size, 100)));
     }
-    
+
     @GetMapping("/crime-reports/nearby")
     public ResponseEntity<PageResponse<CrimeReportResponse>> listCrimeReportsNearby(
             @RequestParam double longitude,
@@ -152,65 +128,52 @@ public class ReportManagerController {
             @RequestParam(defaultValue = "5000") double radius,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageResponse<CrimeReportResponse> response = service.listCrimeReportsWithinRadius(longitude, latitude, radius, page, size);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(service.listCrimeReportsWithinRadius(longitude, latitude, radius, page, Math.min(size, 100)));
     }
-    
+
     @PostMapping("/guidelines")
     public ResponseEntity<GuidelinesDocumentResponse> createGuidelinesDocument(
-            @Valid @RequestBody CreateGuidelinesDocumentRequest request,
-            @RequestHeader("X-User-Id") UUID userId) {
-        GuidelinesDocumentResponse response = service.createGuidelinesDocument(userId, request);
-        return ResponseEntity.ok(response);
+            @Valid @RequestBody CreateGuidelinesDocumentRequest request) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.createGuidelinesDocument(userId, request));
     }
-    
+
     @GetMapping("/guidelines/{documentId}")
     public ResponseEntity<GuidelinesDocumentResponse> getGuidelinesDocument(
-            @PathVariable UUID documentId,
-            @RequestHeader("X-User-Id") UUID userId) {
-        GuidelinesDocumentResponse response = service.getGuidelinesDocument(userId, documentId);
-        return ResponseEntity.ok(response);
+            @PathVariable UUID documentId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.getGuidelinesDocument(userId, documentId));
     }
-    
+
     @PutMapping("/guidelines/{documentId}")
     public ResponseEntity<GuidelinesDocumentResponse> updateGuidelinesDocument(
             @PathVariable UUID documentId,
-            @Valid @RequestBody UpdateGuidelinesDocumentRequest request,
-            @RequestHeader("X-User-Id") UUID userId) {
-        GuidelinesDocumentResponse response = service.updateGuidelinesDocument(userId, documentId, request);
-        return ResponseEntity.ok(response);
+            @Valid @RequestBody UpdateGuidelinesDocumentRequest request) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.updateGuidelinesDocument(userId, documentId, request));
     }
 
     @PostMapping("/guidelines/{documentId}/publish")
     public ResponseEntity<GuidelinesDocumentResponse> publishGuidelinesDocument(
-            @PathVariable UUID documentId,
-            @RequestHeader("X-User-Id") UUID userId) {
-        GuidelinesDocumentResponse response = service.publishGuidelinesDocument(userId, documentId);
-        return ResponseEntity.ok(response);
+            @PathVariable UUID documentId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(service.publishGuidelinesDocument(userId, documentId));
     }
-    
+
     @DeleteMapping("/guidelines/{documentId}")
     public ResponseEntity<Void> deleteGuidelinesDocument(
-            @PathVariable UUID documentId,
-            @RequestHeader("X-User-Id") UUID userId) {
+            @PathVariable UUID documentId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
         service.deleteGuidelinesDocument(userId, documentId);
         return ResponseEntity.noContent().build();
     }
-    
-    @DeleteMapping("/admin/guidelines/{documentId}")
-    public ResponseEntity<Void> deleteGuidelinesDocumentAsAdmin(
-            @PathVariable UUID documentId) {
-        service.deleteGuidelinesDocumentAsAdmin(documentId);
-        return ResponseEntity.noContent().build();
-    }
-    
+
     @GetMapping("/guidelines")
     public ResponseEntity<PageResponse<GuidelinesDocumentResponse>> listGuidelinesDocuments(
             @RequestParam(required = false) UUID reporterId,
             @RequestParam(defaultValue = "false") boolean isPublic,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageResponse<GuidelinesDocumentResponse> response = service.listGuidelinesDocuments(reporterId, isPublic, page, size);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(service.listGuidelinesDocuments(reporterId, isPublic, page, Math.min(size, 100)));
     }
 }

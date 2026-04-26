@@ -34,6 +34,9 @@ public interface CrimeReportRepository extends JpaRepository<CrimeReport, UUID> 
 
     @Query("SELECT c FROM CrimeReport c WHERE c.reporter.id = :reporterId AND c.severity >= :minSeverity")
     Page<CrimeReport> findByReporterIdAndMinSeverity(@Param("reporterId") UUID reporterId, @Param("minSeverity") int minSeverity, Pageable pageable);
+
+    @Query("SELECT c FROM CrimeReport c WHERE c.reporter.id = :reporterId AND c.isPublic = :isPublic")
+    Page<CrimeReport> findByReporterIdAndIsPublic(@Param("reporterId") UUID reporterId, @Param("isPublic") boolean isPublic, Pageable pageable);
     
     @Query("SELECT c FROM CrimeReport c WHERE c.date >= :startDate AND c.date <= :endDate")
     List<CrimeReport> findByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);

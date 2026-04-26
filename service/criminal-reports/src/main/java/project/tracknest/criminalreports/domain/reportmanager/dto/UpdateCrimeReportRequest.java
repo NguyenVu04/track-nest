@@ -20,9 +20,6 @@ public class UpdateCrimeReportRequest {
     @NotBlank(message = "Title is required")
     private String title;
 
-    @NotBlank(message = "Content is required")
-    private String content;
-
     @NotNull(message = "Severity is required")
     @Min(value = 1, message = "Severity must be at least 1")
     @Max(value = 5, message = "Severity must be at most 5")

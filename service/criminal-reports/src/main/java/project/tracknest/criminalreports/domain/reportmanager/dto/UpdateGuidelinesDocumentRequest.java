@@ -18,7 +18,4 @@ public class UpdateGuidelinesDocumentRequest {
     @NotBlank(message = "Abstract is required")
     @Size(max = 500, message = "Abstract must not exceed 500 characters")
     private String abstractText;
-
-    @NotBlank(message = "Content is required")
-    private String content;
 }

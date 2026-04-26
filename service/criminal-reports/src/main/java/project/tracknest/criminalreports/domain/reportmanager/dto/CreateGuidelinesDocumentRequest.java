@@ -16,9 +16,6 @@ public class CreateGuidelinesDocumentRequest {
     
     @NotBlank(message = "Abstract is required")
     private String abstractText;
-    
-    @NotBlank(message = "Content is required")
-    private String content;
-    
+
     private boolean isPublic;
 }

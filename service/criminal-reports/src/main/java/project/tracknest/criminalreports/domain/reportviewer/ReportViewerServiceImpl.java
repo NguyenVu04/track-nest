@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import project.tracknest.criminalreports.core.datatype.PageResponse;
 import project.tracknest.criminalreports.core.entity.CrimeReport;
 import project.tracknest.criminalreports.core.entity.GuidelinesDocument;
@@ -34,7 +36,7 @@ class ReportViewerServiceImpl implements ReportViewerService {
     @Transactional(readOnly = true)
     public MissingPersonReportResponse viewMissingPersonReport(UUID reportId) {
         MissingPersonReport report = missingPersonReportRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Missing person report not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Missing person report not found"));
         return mapToMissingPersonReportResponse(report);
     }
 
@@ -42,7 +44,7 @@ class ReportViewerServiceImpl implements ReportViewerService {
     @Transactional(readOnly = true)
     public CrimeReportResponse viewCrimeReport(UUID reportId) {
         CrimeReport report = crimeReportRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Crime report not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Crime report not found"));
         return mapToCrimeReportResponse(report);
     }
 
@@ -50,7 +52,7 @@ class ReportViewerServiceImpl implements ReportViewerService {
     @Transactional(readOnly = true)
     public GuidelinesDocumentResponse viewGuidelinesDocument(UUID documentId) {
         GuidelinesDocument document = guidelinesDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Guidelines document not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Guidelines document not found"));
         return mapToGuidelinesDocumentResponse(document);
     }
 

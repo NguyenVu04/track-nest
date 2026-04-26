@@ -29,7 +29,7 @@ public class ReportViewerController {
             @RequestParam(defaultValue = "false") boolean isPublic,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageResponse<MissingPersonReportResponse> response = service.listMissingPersonReports(isPublic, page, size);
+        PageResponse<MissingPersonReportResponse> response = service.listMissingPersonReports(isPublic, page, Math.min(size, 100));
         return ResponseEntity.ok(response);
     }
 
@@ -45,7 +45,7 @@ public class ReportViewerController {
             @RequestParam(defaultValue = "false") boolean isPublic,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageResponse<CrimeReportResponse> response = service.listCrimeReports(isPublic, page, size);
+        PageResponse<CrimeReportResponse> response = service.listCrimeReports(isPublic, page, Math.min(size, 100));
         return ResponseEntity.ok(response);
     }
 
@@ -61,7 +61,7 @@ public class ReportViewerController {
             @RequestParam(defaultValue = "false") boolean isPublic,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PageResponse<GuidelinesDocumentResponse> response = service.listGuidelinesDocuments(isPublic, page, size);
+        PageResponse<GuidelinesDocumentResponse> response = service.listGuidelinesDocuments(isPublic, page, Math.min(size, 100));
         return ResponseEntity.ok(response);
     }
 }

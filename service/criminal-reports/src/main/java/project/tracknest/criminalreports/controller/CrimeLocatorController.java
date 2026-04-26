@@ -22,15 +22,7 @@ public class CrimeLocatorController {
             @RequestParam(defaultValue = "5000") double radius,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        PageResponse<CrimeReportResponse> response = service.viewCrimeHeatmap(longitude, latitude, radius, page, size);
+        PageResponse<CrimeReportResponse> response = service.viewCrimeHeatmap(longitude, latitude, radius, page, Math.min(size, 100));
         return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/high-risk-check")
-    public ResponseEntity<Boolean> checkIfInsideHighRiskCrimeZone(
-            @RequestParam double longitude,
-            @RequestParam double latitude) {
-        boolean isHighRisk = service.checkIfInsideHighRiskCrimeZone(longitude, latitude);
-        return ResponseEntity.ok(isHighRisk);
     }
 }

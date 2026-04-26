@@ -22,35 +22,39 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final SecurityProperties securityProperties;
+    private final SecurityReporterRepository reporterRepository;
+
     @Bean
     protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .addFilterAfter(new KeycloakFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new KeycloakFilter(reporterRepository), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers(HttpMethod.OPTIONS, "/**")
-                    .permitAll()
-                    .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**")
-                    .permitAll()
-                    .requestMatchers("/actuator/**")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET,
-                        "/report-manager/missing-person-reports",
-                        "/report-manager/crime-reports",
-                        "/report-manager/crime-reports/nearby",
-                        "/report-manager/guidelines",
-                        "/crime-locator/heatmap",
-                        "/crime-locator/high-risk-check")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/report-viewer/**")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/file/**")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/criminal-analyzer/dashboard")
-                    .permitAll()
-                    .requestMatchers("/chatbot/**")
-                    .hasRole("USER")
-                    .anyRequest()
-                    .authenticated()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**")
+                        .permitAll()
+                        .requestMatchers("/actuator/**")
+                        .permitAll()
+                        .requestMatchers("/crime-locator/**")
+                        .hasRole("USER")
+                        .requestMatchers("/criminal-analyzer/**")
+                        .hasRole("EMERGENCY-SERVICE")
+                        .requestMatchers(HttpMethod.GET, "/file/**")
+                        .hasAnyRole("USER", "EMERGENCY-SERVICE")
+                        .requestMatchers("/file/**")
+                        .hasAnyRole("REPORTER", "ADMIN")
+                        .requestMatchers("/missing-person-request-receiver/**")
+                        .hasRole("USER")
+                        .requestMatchers("/report-manager/**")
+                        .hasRole("REPORTER")
+                        .requestMatchers("/report-admin/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/reporter-viewer/**")
+                        .hasRole("USER")
+                        .requestMatchers("/chatbot/**")
+                        .hasRole("USER")
+                        .anyRequest()
+                        .denyAll()
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
