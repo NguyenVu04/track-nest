@@ -70,9 +70,15 @@ spec:
                   name: {{ .Release.Name }}-secrets
                   key: USER_TRACKING_DB_PASSWORD
 
+            - name: FIREBASE_SERVICE_ACCOUNT_PATH
+              value: /app/config/firebase-service-account.json
+
           volumeMounts:
             - name: truststore
               mountPath: /app/certs
+              readOnly: true
+            - name: firebase-config
+              mountPath: /app/config
               readOnly: true
 
           livenessProbe:
@@ -84,3 +90,9 @@ spec:
         - name: truststore
           secret:
             secretName: {{ .Release.Name }}-certs
+        - name: firebase-config
+          secret:
+            secretName: {{ .Release.Name }}-secrets
+            items:
+              - key: FIREBASE_SERVICE_ACCOUNT_JSON
+                path: firebase-service-account.json

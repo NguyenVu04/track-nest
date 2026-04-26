@@ -126,7 +126,7 @@ emergencyOps:
   # database connection injected via EMERGENCY_OPS_DB_HOST/PORT/NAME secret keys
 
   keycloak:
-    clientId: emergency-operations
+    clientId: internal
 
   hpa:
     enabled: false
