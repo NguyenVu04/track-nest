@@ -1,0 +1,58 @@
+{
+  "content": [
+    {
+      "id": "mp-001",
+      "title": "Missing Person – Sarah Johnson",
+      "fullName": "Sarah Johnson",
+      "personalId": "DL-123456",
+      "photo": "https://example.com/photos/sarah.jpg",
+      "date": "2026-03-28",
+      "content": "Sarah Johnson, 32 years old, last seen wearing a red jacket and blue jeans near the central market.",
+      "contactEmail": "family@example.com",
+      "contactPhone": "+1 234 567 8900",
+      "createdAt": "2026-03-28T14:00:00Z",
+      "userId": "reporter-001",
+      "status": "PENDING",
+      "reporterId": "reporter-001",
+      "isPublic": false
+    },
+    {
+      "id": "mp-002",
+      "title": "Missing Child – Tommy Brown",
+      "fullName": "Tommy Brown",
+      "personalId": "CHILD-789",
+      "photo": null,
+      "date": "2026-04-01",
+      "content": "Tommy Brown, 8 years old, last seen at the school playground.",
+      "contactEmail": null,
+      "contactPhone": "+1 987 654 3210",
+      "createdAt": "2026-04-01T08:00:00Z",
+      "userId": "reporter-001",
+      "status": "PUBLISHED",
+      "reporterId": "reporter-001",
+      "isPublic": true
+    },
+    {
+      "id": "mp-003",
+      "title": "Missing Senior – Margaret Lee",
+      "fullName": "Margaret Lee",
+      "personalId": "PASS-LX5532",
+      "photo": null,
+      "date": "2026-04-05",
+      "content": "Margaret Lee, 78 years old, has dementia. Last seen near the botanical garden.",
+      "contactEmail": "lee.family@example.com",
+      "contactPhone": "+1 555 111 2222",
+      "createdAt": "2026-04-05T16:00:00Z",
+      "userId": "reporter-001",
+      "status": "RESOLVED",
+      "reporterId": "reporter-001",
+      "isPublic": true
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 3,
+  "totalPages": 1,
+  "first": true,
+  "last": true
+}

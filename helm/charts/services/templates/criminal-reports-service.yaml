@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: criminal-reports
+  labels:
+    {{- include "services.labels" (dict "Ctx" . "Name" "criminal-reports") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "services.selectorLabels" (dict "Ctx" . "Name" "criminal-reports") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.criminalReports.port }}
+      targetPort: http
+      protocol: TCP
+    - name: management
+      port: 8081
+      targetPort: management
+      protocol: TCP

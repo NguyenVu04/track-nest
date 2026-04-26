@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-user-tracking
+  labels:
+    {{- include "services.labels" (dict "Ctx" . "Name" "user-tracking") | nindent 4 }}
+spec:
+  replicas: {{ .Values.userTracking.replicaCount }}
+  revisionHistoryLimit: {{ .Values.defaults.revisionHistoryLimit }}
+  strategy:
+    {{- toYaml .Values.defaults.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "services.selectorLabels" (dict "Ctx" . "Name" "user-tracking") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "services.selectorLabels" (dict "Ctx" . "Name" "user-tracking") | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.defaults.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.defaults.podSecurityContext | nindent 8 }}
+      containers:
+        - name: user-tracking
+          image: "{{ .Values.userTracking.image.repository }}:{{ .Values.userTracking.image.tag }}"
+          imagePullPolicy: {{ .Values.defaults.imagePullPolicy }}
+          securityContext:
+            {{- toYaml .Values.defaults.containerSecurityContext | nindent 12 }}
+
+          resources:
+            {{- toYaml .Values.defaults.resources | nindent 12 }}
+
+          ports:
+            - name: grpc
+              containerPort: {{ .Values.userTracking.grpcPort }}
+              protocol: TCP
+            - name: http
+              containerPort: {{ .Values.userTracking.httpPort }}
+              protocol: TCP
+            - name: management
+              containerPort: 8081
+              protocol: TCP
+
+          env:
+            {{- include "services.commonEnv" . | nindent 12 }}
+
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: USER_TRACKING_DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: USER_TRACKING_DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: USER_TRACKING_DB_NAME
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: USER_TRACKING_DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: USER_TRACKING_DB_PASSWORD
+
+            - name: FIREBASE_SERVICE_ACCOUNT_PATH
+              value: /app/config/firebase-service-account.json
+
+          volumeMounts:
+            - name: truststore
+              mountPath: /app/certs
+              readOnly: true
+            - name: firebase-config
+              mountPath: /app/config
+              readOnly: true
+
+          livenessProbe:
+            {{- include "services.livenessProbe" . | nindent 12 }}
+          readinessProbe:
+            {{- include "services.readinessProbe" . | nindent 12 }}
+
+      volumes:
+        - name: truststore
+          secret:
+            secretName: {{ .Release.Name }}-certs
+        - name: firebase-config
+          secret:
+            secretName: {{ .Release.Name }}-secrets
+            items:
+              - key: FIREBASE_SERVICE_ACCOUNT_JSON
+                path: firebase-service-account.json

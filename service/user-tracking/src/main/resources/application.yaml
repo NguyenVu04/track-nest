@@ -1,0 +1,136 @@
+spring:
+  application:
+    name: user-tracking
+  auto-configure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+  security:
+    user:
+      name: admin
+      password: admin
+      roles: ADMIN
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVER:127.0.0.1:29092}
+    consumer:
+      group-id: user_tracking
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: java.util.HashMap
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    listener:
+      missing-topics-fatal: false
+  data:
+    redis:
+      url: ${REDIS_URL:redis://127.0.0.1:6379}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:15432}/${DB_NAME:tracknest}
+    username: ${DB_USERNAME:tracknestadmin}
+    password: ${DB_PASSWORD:tracknestadmin}
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        javax.persistence.lock.timeout: 3000
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  grpc:
+    server:
+      port: ${GRPC_PORT:19090}
+      ssl:
+        secure: false
+      host: 0.0.0.0
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceId: AUTO
+          jobStore:
+            useProperties: true
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            isClustered: true
+          threadPool:
+            threadCount: 10
+
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+server:
+  port: 18080
+  servlet:
+    context-path: /user-tracking
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [${spring.application.name}] [trace=%X{traceId} span=%X{spanId}] %-5level %logger - %msg%n"
+
+app:
+  kafka:
+    topics:
+      location-updated: location-updated
+      notification-sent: notification-sent
+      tracking-notification: tracking-notification
+      risk-notification: risk-notification
+    partitions: 3
+    replication-factor: 1
+  server-name: ${POD_NAME:user-tracking}
+  server-uid: ${$POD_UID:0}
+  security:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost}
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+  quartz:
+    jobs:
+      disconnectInactiveUsers:
+        cron: "0 */3 * * * ?"
+        description: "Disconnect inactive users"
+      updateGrpcSessions:
+        cron: "0 */3 * * * ?"
+        description: "Update gRPC sessions"
+      cellVisitMaintenance:
+        cron: "0 0 0 * * ?"
+        description: "Prune stale cell visits, promote mature cells, recalculate bucket totals"
+      anomalyRunCleanup:
+        cron: "0 0 0 * * ?"
+        description: "Delete resolved anomaly runs older than the retention window"
+      locationCleanup:
+        cron: "0 0 0 * * ?"
+        description: "Delete location rows older than the retention window"

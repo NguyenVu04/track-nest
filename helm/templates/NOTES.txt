@@ -1,0 +1,38 @@
+TrackNest {{ .Chart.AppVersion }} has been installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+1. Make sure the Kafka truststore secret exists (mounted by every JVM service):
+
+     kubectl create secret generic {{ .Release.Name }}-certs \
+       --from-file=truststore.jks=certs/truststore.jks \
+       -n {{ .Release.Namespace }}
+
+2. Provision the TLS cert used by the gateways (nginx + envoy):
+
+     kubectl create secret tls cf-cert \
+       --cert=certs/tls.crt --key=certs/tls.key \
+       -n {{ .Release.Namespace }}
+
+3. Check rollout:
+
+     kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/part-of=tracknest
+
+4. Enabled components in this release:
+{{- if index .Values "services" "enabled" }}
+     - services (criminal-reports, emergency-ops, user-tracking)
+{{- end }}
+{{- if index .Values "keycloak" "enabled" }}
+     - keycloak
+{{- end }}
+{{- if index .Values "gateway" "enabled" }}
+     - gateway (envoy + nginx)
+{{- end }}
+{{- if index .Values "frontend" "enabled" }}
+     - frontend (web)
+{{- end }}
+{{- if index .Values "kube-prometheus-stack" "enabled" }}
+     - observability (kube-prometheus-stack)
+{{- end }}
+
+Rotate the credentials in {{ .Release.Name }}-secrets before exposing this
+cluster to the public internet — the committed defaults must be treated as
+compromised.

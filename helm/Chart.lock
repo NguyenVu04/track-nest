@@ -1,0 +1,24 @@
+dependencies:
+- name: services
+  repository: file://charts/services
+  version: 0.1.0
+- name: keycloak
+  repository: file://charts/keycloak
+  version: 0.1.0
+- name: gateway
+  repository: file://charts/gateway
+  version: 0.1.0
+- name: web-frontend
+  repository: file://charts/frontend
+  version: 0.1.0
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 83.2.0
+- name: loki
+  repository: https://grafana.github.io/helm-charts
+  version: 6.29.0
+- name: promtail
+  repository: https://grafana.github.io/helm-charts
+  version: 6.16.6
+digest: sha256:a54b458c88c4cbd2023aeda6d144d3c3447896a1d04f2dde463822f741c8b0c0
+generated: "2026-04-21T22:54:39.6695192+07:00"

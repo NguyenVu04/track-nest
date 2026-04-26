@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-envoy
+  labels:
+    {{- include "gateway.envoyLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.envoy.replicaCount }}
+  revisionHistoryLimit: {{ .Values.envoy.revisionHistoryLimit }}
+  strategy:
+    {{- toYaml .Values.envoy.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "gateway.envoySelector" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "gateway.envoySelector" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.envoy.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.envoy.podSecurityContext | nindent 8 }}
+      containers:
+        - name: envoy
+          image: "{{ .Values.envoy.image.repository }}:{{ .Values.envoy.image.tag }}"
+          imagePullPolicy: {{ .Values.envoy.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.envoy.containerSecurityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.envoy.resources | nindent 12 }}
+          ports:
+            - name: https
+              containerPort: {{ .Values.envoy.port }}
+              protocol: TCP
+            - name: http
+              containerPort: {{ .Values.envoy.httpPort }}
+              protocol: TCP
+            - name: admin
+              containerPort: {{ .Values.envoy.adminPort }}
+              protocol: TCP
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy
+              readOnly: true
+            - name: cf-cert
+              mountPath: /etc/ssl
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: admin
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: admin
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: envoy-config
+        - name: cf-cert
+          secret:
+            secretName: {{ .Values.tlsSecretName }}
+        - name: tmp
+          emptyDir: {}

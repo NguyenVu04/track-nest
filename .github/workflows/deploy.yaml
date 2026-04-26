@@ -1,0 +1,271 @@
+name: Deploy
+
+on:
+  push:
+    branches: [deploy]
+  pull_request:
+    branches: [deploy]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      criminal-reports: ${{ steps.filter.outputs.criminal-reports }}
+      emergency-ops: ${{ steps.filter.outputs.emergency-ops }}
+      user-tracking: ${{ steps.filter.outputs.user-tracking }}
+      track-nest-web: ${{ steps.filter.outputs.track-nest-web }}
+      helm: ${{ steps.filter.outputs.helm }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            criminal-reports:
+              - 'service/criminal-reports/**'
+            emergency-ops:
+              - 'service/emergency-ops/**'
+            user-tracking:
+              - 'service/user-tracking/**'
+            track-nest-web:
+              - 'frontend/track-nest-web/**'
+            helm:
+              - 'helm/**'
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Docker image builds
+  # ──────────────────────────────────────────────────────────────────────────
+
+  build-push-criminal-reports:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.criminal-reports == 'true'
+    runs-on: ubuntu-24.04
+    outputs:
+      image-tag: ${{ steps.tag.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: tag
+        run: echo "value=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: service/criminal-reports
+          push: true
+          tags: |
+            nguyenvu04/tracknest-criminalreports:${{ steps.tag.outputs.value }}
+            ${{ github.event_name == 'push' && 'nguyenvu04/tracknest-criminalreports:latest' || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-push-emergency-ops:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.emergency-ops == 'true'
+    runs-on: ubuntu-24.04
+    outputs:
+      image-tag: ${{ steps.tag.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: tag
+        run: echo "value=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: service/emergency-ops
+          push: true
+          tags: |
+            nguyenvu04/tracknest-emergencyops:${{ steps.tag.outputs.value }}
+            ${{ github.event_name == 'push' && 'nguyenvu04/tracknest-emergencyops:latest' || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-push-user-tracking:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.user-tracking == 'true'
+    runs-on: ubuntu-24.04
+    outputs:
+      image-tag: ${{ steps.tag.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: tag
+        run: echo "value=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Write Firebase service account for Docker build
+        env:
+          FIREBASE_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: echo "$FIREBASE_JSON" > service/user-tracking/src/main/resources/firebase-service-account.json
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: service/user-tracking
+          push: true
+          tags: |
+            nguyenvu04/tracknest-usertracking:${{ steps.tag.outputs.value }}
+            ${{ github.event_name == 'push' && 'nguyenvu04/tracknest-usertracking:latest' || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Frontend → Vercel
+  # ──────────────────────────────────────────────────────────────────────────
+
+  deploy-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.track-nest-web == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Vercel args
+        id: vercel-args
+        run: |
+          ARGS="${{ github.event_name == 'push' && '--prod' || '' }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_USER_TRACKING_API_URL=${{ secrets.NEXT_PUBLIC_USER_TRACKING_API_URL }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_EMERGENCY_OPS_API_URL=${{ secrets.NEXT_PUBLIC_EMERGENCY_OPS_API_URL }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_EMERGENCY_OPS_WS_URL=${{ secrets.NEXT_PUBLIC_EMERGENCY_OPS_WS_URL }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL=${{ secrets.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_KEYCLOAK_URL=${{ secrets.NEXT_PUBLIC_KEYCLOAK_URL }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_USER_REALM=${{ secrets.NEXT_PUBLIC_USER_REALM }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_REPORTER_REALM=${{ secrets.NEXT_PUBLIC_REPORTER_REALM }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_EMERGENCY_REALM=${{ secrets.NEXT_PUBLIC_EMERGENCY_REALM }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${{ secrets.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_KEYCLOAK_FLOW=${{ secrets.NEXT_PUBLIC_KEYCLOAK_FLOW }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_TINYMCE_API_KEY=${{ secrets.NEXT_PUBLIC_TINYMCE_API_KEY }}"
+          echo "value=$ARGS" >> $GITHUB_OUTPUT
+
+      - uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: ${{ steps.vercel-args.outputs.value }}
+          working-directory: frontend/track-nest-web
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Spring Boot services → DigitalOcean K8s via Helm
+  # ──────────────────────────────────────────────────────────────────────────
+
+  deploy-k8s:
+    needs:
+      - detect-changes
+      - build-push-criminal-reports
+      - build-push-emergency-ops
+      - build-push-user-tracking
+    if: |
+      always() && !cancelled() && !contains(needs.*.result, 'failure') &&
+      (needs.detect-changes.outputs.criminal-reports == 'true' ||
+       needs.detect-changes.outputs.emergency-ops == 'true' ||
+       needs.detect-changes.outputs.user-tracking == 'true' ||
+       needs.detect-changes.outputs.helm == 'true')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Configure kubectl
+        run: doctl kubernetes cluster kubeconfig save ${{ secrets.DIGITALOCEAN_CLUSTER_NAME }}
+
+      - uses: azure/setup-helm@v4
+
+      - name: Update Helm dependencies
+        run: helm dependency update helm/
+
+      - name: Write Helm secrets file
+        env:
+          FIREBASE_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          cat > helm/values-secrets.yaml << EOF
+          secrets:
+            USER_TRACKING_DB_HOST:     "${{ secrets.USER_TRACKING_DB_HOST }}"
+            USER_TRACKING_DB_PORT:     "${{ secrets.USER_TRACKING_DB_PORT }}"
+            USER_TRACKING_DB_NAME:     "${{ secrets.USER_TRACKING_DB_NAME }}"
+            USER_TRACKING_DB_USERNAME: "${{ secrets.USER_TRACKING_DB_USERNAME }}"
+            USER_TRACKING_DB_PASSWORD: "${{ secrets.USER_TRACKING_DB_PASSWORD }}"
+
+            CRIMINAL_REPORTS_DB_HOST:       "${{ secrets.CRIMINAL_REPORTS_DB_HOST }}"
+            CRIMINAL_REPORTS_DB_PORT:       "${{ secrets.CRIMINAL_REPORTS_DB_PORT }}"
+            CRIMINAL_REPORTS_DB_NAME:       "${{ secrets.CRIMINAL_REPORTS_DB_NAME }}"
+            CRIMINAL_REPORTS_DB_USERNAME:   "${{ secrets.CRIMINAL_REPORTS_DB_USERNAME }}"
+            CRIMINAL_REPORTS_DB_PASSWORD:   "${{ secrets.CRIMINAL_REPORTS_DB_PASSWORD }}"
+            CRIMINAL_REPORTS_TINYMCE_API_KEY: "${{ secrets.CRIMINAL_REPORTS_TINYMCE_API_KEY }}"
+
+            EMERGENCY_OPS_DB_HOST:     "${{ secrets.EMERGENCY_OPS_DB_HOST }}"
+            EMERGENCY_OPS_DB_PORT:     "${{ secrets.EMERGENCY_OPS_DB_PORT }}"
+            EMERGENCY_OPS_DB_NAME:     "${{ secrets.EMERGENCY_OPS_DB_NAME }}"
+            EMERGENCY_OPS_DB_USERNAME: "${{ secrets.EMERGENCY_OPS_DB_USERNAME }}"
+            EMERGENCY_OPS_DB_PASSWORD: "${{ secrets.EMERGENCY_OPS_DB_PASSWORD }}"
+
+            KEYCLOAK_DB_URL:      "${{ secrets.KEYCLOAK_DB_URL }}"
+            KEYCLOAK_DB_USERNAME: "${{ secrets.KEYCLOAK_DB_USERNAME }}"
+            KEYCLOAK_DB_PASSWORD: "${{ secrets.KEYCLOAK_DB_PASSWORD }}"
+
+            KAFKA_BOOTSTRAP_SERVERS:       "${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}"
+            KAFKA_USERNAME:                "${{ secrets.KAFKA_USERNAME }}"
+            KAFKA_PASSWORD:                "${{ secrets.KAFKA_PASSWORD }}"
+            KAFKA_SSL_TRUSTSTORE_PASSWORD: "${{ secrets.KAFKA_SSL_TRUSTSTORE_PASSWORD }}"
+
+            REDIS_URL: "${{ secrets.REDIS_URL }}"
+
+            GOOGLE_API_KEY: "${{ secrets.GOOGLE_API_KEY }}"
+
+            KEYCLOAK_CLIENT_SECRET: "${{ secrets.KEYCLOAK_CLIENT_SECRET }}"
+            KEYCLOAK_ADMIN_PASSWORD: "${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}"
+
+            bot-token: "${{ secrets.TELEGRAM_BOT_TOKEN }}"
+
+            FIREBASE_SERVICE_ACCOUNT_JSON: $(echo "$FIREBASE_JSON" | jq -c . | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().strip()))")
+
+          kube-prometheus-stack:
+            grafana:
+              adminPassword: "${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
+          EOF
+
+      - name: Build image tag overrides
+        id: overrides
+        run: |
+          ARGS=""
+          CR_TAG="${{ needs.build-push-criminal-reports.outputs.image-tag }}"
+          EO_TAG="${{ needs.build-push-emergency-ops.outputs.image-tag }}"
+          UT_TAG="${{ needs.build-push-user-tracking.outputs.image-tag }}"
+          [ -n "$CR_TAG" ] && ARGS="$ARGS --set services.criminalReports.image.tag=$CR_TAG"
+          [ -n "$EO_TAG" ] && ARGS="$ARGS --set services.emergencyOps.image.tag=$EO_TAG"
+          [ -n "$UT_TAG" ] && ARGS="$ARGS --set services.userTracking.image.tag=$UT_TAG"
+          echo "args=$ARGS" >> $GITHUB_OUTPUT
+
+      - name: Deploy via Helm
+        run: |
+          helm upgrade --install tracknest ./helm \
+            -f helm/values-secrets.yaml \
+            ${{ steps.overrides.outputs.args }} \
+            -n tracknest --create-namespace \
+            --atomic --timeout 5m

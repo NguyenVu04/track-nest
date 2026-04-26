@@ -1,0 +1,76 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: user-tracking-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: {{ .Release.Name }}
+spec:
+  groups:
+    - name: user-tracking.rules
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(http_server_requests_seconds_count{job="user-tracking", status=~"5.."}[1m]))
+            /
+            sum(rate(http_server_requests_seconds_count{job="user-tracking"}[1m]))
+            > 0.05
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High error rate"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_server_requests_seconds_bucket{job="user-tracking"}[5m])) by (le)
+            ) > 0.5
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency (P95 > 0.5s)"
+
+        - alert: PodDown
+          expr: |
+            up{job="user-tracking"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod is down"
+
+    - name: user-tracking.grpc.rules
+      rules:
+        - alert: GrpcHighErrorRate
+          expr: |
+            sum(rate(grpc_server_calls_seconds_count{job="user-tracking", status_code!="OK"}[1m]))
+            /
+            sum(rate(grpc_server_calls_seconds_count{job="user-tracking"}[1m]))
+            > 0.05
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High gRPC error rate (>5% non-OK)"
+
+        - alert: GrpcHighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(grpc_server_calls_seconds_bucket{job="user-tracking"}[5m])) by (le, grpc_service, grpc_method)
+            ) > 0.5
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High gRPC latency (P95 > 0.5s)"
+
+        - alert: GrpcServerNotReceivingCalls
+          expr: |
+            absent(grpc_server_calls_seconds_count{job="user-tracking"}) == 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "No gRPC calls received — server may be unreachable"

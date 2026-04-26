@@ -1,0 +1,42 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: envoy-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: {{ .Release.Name }}
+spec:
+  groups:
+    - name: envoy.rules
+      rules:
+        - alert: PodDown
+          expr: |
+            up{job="envoy"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Envoy pod down"
+
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(envoy_http_ingress_http_downstream_rq_5xx[1m]))
+            /
+            sum(rate(envoy_http_ingress_http_downstream_rq_total[1m]))
+            > 0.05
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High error rate on Envoy"
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(envoy_http_ingress_http_downstream_rq_time_bucket[5m])) by (le)
+            ) > 500
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency on Envoy (P95 > 500ms)"

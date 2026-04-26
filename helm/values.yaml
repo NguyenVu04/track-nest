@@ -1,0 +1,348 @@
+############################################################
+# TrackNest umbrella chart — all environment config.
+#
+# Secrets are injected at deploy time via values-secrets.yaml:
+#   helm upgrade --install tracknest . \
+#     -f values-secrets.yaml \
+#     -n tracknest --create-namespace
+#
+# See values-secrets.example.yaml for the required keys.
+############################################################
+
+# --- Backend services ------------------------------------
+services:
+  enabled: true
+
+  userTracking:
+    replicaCount: 2
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+    pdb:
+      enabled: true
+      minAvailable: 1
+
+  criminalReports:
+    replicaCount: 2
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+    pdb:
+      enabled: true
+      minAvailable: 1
+
+  emergencyOps:
+    replicaCount: 2
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+    pdb:
+      enabled: true
+      minAvailable: 1
+
+# --- Keycloak --------------------------------------------
+keycloak:
+  enabled: true
+
+  keycloak:
+    replicaCount: 1
+    startCommand: start
+    hostnameStrict: true
+    hostnameStrictHttps: true
+    pdb:
+      enabled: true
+      minAvailable: 1
+
+# --- Gateway ---------------------------------------------
+gateway:
+  enabled: true
+
+  envoy:
+    replicaCount: 2
+    pdb:
+      enabled: true
+      minAvailable: 1
+
+# --- Observability: Prometheus + Grafana + AlertManager --
+kube-prometheus-stack:
+  enabled: true
+
+  prometheus:
+    prometheusSpec:
+      replicas: 1
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+
+  grafana:
+    replicas: 1
+    adminUser: admin
+    # adminPassword: set via values-secrets.yaml
+
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "128Mi"
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+
+    additionalDataSources:
+      - name: Loki
+        type: loki
+        url: http://tracknest-loki:3100
+        access: proxy
+        isDefault: false
+        jsonData:
+          maxLines: 1000
+          derivedFields:
+            - name: TraceID
+              matcherRegex: "traceId=([0-9a-f]+)"
+              url: ""
+              datasourceUid: ""
+
+  alertmanager:
+    enabled: true
+    alertmanagerSpec:
+      replicas: 1
+      secrets:
+        - tracknest-secrets
+
+    config:
+      global:
+        resolve_timeout: 5m
+
+      route:
+        receiver: telegram
+        group_by: ["alertname", "job"]
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 4h
+
+        routes:
+          - match:
+              severity: critical
+            receiver: telegram
+            group_wait: 10s
+            repeat_interval: 30m
+
+          - match:
+              severity: warning
+            receiver: telegram
+            repeat_interval: 2h
+
+          - match:
+              severity: info
+            receiver: telegram
+
+      receivers:
+        - name: telegram
+          telegram_configs:
+            - bot_token_file: /etc/alertmanager/secrets/tracknest-secrets/bot-token
+              chat_id: -5237911116
+              parse_mode: HTML
+              message: |
+                {{- if eq .Status "firing" -}}
+                🚨 <b>ALERT FIRING</b>
+                {{- else -}}
+                ✅ <b>ALERT RESOLVED</b>
+                {{- end }}
+
+                <b>{{ .CommonLabels.alertname }}</b>
+
+                {{- if .CommonLabels.job }}
+                📦 <b>Service:</b> {{ .CommonLabels.job }}
+                {{- end }}
+
+                {{- if .CommonLabels.namespace }}
+                🧭 <b>Namespace:</b> {{ .CommonLabels.namespace }}
+                {{- end }}
+
+                {{- if .CommonLabels.severity }}
+                🔥 <b>Severity:</b> {{ .CommonLabels.severity }}
+                {{- end }}
+
+                {{ range .Alerts }}
+                ────────────────
+                🖥 <b>Instance:</b> {{ .Labels.instance }}
+
+                {{- if .Labels.pod }}
+                📍 <b>Pod:</b> {{ .Labels.pod }}
+                {{- end }}
+
+                {{- if .Annotations.description }}
+                📝 <b>Description:</b>
+                {{ .Annotations.description }}
+                {{- end }}
+                {{ end }}
+
+# --- Loki (log storage, single binary, filesystem) -------
+loki:
+  enabled: true
+  deploymentMode: SingleBinary
+
+  singleBinary:
+    replicas: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+    persistence:
+      enabled: true
+      size: 2Gi
+
+  loki:
+    auth_enabled: false
+    commonConfig:
+      replication_factor: 1
+    storage:
+      type: filesystem
+    schemaConfig:
+      configs:
+        - from: "2024-01-01"
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: loki_index_
+            period: 24h
+    limits_config:
+      retention_period: 24h
+      ingestion_rate_mb: 8
+      ingestion_burst_size_mb: 16
+      max_query_lookback: 24h
+    compactor:
+      working_directory: /var/loki/compactor
+      retention_enabled: true
+      retention_delete_delay: 2h
+      delete_request_store: filesystem
+
+  # Disable all non-SingleBinary component replicas
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+  ingester:
+    replicas: 0
+  distributor:
+    replicas: 0
+  querier:
+    replicas: 0
+  queryFrontend:
+    replicas: 0
+  queryScheduler:
+    replicas: 0
+  ruler:
+    replicas: 0
+  compactor:
+    replicas: 0
+  bloomCompactor:
+    replicas: 0
+  bloomGateway:
+    replicas: 0
+
+  minio:
+    enabled: false
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+  test:
+    enabled: false
+  lokiCanary:
+    enabled: false
+  chunksCache:
+    enabled: false
+  resultsCache:
+    enabled: false
+  gateway:
+    enabled: false
+
+# --- Promtail (DaemonSet — 1 pod per node) ---------------
+promtail:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+
+  config:
+    clients:
+      - url: http://tracknest-loki:3100/loki/api/v1/push
+
+    snippets:
+      extraScrapeConfigs: |
+        - job_name: tracknest-pods
+          kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                  - tracknest
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_label_app]
+              target_label: app
+            - source_labels: [__meta_kubernetes_namespace]
+              target_label: namespace
+            - source_labels: [__meta_kubernetes_pod_name]
+              target_label: pod
+            - source_labels: [__meta_kubernetes_pod_node_name]
+              target_label: node
+            - source_labels: [__meta_kubernetes_pod_container_name]
+              target_label: container
+            - source_labels: [__meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
+              target_label: __path__
+              separator: /
+              replacement: /var/log/pods/*$1/*.log
+          pipeline_stages:
+            - cri: {}
+            - match:
+                selector: '{app=~"criminal-reports|emergency-ops|user-tracking"}'
+                stages:
+                  - multiline:
+                      firstline: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+                      max_wait_time: 3s
+                      max_lines: 128
+                  - regex:
+                      expression: >-
+                        ^(?P<log_timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})
+                        \[(?P<service>[^\]]+)\]
+                        \[trace=(?P<traceId>[0-9a-f]*)\s+span=(?P<spanId>[0-9a-f]*)\]
+                        (?P<level>\S+)\s+
+                        (?P<logger>[^\s]+)\s+-\s+
+                        (?P<message>.*)$
+                  - labels:
+                      level:
+                      service:
+                  - structured_metadata:
+                      traceId:
+                      spanId:
+                      logger:
+                  - output:
+                      source: message
+                  - timestamp:
+                      source: log_timestamp
+                      format: "2006-01-02 15:04:05"

@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-keycloak
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.keycloak.replicaCount }}
+  revisionHistoryLimit: {{ .Values.keycloak.revisionHistoryLimit }}
+  strategy:
+    {{- toYaml .Values.keycloak.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "keycloak.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "keycloak.selectorLabels" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.keycloak.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.keycloak.podSecurityContext | nindent 8 }}
+      containers:
+        - name: keycloak
+          image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"
+          imagePullPolicy: {{ .Values.keycloak.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.keycloak.containerSecurityContext | nindent 12 }}
+
+          args:
+            - {{ .Values.keycloak.startCommand | quote }}
+            {{- if .Values.keycloak.importRealm }}
+            - "--import-realm"
+            {{- end }}
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.keycloak.port }}
+              protocol: TCP
+            - name: management
+              containerPort: {{ .Values.keycloak.managementPort }}
+              protocol: TCP
+
+          env:
+            # --- Bootstrap admin ---
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: "admin"
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KEYCLOAK_ADMIN_PASSWORD
+
+            # --- Database ---
+            - name: KC_DB
+              value: "postgres"
+            - name: KC_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KEYCLOAK_DB_URL
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KEYCLOAK_DB_USERNAME
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KEYCLOAK_DB_PASSWORD
+
+            # --- HTTP / proxy ---
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_PROXY
+              value: "edge"
+            - name: KC_PROXY_HEADERS
+              value: "xforwarded"
+            - name: KC_HOSTNAME
+              value: {{ .Values.keycloak.hostname | quote }}
+            - name: KC_HOSTNAME_STRICT
+              value: {{ .Values.keycloak.hostnameStrict | quote }}
+            - name: KC_HOSTNAME_STRICT_HTTPS
+              value: {{ .Values.keycloak.hostnameStrictHttps | quote }}
+            - name: KC_HTTP_RELATIVE_PATH
+              value: "/auth"
+
+            # --- Observability ---
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+            - name: KC_METRICS_ENABLED
+              value: "true"
+            - name: KC_HTTP_METRICS_HISTOGRAMS_ENABLED
+              value: "true"
+            - name: KC_HTTP_METRICS_SLOS
+              value: "250,500,1000,2500"
+            - name: KC_CACHE_METRICS_HISTOGRAMS_ENABLED
+              value: "true"
+
+          volumeMounts:
+            - name: realm-config
+              mountPath: /opt/keycloak/data/import
+              readOnly: true
+
+          readinessProbe:
+            httpGet:
+              path: /auth/health/ready
+              port: management
+            initialDelaySeconds: {{ .Values.keycloak.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.keycloak.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.keycloak.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.keycloak.probes.readiness.failureThreshold }}
+
+          livenessProbe:
+            httpGet:
+              path: /auth/health/live
+              port: management
+            initialDelaySeconds: {{ .Values.keycloak.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.keycloak.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.keycloak.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.keycloak.probes.liveness.failureThreshold }}
+
+          resources:
+            {{- toYaml .Values.keycloak.resources | nindent 12 }}
+
+      volumes:
+        - name: realm-config
+          secret:
+            secretName: keycloak-realm-config

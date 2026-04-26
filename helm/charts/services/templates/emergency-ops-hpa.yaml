@@ -1,0 +1,22 @@
+{{- if .Values.emergencyOps.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-emergency-ops
+  labels:
+    {{- include "services.labels" (dict "Ctx" . "Name" "emergency-ops") | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-emergency-ops
+  minReplicas: {{ .Values.emergencyOps.hpa.minReplicas }}
+  maxReplicas: {{ .Values.emergencyOps.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.emergencyOps.hpa.targetCPUUtilizationPercentage }}
+{{- end }}

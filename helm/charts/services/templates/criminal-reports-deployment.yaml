@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-criminal-reports
+  labels:
+    {{- include "services.labels" (dict "Ctx" . "Name" "criminal-reports") | nindent 4 }}
+spec:
+  replicas: {{ .Values.criminalReports.replicaCount }}
+  revisionHistoryLimit: {{ .Values.defaults.revisionHistoryLimit }}
+  strategy:
+    {{- toYaml .Values.defaults.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "services.selectorLabels" (dict "Ctx" . "Name" "criminal-reports") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "services.selectorLabels" (dict "Ctx" . "Name" "criminal-reports") | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.defaults.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.defaults.podSecurityContext | nindent 8 }}
+      containers:
+        - name: criminal-reports
+          image: "{{ .Values.criminalReports.image.repository }}:{{ .Values.criminalReports.image.tag }}"
+          imagePullPolicy: {{ .Values.defaults.imagePullPolicy }}
+          securityContext:
+            {{- toYaml .Values.defaults.containerSecurityContext | nindent 12 }}
+
+          resources:
+            {{- toYaml .Values.defaults.resources | nindent 12 }}
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.criminalReports.port }}
+              protocol: TCP
+            - name: management
+              containerPort: 8081
+              protocol: TCP
+
+          env:
+            {{- include "services.commonEnv" . | nindent 12 }}
+
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_DB_NAME
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_DB_PASSWORD
+
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: GOOGLE_API_KEY
+            - name: GOOGLE_GEMINI_CHAT_MODEL
+              value: {{ .Values.criminalReports.gemini.chatModel | quote }}
+
+            - name: TINYMCE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_TINYMCE_API_KEY
+
+          volumeMounts:
+            - name: truststore
+              mountPath: /app/certs
+              readOnly: true
+
+          livenessProbe:
+            {{- include "services.livenessProbe" . | nindent 12 }}
+          readinessProbe:
+            {{- include "services.readinessProbe" . | nindent 12 }}
+
+      volumes:
+        - name: truststore
+          secret:
+            secretName: {{ .Release.Name }}-certs

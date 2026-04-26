@@ -1,0 +1,116 @@
+spring:
+  application:
+    name: emergency-ops
+  auto-configure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+  ai:
+    google:
+      genai:
+        api-key: ${GOOGLE_API_KEY:} #TODO: Replace with your actual API key or set it as an environment variable
+        chat:
+          options:
+            model: ${GOOGLE_GEMINI_CHAT_MODEL:gemini-3-flash-preview}
+  security:
+    user:
+      name: admin
+      password: admin
+      roles: ADMIN
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVER:127.0.0.1:29092}
+    consumer:
+      group-id: criminal_reports
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: java.util.HashMap
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    listener:
+      missing-topics-fatal: false
+  data:
+    redis:
+      url: ${REDIS_URL:redis://127.0.0.1:6379}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:35432}/${DB_NAME:tracknest}
+    username: ${DB_USERNAME:tracknestadmin}
+    password: ${DB_PASSWORD:tracknestadmin}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+server:
+  port: 38080
+  servlet:
+    context-path: /criminal-reports
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [${spring.application.name}] [trace=%X{traceId} span=%X{spanId}] %-5level %logger - %msg%n"
+
+app:
+  kafka:
+    topics:
+      - location-updated
+    partitions: 3
+    replication-factor: 1
+  security:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost}
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
+    public-url: ${MINIO_PUBLIC_URL:http://localhost:38080/criminal-reports/file}
+    credentials:
+      access-key: ${MINIO_ACCESS_KEY:minioadmin}
+      secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    buckets:
+      criminal-reports: criminal-reports
+  server-name: ${POD_NAME:criminal-reports}
+  server-uid: ${$POD_UID:0}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    display-request-duration: true
+    path: /swagger-ui.html

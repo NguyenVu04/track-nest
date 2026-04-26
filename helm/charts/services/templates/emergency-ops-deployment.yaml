@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-emergency-ops
+  labels:
+    {{- include "services.labels" (dict "Ctx" . "Name" "emergency-ops") | nindent 4 }}
+spec:
+  replicas: {{ .Values.emergencyOps.replicaCount }}
+  revisionHistoryLimit: {{ .Values.defaults.revisionHistoryLimit }}
+  strategy:
+    {{- toYaml .Values.defaults.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "services.selectorLabels" (dict "Ctx" . "Name" "emergency-ops") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "services.selectorLabels" (dict "Ctx" . "Name" "emergency-ops") | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.defaults.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.defaults.podSecurityContext | nindent 8 }}
+      containers:
+        - name: emergency-ops
+          image: "{{ .Values.emergencyOps.image.repository }}:{{ .Values.emergencyOps.image.tag }}"
+          imagePullPolicy: {{ .Values.defaults.imagePullPolicy }}
+          securityContext:
+            {{- toYaml .Values.defaults.containerSecurityContext | nindent 12 }}
+
+          resources:
+            {{- toYaml .Values.defaults.resources | nindent 12 }}
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.emergencyOps.port }}
+              protocol: TCP
+            - name: management
+              containerPort: 8081
+              protocol: TCP
+
+          env:
+            {{- include "services.commonEnv" . | nindent 12 }}
+
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: EMERGENCY_OPS_DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: EMERGENCY_OPS_DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: EMERGENCY_OPS_DB_NAME
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: EMERGENCY_OPS_DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: EMERGENCY_OPS_DB_PASSWORD
+
+            - name: KEYCLOAK_AUTH_SERVER_URL
+              value: {{ .Values.keycloak.authServerUrl | quote }}
+            - name: KEYCLOAK_CLIENT_ID
+              value: {{ .Values.emergencyOps.keycloak.clientId | quote }}
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KEYCLOAK_CLIENT_SECRET
+            - name: KEYCLOAK_PUBLIC_REALM
+              value: {{ .Values.keycloak.publicRealm | quote }}
+
+          volumeMounts:
+            - name: truststore
+              mountPath: /app/certs
+              readOnly: true
+
+          livenessProbe:
+            {{- include "services.livenessProbe" . | nindent 12 }}
+          readinessProbe:
+            {{- include "services.readinessProbe" . | nindent 12 }}
+
+      volumes:
+        - name: truststore
+          secret:
+            secretName: {{ .Release.Name }}-certs

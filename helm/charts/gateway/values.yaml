@@ -1,0 +1,64 @@
+############################################################
+# Gateway subchart — single Envoy edge proxy.
+#   Terminates TLS for all traffic on both domains:
+#     tracknestapp.org       → /auth/ proxied to Keycloak
+#     api.tracknestapp.org/* → REST services + gRPC-Web
+############################################################
+
+# Secret containing tls.crt / tls.key.
+# Provision out-of-band (not managed by this chart).
+tlsSecretName: cf-cert
+
+envoy:
+  replicaCount: 1
+
+  image:
+    repository: envoyproxy/envoy
+    tag: v1.36-latest
+    pullPolicy: IfNotPresent
+
+  # TLS listener port (container). Service maps servicePort → port.
+  port: 8800
+  # HTTP listener port for redirect-to-HTTPS.
+  httpPort: 8080
+  adminPort: 9901
+
+  # External service ports.
+  servicePort: 443
+  httpServicePort: 80
+
+  serviceType: LoadBalancer
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "192Mi"
+    limits:
+      cpu: "500m"
+      memory: "768Mi"
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    fsGroup: 101
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  revisionHistoryLimit: 5
+  terminationGracePeriodSeconds: 30
+
+  pdb:
+    enabled: false
+    minAvailable: 1

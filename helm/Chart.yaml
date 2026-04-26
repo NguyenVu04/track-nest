@@ -1,0 +1,46 @@
+apiVersion: v2
+name: tracknest
+description: Umbrella Helm chart for the TrackNest platform (services, gateway, identity, observability)
+type: application
+version: 0.3.0
+appVersion: "1.0.0"
+
+keywords:
+  - tracknest
+  - microservices
+  - emergency
+  - tracking
+
+maintainers:
+  - name: TrackNest Platform
+
+dependencies:
+  - name: services
+    version: 0.1.0
+    repository: "file://charts/services"
+    condition: services.enabled
+
+  - name: keycloak
+    version: 0.1.0
+    repository: "file://charts/keycloak"
+    condition: keycloak.enabled
+
+  - name: gateway
+    version: 0.1.0
+    repository: "file://charts/gateway"
+    condition: gateway.enabled
+
+  - name: kube-prometheus-stack
+    version: 83.2.0
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: kube-prometheus-stack.enabled
+
+  - name: loki
+    version: 6.29.0
+    repository: https://grafana.github.io/helm-charts
+    condition: loki.enabled
+
+  - name: promtail
+    version: 6.16.6
+    repository: https://grafana.github.io/helm-charts
+    condition: promtail.enabled

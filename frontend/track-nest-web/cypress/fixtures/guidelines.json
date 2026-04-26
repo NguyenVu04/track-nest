@@ -1,0 +1,28 @@
+{
+  "content": [
+    {
+      "id": "gl-001",
+      "title": "Evacuation Protocol",
+      "abstractText": "Standard evacuation procedures for urban emergencies.",
+      "content": "In case of emergency, follow these steps: 1. Stay calm. 2. Exit via designated routes. 3. Gather at the muster point.",
+      "createdAt": "2026-03-01T09:00:00Z",
+      "reporterId": "reporter-001",
+      "isPublic": true
+    },
+    {
+      "id": "gl-002",
+      "title": "Missing Person Reporting Guide",
+      "abstractText": "How to file a missing person report correctly.",
+      "content": "To file a missing person report: 1. Gather all available identification. 2. Collect last known location. 3. Submit through the TrackNest portal.",
+      "createdAt": "2026-03-15T10:00:00Z",
+      "reporterId": "reporter-001",
+      "isPublic": false
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 2,
+  "totalPages": 1,
+  "first": true,
+  "last": true
+}

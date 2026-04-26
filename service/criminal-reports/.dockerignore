@@ -1,0 +1,29 @@
+# Build outputs
+build/
+.gradle/
+out/
+bin/
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# VCS / meta
+.git/
+.gitignore
+.gitattributes
+
+# Host-only wrapper
+gradlew.bat
+
+# Docker artifacts themselves
+Dockerfile
+.dockerignore
+
+# Logs / dumps
+*.log
+*.hprof
+HELP.md
