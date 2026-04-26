@@ -8,10 +8,11 @@ import java.util.UUID;
 public interface MissingPersonRequestReceiverService {
     MissingPersonReportResponse submitMissingPersonReport(
             UUID userId,
-            UUID reporterId,
+//            UUID reporterId,
             String title,
             String fullName,
             String personalId,
+            String content,
             String photo,
             String contactEmail,
             String contactPhone,

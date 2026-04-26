@@ -1,27 +1,55 @@
 package project.tracknest.criminalreports.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import project.tracknest.criminalreports.configuration.objectstorage.ObjectStorage;
 import project.tracknest.criminalreports.core.datatype.PageResponse;
 import project.tracknest.criminalreports.domain.reportmanager.dto.CrimeReportResponse;
 import project.tracknest.criminalreports.domain.reportmanager.dto.GuidelinesDocumentResponse;
 import project.tracknest.criminalreports.domain.reportmanager.dto.MissingPersonReportResponse;
 import project.tracknest.criminalreports.domain.reportviewer.ReportViewerService;
 
+import java.io.InputStream;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/report-viewer")
 @RequiredArgsConstructor
+@Slf4j
 public class ReportViewerController {
     private final ReportViewerService service;
+    private final ObjectStorage objectStorage;
+
+    @Value("${app.minio.buckets.criminal-reports:criminal-reports}")
+    private String bucketName;
 
     @GetMapping("/missing-person-reports/{reportId}")
     public ResponseEntity<MissingPersonReportResponse> viewMissingPersonReport(
             @PathVariable UUID reportId) {
         MissingPersonReportResponse response = service.viewMissingPersonReport(reportId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/missing-person-reports/{reportId}/photo")
+    public ResponseEntity<byte[]> viewMissingPersonReportPhoto(@PathVariable UUID reportId) {
+        MissingPersonReportResponse report = service.viewMissingPersonReport(reportId);
+        String photo = report.getPhoto();
+        if (photo == null || photo.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+        try (InputStream stream = objectStorage.downloadFile(bucketName, photo)) {
+            byte[] bytes = stream.readAllBytes();
+            return ResponseEntity.ok()
+                    .header("Content-Type", resolveContentType(photo))
+                    .header("Cache-Control", "public, max-age=86400")
+                    .body(bytes);
+        } catch (Exception e) {
+            log.error("Failed to serve photo for report {}: {}", reportId, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/missing-person-reports")
@@ -63,5 +91,14 @@ public class ReportViewerController {
             @RequestParam(defaultValue = "10") int size) {
         PageResponse<GuidelinesDocumentResponse> response = service.listGuidelinesDocuments(isPublic, page, Math.min(size, 100));
         return ResponseEntity.ok(response);
+    }
+
+    private String resolveContentType(String objectName) {
+        String lower = objectName.toLowerCase();
+        if (lower.endsWith(".png"))  return "image/png";
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        if (lower.endsWith(".gif"))  return "image/gif";
+        if (lower.endsWith(".webp")) return "image/webp";
+        return "application/octet-stream";
     }
 }

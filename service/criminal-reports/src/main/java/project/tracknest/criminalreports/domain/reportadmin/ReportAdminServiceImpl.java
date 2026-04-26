@@ -35,8 +35,9 @@ class ReportAdminServiceImpl implements ReportAdminService {
     public void deleteMissingPersonReportAsAdmin(UUID reportId) {
         MissingPersonReport report = missingPersonReportRepository.findById(reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Missing person report not found"));
+        String photo = report.getPhoto();
         missingPersonReportRepository.delete(report);
-        objectStorage.deleteFolder(bucketName, reportId + "/");
+        if (photo != null && !photo.isBlank()) objectStorage.deleteFile(bucketName, photo);
         log.info("Deleted missing person report as admin: {}", reportId);
     }
 
@@ -46,7 +47,6 @@ class ReportAdminServiceImpl implements ReportAdminService {
         CrimeReport report = crimeReportRepository.findById(reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Crime report not found"));
         crimeReportRepository.delete(report);
-        objectStorage.deleteFolder(bucketName, reportId + "/");
         log.info("Deleted crime report as admin: {}", reportId);
     }
 
@@ -56,7 +56,6 @@ class ReportAdminServiceImpl implements ReportAdminService {
         GuidelinesDocument document = guidelinesDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Guidelines document not found"));
         guidelinesDocumentRepository.delete(document);
-        objectStorage.deleteFolder(bucketName, documentId + "/");
         log.info("Deleted guidelines document as admin: {}", documentId);
     }
 }

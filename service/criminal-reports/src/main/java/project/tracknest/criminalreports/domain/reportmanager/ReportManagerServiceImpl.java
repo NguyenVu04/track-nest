@@ -43,9 +43,6 @@ class ReportManagerServiceImpl implements ReportManagerService {
     @Value("${app.minio.buckets.criminal-reports:criminal-reports}")
     private String bucketName;
 
-    @Value("${app.minio.public-url:http://localhost:38080/criminal-reports/file}")
-    private String publicUrl;
-
     private static final String DEFAULT_STATUS = ReportStatusConstants.PENDING;
 
     // ── Missing Person Reports ────────────────────────────────────────────────
@@ -60,7 +57,6 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .orElseGet(() -> statusRepository.save(MissingPersonReportStatus.builder().name(DEFAULT_STATUS).build()));
 
         UUID reportId = UUID.randomUUID();
-        String contentUrl = buildContentUrl(reportId);
 
         MissingPersonReport report = MissingPersonReport.builder()
                 .id(reportId)
@@ -69,7 +65,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .personalId(request.getPersonalId())
                 .photo(request.getPhoto() != null ? request.getPhoto() : "")
                 .date(request.getDate())
-                .content(contentUrl)
+                .content(request.getContent() != null ? request.getContent() : "")
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
                 .contactEmail(request.getContactEmail())
@@ -102,6 +98,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
         report.setFullName(request.getFullName());
         report.setPersonalId(request.getPersonalId());
         if (request.getPhoto() != null) report.setPhoto(request.getPhoto());
+        if (request.getContent() != null) report.setContent(request.getContent());
         report.setDate(request.getDate());
         if (request.getLatitude() != null) report.setLatitude(request.getLatitude());
         if (request.getLongitude() != null) report.setLongitude(request.getLongitude());
@@ -113,7 +110,10 @@ class ReportManagerServiceImpl implements ReportManagerService {
     @Override
     @Transactional
     public void deleteMissingPersonReport(UUID reporterId, UUID reportId) {
-        missingPersonReportRepository.delete(findMissingPersonReportOwned(reporterId, reportId));
+        MissingPersonReport report = findMissingPersonReportOwned(reporterId, reportId);
+        String photo = report.getPhoto();
+        missingPersonReportRepository.delete(report);
+        if (photo != null && !photo.isBlank()) objectStorage.deleteFile(bucketName, photo);
     }
 
     @Override
@@ -180,12 +180,11 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .orElseGet(() -> reporterRepository.save(Reporter.builder().id(reporterId).build()));
 
         UUID reportId = UUID.randomUUID();
-        String contentUrl = buildContentUrl(reportId);
 
         CrimeReport report = CrimeReport.builder()
                 .id(reportId)
                 .title(request.getTitle())
-                .content(contentUrl)
+                .content(request.getContent() != null ? request.getContent() : "")
                 .severity(request.getSeverity())
                 .date(request.getDate())
                 .longitude(request.getLongitude())
@@ -217,6 +216,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot update a published crime report");
         }
         report.setTitle(request.getTitle());
+        if (request.getContent() != null) report.setContent(request.getContent());
         report.setSeverity(request.getSeverity());
         report.setDate(request.getDate());
         report.setNumberOfVictims(request.getNumberOfVictims());
@@ -288,13 +288,12 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .orElseGet(() -> reporterRepository.save(Reporter.builder().id(reporterId).build()));
 
         UUID documentId = UUID.randomUUID();
-        String contentUrl = buildContentUrl(documentId);
 
         GuidelinesDocument document = GuidelinesDocument.builder()
                 .id(documentId)
                 .title(request.getTitle())
                 .abstractText(request.getAbstractText())
-                .content(contentUrl)
+                .content(request.getContent() != null ? request.getContent() : "")
                 .isPublic(request.isPublic())
                 .reporter(reporter)
                 .createdAt(OffsetDateTime.now())
@@ -318,6 +317,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
         }
         document.setTitle(request.getTitle());
         document.setAbstractText(request.getAbstractText());
+        if (request.getContent() != null) document.setContent(request.getContent());
         return mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
     }
 
@@ -337,7 +337,6 @@ class ReportManagerServiceImpl implements ReportManagerService {
     public void deleteGuidelinesDocument(UUID reporterId, UUID documentId) {
         GuidelinesDocument document = findGuidelinesDocumentOwned(reporterId, documentId);
         guidelinesDocumentRepository.delete(document);
-        objectStorage.deleteFolder(bucketName, documentId + "/");
     }
 
     @Override
@@ -374,10 +373,6 @@ class ReportManagerServiceImpl implements ReportManagerService {
     private GuidelinesDocument findGuidelinesDocumentOwned(UUID reporterId, UUID documentId) {
         return guidelinesDocumentRepository.findByReporterIdAndId(reporterId, documentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Guidelines document not found"));
-    }
-
-    private String buildContentUrl(UUID entityId) {
-        return publicUrl + "/" + bucketName + "/" + entityId + "/index.html";
     }
 
     private MissingPersonReportResponse mapToMissingPersonReportResponse(MissingPersonReport report) {

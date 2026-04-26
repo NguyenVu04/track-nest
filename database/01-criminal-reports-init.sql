@@ -3,7 +3,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "postgis";
 
 CREATE TABLE reporter (
-    id UUID PRIMARY KEY
+    id UUID PRIMARY KEY,
+    last_assigned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE missing_person_report (

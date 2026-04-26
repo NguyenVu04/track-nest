@@ -26,7 +26,9 @@ public class CreateMissingPersonReportRequest {
     private String personalId;
     
     private String photo;
-    
+
+    private String content;
+
     @NotNull(message = "Date is required")
     private LocalDate date;
 

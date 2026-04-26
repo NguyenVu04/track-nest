@@ -10,4 +10,6 @@ import java.util.UUID;
 @Repository
 public interface ReporterRepository extends JpaRepository<Reporter, UUID> {
     Optional<Reporter> findById(UUID id);
+
+    Optional<Reporter> findFirstByOrderByLastAssignedAtAsc();
 }

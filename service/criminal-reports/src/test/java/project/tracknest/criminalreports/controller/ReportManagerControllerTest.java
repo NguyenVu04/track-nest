@@ -15,11 +15,13 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
+import project.tracknest.criminalreports.configuration.objectstorage.ObjectStorage;
 import project.tracknest.criminalreports.core.datatype.PageResponse;
 import project.tracknest.criminalreports.domain.reportmanager.ReportManagerService;
 import project.tracknest.criminalreports.domain.reportmanager.dto.*;
 import project.tracknest.criminalreports.utils.SecuritySetup;
 
+import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -37,6 +39,7 @@ class ReportManagerControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @MockBean  private ReportManagerService service;
+    @MockBean  private ObjectStorage objectStorage;
 
     private static final UUID REPORTER_ID = SecuritySetup.REPORTER_USER_ID;
     private static final UUID REPORT_ID   = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -56,14 +59,23 @@ class ReportManagerControllerTest {
         return MissingPersonReportResponse.builder()
                 .id(REPORT_ID).title("Alert").fullName("Jane").personalId("ID1")
                 .date(LocalDate.now()).contactPhone("+1234567890")
-                .content("http://url/index.html").status("PENDING")
+                .content("some description").status("PENDING")
+                .createdAt(OffsetDateTime.now()).userId(REPORTER_ID).reporterId(REPORTER_ID)
+                .publicFlag(false).build();
+    }
+
+    private MissingPersonReportResponse sampleMissingResponseWithPhoto(String photo) {
+        return MissingPersonReportResponse.builder()
+                .id(REPORT_ID).title("Alert").fullName("Jane").personalId("ID1")
+                .date(LocalDate.now()).contactPhone("+1234567890").photo(photo)
+                .content("some description").status("PENDING")
                 .createdAt(OffsetDateTime.now()).userId(REPORTER_ID).reporterId(REPORTER_ID)
                 .publicFlag(false).build();
     }
 
     private CrimeReportResponse sampleCrimeResponse() {
         return CrimeReportResponse.builder()
-                .id(REPORT_ID).title("Crime").content("http://url/index.html")
+                .id(REPORT_ID).title("Crime").content("some description")
                 .severity(3).date(LocalDate.now()).longitude(106.7).latitude(10.7)
                 .createdAt(OffsetDateTime.now()).updatedAt(OffsetDateTime.now())
                 .reporterId(REPORTER_ID).publicFlag(false).build();
@@ -71,7 +83,7 @@ class ReportManagerControllerTest {
 
     private GuidelinesDocumentResponse sampleGuidelineResponse() {
         return GuidelinesDocumentResponse.builder()
-                .id(DOC_ID).title("Guide").abstractText("Abstract").content("http://url/index.html")
+                .id(DOC_ID).title("Guide").abstractText("Abstract").content("some description")
                 .createdAt(OffsetDateTime.now()).reporterId(REPORTER_ID).publicFlag(false).build();
     }
 
@@ -125,6 +137,43 @@ class ReportManagerControllerTest {
                     .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
 
             mockMvc.perform(get("/report-manager/missing-person-reports/{id}", REPORT_ID))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested @DisplayName("GET /report-manager/missing-person-reports/{reportId}/photo")
+    class GetMissingPersonReportPhoto {
+
+        @Test
+        void should_return200_withImageBytes_whenPhotoExists() throws Exception {
+            when(service.getMissingPersonReport(REPORTER_ID, REPORT_ID))
+                    .thenReturn(sampleMissingResponseWithPhoto("uuid.png"));
+            when(objectStorage.downloadFile(any(), eq("uuid.png")))
+                    .thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
+
+            mockMvc.perform(get("/report-manager/missing-person-reports/{id}/photo", REPORT_ID))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("Content-Type", "image/png"))
+                    .andExpect(header().string("Cache-Control", "public, max-age=86400"));
+        }
+
+        @Test
+        void should_return404_whenPhotoBlank() throws Exception {
+            when(service.getMissingPersonReport(REPORTER_ID, REPORT_ID))
+                    .thenReturn(sampleMissingResponseWithPhoto(""));
+
+            mockMvc.perform(get("/report-manager/missing-person-reports/{id}/photo", REPORT_ID))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void should_return404_whenStorageThrows() throws Exception {
+            when(service.getMissingPersonReport(REPORTER_ID, REPORT_ID))
+                    .thenReturn(sampleMissingResponseWithPhoto("uuid.png"));
+            when(objectStorage.downloadFile(any(), eq("uuid.png")))
+                    .thenThrow(new RuntimeException("Not found in storage"));
+
+            mockMvc.perform(get("/report-manager/missing-person-reports/{id}/photo", REPORT_ID))
                     .andExpect(status().isNotFound());
         }
     }

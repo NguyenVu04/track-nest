@@ -1,8 +1,8 @@
 package project.tracknest.criminalreports.domain.missingpersonrequestreceiver;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,15 +25,10 @@ import java.util.UUID;
 @Slf4j
 class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestReceiverService {
 
+    private final EntityManager entityManager;
     private final MissingPersonReportRepository missingPersonReportRepository;
     private final MissingPersonReportStatusRepository statusRepository;
     private final ReporterRepository reporterRepository;
-
-    @Value("${app.minio.buckets.criminal-reports:criminal-reports}")
-    private String bucketName;
-
-    @Value("${app.minio.public-url:http://localhost:38080/criminal-reports/file}")
-    private String publicUrl;
 
     private static final String DEFAULT_STATUS = ReportStatusConstants.PENDING;
 
@@ -41,10 +36,11 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
     @Transactional
     public MissingPersonReportResponse submitMissingPersonReport(
             UUID userId,
-            UUID reporterId,
+            // UUID reporterId,
             String title,
             String fullName,
             String personalId,
+            String content,
             String photo,
             String contactEmail,
             String contactPhone,
@@ -53,24 +49,20 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
 
         log.info("Submitting missing person report for user: {}", userId);
 
-        Reporter reporter = reporterRepository.findById(reporterId)
+        Reporter reporter = reporterRepository.findFirstByOrderByLastAssignedAtAsc()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Reporter with ID " + reporterId + " not found"));
+                        "No available reporter found to assign the report. Please try again later."));
 
         MissingPersonReportStatus status = statusRepository.findByName(DEFAULT_STATUS)
                 .orElseGet(() -> statusRepository.save(MissingPersonReportStatus.builder().name(DEFAULT_STATUS).build()));
 
-        UUID reportId = UUID.randomUUID();
-        String contentUrl = publicUrl + "/" + bucketName + "/" + reportId + "/index.html";
-
         MissingPersonReport report = MissingPersonReport.builder()
-                .id(reportId)
                 .title(title)
                 .fullName(fullName)
                 .personalId(personalId)
                 .photo(photo != null ? photo : "")
                 .date(date)
-                .content(contentUrl)
+                .content(content != null ? content : "")
                 .contactEmail(contactEmail)
                 .contactPhone(contactPhone)
                 .userId(userId)
@@ -79,7 +71,8 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
                 .createdAt(OffsetDateTime.now())
                 .build();
 
-        MissingPersonReport saved = missingPersonReportRepository.save(report);
+        MissingPersonReport saved = missingPersonReportRepository.saveAndFlush(report);
+        entityManager.refresh(saved);
         log.info("Missing person report submitted successfully: {}", saved.getId());
         return mapToResponse(saved);
     }

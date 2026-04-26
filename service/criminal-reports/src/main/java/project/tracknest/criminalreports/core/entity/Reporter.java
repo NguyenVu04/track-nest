@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Data
@@ -21,4 +22,7 @@ public class Reporter {
     @Id
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
+
+    @Column(name = "last_assigned_at", nullable = false, insertable = false)
+    private OffsetDateTime lastAssignedAt;
 }

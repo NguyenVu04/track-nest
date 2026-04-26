@@ -27,6 +27,8 @@ public class UpdateMissingPersonReportRequest {
 
     private String photo;
 
+    private String content;
+
     @NotNull(message = "Date is required")
     private LocalDate date;
 

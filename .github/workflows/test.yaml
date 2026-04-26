@@ -175,7 +175,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend/track-nest-web
-        run: npm ci
+        run: npm install
 
       - name: Run Jest
         working-directory: frontend/track-nest-web
@@ -213,7 +213,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend/TrackNest
-        run: npm ci
+        run: npm install
 
       - name: Run Jest
         working-directory: frontend/TrackNest

@@ -53,7 +53,6 @@ class ReportManagerServiceImplTest {
     @BeforeEach
     void injectValues() {
         ReflectionTestUtils.setField(service, "bucketName", "criminal-reports");
-        ReflectionTestUtils.setField(service, "publicUrl",  "http://localhost/file");
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -61,14 +60,22 @@ class ReportManagerServiceImplTest {
     private MissingPersonReport pendingReport() {
         return MissingPersonReport.builder()
                 .id(REPORT_ID).title("T").fullName("F").personalId("P").photo("")
-                .date(LocalDate.now()).content("http://localhost/file/criminal-reports/" + REPORT_ID + "/index.html")
+                .date(LocalDate.now()).content("plain text content")
+                .contactPhone("+1234567890").createdAt(OffsetDateTime.now())
+                .userId(REPORTER_ID).reporter(reporter).status(pendingStatus).build();
+    }
+
+    private MissingPersonReport pendingReportWithPhoto(String photo) {
+        return MissingPersonReport.builder()
+                .id(REPORT_ID).title("T").fullName("F").personalId("P").photo(photo)
+                .date(LocalDate.now()).content("plain text content")
                 .contactPhone("+1234567890").createdAt(OffsetDateTime.now())
                 .userId(REPORTER_ID).reporter(reporter).status(pendingStatus).build();
     }
 
     private CrimeReport privateCrimeReport() {
         return CrimeReport.builder()
-                .id(REPORT_ID).title("Crime").content("http://localhost/file/criminal-reports/" + REPORT_ID + "/index.html")
+                .id(REPORT_ID).title("Crime").content("plain text content")
                 .severity(3).date(LocalDate.now()).longitude(106.7).latitude(10.7)
                 .numberOfVictims(1).numberOfOffenders(1).arrested(false)
                 .photos(List.of()).reporter(reporter).isPublic(false)
@@ -78,7 +85,7 @@ class ReportManagerServiceImplTest {
     private GuidelinesDocument privateGuideline() {
         return GuidelinesDocument.builder()
                 .id(DOC_ID).title("G").abstractText("A")
-                .content("http://localhost/file/criminal-reports/" + DOC_ID + "/index.html")
+                .content("plain text content")
                 .isPublic(false).reporter(reporter).createdAt(OffsetDateTime.now()).build();
     }
 
@@ -95,13 +102,14 @@ class ReportManagerServiceImplTest {
 
             var req = CreateMissingPersonReportRequest.builder()
                     .title("Alert").fullName("Jane").personalId("ID1")
+                    .content("description text")
                     .date(LocalDate.now()).contactPhone("+1234567890").build();
 
             MissingPersonReportResponse resp = service.createMissingPersonReport(REPORTER_ID, req);
 
             assertThat(resp.getTitle()).isEqualTo("Alert");
             assertThat(resp.getStatus()).isEqualTo(ReportStatusConstants.PENDING);
-            assertThat(resp.getContent()).contains("/index.html");
+            assertThat(resp.getContent()).isEqualTo("description text");
             verify(missingPersonReportRepository).save(any());
         }
 
@@ -156,6 +164,7 @@ class ReportManagerServiceImplTest {
 
             var req = UpdateMissingPersonReportRequest.builder()
                     .title("Updated").fullName("New Name").personalId("NEW")
+                    .content("updated text")
                     .date(LocalDate.now()).contactPhone("+9999999999").build();
 
             MissingPersonReportResponse resp = service.updateMissingPersonReport(REPORTER_ID, REPORT_ID, req);
@@ -257,13 +266,27 @@ class ReportManagerServiceImplTest {
     class DeleteMissingPersonReport {
 
         @Test
-        void should_delete_whenOwned() {
+        void should_delete_whenOwned_andNoPhoto() {
             MissingPersonReport report = pendingReport();
             when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(report));
 
             service.deleteMissingPersonReport(REPORTER_ID, REPORT_ID);
+
             verify(missingPersonReportRepository).delete(report);
+            verify(objectStorage, never()).deleteFile(any(), any());
+        }
+
+        @Test
+        void should_deletePhotoFromStorage_whenPhotoPresent() {
+            MissingPersonReport report = pendingReportWithPhoto("photo.png");
+            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+                    .thenReturn(Optional.of(report));
+
+            service.deleteMissingPersonReport(REPORTER_ID, REPORT_ID);
+
+            verify(missingPersonReportRepository).delete(report);
+            verify(objectStorage).deleteFile("criminal-reports", "photo.png");
         }
 
         @Test
@@ -333,19 +356,20 @@ class ReportManagerServiceImplTest {
     class CreateCrimeReport {
 
         @Test
-        void should_createCrimeReport_withAutoUrl() {
+        void should_createCrimeReport_withProvidedContent() {
             when(reporterRepository.findById(REPORTER_ID)).thenReturn(Optional.of(reporter));
             when(crimeReportRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             var req = CreateCrimeReportRequest.builder()
                     .title("Robbery").severity(3).date(LocalDate.now())
                     .longitude(106.7).latitude(10.7).numberOfVictims(1).numberOfOffenders(1)
+                    .content("robbery description")
                     .arrested(false).build();
 
             CrimeReportResponse resp = service.createCrimeReport(REPORTER_ID, req);
 
             assertThat(resp.getTitle()).isEqualTo("Robbery");
-            assertThat(resp.getContent()).endsWith("/index.html");
+            assertThat(resp.getContent()).isEqualTo("robbery description");
             assertThat(resp.isPublicFlag()).isFalse();
         }
     }
@@ -490,17 +514,17 @@ class ReportManagerServiceImplTest {
     class CreateGuidelinesDocument {
 
         @Test
-        void should_createDocument_withAutoUrl() {
+        void should_createDocument_withProvidedContent() {
             when(reporterRepository.findById(REPORTER_ID)).thenReturn(Optional.of(reporter));
             when(guidelinesDocumentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             var req = CreateGuidelinesDocumentRequest.builder()
-                    .title("Guide").abstractText("Abstract").isPublic(false).build();
+                    .title("Guide").abstractText("Abstract").content("guide content").isPublic(false).build();
 
             GuidelinesDocumentResponse resp = service.createGuidelinesDocument(REPORTER_ID, req);
 
             assertThat(resp.getTitle()).isEqualTo("Guide");
-            assertThat(resp.getContent()).endsWith("/index.html");
+            assertThat(resp.getContent()).isEqualTo("guide content");
         }
     }
 
@@ -568,7 +592,7 @@ class ReportManagerServiceImplTest {
     class DeleteGuidelinesDocument {
 
         @Test
-        void should_deleteDocumentAndStorageFolder() {
+        void should_deleteDocumentOnly_withoutStorageCall() {
             GuidelinesDocument doc = privateGuideline();
             when(guidelinesDocumentRepository.findByReporterIdAndId(REPORTER_ID, DOC_ID))
                     .thenReturn(Optional.of(doc));
@@ -576,7 +600,7 @@ class ReportManagerServiceImplTest {
             service.deleteGuidelinesDocument(REPORTER_ID, DOC_ID);
 
             verify(guidelinesDocumentRepository).delete(doc);
-            verify(objectStorage).deleteFolder("criminal-reports", DOC_ID + "/");
+            verify(objectStorage, never()).deleteFolder(any(), any());
         }
 
         @Test

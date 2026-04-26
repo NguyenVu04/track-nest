@@ -41,14 +41,26 @@ class ReportAdminServiceImplTest {
     }
 
     @Test
-    void should_deleteMissingPersonReport_andStorageFolder_whenFound() {
-        MissingPersonReport report = MissingPersonReport.builder().id(REPORT_ID).build();
+    void should_deleteMissingPersonReport_andPhotoFile_whenPhotoPresent() {
+        MissingPersonReport report = MissingPersonReport.builder().id(REPORT_ID).photo("photo.png").build();
         when(missingPersonReportRepository.findById(REPORT_ID)).thenReturn(Optional.of(report));
 
         service.deleteMissingPersonReportAsAdmin(REPORT_ID);
 
         verify(missingPersonReportRepository).delete(report);
-        verify(objectStorage).deleteFolder("criminal-reports", REPORT_ID + "/");
+        verify(objectStorage).deleteFile("criminal-reports", "photo.png");
+        verify(objectStorage, never()).deleteFolder(any(), any());
+    }
+
+    @Test
+    void should_deleteMissingPersonReport_withoutStorageCall_whenNoPhoto() {
+        MissingPersonReport report = MissingPersonReport.builder().id(REPORT_ID).photo("").build();
+        when(missingPersonReportRepository.findById(REPORT_ID)).thenReturn(Optional.of(report));
+
+        service.deleteMissingPersonReportAsAdmin(REPORT_ID);
+
+        verify(missingPersonReportRepository).delete(report);
+        verify(objectStorage, never()).deleteFile(any(), any());
     }
 
     @Test
@@ -62,14 +74,14 @@ class ReportAdminServiceImplTest {
     }
 
     @Test
-    void should_deleteCrimeReport_andStorageFolder_whenFound() {
+    void should_deleteCrimeReport_withoutStorageCall_whenFound() {
         CrimeReport report = CrimeReport.builder().id(REPORT_ID).build();
         when(crimeReportRepository.findById(REPORT_ID)).thenReturn(Optional.of(report));
 
         service.deleteCrimeReportAsAdmin(REPORT_ID);
 
         verify(crimeReportRepository).delete(report);
-        verify(objectStorage).deleteFolder("criminal-reports", REPORT_ID + "/");
+        verifyNoInteractions(objectStorage);
     }
 
     @Test
@@ -83,14 +95,14 @@ class ReportAdminServiceImplTest {
     }
 
     @Test
-    void should_deleteGuidelinesDocument_andStorageFolder_whenFound() {
+    void should_deleteGuidelinesDocument_withoutStorageCall_whenFound() {
         GuidelinesDocument doc = GuidelinesDocument.builder().id(REPORT_ID).build();
         when(guidelinesDocumentRepository.findById(REPORT_ID)).thenReturn(Optional.of(doc));
 
         service.deleteGuidelinesDocumentAsAdmin(REPORT_ID);
 
         verify(guidelinesDocumentRepository).delete(doc);
-        verify(objectStorage).deleteFolder("criminal-reports", REPORT_ID + "/");
+        verifyNoInteractions(objectStorage);
     }
 
     @Test
@@ -102,5 +114,4 @@ class ReportAdminServiceImplTest {
                 .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode())
                         .isEqualTo(HttpStatus.NOT_FOUND));
     }
-
 }

@@ -1,9 +1,14 @@
 package project.tracknest.criminalreports.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import project.tracknest.criminalreports.configuration.objectstorage.ObjectStorage;
 import project.tracknest.criminalreports.configuration.security.SecurityUtils;
 import project.tracknest.criminalreports.core.datatype.PageResponse;
 import project.tracknest.criminalreports.domain.reportmanager.ReportManagerService;
@@ -12,13 +17,19 @@ import project.tracknest.criminalreports.domain.reportmanager.dto.CrimeReportRes
 import project.tracknest.criminalreports.domain.reportmanager.dto.GuidelinesDocumentResponse;
 import project.tracknest.criminalreports.domain.reportmanager.dto.MissingPersonReportResponse;
 
+import java.io.InputStream;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/report-manager")
 @RequiredArgsConstructor
+@Slf4j
 public class ReportManagerController {
     private final ReportManagerService service;
+    private final ObjectStorage objectStorage;
+
+    @Value("${app.minio.buckets.criminal-reports:criminal-reports}")
+    private String bucketName;
 
     @PostMapping("/missing-person-reports")
     public ResponseEntity<MissingPersonReportResponse> createMissingPersonReport(
@@ -32,6 +43,26 @@ public class ReportManagerController {
             @PathVariable UUID reportId) {
         UUID userId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(service.getMissingPersonReport(userId, reportId));
+    }
+
+    @GetMapping("/missing-person-reports/{reportId}/photo")
+    public ResponseEntity<byte[]> getMissingPersonReportPhoto(@PathVariable UUID reportId) {
+        UUID userId = SecurityUtils.getCurrentUserId();
+        MissingPersonReportResponse report = service.getMissingPersonReport(userId, reportId);
+        String photo = report.getPhoto();
+        if (photo == null || photo.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+        try (InputStream stream = objectStorage.downloadFile(bucketName, photo)) {
+            byte[] bytes = stream.readAllBytes();
+            return ResponseEntity.ok()
+                    .header("Content-Type", resolveContentType(photo))
+                    .header("Cache-Control", "public, max-age=86400")
+                    .body(bytes);
+        } catch (Exception e) {
+            log.error("Failed to serve photo for report {}: {}", reportId, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/missing-person-reports/{reportId}")
@@ -175,5 +206,14 @@ public class ReportManagerController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(service.listGuidelinesDocuments(reporterId, isPublic, page, Math.min(size, 100)));
+    }
+
+    private String resolveContentType(String objectName) {
+        String lower = objectName.toLowerCase();
+        if (lower.endsWith(".png"))  return "image/png";
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        if (lower.endsWith(".gif"))  return "image/gif";
+        if (lower.endsWith(".webp")) return "image/webp";
+        return "application/octet-stream";
     }
 }
