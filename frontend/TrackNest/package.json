@@ -9,6 +9,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "test": "jest --watchAll=false",
     "proto-gen": "protoc --proto_path=./proto --js_out=import_style=commonjs:./proto --grpc-web_out=import_style=typescript,mode=grpcwebtext:./proto tracker.proto trackingmanager.proto notifier.proto google/rpc/status.proto"
   },
   "dependencies": {
@@ -72,11 +73,14 @@
   "devDependencies": {
     "@bufbuild/buf": "^1.62.1",
     "@bufbuild/protoc-gen-es": "^2.10.2",
+    "@testing-library/react-native": "^13.0.0",
     "@types/google-protobuf": "^3.15.12",
+    "@types/jest": "^29.0.0",
     "@types/react": "~19.1.0",
     "baseline-browser-mapping": "^2.10.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "jest-expo": "^54.0.0",
     "typescript": "~5.9.2"
   },
   "private": true

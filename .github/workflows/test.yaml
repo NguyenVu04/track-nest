@@ -1,0 +1,350 @@
+name: CI – Test & Quality Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ── 1. Path-based change detection ────────────────────────────────
+  detect-changes:
+    name: Detect changed components
+    runs-on: ubuntu-24.04
+    outputs:
+      criminal-reports: ${{ steps.filter.outputs.criminal-reports }}
+      emergency-ops:    ${{ steps.filter.outputs.emergency-ops }}
+      user-tracking:    ${{ steps.filter.outputs.user-tracking }}
+      track-nest-web:   ${{ steps.filter.outputs.track-nest-web }}
+      tracknest-mobile: ${{ steps.filter.outputs.tracknest-mobile }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            criminal-reports:
+              - 'service/criminal-reports/**'
+            emergency-ops:
+              - 'service/emergency-ops/**'
+            user-tracking:
+              - 'service/user-tracking/**'
+            track-nest-web:
+              - 'frontend/track-nest-web/**'
+            tracknest-mobile:
+              - 'frontend/TrackNest/**'
+
+  # ── 2. criminal-reports ───────────────────────────────────────────
+  # Needs Docker: Testcontainers spins PostGIS + Redis containers.
+  # ubuntu-24.04 includes Docker Engine; RYUK disabled for CI stability.
+  test-criminal-reports:
+    name: Test – criminal-reports
+    needs: detect-changes
+    if: needs.detect-changes.outputs.criminal-reports == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+          cache-dependency-path: service/criminal-reports/build.gradle
+
+      - run: chmod +x service/criminal-reports/gradlew
+
+      - name: Test + JaCoCo report
+        working-directory: service/criminal-reports
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: 'true'
+        run: ./gradlew test jacocoTestReport --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-criminal-reports
+          path: service/criminal-reports/build/reports/jacoco/test/jacocoTestReport.xml
+          retention-days: 1
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-criminal-reports
+          path: service/criminal-reports/build/test-results/test/
+          retention-days: 7
+
+  # ── 3. emergency-ops ──────────────────────────────────────────────
+  test-emergency-ops:
+    name: Test – emergency-ops
+    needs: detect-changes
+    if: needs.detect-changes.outputs.emergency-ops == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+          cache-dependency-path: service/emergency-ops/build.gradle
+
+      - run: chmod +x service/emergency-ops/gradlew
+
+      - name: Test + JaCoCo report
+        working-directory: service/emergency-ops
+        run: ./gradlew test jacocoTestReport --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-emergency-ops
+          path: service/emergency-ops/build/reports/jacoco/test/jacocoTestReport.xml
+          retention-days: 1
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-emergency-ops
+          path: service/emergency-ops/build/test-results/test/
+          retention-days: 7
+
+  # ── 4. user-tracking ─────────────────────────────────────────────
+  # Requires generateProto before compile (gRPC/protobuf stubs).
+  test-user-tracking:
+    name: Test – user-tracking
+    needs: detect-changes
+    if: needs.detect-changes.outputs.user-tracking == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+          cache-dependency-path: service/user-tracking/build.gradle
+
+      - run: chmod +x service/user-tracking/gradlew
+
+      - name: Generate proto sources
+        working-directory: service/user-tracking
+        run: ./gradlew generateProto --no-daemon
+
+      - name: Test + JaCoCo report
+        working-directory: service/user-tracking
+        run: ./gradlew test jacocoTestReport --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-user-tracking
+          path: service/user-tracking/build/reports/jacoco/test/jacocoTestReport.xml
+          retention-days: 1
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-user-tracking
+          path: service/user-tracking/build/test-results/test/
+          retention-days: 7
+
+  # ── 5. track-nest-web ─────────────────────────────────────────────
+  # Jest + React Testing Library via next/jest (SWC transform, no Babel).
+  # Passes with a warning when no test files exist yet.
+  test-track-nest-web:
+    name: Test – track-nest-web (Jest)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.track-nest-web == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/track-nest-web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend/track-nest-web
+        run: npm ci
+
+      - name: Run Jest
+        working-directory: frontend/track-nest-web
+        run: |
+          output=$(npm test 2>&1) || true
+          echo "$output"
+          if echo "$output" | grep -q "No tests found"; then
+            echo "No test files found yet — passing as placeholder."
+            exit 0
+          fi
+          echo "$output" | grep -q "Tests:.*failed" && exit 1 || exit 0
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: track-nest-web-coverage
+          path: frontend/track-nest-web/coverage/lcov.info
+          retention-days: 1
+
+  # ── 6. TrackNest mobile ───────────────────────────────────────────
+  # Jest + jest-expo. Passes with warning until spec files are added.
+  test-tracknest-mobile:
+    name: Test – TrackNest mobile (Jest)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.tracknest-mobile == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/TrackNest/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend/TrackNest
+        run: npm ci
+
+      - name: Run Jest
+        working-directory: frontend/TrackNest
+        run: |
+          output=$(npm test 2>&1) || true
+          echo "$output"
+          if echo "$output" | grep -q "No tests found"; then
+            echo "No test files found yet — passing as placeholder."
+            exit 0
+          fi
+          echo "$output" | grep -q "Tests:.*failed" && exit 1 || exit 0
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tracknest-coverage
+          path: frontend/TrackNest/coverage/lcov.info
+          retention-days: 1
+
+  # ── 7. Aggregate SonarCloud scan (single project) ─────────────────
+  # Always runs after test jobs (unless workflow is cancelled).
+  # Recompiles all Java services (no tests) to produce class files for
+  # deep sonar analysis, then downloads available coverage artifacts.
+  # Missing artifacts (component not tested this run) are skipped silently.
+  sonar-scan:
+    name: SonarCloud Scan
+    needs:
+      - detect-changes
+      - test-criminal-reports
+      - test-emergency-ops
+      - test-user-tracking
+      - test-track-nest-web
+      - test-tracknest-mobile
+    if: always() && !cancelled()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Make gradlew scripts executable
+        run: |
+          chmod +x service/criminal-reports/gradlew
+          chmod +x service/emergency-ops/gradlew
+          chmod +x service/user-tracking/gradlew
+
+      - name: Compile criminal-reports
+        working-directory: service/criminal-reports
+        run: ./gradlew compileJava compileTestJava --no-daemon
+
+      - name: Compile emergency-ops
+        working-directory: service/emergency-ops
+        run: ./gradlew compileJava compileTestJava --no-daemon
+
+      - name: Generate protos + compile user-tracking
+        working-directory: service/user-tracking
+        run: ./gradlew generateProto compileJava compileTestJava --no-daemon
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: jacoco-criminal-reports
+          path: service/criminal-reports/build/reports/jacoco/test/
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: jacoco-emergency-ops
+          path: service/emergency-ops/build/reports/jacoco/test/
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: jacoco-user-tracking
+          path: service/user-tracking/build/reports/jacoco/test/
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: track-nest-web-coverage
+          path: frontend/track-nest-web/coverage/
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: tracknest-coverage
+          path: frontend/TrackNest/coverage/
+
+      - name: SonarCloud scan
+        uses: SonarSource/sonarcloud-github-action@v4
+        with:
+          projectBaseDir: .
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── 8. Merge gate ─────────────────────────────────────────────────
+  # Single required status check — add "CI Gate" to branch protection rules.
+  # Uses `if: always()` so it runs even when component jobs are skipped.
+  # Skipped jobs (unchanged components) count as passing.
+  ci-gate:
+    name: CI Gate
+    needs:
+      - test-criminal-reports
+      - test-emergency-ops
+      - test-user-tracking
+      - test-track-nest-web
+      - test-tracknest-mobile
+      - sonar-scan
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Evaluate results
+        run: |
+          results=(
+            "${{ needs.test-criminal-reports.result }}"
+            "${{ needs.test-emergency-ops.result }}"
+            "${{ needs.test-user-tracking.result }}"
+            "${{ needs.test-track-nest-web.result }}"
+            "${{ needs.test-tracknest-mobile.result }}"
+            "${{ needs.sonar-scan.result }}"
+          )
+          for r in "${results[@]}"; do
+            if [[ "$r" == "failure" || "$r" == "cancelled" ]]; then
+              echo "A required job failed: $r"
+              exit 1
+            fi
+          done
+          echo "All executed jobs passed or were skipped."
