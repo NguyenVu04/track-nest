@@ -14,33 +14,33 @@ services:
   enabled: true
 
   userTracking:
-    replicaCount: 2
+    replicaCount: 1
     hpa:
       enabled: true
-      minReplicas: 2
-      maxReplicas: 6
+      minReplicas: 1
+      maxReplicas: 3
       targetCPUUtilizationPercentage: 70
     pdb:
       enabled: true
       minAvailable: 1
 
   criminalReports:
-    replicaCount: 2
+    replicaCount: 1
     hpa:
       enabled: true
-      minReplicas: 2
-      maxReplicas: 6
+      minReplicas: 1
+      maxReplicas: 3
       targetCPUUtilizationPercentage: 70
     pdb:
       enabled: true
       minAvailable: 1
 
   emergencyOps:
-    replicaCount: 2
+    replicaCount: 1
     hpa:
       enabled: true
-      minReplicas: 2
-      maxReplicas: 6
+      minReplicas: 1
+      maxReplicas: 3
       targetCPUUtilizationPercentage: 70
     pdb:
       enabled: true
@@ -64,7 +64,7 @@ gateway:
   enabled: true
 
   envoy:
-    replicaCount: 2
+    replicaCount: 1
     pdb:
       enabled: true
       minAvailable: 1
