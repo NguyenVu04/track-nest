@@ -163,7 +163,7 @@ data:
                             allow_credentials: true
                           routes:
                             - match:
-                                prefix: "/auth/"
+                                prefix: "/auth"
                               request_headers_to_add:
                                 - header:
                                     key: "X-Forwarded-Proto"
@@ -258,7 +258,7 @@ data:
                           rules:
                             # Keycloak itself — no JWT
                             - match:
-                                prefix: "/auth/"
+                                prefix: "/auth"
 
                             # Swagger / OpenAPI docs — no JWT
                             - match:
