@@ -20,21 +20,14 @@ jobs:
       track-nest-web: ${{ steps.filter.outputs.track-nest-web }}
       helm: ${{ steps.filter.outputs.helm }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - name: Force all change flags to true
         id: filter
-        with:
-          filters: |
-            criminal-reports:
-              - 'service/criminal-reports/**'
-            emergency-ops:
-              - 'service/emergency-ops/**'
-            user-tracking:
-              - 'service/user-tracking/**'
-            track-nest-web:
-              - 'frontend/track-nest-web/**'
-            helm:
-              - 'helm/**'
+        run: |
+          echo "criminal-reports=true" >> $GITHUB_OUTPUT
+          echo "emergency-ops=true" >> $GITHUB_OUTPUT
+          echo "user-tracking=true" >> $GITHUB_OUTPUT
+          echo "track-nest-web=true" >> $GITHUB_OUTPUT
+          echo "helm=true" >> $GITHUB_OUTPUT
 
   # ──────────────────────────────────────────────────────────────────────────
   # Docker image builds
