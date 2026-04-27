@@ -23,6 +23,9 @@ public class Reporter {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
+    @Column(name = "username", nullable = false)
+    private String username;
+
     @Column(name = "last_assigned_at", nullable = false, insertable = false)
     private OffsetDateTime lastAssignedAt;
 }

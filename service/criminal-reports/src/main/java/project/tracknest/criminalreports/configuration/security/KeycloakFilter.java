@@ -74,16 +74,25 @@ public class KeycloakFilter extends OncePerRequestFilter {
                         .contains("REPORTER");
 
                 if (isReporter) {
-                    Optional<Reporter> serviceOpt = reporterRepository
+                    Optional<Reporter> reporterOpt = reporterRepository
                             .findById(decoded.getUserId());
-                    if (serviceOpt.isEmpty()) {
+                    if (reporterOpt.isEmpty()) {
                         log.warn("No emergency service found for ID: {}", decoded.getUserId());
 
                         Reporter reporter = Reporter
                                 .builder()
                                 .id(decoded.getUserId())
+                                .username(decoded.getUsername())
                                 .build();
                         reporterRepository.save(reporter);
+                    } else {
+                        Reporter reporter = reporterOpt.get();
+                        if (!reporter.getUsername().equals(decoded.getUsername())) {
+                            log.info("Updating reporter info for ID: {}", decoded.getUserId());
+
+                            reporter.setUsername(decoded.getUsername());
+                            reporterRepository.save(reporter);
+                        }
                     }
                 }
 
