@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 public class GrpcSecurityInterceptor implements ServerInterceptor {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final int MAX_HEADER_LENGTH = 4096;
-    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer [A-Za-z0-9\\-_=]+\\.[A-Za-z0-9\\-_=]+\\.?[A-Za-z0-9\\-_.+/=]*$");
+    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$");;
     private static final Metadata.Key<String> AUTHORIZATION_KEY =
             Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
 

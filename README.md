@@ -1,6 +1,12 @@
 # TrackNest
 
-TrackNest is a event-driven, microservices-based, real-time abduction prevention system designed to enhance safety and emergency response through advanced location tracking, anomaly detection, and coordinated operations. The platform empowers users, responders, and administrators with robust crime information management and immediate emergency response tools—all accessible via a dedicated mobile app and web interface. TrackNest is built for scalability, security, and interoperability, making it ideal for smart city safety initiatives, community protection, and integrated emergency management.
+TrackNest is an event-driven, microservices-based real-time abduction-prevention and emergency-response platform. It provides continuous location tracking, AI-assisted crime/missing-person report management, and coordinated emergency operations — accessible via a mobile app and web interface.
+
+[![CI – Test & Quality Gate](https://github.com/NguyenVu04/track-nest/actions/workflows/test.yaml/badge.svg)](https://github.com/NguyenVu04/track-nest/actions/workflows/test.yaml)
+[![Deploy](https://github.com/NguyenVu04/track-nest/actions/workflows/deploy.yaml/badge.svg)](https://github.com/NguyenVu04/track-nest/actions/workflows/deploy.yaml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=NguyenVu04_track-nest&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=NguyenVu04_track-nest)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=NguyenVu04_track-nest&metric=coverage)](https://sonarcloud.io/summary/new_code?id=NguyenVu04_track-nest)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=NguyenVu04_track-nest&metric=bugs)](https://sonarcloud.io/summary/new_code?id=NguyenVu04_track-nest)
 
 ---
 
@@ -9,8 +15,7 @@ TrackNest is a event-driven, microservices-based, real-time abduction prevention
 - [Features](#features)
 - [System Architecture](#system-architecture)
 - [Technology Stack](#technology-stack)
-- [Use Case Overview](#use-case-overview)
-- [Component Overview](#component-overview)
+- [Repository Layout](#repository-layout)
 - [Getting Started](#getting-started)
 - [Contributing](#contributing)
 - [License](#license)
@@ -20,93 +25,93 @@ TrackNest is a event-driven, microservices-based, real-time abduction prevention
 
 ## Features
 
-- **Real-Time Location Tracking**: Continuous monitoring of user and target locations.
-- **Anomaly Detection**: Immediate alerts for abnormal mobility patterns or high-risk zones.
-- **Crime Information Management**: Submit, view, and analyze crime and missing person reports.
-- **Emergency Response Coordination**: Rapid emergency request handling and safe location guidance.
-- **Role-Based Access**: Support for users, emergency services, reporters, and administrators.
-- **Scalable & Secure**: Built using distributed, cloud-ready microservices and secure IAM.
+- **Real-Time Location Tracking**: Continuous gRPC-based location streaming with Quartz-scheduled durable jobs and H3 hexagonal spatial indexing.
+- **Crime & Missing Person Reports**: Full lifecycle management with AI-generated summaries (Google Gemini), rich-text content, geo queries, and MinIO/Spaces media storage.
+- **Emergency Response Coordination**: Request lifecycle management, safe location guidance, and real-time WebSocket updates.
+- **Push Notifications**: Firebase Admin SDK integration for mobile push delivery.
+- **Role-Based Access**: Keycloak-backed IAM with separate realms for end users and privileged actors.
 
 ---
 
 ## System Architecture
 
-TrackNest leverages a microservices architecture, orchestrating multiple specialized services through an API gateway and message broker for real-time operations and robust data management.
+TrackNest uses a microservices architecture with Nginx as the HTTP gateway, Envoy as the gRPC-Web bridge, and Kafka for asynchronous event propagation.
 
-<!-- **Architecture Diagram**:
-![Architecture Diagram](image1) -->
+**Ingress / Edge**
 
-**Key Components:**
-- **API Gateway (APISIX)**: Central entry point for all clients (mobile/web), managing routing, security, and throttling.
-- **User Tracking Service (Python)**: Handles real-time user tracking, anomaly detection, and vector-based mobility analysis.
-- **Emergency Operations Service (Spring Boot)**: Manages emergency requests, safe locations, and response coordination.
-- **Criminal Reports Service (Spring Boot)**: Supports crime/missing person data management and search.
-- **IAM (Keycloak)**: Secure identity and access management for all roles.
-- **Databases**: 
-  - pgEdge (distributed SQL for all services)
-  - Milvus (vector database for advanced tracking)
-  - Elasticsearch (advanced search for crime data)
-- **Message Broker (Kafka)**: Real-time event and alert propagation across services.
-- **Secrets Management (HashiCorp Vault)**: Secures sensitive credentials and secrets for all microservices.
-- **Frontends**: 
-  - Mobile App (Kotlin)
-  - Web App (Nuxt.js)
-- **Deployment**: Kubernetes (K8s) and Helm for scalable, resilient, and automated deployment and orchestration.
+| Component | Role | Port |
+|---|---|---|
+| Nginx | HTTP reverse proxy — routes `/auth` → Keycloak, `/` → Next.js web | 80 |
+| Envoy | gRPC-Web bridge for mobile; also proxies HTTP services | 8800 |
+
+**Backend Services**
+
+| Service | Runtime | Responsibilities | Key Dependencies |
+|---|---|---|---|
+| `user-tracking` | Spring Boot (Java 25) | Real-time location streaming (gRPC + HTTP), push notifications, durable scheduled jobs | TimescaleDB, Quartz, Firebase Admin, Kafka, Uber H3 |
+| `emergency-ops` | Spring Boot (Java 25) | Emergency request lifecycle, safe location management | Postgres, Keycloak Admin Client, WebSocket, Kafka, Quartz |
+| `criminal-reports` | Spring Boot (Java 25) | Crime/missing-person report CRUD, AI summaries, geo queries, media upload | Postgres (PostGIS/JTS), MinIO/Spaces, Kafka, Redis, Spring AI (Gemini) |
+
+**Frontends**
+
+| App | Stack |
+|---|---|
+| Web | Next.js 16 + React 19 + Tailwind v4 + shadcn/Radix + Leaflet, deployed on Vercel |
+| Mobile (Android) | Expo React Native — gRPC-Web via Envoy |
+
+**Data Stores**
+
+| Store | Usage | Prod Backend |
+|---|---|---|
+| Postgres / TimescaleDB | Per-service relational + spatial data | Neon |
+| Redis | Distributed locks, caching | Upstash |
+| MinIO / Spaces | Object storage for report media | DigitalOcean Spaces |
+
+**Identity**
+
+Keycloak with two realms: `public-dev` (end users) and `restricted-dev` (privileged actors / emergency services).
 
 ---
 
 ## Technology Stack
 
-| Layer           | Technology                   |
-|-----------------|-----------------------------|
-| API Gateway     | APISIX                      |
-| Message Broker  | Kafka                       |
-| User Tracking   | Python, Milvus              |
-| Emergency Ops   | Spring Boot, pgEdge         |
-| Crime Reports   | Spring Boot, Elasticsearch, pgEdge |
-| IAM             | Keycloak, pgEdge            |
-| Databases       | pgEdge, Milvus              |
-| Search Engine   | Elasticsearch               |
-| Secrets         | HashiCorp Vault             |
-| Mobile App      | Kotlin                      |
-| Web Frontend    | Nuxt.js                     |
-| Deployment      | Kubernetes, Docker, Helm    |
+| Layer | Technology |
+|---|---|
+| HTTP Gateway | Nginx |
+| gRPC-Web Gateway | Envoy |
+| Message Broker | Apache Kafka (KRaft — local; Aiven SASL/SSL — prod) |
+| User Tracking | Spring Boot, Java 25, gRPC (spring-grpc + protobuf), Quartz, Firebase Admin, Uber H3 |
+| Emergency Ops | Spring Boot, Java 25, WebSocket, Quartz, Keycloak Admin Client |
+| Criminal Reports | Spring Boot, Java 25, JTS / hibernate-spatial, Spring AI (Google Gemini) |
+| Databases | TimescaleDB / Neon Postgres, Redis (Upstash) |
+| Object Storage | MinIO (local), DigitalOcean Spaces (prod) |
+| IAM | Keycloak |
+| Web Frontend | Next.js 16, React 19, Tailwind v4, shadcn/Radix, Leaflet |
+| Mobile | Expo React Native (Android), gRPC-Web, buf |
+| CI/CD | GitHub Actions, SonarCloud, Docker Hub |
+| Deployment | Docker Compose (local/prod), Kubernetes + Helm (DigitalOcean K8s) |
 
 ---
 
-## Use Case Overview
+## Repository Layout
 
-TrackNest supports a diverse set of actors and workflows, including users, emergency services, reporters, and administrators. The system is designed to address real-world scenarios such as abduction alerts, emergency coordination, and crime reporting.
-
-**Use Case Diagram**:
-![Use Case Diagram](docs/TrackNest-usecase.png)
-
-### Example Use Cases
-
-- **Users**: 
-  - Receive anomaly/crime alerts
-  - Track and manage personal safety
-  - Send emergency requests (voice-activated)
-  - Manage guardians and activation voices
-- **Emergency Services**:
-  - Respond to emergencies
-  - Manage safe locations
-- **Reporters/Admins**:
-  - Publish and manage crime/missing person reports
-  - Oversee platform guidelines and data analysis
-
----
-
-## Component Overview
-
-### Microservices
-
-- **IAM Service**: Authentication and authorization using Keycloak and pgEdge.
-- **UserTrackingService**: Real-time tracking, anomaly detection, and vector similarity search (Python, Milvus).
-- **EmergencyOpsService**: Orchestrates emergency request lifecycle (Spring Boot).
-- **CriminalReportsService**: Manages all crime/missing person report workflows (Spring Boot, Elasticsearch).
-- **API Gateway**: Unified entry point, powered by APISIX.
-- **Secrets Management**: All sensitive configuration and credentials are secured using HashiCorp Vault.
+```
+track-nest/
+├── service/
+│   ├── criminal-reports/   # Spring Boot — crime/missing-person reports + AI summaries
+│   ├── emergency-ops/      # Spring Boot — emergency request lifecycle
+│   └── user-tracking/      # Spring Boot — real-time tracking + gRPC
+├── frontend/
+│   ├── track-nest-web/     # Next.js 16 web app (deployed to Vercel)
+│   ├── TrackNest/          # Expo React Native mobile app (Android)
+│   └── proto/              # Protobuf source of truth (tracker, trackingmanager, notifier)
+├── database/               # Per-service Postgres init/seed SQL scripts
+├── docker-compose/         # Dev and prod Docker Compose stacks + Envoy/Nginx config
+├── keycloak/               # Realm import JSON + custom Dockerfile
+├── helm/                   # Helm chart for DigitalOcean K8s deployment
+├── test/                   # k6 load testing scripts
+└── certs/                  # TLS material for local Kafka dev
+```
 
 ---
 
@@ -114,61 +119,57 @@ TrackNest supports a diverse set of actors and workflows, including users, emerg
 
 ### Prerequisites
 
-- [Docker](https://www.docker.com/)
-- [Kubernetes](https://kubernetes.io/)
-- [Helm](https://helm.sh/)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [Docker](https://www.docker.com/) and Docker Compose
 
-### Deployment Steps
-
-1. **Clone the Repository**
-    ```bash
-    git clone https://github.com/NguyenVu04/track-nest.git
-    cd track-nest
-    ```
-
-2. **Configure Secrets and Environment**
-    - Set up your secrets in HashiCorp Vault.
-    - Update the `values.yaml` files in the `helm/` directory with your configuration (database URLs, credentials, etc.).
-
-3. **Install Dependencies**
-    - Ensure your Kubernetes cluster is running.
-    - Install required Helm charts for dependencies (e.g., Kafka, PostgreSQL, Milvus, Elasticsearch, Keycloak) if not already present.
-
-4. **Deploy TrackNest Microservices**
-    ```bash
-    helm install --values values.yaml -f values-prod.yaml tracknest ./helm
-    ```
-
-5. **Access the Platform**
-    - Web app: `http://<your-cluster-ip>:<web-port>`
-    - Mobile app: Configure the API endpoint in the app settings.
-
-### Local Development
+### Local Development Stack
 
 ```bash
-helm install --values values.yaml -f values-dev.yaml tracknest ./helm
+cd docker-compose
+docker compose -f docker-compose.yaml up --build
 ```
 
-### Troubleshooting
+This starts the full local stack: Kafka (KRaft 3 controllers + 3 brokers), Postgres/TimescaleDB (per service), Redis, MinIO, Keycloak, Nginx, and Envoy.
 
-- Check pod and service status:
-  ```bash
-  kubectl get pods
-  kubectl get services
-  ```
-- Review logs for any failed pods:
-  ```bash
-  kubectl logs <pod-name>
-  ```
+### Running Individual Services
 
-For detailed setup and advanced configuration, refer to the [documentation](#documentation).
+**Spring Boot services** (`criminal-reports`, `emergency-ops`, `user-tracking`):
+```bash
+cd service/<service-name>
+./gradlew bootRun
+./gradlew test
+```
+
+**Web frontend**:
+```bash
+cd frontend/track-nest-web
+npm install
+npm run dev        # http://localhost:3000
+```
+
+**Mobile app**:
+```bash
+cd frontend/TrackNest
+npm install
+npx expo start
+```
+
+### Production Deployment (DigitalOcean K8s)
+
+Docker images are built and pushed to Docker Hub, then deployed via Helm to DigitalOcean Kubernetes through the `deploy` branch CI pipeline.
+
+```bash
+# Manual Helm deploy (requires kubeconfig for the DigitalOcean cluster)
+helm upgrade --install tracknest ./helm \
+  -f helm/values-secrets.yaml \
+  -n tracknest --create-namespace \
+  --atomic --timeout 5m
+```
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please open issues and pull requests for new features, bug fixes, or suggestions.
+Contributions are welcome. Please open an issue or pull request for new features, bug fixes, or suggestions.
 
 ---
 
@@ -180,5 +181,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Documentation
 
-- See the [diagrams](https://drive.google.com/file/d/1QvLAFJZOpmkjzOIqNoP01gEp86QR5JBV/view?usp=sharing) for a visual representation of the system.
-- See the [report](https://www.overleaf.com/read/tbvhpdqvcfqh#b59cf0) for a detailed explanation of the system architecture, design decisions, implementation, and evaluation results.
+- [Use Case Diagram](docs/TrackNest-usecase.png)
+- [Architecture Diagrams](https://drive.google.com/file/d/1QvLAFJZOpmkjzOIqNoP01gEb86QR5JBV/view?usp=sharing)
+- [Technical Report](https://www.overleaf.com/read/tbvhpdqvcfqh#b59cf0)

@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class KeycloakFilter extends OncePerRequestFilter {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final int MAX_HEADER_LENGTH = 4096;
-    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer [A-Za-z0-9\\-_=]+\\.[A-Za-z0-9\\-_=]+\\.?[A-Za-z0-9\\-_.+/=]*$");
+    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$");
     private static final String AUTHORIZATION_KEY = "Authorization";
 
     private final SecurityEmergencyServiceRepository serviceRepository;

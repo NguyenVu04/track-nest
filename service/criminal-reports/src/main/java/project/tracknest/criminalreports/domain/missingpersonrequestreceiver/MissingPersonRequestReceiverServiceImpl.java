@@ -53,6 +53,9 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "No available reporter found to assign the report. Please try again later."));
 
+        reporter.setLastAssignedAt(OffsetDateTime.now());
+        reporterRepository.save(reporter);
+
         MissingPersonReportStatus status = statusRepository.findByName(DEFAULT_STATUS)
                 .orElseGet(() -> statusRepository.save(MissingPersonReportStatus.builder().name(DEFAULT_STATUS).build()));
 
