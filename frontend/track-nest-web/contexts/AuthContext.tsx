@@ -10,6 +10,7 @@ import {
 } from "react";
 import type { User, UserRole } from "@/types";
 import { authService } from "@/services/authService";
+import { usePathname } from "next/navigation";
 
 interface AuthContextType {
   user: User | null;
@@ -38,6 +39,8 @@ const mapRoles = (rawRoles: string[]): UserRole[] => {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const pathName = usePathname();
 
   useEffect(() => {
     const initAuth = async () => {
@@ -70,8 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    initAuth();
-  }, []);
+    if(pathName !== "/login" && pathName !== "/") {
+      initAuth();
+    }
+  }, [pathName]);
 
   const login = useCallback(async (userData: User) => {
     setUser(userData);

@@ -759,7 +759,7 @@ export default function LandingPage() {
           </div>
           <div className="border-t border-[#1a3a3a] pt-8 text-center">
             <p className="text-[#3a5a5a] text-sm">
-              © 2024 TrackNest Sanctuary. All rights reserved.
+              © 2026 TrackNest Sanctuary. All rights reserved.
             </p>
           </div>
         </div>
