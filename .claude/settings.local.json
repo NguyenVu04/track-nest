@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(./gradlew build:*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|ts|yaml\\)$\")"
     ]
   }
 }
