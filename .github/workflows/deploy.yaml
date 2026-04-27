@@ -146,6 +146,7 @@ jobs:
       - name: Build Vercel args
         id: vercel-args
         run: |
+          ARGS="${{ github.event_name == 'push' && '--prod' || '' }}"
           ARGS="$ARGS --build-env NEXT_PUBLIC_USER_TRACKING_API_URL=${{ secrets.NEXT_PUBLIC_USER_TRACKING_API_URL }}"
           ARGS="$ARGS --build-env NEXT_PUBLIC_EMERGENCY_OPS_API_URL=${{ secrets.NEXT_PUBLIC_EMERGENCY_OPS_API_URL }}"
           ARGS="$ARGS --build-env NEXT_PUBLIC_EMERGENCY_OPS_WS_URL=${{ secrets.NEXT_PUBLIC_EMERGENCY_OPS_WS_URL }}"
@@ -167,7 +168,8 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: vercel --prod --token=$VERCEL_TOKEN ${{ steps.vercel-args.outputs.value }}
+        working-directory: frontend/track-nest-web
+        run: vercel deploy --token=$VERCEL_TOKEN ${{ steps.vercel-args.outputs.value }}
 
   # ──────────────────────────────────────────────────────────────────────────
   # Spring Boot services → DigitalOcean K8s via Helm
