@@ -264,4 +264,4 @@ jobs:
             -f helm/values-secrets.yaml \
             ${{ steps.overrides.outputs.args }} \
             -n tracknest --create-namespace \
-            --atomic --timeout 5m
+            --rollback-on-failure --timeout 5m
