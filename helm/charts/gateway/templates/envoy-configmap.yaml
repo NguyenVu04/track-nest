@@ -55,7 +55,7 @@ data:
                         typed_config:
                           "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
-        # Main TLS listener — handles both tracknestapp.org (Keycloak) and api.tracknestapp.org (APIs + gRPC)
+        # Main TLS listener — handles api.tracknestapp.org (Keycloak /auth/, REST APIs, gRPC)
         - name: main_listener
           address:
             socket_address:
@@ -115,11 +115,12 @@ data:
                     route_config:
                       name: local_route
                       virtual_hosts:
-                        # Keycloak identity endpoints — no JWT required, security headers applied
-                        - name: keycloak_host
+                        # All traffic: Keycloak identity, REST APIs, gRPC — JWT enforced per route
+                        - name: api_services
                           domains:
-                            - "tracknestapp.org"
-                            - "tracknestapp.org:{{ .Values.envoy.servicePort }}"
+                            - "api.tracknestapp.org"
+                            - "api.tracknestapp.org:{{ .Values.envoy.servicePort }}"
+                            - "*"
                           response_headers_to_add:
                             - header:
                                 key: "Strict-Transport-Security"
@@ -149,6 +150,17 @@ data:
                                 key: "X-XSS-Protection"
                                 value: "0"
                               keep_empty_value: false
+                          cors:
+                            allow_origin_string_match:
+                              - exact: "http://localhost"
+                              - exact: "http://localhost:3000"
+                              - exact: "https://tracknestapp.org"
+                              - exact: "https://api.tracknestapp.org"
+                            allow_methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+                            allow_headers: "authorization,content-type,x-correlation-id,x-requested-with,x-grpc-web,x-user-agent,grpc-timeout"
+                            expose_headers: "grpc-status,grpc-message,grpc-status-details-bin"
+                            max_age: "3600"
+                            allow_credentials: true
                           routes:
                             - match:
                                 prefix: "/auth/"
@@ -164,31 +176,7 @@ data:
                               route:
                                 cluster: keycloak_http
                                 timeout: 30s
-                            - match:
-                                prefix: "/"
-                              direct_response:
-                                status: 404
-                                body:
-                                  inline_string: "Not found"
 
-                        # API services + gRPC — JWT enforced per route
-                        - name: api_services
-                          domains:
-                            - "api.tracknestapp.org"
-                            - "api.tracknestapp.org:{{ .Values.envoy.servicePort }}"
-                            - "*"
-                          cors:
-                            allow_origin_string_match:
-                              - exact: "http://localhost"
-                              - exact: "http://localhost:3000"
-                              - exact: "https://tracknestapp.org"
-                              - exact: "https://api.tracknestapp.org"
-                            allow_methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-                            allow_headers: "authorization,content-type,x-correlation-id,x-requested-with,x-grpc-web,x-user-agent,grpc-timeout"
-                            expose_headers: "grpc-status,grpc-message,grpc-status-details-bin"
-                            max_age: "3600"
-                            allow_credentials: true
-                          routes:
                             - match:
                                 prefix: "/emergency-ops/"
                               route:

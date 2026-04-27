@@ -18,7 +18,7 @@ keycloak:
 
   # Public hostname Keycloak emits in issuer / redirect URLs.
   # MUST match what sits in front of it (nginx/envoy/CF).
-  hostname: tracknestapp.org
+  hostname: api.tracknestapp.org
   hostnameStrict: false
   hostnameStrictHttps: true
 

@@ -8,6 +8,8 @@ TrackNest is an event-driven, microservices-based real-time abduction-prevention
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=NguyenVu04_track-nest&metric=coverage)](https://sonarcloud.io/summary/new_code?id=NguyenVu04_track-nest)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=NguyenVu04_track-nest&metric=bugs)](https://sonarcloud.io/summary/new_code?id=NguyenVu04_track-nest)
 
+---
+
 ## Table of Contents
 
 - [Features](#features)
