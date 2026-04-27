@@ -152,19 +152,18 @@ data:
                           routes:
                             - match:
                                 prefix: "/auth/"
+                              request_headers_to_add:
+                                - header:
+                                    key: "X-Forwarded-Proto"
+                                    value: "https"
+                                  keep_empty_value: false
+                                - header:
+                                    key: "X-Forwarded-Port"
+                                    value: "{{ .Values.envoy.servicePort }}"
+                                  keep_empty_value: false
                               route:
                                 cluster: keycloak_http
                                 timeout: 30s
-                                # Propagate real client IP and protocol to Keycloak
-                                request_headers_to_add:
-                                  - header:
-                                      key: "X-Forwarded-Proto"
-                                      value: "https"
-                                    keep_empty_value: false
-                                  - header:
-                                      key: "X-Forwarded-Port"
-                                      value: "{{ .Values.envoy.servicePort }}"
-                                    keep_empty_value: false
                             - match:
                                 prefix: "/"
                               direct_response:
