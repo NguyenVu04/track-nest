@@ -67,6 +67,27 @@ spec:
                   name: {{ .Release.Name }}-secrets
                   key: CRIMINAL_REPORTS_DB_PASSWORD
 
+            - name: MINIO_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: MINIO_ENDPOINT
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: MINIO_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: MINIO_SECRET_KEY
+            - name: MINIO_PUBLIC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: CRIMINAL_REPORTS_MINIO_PUBLIC_URL
+
             - name: GOOGLE_API_KEY
               valueFrom:
                 secretKeyRef:

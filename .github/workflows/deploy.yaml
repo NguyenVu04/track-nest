@@ -221,6 +221,7 @@ jobs:
             CRIMINAL_REPORTS_DB_USERNAME:   "${{ secrets.CRIMINAL_REPORTS_DB_USERNAME }}"
             CRIMINAL_REPORTS_DB_PASSWORD:   "${{ secrets.CRIMINAL_REPORTS_DB_PASSWORD }}"
             CRIMINAL_REPORTS_TINYMCE_API_KEY: "${{ secrets.CRIMINAL_REPORTS_TINYMCE_API_KEY }}"
+            CRIMINAL_REPORTS_MINIO_PUBLIC_URL: "${{ secrets.CRIMINAL_REPORTS_MINIO_PUBLIC_URL }}"
 
             EMERGENCY_OPS_DB_HOST:     "${{ secrets.EMERGENCY_OPS_DB_HOST }}"
             EMERGENCY_OPS_DB_PORT:     "${{ secrets.EMERGENCY_OPS_DB_PORT }}"
@@ -231,6 +232,10 @@ jobs:
             KEYCLOAK_DB_URL:      "${{ secrets.KEYCLOAK_DB_URL }}"
             KEYCLOAK_DB_USERNAME: "${{ secrets.KEYCLOAK_DB_USERNAME }}"
             KEYCLOAK_DB_PASSWORD: "${{ secrets.KEYCLOAK_DB_PASSWORD }}"
+
+            MINIO_ENDPOINT:       "${{ secrets.MINIO_ENDPOINT }}"
+            MINIO_ACCESS_KEY:     "${{ secrets.MINIO_ACCESS_KEY }}"
+            MINIO_SECRET_KEY:     "${{ secrets.MINIO_SECRET_KEY }}"
 
             KAFKA_BOOTSTRAP_SERVERS:       "${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}"
             KAFKA_USERNAME:                "${{ secrets.KAFKA_USERNAME }}"
