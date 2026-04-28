@@ -5,7 +5,10 @@ import dynamic from "next/dynamic";
 import { Save, X, MapPin, User, Calendar, FileText, Phone, Mail, Upload, Trash2 } from "lucide-react";
 import Image from "next/image";
 import type { MissingPerson } from "@/types";
-import { criminalReportsService, CreateMissingPersonReportRequest, UpdateMissingPersonReportRequest } from "@/services/criminalReportsService";
+import {
+  criminalReportsService,
+  UpdateMissingPersonReportRequest,
+} from "@/services/criminalReportsService";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -50,8 +53,8 @@ export function MissingPersonForm({
   const tCommon = useTranslations("common");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState<Partial<MissingPerson>>(
     person || {
       fullName: "",
@@ -67,20 +70,42 @@ export function MissingPersonForm({
   );
 
   const [coordinates, setCoordinates] = useState<[number, number]>(
-    person ? [10.8231, 106.6297] : [10.8231, 106.6297]
+    person?.latitude != null && person?.longitude != null
+      ? [person.latitude, person.longitude]
+      : [10.8231, 106.6297]
   );
 
-  const handlePhotoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // In create mode the photo is kept as a File until submission (the backend's
+  // submit endpoint handles the upload atomically). In edit mode the photo field
+  // holds the existing stored key/URL which we leave unchanged unless replaced.
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string>(
+    mode === "edit" ? (person?.photo ?? "") : ""
+  );
+
+  const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsUploadingPhoto(true);
+
+    if (mode === "create") {
+      // Store the File for submission; generate a local preview URL.
+      setPhotoFile(file);
+      setPhotoPreviewUrl(URL.createObjectURL(file));
+    } else {
+      // Edit mode: upload immediately so the stored key is available for the
+      // JSON update request.
+      handleEditPhotoUpload(file);
+    }
+  };
+
+  const handleEditPhotoUpload = async (file: File) => {
     try {
       const result = await criminalReportsService.uploadFile(file, "criminal-reports");
       setFormData((prev) => ({ ...prev, photo: result.url }));
+      setPhotoPreviewUrl(result.url);
     } catch {
       toast.error(t("uploadPhotoError"));
     } finally {
-      setIsUploadingPhoto(false);
       if (photoInputRef.current) photoInputRef.current.value = "";
     }
   };
@@ -93,6 +118,8 @@ export function MissingPersonForm({
   };
 
   const handleRemovePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreviewUrl("");
     setFormData((prev) => ({ ...prev, photo: "" }));
     if (photoInputRef.current) photoInputRef.current.value = "";
   };
@@ -103,20 +130,19 @@ export function MissingPersonForm({
 
     try {
       if (mode === "create") {
-        const request: CreateMissingPersonReportRequest = {
+        // Use the submit (multipart) endpoint so the photo file is uploaded
+        // atomically with the report — the JSON create endpoint has no file
+        // upload handler in the backend.
+        const response = await criminalReportsService.submitMissingPersonReport({
           title: formData.title || formData.fullName || "Missing Person Report",
           fullName: formData.fullName!,
           personalId: formData.personalId!,
-          photo: formData.photo || undefined,
+          photo: photoFile ?? undefined,
           date: formData.date!,
           content: formData.content!,
-          latitude: coordinates[0],
-          longitude: coordinates[1],
-          contactEmail: formData.contactEmail || undefined,
+          contactEmail: formData.contactEmail || "",
           contactPhone: formData.contactPhone!,
-        };
-
-        const response = await criminalReportsService.createMissingPersonReport(request);
+        });
         const newPerson: MissingPerson = {
           id: response.id,
           title: response.title,
@@ -175,10 +201,13 @@ export function MissingPersonForm({
       }
     } catch (error) {
       console.error("Error saving missing person report:", error);
+      toast.error(mode === "create" ? t("toastCreateError") : t("toastUpdateError"));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const currentPhotoSrc = photoPreviewUrl || formData.photo || "";
 
   return (
     <div className="max-w-4xl">
@@ -272,10 +301,10 @@ export function MissingPersonForm({
           <div>
             <label className="block text-gray-700 mb-2">{t("formPhotoUrl")}</label>
 
-            {formData.photo ? (
+            {currentPhotoSrc ? (
               <div className="relative w-full rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
                 <Image
-                  src={formData.photo}
+                  src={currentPhotoSrc}
                   alt="Uploaded photo"
                   width={400}
                   height={200}
@@ -294,46 +323,40 @@ export function MissingPersonForm({
             ) : (
               <div
                 className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
-                onClick={() => !isUploadingPhoto && photoInputRef.current?.click()}
+                onClick={() => photoInputRef.current?.click()}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handlePhotoDrop}
               >
-                {isUploadingPhoto ? (
-                  <div className="flex flex-col items-center gap-2 text-gray-500">
-                    <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm">{t("uploadingPhoto")}</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-gray-500 pointer-events-none">
-                    <Upload className="w-7 h-7 text-gray-400" />
-                    <span className="text-sm font-medium">{t("uploadPhotoBtn")}</span>
-                    <span className="text-xs text-gray-400">{t("uploadPhotoHint")}</span>
-                  </div>
-                )}
+                <div className="flex flex-col items-center gap-2 text-gray-500 pointer-events-none">
+                  <Upload className="w-7 h-7 text-gray-400" />
+                  <span className="text-sm font-medium">{t("uploadPhotoBtn")}</span>
+                  <span className="text-xs text-gray-400">{t("uploadPhotoHint")}</span>
+                </div>
                 <input
                   ref={photoInputRef}
                   type="file"
                   accept="image/*"
                   className="hidden"
                   onChange={handlePhotoFileChange}
-                  disabled={isUploadingPhoto}
                 />
               </div>
             )}
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-gray-700 mb-2">
-              <span className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                {t("formLocationCoords")}{tCommon("requiredSuffix")}
-              </span>
-            </label>
-            <LocationPicker
-              position={coordinates}
-              onPositionChange={(position) => setCoordinates(position)}
-            />
-          </div>
+          {mode === "edit" && (
+            <div className="md:col-span-2">
+              <label className="block text-gray-700 mb-2">
+                <span className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  {t("formLocationCoords")}
+                </span>
+              </label>
+              <LocationPicker
+                position={coordinates}
+                onPositionChange={(position) => setCoordinates(position)}
+              />
+            </div>
+          )}
 
           <div className="md:col-span-2">
             <label htmlFor="content" className="block text-gray-700 mb-2">

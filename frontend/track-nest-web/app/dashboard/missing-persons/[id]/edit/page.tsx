@@ -32,6 +32,8 @@ export default function EditMissingPersonPage() {
           photo: response.photo,
           date: response.date,
           content: response.content,
+          latitude: response.latitude,
+          longitude: response.longitude,
           contactEmail: response.contactEmail,
           contactPhone: response.contactPhone,
           createdAt: response.createdAt,

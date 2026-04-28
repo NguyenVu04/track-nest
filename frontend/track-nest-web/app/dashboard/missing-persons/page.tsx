@@ -188,7 +188,7 @@ export default function MissingPersonsPage() {
                 <option value="all">{t("filterAll")}</option>
                 <option value="PENDING">{t("filterPending")}</option>
                 <option value="PUBLISHED">{t("filterPublished")}</option>
-                <option value="RESOLVED">{t("filterResolved")}</option>
+                <option value="REJECTED">{t("filterRejected")}</option>
               </select>
             </div>
           </div>

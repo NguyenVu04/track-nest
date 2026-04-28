@@ -38,6 +38,7 @@ export default function EditCrimeReportPage() {
           numberOfVictims: response.numberOfVictims,
           numberOfOffenders: response.numberOfOffenders,
           arrested: response.arrested,
+          photos: response.photos ?? [],
           createdAt: response.createdAt,
           updatedAt: response.updatedAt,
           reporterId: response.reporterId,
@@ -82,6 +83,7 @@ export default function EditCrimeReportPage() {
       numberOfVictims: updated.numberOfVictims,
       numberOfOffenders: updated.numberOfOffenders,
       arrested: updated.arrested,
+      photos: updated.photos,
     };
     await criminalReportsService.updateCrimeReport(id, request);
     toast.success("Report updated successfully");
