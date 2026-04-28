@@ -5,4 +5,6 @@ import project.tracknest.criminalreports.domain.reportmanager.dto.CrimeReportRes
 
 public interface CrimeLocatorService {
     PageResponse<CrimeReportResponse> viewCrimeHeatmap(double longitude, double latitude, double radius, int page, int size);
+
+    boolean isHighRiskZone(double longitude, double latitude);
 }

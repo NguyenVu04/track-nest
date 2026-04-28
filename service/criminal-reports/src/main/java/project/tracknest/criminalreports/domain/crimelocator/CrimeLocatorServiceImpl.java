@@ -18,6 +18,8 @@ import project.tracknest.criminalreports.domain.repository.CrimeReportRepository
 class CrimeLocatorServiceImpl implements CrimeLocatorService {
 
     private final CrimeReportRepository crimeReportRepository;
+    private static final double HIGH_RISK_RADIUS_METERS = 1000.0;
+    private static final int HIGH_RISK_MIN_SEVERITY = 4;
 
     @Override
     @Transactional(readOnly = true)
@@ -26,6 +28,17 @@ class CrimeLocatorServiceImpl implements CrimeLocatorService {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "severity"));
         Page<CrimeReport> reports = crimeReportRepository.findAllPublicWithinRadius(longitude, latitude, radius, pageRequest);
         return mapToPageResponse(reports.map(this::mapToCrimeReportResponse));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isHighRiskZone(double longitude, double latitude) {
+        long count = crimeReportRepository.countPublicWithinRadiusWithMinSeverity(
+                longitude,
+                latitude,
+                HIGH_RISK_RADIUS_METERS,
+                HIGH_RISK_MIN_SEVERITY);
+        return count > 0;
     }
 
     private CrimeReportResponse mapToCrimeReportResponse(CrimeReport report) {

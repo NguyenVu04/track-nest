@@ -25,4 +25,11 @@ public class CrimeLocatorController {
         PageResponse<CrimeReportResponse> response = service.viewCrimeHeatmap(longitude, latitude, radius, page, Math.min(size, 100));
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/high-risk-check")
+    public ResponseEntity<Boolean> checkHighRiskCrimeZone(
+            @RequestParam double longitude,
+            @RequestParam double latitude) {
+        return ResponseEntity.ok(service.isHighRiskZone(longitude, latitude));
+    }
 }

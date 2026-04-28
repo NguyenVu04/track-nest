@@ -361,7 +361,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private MissingPersonReport findMissingPersonReportOwned(UUID reporterId, UUID reportId) {
-        return missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
+        return missingPersonReportRepository.findByReporterIdOrUserIdAndId(reporterId, reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Missing person report not found"));
     }
 

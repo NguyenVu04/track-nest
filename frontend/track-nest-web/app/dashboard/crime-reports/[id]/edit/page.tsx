@@ -78,8 +78,6 @@ export default function EditCrimeReportPage() {
       content: updated.content,
       severity: updated.severity,
       date: updated.date,
-      longitude: updated.longitude,
-      latitude: updated.latitude,
       numberOfVictims: updated.numberOfVictims,
       numberOfOffenders: updated.numberOfOffenders,
       arrested: updated.arrested,

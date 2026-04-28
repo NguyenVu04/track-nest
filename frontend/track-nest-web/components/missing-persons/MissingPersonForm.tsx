@@ -75,9 +75,11 @@ export function MissingPersonForm({
       : [10.8231, 106.6297]
   );
 
-  // In create mode the photo is kept as a File until submission (the backend's
-  // submit endpoint handles the upload atomically). In edit mode the photo field
-  // holds the existing stored key/URL which we leave unchanged unless replaced.
+  // In create mode the photo File is held locally and submitted together with
+  // the form via submitMissingPersonReport (multipart). The backend's
+  // /missing-person-request-receiver/submit endpoint handles the MinIO upload
+  // atomically — ROLE_USER or ROLE_ADMIN is required for that path.
+  // In edit mode the photo field holds the existing stored key/URL.
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string>(
     mode === "edit" ? (person?.photo ?? "") : ""
@@ -88,12 +90,9 @@ export function MissingPersonForm({
     if (!file) return;
 
     if (mode === "create") {
-      // Store the File for submission; generate a local preview URL.
       setPhotoFile(file);
       setPhotoPreviewUrl(URL.createObjectURL(file));
     } else {
-      // Edit mode: upload immediately so the stored key is available for the
-      // JSON update request.
       handleEditPhotoUpload(file);
     }
   };
@@ -130,9 +129,8 @@ export function MissingPersonForm({
 
     try {
       if (mode === "create") {
-        // Use the submit (multipart) endpoint so the photo file is uploaded
-        // atomically with the report — the JSON create endpoint has no file
-        // upload handler in the backend.
+        // Uses the multipart submit endpoint (ROLE_USER or ROLE_ADMIN).
+        // Photo upload is handled atomically server-side.
         const response = await criminalReportsService.submitMissingPersonReport({
           title: formData.title || formData.fullName || "Missing Person Report",
           fullName: formData.fullName!,
@@ -143,7 +141,7 @@ export function MissingPersonForm({
           contactEmail: formData.contactEmail || "",
           contactPhone: formData.contactPhone!,
         });
-        const newPerson: MissingPerson = {
+        onSave({
           id: response.id,
           title: response.title,
           fullName: response.fullName,
@@ -160,8 +158,7 @@ export function MissingPersonForm({
           status: response.status as MissingPerson["status"],
           reporterId: response.reporterId,
           isPublic: response.isPublic,
-        };
-        onSave(newPerson);
+        });
       } else {
         const updateRequest: UpdateMissingPersonReportRequest = {
           title: formData.title,
@@ -179,7 +176,7 @@ export function MissingPersonForm({
           person!.id,
           updateRequest,
         );
-        const updatedPerson: MissingPerson = {
+        onSave({
           id: response.id,
           title: response.title,
           fullName: response.fullName,
@@ -196,8 +193,7 @@ export function MissingPersonForm({
           status: response.status as MissingPerson["status"],
           reporterId: response.reporterId,
           isPublic: response.isPublic,
-        };
-        onSave(updatedPerson);
+        });
       }
     } catch (error) {
       console.error("Error saving missing person report:", error);
@@ -343,20 +339,18 @@ export function MissingPersonForm({
             )}
           </div>
 
-          {mode === "edit" && (
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 mb-2">
-                <span className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  {t("formLocationCoords")}
-                </span>
-              </label>
-              <LocationPicker
-                position={coordinates}
-                onPositionChange={(position) => setCoordinates(position)}
-              />
-            </div>
-          )}
+          <div className="md:col-span-2">
+            <label className="block text-gray-700 mb-2">
+              <span className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                {t("formLocationCoords")}
+              </span>
+            </label>
+            <LocationPicker
+              position={coordinates}
+              onPositionChange={(position) => setCoordinates(position)}
+            />
+          </div>
 
           <div className="md:col-span-2">
             <label htmlFor="content" className="block text-gray-700 mb-2">

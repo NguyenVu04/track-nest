@@ -104,12 +104,10 @@ export interface CreateCrimeReportRequest {
 }
 
 export interface UpdateCrimeReportRequest {
-  title?: string;
+  title: string;
   content?: string;
-  severity?: number;
-  date?: string;
-  longitude?: number;
-  latitude?: number;
+  severity: number;
+  date: string;
   numberOfVictims?: number;
   numberOfOffenders?: number;
   arrested?: boolean;
