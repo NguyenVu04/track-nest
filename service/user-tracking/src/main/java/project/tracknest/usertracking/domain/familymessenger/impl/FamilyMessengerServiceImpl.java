@@ -8,12 +8,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.tracknest.usertracking.configuration.firebase.FcmService;
 import project.tracknest.usertracking.configuration.redis.ServerRedisMessage;
 import project.tracknest.usertracking.configuration.redis.ServerRedisMessagePublisher;
 import project.tracknest.usertracking.core.datatype.FamilyMessageEvent;
 import project.tracknest.usertracking.core.datatype.PageToken;
 import project.tracknest.usertracking.core.entity.FamilyCircleMember;
 import project.tracknest.usertracking.core.entity.FamilyMessage;
+import project.tracknest.usertracking.core.entity.MobileDevice;
+import project.tracknest.usertracking.core.entity.User;
 import project.tracknest.usertracking.core.utils.PageTokenCodec;
 import project.tracknest.usertracking.domain.familymessenger.service.FamilyMessengerService;
 import project.tracknest.usertracking.proto.lib.*;
@@ -22,6 +25,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -31,7 +35,10 @@ import java.util.UUID;
 class FamilyMessengerServiceImpl implements FamilyMessengerService {
     private final FamilyMessengerFamilyMessageRepository messageRepository;
     private final FamilyMessengerFamilyCircleMemberRepository memberRepository;
+    private final FamilyMessengerUserRepository userRepository;
+    private final FamilyMessengerMobileDeviceRepository mobileDeviceRepository;
     private final ServerRedisMessagePublisher redisPublisher;
+    private final FcmService fcmService;
 
     @Override
     @Transactional
@@ -64,6 +71,7 @@ class FamilyMessengerServiceImpl implements FamilyMessengerService {
                 .build();
 
         publishToCircleMembers(circleId, event);
+        sendChatMessageFcmNotifications(circleId, userId, event);
 
         return SendMessageResponse.newBuilder()
                 .setMessageId(saved.getId().toString())
@@ -148,5 +156,47 @@ class FamilyMessengerServiceImpl implements FamilyMessengerService {
                 log.warn("Failed to publish family message to member {}: {}", memberId, e.getMessage());
             }
         }
+    }
+
+    /**
+     * Sends an FCM push notification to all circle members except the sender.
+     * The notification title is the sender's username and the body is the message content.
+     * The data payload carries the type, deep-link route, and circleId for the mobile client.
+     */
+    private void sendChatMessageFcmNotifications(UUID circleId, UUID senderId, FamilyMessageEvent event) {
+        // Resolve sender username for the notification title
+        String senderUsername = userRepository.findById(senderId)
+                .map(User::getUsername)
+                .orElse("Family member");
+
+        // Collect IDs of members who should receive the push (everyone except the sender)
+        List<UUID> recipientIds = memberRepository.findAllById_FamilyCircleId(circleId)
+                .stream()
+                .map(m -> m.getId().getMemberId())
+                .filter(id -> !id.equals(senderId))
+                .toList();
+
+        if (recipientIds.isEmpty()) {
+            return;
+        }
+
+        // Fetch all FCM tokens for those recipients in one query
+        List<String> tokens = mobileDeviceRepository.findAllByUserIdIn(recipientIds)
+                .stream()
+                .map(MobileDevice::getDeviceToken)
+                .toList();
+
+        if (tokens.isEmpty()) {
+            return;
+        }
+
+        Map<String, String> data = Map.of(
+                "type", "chat_message",
+                "route", "/(app)/(tabs)/family-chat",
+                "circleId", circleId.toString()
+        );
+
+        int sent = fcmService.sendToTokensWithData(tokens, senderUsername, event.getContent(), data);
+        log.info("FCM chat notification: sent={} tokens={} circleId={}", sent, tokens.size(), circleId);
     }
 }
