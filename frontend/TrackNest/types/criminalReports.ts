@@ -194,3 +194,22 @@ export interface PageResponse<T> {
   first: boolean;
   last: boolean;
 }
+
+export interface ChatbotSessionMessage {
+  role: "USER" | "MODEL";
+  content: string;
+  createdAtMs: number;
+}
+
+export interface ChatbotSessionResponse {
+  sessionId: string;
+  documentId?: string;
+  createdAtMs: number;
+  messageLeft?: number;
+  messages: ChatbotSessionMessage[];
+}
+
+export interface ChatbotMessageResponse {
+  response: string;
+  createdAt: number;
+}

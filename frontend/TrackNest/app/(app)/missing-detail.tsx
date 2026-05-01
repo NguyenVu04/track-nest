@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -316,6 +317,13 @@ export default function MissingDetailScreen() {
 
         <View style={{ height: 32 }} />
       </ScrollView>
+
+      {/* Floating Chatbot Panel */}
+      <ChatbotPanel 
+        documentId={person.content} 
+        title={person.fullName} 
+        emptyState="Ask a question about this missing person report." 
+      />
     </SafeAreaView>
   );
 }

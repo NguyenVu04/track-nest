@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { criminalReportsService } from "@/services/criminalReports";
 import type { GuidelinesDocument } from "@/types/criminalReports";
 import { colors, radii, spacing } from "@/styles/styles";
+import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
 
 export default function GuidelineDetailScreen() {
   const router = useRouter();
@@ -99,6 +100,13 @@ export default function GuidelineDetailScreen() {
         </View>
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Floating Chatbot Panel */}
+      <ChatbotPanel 
+        documentId={guideline.content} 
+        title={guideline.title} 
+        emptyState="Ask a question about this guideline." 
+      />
     </SafeAreaView>
   );
 }

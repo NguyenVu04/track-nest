@@ -16,6 +16,9 @@ import type {
   UpdateCrimeReportInput,
   UpdateGuidelinesDocumentInput,
   UpdateMissingPersonReportInput,
+  ChatbotSessionMessage,
+  ChatbotSessionResponse,
+  ChatbotMessageResponse,
 } from "@/types/criminalReports";
 export type {
   CreateCrimeReportInput,
@@ -35,6 +38,9 @@ export type {
   UpdateCrimeReportInput,
   UpdateGuidelinesDocumentInput,
   UpdateMissingPersonReportInput,
+  ChatbotSessionMessage,
+  ChatbotSessionResponse,
+  ChatbotMessageResponse,
 } from "@/types/criminalReports";
 
 class CriminalReportsService {
@@ -426,6 +432,26 @@ class CriminalReportsService {
   async adminDeleteGuidelines(documentId: string): Promise<void> {
     const client = await this.getApiClient();
     await client.delete(`/report-admin/guidelines/${documentId}`);
+  }
+
+  // ==================== Chatbot ====================
+
+  async startChatbotSession(params: { documentId: string }): Promise<{ sessionId: string }> {
+    const client = await this.getMutationClient();
+    const response = await client.post("/chatbot/sessions", params);
+    return response.data;
+  }
+
+  async sendChatbotMessage(params: { sessionId: string; message: string }): Promise<ChatbotMessageResponse> {
+    const client = await this.getMutationClient();
+    const response = await client.post(`/chatbot/sessions/${params.sessionId}/messages`, { message: params.message });
+    return response.data;
+  }
+
+  async getChatbotSession(sessionId: string): Promise<ChatbotSessionResponse> {
+    const client = await this.getApiClient();
+    const response = await client.get(`/chatbot/sessions/${sessionId}`);
+    return response.data;
   }
 }
 
