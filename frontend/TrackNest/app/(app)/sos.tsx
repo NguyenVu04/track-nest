@@ -1,8 +1,9 @@
 import { sos as sosLang } from "@/constant/languages";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEmergency } from "@/contexts/EmergencyContext";
 import { useTranslation } from "@/hooks/useTranslation";
+import { showToast } from "@/utils";
 import { colors } from "@/styles/styles";
-import { Ionicons } from "@expo/vector-icons";
 import * as Notifications from "expo-notifications";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -12,7 +13,6 @@ import {
   Dimensions,
   PanResponder,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -21,7 +21,6 @@ import {
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.6;
 
-// Configure notification handler
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldPlaySound: false,
@@ -36,6 +35,7 @@ export default function SosScreen() {
   const { autoActivate } = useLocalSearchParams<{ autoActivate?: string }>();
   const t = useTranslation(sosLang);
   const { createEmergencyRequest } = useEmergency();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [countdown, setCountdown] = useState(10);
   const [isCancelled, setIsCancelled] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
@@ -43,7 +43,14 @@ export default function SosScreen() {
   const emergencyTriggeredRef = useRef(false);
   const autoActivatedRef = useRef(false);
 
-  // Setup notifications and prevent hardware back button
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (!user) {
+      showToast("Please log in to use the SOS feature.");
+      router.replace("/map");
+    }
+  }, [isAuthLoading, user, router]);
+
   useEffect(() => {
     const setupNotifications = async () => {
       if (Platform.OS === "android") {
@@ -58,28 +65,19 @@ export default function SosScreen() {
 
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
-      () => true, // Return true to prevent default behavior
+      () => true,
     );
-
     return () => backHandler.remove();
   }, [t.sosNotificationChannel]);
 
-  const getTargetId = useCallback(() => {
-    // For now, use a default target ID
-    // In a full implementation, this would be selected from available family members
-    return "default-target-id";
-  }, []);
+  const getTargetId = useCallback(() => user?.sub ?? "", [user?.sub]);
 
   const triggerEmergency = useCallback(async () => {
     if (emergencyTriggeredRef.current) return;
+    if (!user) return;
     emergencyTriggeredRef.current = true;
-
     try {
-      // Create emergency request via backend API
-      const targetId = getTargetId();
-      await createEmergencyRequest(targetId);
-      
-      // Show success notification
+      await createEmergencyRequest(getTargetId());
       await Notifications.scheduleNotificationAsync({
         content: {
           title: t.emergencyActivatedTitle,
@@ -87,22 +85,15 @@ export default function SosScreen() {
         },
         trigger: null,
       });
-      
-      // Navigate back to map - emergency status will be visible
       router.replace("/map");
-    } catch (error) {
-      console.error("Emergency request failed:", error);
-      
-      // Show error notification
+    } catch {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: "Emergency Request Failed",
-          body: "Please try again or call emergency services directly",
+          title: t.emergencyFailedTitle,
+          body: t.emergencyFailedBody,
         },
         trigger: null,
       });
-      
-      // Navigate back to map on error
       router.replace("/map");
     }
   }, [router, t, createEmergencyRequest, getTargetId]);
@@ -110,18 +101,13 @@ export default function SosScreen() {
   useEffect(() => {
     const shouldAutoActivate = autoActivate === "1" || autoActivate === "true";
     if (!shouldAutoActivate || autoActivatedRef.current) return;
-
     autoActivatedRef.current = true;
-    if (countdownRef.current) {
-      clearInterval(countdownRef.current);
-    }
+    if (countdownRef.current) clearInterval(countdownRef.current);
     triggerEmergency();
   }, [autoActivate, triggerEmergency]);
 
-  // Countdown timer
   useEffect(() => {
     if (isCancelled) return;
-
     countdownRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -131,26 +117,18 @@ export default function SosScreen() {
         return prev - 1;
       });
     }, 1000);
-
     return () => {
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
-      }
+      if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, [isCancelled]);
 
-  // Trigger emergency when countdown reaches 0
   useEffect(() => {
-    if (countdown === 0 && !isCancelled) {
-      triggerEmergency();
-    }
+    if (countdown === 0 && !isCancelled) triggerEmergency();
   }, [countdown, isCancelled, triggerEmergency]);
 
-  const cancelEmergency = () => {
+  const cancelEmergency = useCallback(() => {
     setIsCancelled(true);
-    if (countdownRef.current) {
-      clearInterval(countdownRef.current);
-    }
+    if (countdownRef.current) clearInterval(countdownRef.current);
     router.replace("/map");
     Notifications.scheduleNotificationAsync({
       content: {
@@ -159,30 +137,23 @@ export default function SosScreen() {
       },
       trigger: null,
     });
-  };
+  }, [router, t]);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: (_, gestureState) => {
-        // Only allow rightward movement
-        if (gestureState.dx > 0) {
-          translateX.setValue(gestureState.dx);
-        }
+      onPanResponderMove: (_, gs) => {
+        if (gs.dx > 0) translateX.setValue(gs.dx);
       },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx > SWIPE_THRESHOLD) {
-          // Swipe successful - cancel emergency
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dx > SWIPE_THRESHOLD) {
           Animated.timing(translateX, {
             toValue: SCREEN_WIDTH,
             duration: 200,
             useNativeDriver: true,
-          }).start(() => {
-            cancelEmergency();
-          });
+          }).start(() => cancelEmergency());
         } else {
-          // Snap back
           Animated.spring(translateX, {
             toValue: 0,
             useNativeDriver: true,
@@ -199,75 +170,45 @@ export default function SosScreen() {
     extrapolate: "clamp",
   });
 
-  const trackBackgroundColor = swipeProgress.interpolate({
+  const trackBg = swipeProgress.interpolate({
     inputRange: [0, 1],
     outputRange: ["rgba(255,255,255,0.2)", "rgba(76,217,100,0.5)"],
   });
 
   return (
     <View style={styles.container}>
-      {/* Pulsing background effect */}
-      <View style={styles.pulseBackground} />
-
-      {/* Emergency icon */}
-      <View style={styles.iconContainer}>
-        <Ionicons name="warning" size={80} color="#fff" />
+      {/* Medical asterisk icon */}
+      <View style={styles.iconCircle}>
+        <Text style={styles.iconStar}>✳</Text>
       </View>
 
       {/* Title */}
       <Text style={styles.title}>{t.title}</Text>
 
-      {/* Countdown */}
-      <View style={styles.countdownContainer}>
-        <Text style={styles.countdownNumber}>{countdown}</Text>
-        <Text style={styles.countdownLabel}>{t.seconds}</Text>
-      </View>
-
-      {/* Instruction */}
-      <Text style={styles.instruction}>
-        {t.instruction.replace("{countdown}", String(countdown))}
+      {/* Subtitle */}
+      <Text style={styles.subtitle}>
+        {t.notifyingSubtitle.replace("{newline}", "\n")}
       </Text>
 
-      {/* Swipe to cancel button */}
-      <View style={styles.swipeContainer}>
-        <Animated.View
-          style={[styles.swipeTrack, { backgroundColor: trackBackgroundColor }]}
-        >
-          <Text style={styles.swipeTrackText}>{t.swipeToCancel}</Text>
-        </Animated.View>
-
-        <Animated.View
-          style={[
-            styles.swipeButton,
-            {
-              transform: [{ translateX }],
-            },
-          ]}
-          {...panResponder.panHandlers}
-        >
-          <Ionicons name="close" size={32} color={colors.danger} />
-        </Animated.View>
+      {/* Frosted countdown circle */}
+      <View style={styles.countdownCircle}>
+        <Text style={styles.countdownNumber}>{countdown}</Text>
       </View>
 
-      {/* Immediate emergency button */}
-      <Pressable
-        style={({ pressed }) => [
-          styles.emergencyButton,
-          pressed && styles.emergencyButtonPressed,
-        ]}
-        onPress={() => {
-          if (countdownRef.current) {
-            clearInterval(countdownRef.current);
-          }
-          triggerEmergency();
-        }}
-      >
-        <Ionicons name="call" size={20} color="#fff" />
-        <Text style={styles.emergencyButtonText}>{t.sendEmergencyNow}</Text>
-      </Pressable>
+      {/* Swipe to cancel */}
+      <Text style={styles.actionLabel}>{t.actionRequired}</Text>
 
-      {/* Additional info */}
-      <Text style={styles.infoText}>{t.infoText}</Text>
+      <View style={styles.swipeContainer}>
+        <Animated.View style={[styles.swipeTrack, { backgroundColor: trackBg }]}>
+          <Text style={styles.swipeTrackText}>{t.swipeToCancel}</Text>
+        </Animated.View>
+        <Animated.View
+          style={[styles.swipeThumb, { transform: [{ translateX }] }]}
+          {...panResponder.panHandlers}
+        >
+          <Text style={styles.swipeChevrons}>{">>"}</Text>
+        </Animated.View>
+      </View>
     </View>
   );
 }
@@ -278,51 +219,62 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
+    gap: 16,
   },
-  pulseBackground: {
-    position: "absolute",
-    width: "200%",
-    height: "200%",
-    backgroundColor: "rgba(0,0,0,0.1)",
-  },
-  iconContainer: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 32,
-    letterSpacing: 2,
-  },
-  countdownContainer: {
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  countdownNumber: {
-    fontSize: 72,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  countdownLabel: {
-    fontSize: 18,
-    color: "rgba(255,255,255,0.8)",
-    marginTop: -8,
-  },
-  instruction: {
-    fontSize: 16,
-    color: "#fff",
-    textAlign: "center",
-    marginBottom: 40,
-    lineHeight: 24,
-    paddingHorizontal: 20,
-  },
-  swipeContainer: {
-    width: SCREEN_WIDTH - 48,
+  iconCircle: {
+    width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  iconStar: {
+    fontSize: 28,
+    color: "#fff",
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#fff",
+    letterSpacing: 0.3,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "rgba(255,255,255,0.85)",
+    textAlign: "center",
+    lineHeight: 24,
+  },
+  countdownCircle: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 24,
+  },
+  countdownNumber: {
+    fontSize: 96,
+    fontWeight: "700",
+    color: "#fff",
+    lineHeight: 110,
+  },
+  actionLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    marginBottom: 4,
+  },
+  swipeContainer: {
+    width: SCREEN_WIDTH - 64,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "rgba(0,0,0,0.25)",
     justifyContent: "center",
     overflow: "hidden",
   },
@@ -332,20 +284,21 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    justifyContent: "center",
+    borderRadius: 30,
     alignItems: "center",
-    borderRadius: 32,
+    justifyContent: "center",
   },
   swipeTrackText: {
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.8)",
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "600",
+    letterSpacing: 0.3,
   },
-  swipeButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#fff",
+  swipeThumb: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "rgba(255,255,255,0.9)",
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 4,
@@ -355,29 +308,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  emergencyButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.4)",
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 28,
-    marginTop: 24,
-    gap: 8,
-  },
-  emergencyButtonPressed: {
-    backgroundColor: "rgba(0,0,0,0.6)",
-  },
-  emergencyButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  infoText: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.6)",
-    textAlign: "center",
-    marginTop: 24,
+  swipeChevrons: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.danger,
+    letterSpacing: -2,
   },
 });

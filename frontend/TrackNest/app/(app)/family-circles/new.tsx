@@ -1,12 +1,14 @@
 import { familyCircleNew as familyCircleNewLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
 import { createFamilyCircle } from "@/services/trackingManager";
+import { showToast } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -34,7 +36,7 @@ export default function NewFamilyCircle() {
 
   const handleCreate = async () => {
     if (!name.trim()) {
-      Alert.alert(t.validationTitle, t.validationEnterName);
+      showToast(t.validationEnterName, t.validationTitle);
       return;
     }
     setCreating(true);
@@ -43,7 +45,7 @@ export default function NewFamilyCircle() {
       setName("");
       router.back();
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error?.message ?? t.createFailed);
+      showToast(error?.message ?? t.createFailed, t.errorTitle);
     } finally {
       setCreating(false);
     }
@@ -51,61 +53,67 @@ export default function NewFamilyCircle() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={18} />
-        <Text style={{ fontSize: 18 }}>{t.back}</Text>
-      </Pressable>
-
-      <Text style={styles.title}>{t.pageTitle}</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder={t.namePlaceholder}
-        placeholderTextColor="#aaa"
-        value={name}
-        onChangeText={setName}
-        editable={!creating}
-      />
-
-      <View style={styles.roleSection}>
-        <Text style={styles.roleLabel}>{t.yourRole}</Text>
-        <View style={styles.roleGrid}>
-          {ROLE_OPTIONS.map((option) => (
-            <Pressable
-              key={option.value}
-              style={[
-                styles.roleChip,
-                role === option.value && styles.roleChipSelected,
-              ]}
-              onPress={() => setRole(option.value)}
-              disabled={creating}
-            >
-              <Text
-                style={[
-                  styles.roleChipText,
-                  role === option.value && styles.roleChipTextSelected,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      <Pressable
-        style={[
-          styles.createButton,
-          (creating || !name.trim()) && styles.createButtonDisabled,
-        ]}
-        onPress={handleCreate}
-        disabled={creating || !name.trim()}
+      <KeyboardAvoidingView
+        style={{ flex: 1, width: "100%" }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={24}
       >
-        {creating && <ActivityIndicator size="small" color="#fff" />}
-        <Text style={styles.createButtonText}>
-          {creating ? t.creating : t.create}
-        </Text>
-      </Pressable>
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={18} />
+          <Text style={{ fontSize: 18 }}>{t.back}</Text>
+        </Pressable>
+
+        <Text style={styles.title}>{t.pageTitle}</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder={t.namePlaceholder}
+          placeholderTextColor="#aaa"
+          value={name}
+          onChangeText={setName}
+          editable={!creating}
+        />
+
+        <View style={styles.roleSection}>
+          <Text style={styles.roleLabel}>{t.yourRole}</Text>
+          <View style={styles.roleGrid}>
+            {ROLE_OPTIONS.map((option) => (
+              <Pressable
+                key={option.value}
+                style={[
+                  styles.roleChip,
+                  role === option.value && styles.roleChipSelected,
+                ]}
+                onPress={() => setRole(option.value)}
+                disabled={creating}
+              >
+                <Text
+                  style={[
+                    styles.roleChipText,
+                    role === option.value && styles.roleChipTextSelected,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <Pressable
+          style={[
+            styles.createButton,
+            (creating || !name.trim()) && styles.createButtonDisabled,
+          ]}
+          onPress={handleCreate}
+          disabled={creating || !name.trim()}
+        >
+          {creating && <ActivityIndicator size="small" color="#fff" />}
+          <Text style={styles.createButtonText}>
+            {creating ? t.creating : t.create}
+          </Text>
+        </Pressable>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

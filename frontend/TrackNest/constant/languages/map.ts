@@ -73,6 +73,25 @@ export const Vietnamese = {
   apiKeyMissingTitle: "Thiếu API Key",
   apiKeyMissingMessage:
     "Thiếu Google Maps API key. Vui lòng thêm vào tệp .env.",
+  tourMapStep:
+    "Đây là màn hình bản đồ chính, nơi hiển thị vị trí của bạn và các thành viên trong nhóm.",
+  tourHeaderStep:
+    "Tại đây bạn có thể chọn nhóm gia đình và xem thông báo theo dõi/rủi ro.",
+  tourControlsStep:
+    "Cột nút bên phải cho phép mở danh sách, bật/tắt lớp dữ liệu và kích hoạt SOS nhanh.",
+  tourPrevious: "Lùi",
+  tourNext: "Tiếp",
+  tourSkip: "Bỏ qua",
+  tourFinish: "Xong",
+  safeRadiusWithMeters: "Bán kính an toàn: {meters}m",
+  infoNameLabel: "Tên",
+  infoAddressLabel: "Địa chỉ đầy đủ",
+  infoResolvingAddress: "Đang xác định địa chỉ...",
+  infoSpeedLabel: "Tốc độ",
+  infoTimeSpentLabel: "Thời gian ở đây",
+  infoCoordinatesLabel: "Tọa độ",
+  infoLastUpdatedLabel: "Cập nhật lần cuối",
+  notAvailable: "N/A",
 };
 
 export const English = {
@@ -149,4 +168,23 @@ export const English = {
   apiKeyMissingTitle: "API Key Missing",
   apiKeyMissingMessage:
     "Google Maps API key is missing. Please add it to the .env file.",
+  tourMapStep:
+    "This is the main map where your location and family member positions are shown.",
+  tourHeaderStep:
+    "Use the top bar to switch family circles and open tracking or risk notifications.",
+  tourControlsStep:
+    "The right control rail lets you open member info, toggle overlays, and trigger SOS quickly.",
+  tourPrevious: "Previous",
+  tourNext: "Next",
+  tourSkip: "Skip",
+  tourFinish: "Done",
+  safeRadiusWithMeters: "Safe radius: {meters}m",
+  infoNameLabel: "Name",
+  infoAddressLabel: "Full address",
+  infoResolvingAddress: "Resolving address...",
+  infoSpeedLabel: "Speed",
+  infoTimeSpentLabel: "Time spent here",
+  infoCoordinatesLabel: "Coordinates",
+  infoLastUpdatedLabel: "Last updated",
+  notAvailable: "N/A",
 };

@@ -1,6 +1,8 @@
 export const Vietnamese = {
   pageTitle: "Cài đặt",
+  pageSubtitle: "Quản lý các tùy chọn bảo vệ của bạn",
   sectionGeneral: "Chung",
+  sectionPrivacy: "Quyền riêng tư",
   sectionMapsAndSafety: "Bản đồ & An toàn",
   sectionSync: "Đồng bộ",
   sectionPrivacyAndDeveloper: "Quyền riêng tư & Nhà phát triển",
@@ -15,6 +17,7 @@ export const Vietnamese = {
   languageOptionVietnameseSubtitle: "Tiếng Việt",
   manageCirclesTitle: "Quản lý vòng tròn người thân",
   manageCirclesSubtitle: "vòng tròn người thân đang hoạt động",
+  manageCirclesSettingsSubtitle: "Thêm hoặc quản lý các vòng tròn của bạn",
   manageFollowersTitle: "Quản lý người được theo dõi",
   manageFollowersSubtitle: "người đang được theo dõi",
   locationHistoryTitle: "Lịch sử vị trí",
@@ -34,6 +37,10 @@ export const Vietnamese = {
   shareLocationTitle: "Chia sẻ vị trí",
   shareLocationSubtitle: "Bật để đồng bộ lịch sử vị trí lên máy chủ",
   notificationsSubtitle: "Quản lý quyền thông báo",
+  voiceSosCommandTitle: "Lệnh SOS bằng giọng nói",
+  dataPermissionsTitle: "Quyền dữ liệu",
+  dataPermissionsSubtitle: "Quản lý cài đặt quyền riêng tư của bạn",
+  developerSectionTitle: "Nhà phát triển",
   privacySubtitle: "Dữ liệu & quyền riêng tư",
   developerOptionsTitle: "Tùy chọn nhà phát triển",
   developerOptionsOn: "Chế độ dev: Bật",
@@ -122,6 +129,12 @@ export const Vietnamese = {
   serverUrlLabel: "URL máy chủ",
   serverUrlDescription:
     "Ghi đè URL dịch vụ backend. Để trống để dùng giá trị mặc định từ môi trường.",
+  emergencyUrlLabel: "URL emergency-ops",
+  emergencyUrlDescription:
+    "Ghi đè URL cho dịch vụ emergency-ops. Để trống để dùng giá trị mặc định từ môi trường.",
+  criminalUrlLabel: "URL criminal-reports",
+  criminalUrlDescription:
+    "Ghi đè URL cho dịch vụ criminal-reports. Để trống để dùng giá trị mặc định từ môi trường.",
   serverUrlPlaceholder: "https://your-service-url",
   devModeLabel: "Chế độ dev",
   enabled: "Đã bật",
@@ -133,7 +146,9 @@ export const Vietnamese = {
 
 export const English = {
   pageTitle: "Settings",
+  pageSubtitle: "Manage your sanctuary preferences",
   sectionGeneral: "General",
+  sectionPrivacy: "Privacy",
   sectionMapsAndSafety: "Maps & Safety",
   sectionSync: "Sync",
   sectionPrivacyAndDeveloper: "Privacy & Developer",
@@ -148,6 +163,7 @@ export const English = {
   languageOptionVietnameseSubtitle: "Vietnamese",
   manageCirclesTitle: "Manage Circles",
   manageCirclesSubtitle: "active circles",
+  manageCirclesSettingsSubtitle: "Add or manage your circles",
   manageFollowersTitle: "Manage Targets",
   manageFollowersSubtitle: "targets",
   locationHistoryTitle: "Location History",
@@ -166,6 +182,10 @@ export const English = {
   shareLocationTitle: "Share Location",
   shareLocationSubtitle: "Turn on to sync location history to the server",
   notificationsSubtitle: "Manage notification permissions",
+  voiceSosCommandTitle: "Voice SOS Command",
+  dataPermissionsTitle: "Data Permissions",
+  dataPermissionsSubtitle: "Manage your privacy settings",
+  developerSectionTitle: "Developer",
   privacySubtitle: "Data & privacy",
   developerOptionsTitle: "Developer Options",
   developerOptionsOn: "Dev mode: On",
@@ -254,6 +274,12 @@ export const English = {
   serverUrlLabel: "Server URL",
   serverUrlDescription:
     "Override the backend service URL. Leave blank to use the default from the environment.",
+  emergencyUrlLabel: "Emergency Service URL",
+  emergencyUrlDescription:
+    "Override the emergency-ops service URL. Leave blank to use the default from the environment.",
+  criminalUrlLabel: "Criminal Service URL",
+  criminalUrlDescription:
+    "Override the criminal-reports service URL. Leave blank to use the default from the environment.",
   serverUrlPlaceholder: "https://your-service-url",
   devModeLabel: "Dev Mode",
   enabled: "Enabled",

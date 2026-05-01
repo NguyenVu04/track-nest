@@ -25,15 +25,15 @@ const MAP_TYPE_OPTIONS: MapTypeOption[] = [
       roads: "#FFFFFF",
     },
   },
-  {
-    type: "satellite",
-    label: "Satellite",
-    previewColors: {
-      background: "#304530",
-      roads: "#7fbf7f",
-    },
-    isSatelliteLike: true,
-  },
+  // {
+  //   type: "satellite",
+  //   label: "Satellite",
+  //   previewColors: {
+  //     background: "#304530",
+  //     roads: "#7fbf7f",
+  //   },
+  //   isSatelliteLike: true,
+  // },
   {
     type: "hybrid",
     label: "Hybrid",
@@ -43,30 +43,30 @@ const MAP_TYPE_OPTIONS: MapTypeOption[] = [
     },
     isSatelliteLike: true,
   },
-  {
-    type: "terrain",
-    label: "Terrain",
-    previewColors: {
-      background: "#95b37c",
-      roads: "#f8f8e8",
-    },
-  },
-  {
-    type: "mutedStandard",
-    label: "Muted",
-    previewColors: {
-      background: "#d5dde5",
-      roads: "#f5f7fa",
-    },
-  },
-  {
-    type: "none",
-    label: "None",
-    previewColors: {
-      background: "#111827",
-      roads: "#374151",
-    },
-  },
+  // {
+  //   type: "terrain",
+  //   label: "Terrain",
+  //   previewColors: {
+  //     background: "#95b37c",
+  //     roads: "#f8f8e8",
+  //   },
+  // },
+  // {
+  //   type: "mutedStandard",
+  //   label: "Muted",
+  //   previewColors: {
+  //     background: "#d5dde5",
+  //     roads: "#f5f7fa",
+  //   },
+  // },
+  // {
+  //   type: "none",
+  //   label: "None",
+  //   previewColors: {
+  //     background: "#111827",
+  //     roads: "#374151",
+  //   },
+  // },
 ];
 
 type Props = {

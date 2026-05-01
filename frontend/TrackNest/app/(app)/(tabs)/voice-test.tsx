@@ -1,4 +1,6 @@
 import { useSettings } from "@/contexts/SettingsContext";
+import { voiceTest as voiceTestLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
@@ -7,8 +9,7 @@ import {
 } from "expo-speech-recognition";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,9 +17,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { showToast } from "@/utils";
 
 const VoiceTestScreen = () => {
   const router = useRouter();
+  const t = useTranslation(voiceTestLang);
   const { checkForSOSCommand, voiceSettings } = useSettings();
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -31,18 +34,15 @@ const VoiceTestScreen = () => {
       setIsListening(false);
       ExpoSpeechRecognitionModule.stop();
     } catch (err) {
-      setError("Error stopping recording");
+      setError(t.errorStoppingRecording);
     }
-  }, []);
+  }, [t.errorStoppingRecording]);
 
   const startListening = useCallback(async () => {
     try {
       // Check if speech recognition is available
       if (!ExpoSpeechRecognitionModule.isRecognitionAvailable()) {
-        Alert.alert(
-          "Not Available",
-          "Speech recognition is not available on this device",
-        );
+        showToast(t.notAvailableMessage, t.notAvailable);
         return;
       }
 
@@ -55,17 +55,11 @@ const VoiceTestScreen = () => {
           const requested =
             await ExpoSpeechRecognitionModule.requestMicrophonePermissionsAsync();
           if (!requested.granted) {
-            Alert.alert(
-              "Permission Denied",
-              "Microphone permission is required for voice recognition",
-            );
+            showToast(t.permissionDeniedMessage, t.permissionDenied);
             return;
           }
         } else {
-          Alert.alert(
-            "Permission Required",
-            "Please enable microphone permissions in settings",
-          );
+          showToast(t.permissionRequiredMessage, t.permissionRequired);
           return;
         }
       }
@@ -73,7 +67,7 @@ const VoiceTestScreen = () => {
       // Check current state before starting
       const state = await ExpoSpeechRecognitionModule.getStateAsync();
       if (state === "recognizing" || state === "starting") {
-        setError("Already recording");
+        setError(t.alreadyRecording);
         return;
       }
 
@@ -89,10 +83,19 @@ const VoiceTestScreen = () => {
         continuous: false, // Stop after one phrase
       });
     } catch (err: any) {
-      setError("Failed to start recording: " + err.message);
+      setError(`${t.failedToStart}: ${err.message}`);
       setIsListening(false);
     }
-  }, []);
+  }, [
+    t.alreadyRecording,
+    t.failedToStart,
+    t.notAvailable,
+    t.notAvailableMessage,
+    t.permissionDenied,
+    t.permissionDeniedMessage,
+    t.permissionRequired,
+    t.permissionRequiredMessage,
+  ]);
 
   // Handle incoming results
   useSpeechRecognitionEvent("result", async (event) => {
@@ -116,7 +119,7 @@ const VoiceTestScreen = () => {
 
   // Handle errors
   useSpeechRecognitionEvent("error", (event) => {
-    setError(`Error: ${event.error}`);
+    setError(`${t.errorPrefix}: ${event.error}`);
     setIsListening(false);
   });
 
@@ -139,19 +142,19 @@ const VoiceTestScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
           <Ionicons name="mic" size={32} color="#74becb" />
-          <Text style={styles.title}>Voice Recognition Test</Text>
+          <Text style={styles.title}>{t.title}</Text>
         </View>
 
         {/* Recording Status */}
         <View style={styles.statusCard}>
-          <Text style={styles.statusLabel}>Status:</Text>
+          <Text style={styles.statusLabel}>{t.statusLabel}</Text>
           <View style={styles.statusRow}>
             <View
               style={[
@@ -162,7 +165,7 @@ const VoiceTestScreen = () => {
               ]}
             />
             <Text style={styles.statusText}>
-              {isListening ? "Recording..." : "Ready"}
+              {isListening ? t.statusRecording : t.statusReady}
             </Text>
           </View>
         </View>
@@ -179,12 +182,12 @@ const VoiceTestScreen = () => {
           {isListening ? (
             <>
               <ActivityIndicator size="large" color="#fff" />
-              <Text style={styles.recordButtonText}>Stop Recording</Text>
+              <Text style={styles.recordButtonText}>{t.stopRecording}</Text>
             </>
           ) : (
             <>
               <Ionicons name="mic-circle" size={48} color="#fff" />
-              <Text style={styles.recordButtonText}>Start Recording</Text>
+              <Text style={styles.recordButtonText}>{t.startRecording}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -192,7 +195,7 @@ const VoiceTestScreen = () => {
         {/* Current Transcript */}
         {(transcript || interimTranscript) && (
           <View style={styles.transcriptCard}>
-            <Text style={styles.transcriptLabel}>Current Result:</Text>
+            <Text style={styles.transcriptLabel}>{t.currentResult}</Text>
             {interimTranscript && (
               <Text style={styles.interimTranscript}>{interimTranscript}</Text>
             )}
@@ -214,7 +217,7 @@ const VoiceTestScreen = () => {
         {allResults.length > 0 && (
           <View style={styles.historyCard}>
             <View style={styles.historyHeader}>
-              <Text style={styles.historyTitle}>Recording History</Text>
+              <Text style={styles.historyTitle}>{t.recordingHistory}</Text>
               <TouchableOpacity onPress={clearHistory}>
                 <Ionicons name="trash-outline" size={20} color="#e74c3c" />
               </TouchableOpacity>
@@ -232,12 +235,12 @@ const VoiceTestScreen = () => {
 
         {/* Info Section */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>How to use:</Text>
+          <Text style={styles.infoTitle}>{t.howToUse}</Text>
           <Text style={styles.infoText}>
-            1. Press the button to start recording{"\n"}
-            2. Speak clearly{"\n"}
-            3. The recognizer will detect when you finish{"\n"}
-            4. Your speech will be displayed below
+            {t.howToUseSteps
+              .replace("{newline}", "\n")
+              .replace("{newline}", "\n")
+              .replace("{newline}", "\n")}
           </Text>
         </View>
       </ScrollView>

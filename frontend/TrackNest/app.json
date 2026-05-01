@@ -53,14 +53,6 @@
       "expo-web-browser",
       "expo-build-properties",
       [
-        "expo-build-properties",
-        {
-          "android": {
-            "usesCleartextTraffic": true
-          }
-        }
-      ],
-      [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location even when the app is in the background.",

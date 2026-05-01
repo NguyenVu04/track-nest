@@ -1,8 +1,7 @@
 import type { ClientReadableStream } from "grpc-web";
 import React, { useCallback, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { showToast } from "@/utils";
 
 import { BACKGROUND_CIRCLE_LOCATION_TASK_NAME } from "@/constant";
 import { trackerTest as trackerTestLang } from "@/constant/languages";
@@ -63,7 +63,7 @@ export default function TrackerTestScreen() {
   // Stream family member locations
   const handleStartStream = useCallback(async () => {
     if (!familyCircleId.trim()) {
-      Alert.alert(t.errorTitle, t.enterFamilyCircleId);
+      showToast(t.enterFamilyCircleId, t.errorTitle);
       return;
     }
 
@@ -77,7 +77,7 @@ export default function TrackerTestScreen() {
           setStreamedLocations((prev) => [...prev, location]);
         },
         (err) => {
-          Alert.alert(t.streamErrorTitle, err.message);
+          showToast(err.message, t.streamErrorTitle);
           setIsStreaming(false);
         },
         () => {
@@ -87,7 +87,7 @@ export default function TrackerTestScreen() {
 
       streamRef.current = stream;
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
       setIsStreaming(false);
     }
   }, [familyCircleId, t.enterFamilyCircleId, t.errorTitle, t.streamErrorTitle]);
@@ -103,7 +103,7 @@ export default function TrackerTestScreen() {
   // Fetch location history
   const handleFetchHistory = useCallback(async () => {
     if (!historyCircleId.trim() || !memberId.trim()) {
-      Alert.alert(t.errorTitle, t.fillRequiredFields);
+      showToast(t.fillRequiredFields, t.errorTitle);
       return;
     }
 
@@ -118,7 +118,7 @@ export default function TrackerTestScreen() {
 
       setHistoryLocations(response.locationsList);
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsLoadingHistory(false);
     }
@@ -132,7 +132,7 @@ export default function TrackerTestScreen() {
     const vel = parseFloat(velocity);
 
     if (isNaN(lat) || isNaN(lng) || isNaN(acc) || isNaN(vel)) {
-      Alert.alert(t.errorTitle, t.validNumericValues);
+      showToast(t.validNumericValues, t.errorTitle);
       return;
     }
 
@@ -145,7 +145,7 @@ export default function TrackerTestScreen() {
       ]);
       setUpdateResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsUpdating(false);
     }
@@ -159,7 +159,7 @@ export default function TrackerTestScreen() {
   ]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>{t.title}</Text>
 

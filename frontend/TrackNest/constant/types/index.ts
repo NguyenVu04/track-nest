@@ -1,3 +1,5 @@
+export type ActivityMode = "walking" | "driving" | "charging" | "stationary";
+
 export type Follower = {
   id: string;
   latitude: number;
@@ -8,6 +10,9 @@ export type Follower = {
   lastActive?: string | number;
   sharingActive?: boolean;
   shareTracking?: boolean;
+  batteryLevel?: number;
+  activityMode?: ActivityMode;
+  currentAddress?: string;
 };
 
 export type ProtoTrackerResponse = {
@@ -42,7 +47,7 @@ export type SafeZone = {
   longitude: number;
   radius: number;
   createdAt: string;
-  emergencyServiceId: string;
+  emergencyServiceId?: string;
 };
 
 export type DangerStatus = "low" | "medium" | "high" | "critical";

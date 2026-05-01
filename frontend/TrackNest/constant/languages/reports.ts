@@ -9,6 +9,7 @@ export const Vietnamese = {
   loading: "Đang tải...",
   noDataAvailable: "Không có dữ liệu",
   title: "Báo cáo",
+  createReport: "Tạo báo cáo",
 };
 
 export const English = {
@@ -22,4 +23,5 @@ export const English = {
   loading: "Loading...",
   noDataAvailable: "No data available",
   title: "Reports",
+  createReport: "Create Report",
 };

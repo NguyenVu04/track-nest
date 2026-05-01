@@ -1,5 +1,7 @@
 export const Vietnamese = {
   title: "KHẨN CẤP SOS",
+  notifyingSubtitle: "Đang thông báo cho người thân khẩn cấp{newline}và cơ quan chức năng trong...",
+  actionRequired: "YÊU CẦU HÀNH ĐỘNG",
   seconds: "giây",
   instruction:
     "Vuốt nút bên dưới trong vòng {countdown}s để hủy cuộc gọi khẩn cấp",
@@ -8,6 +10,8 @@ export const Vietnamese = {
   infoText: "Liên hệ khẩn cấp và vị trí sẽ được chia sẻ",
   emergencyActivatedTitle: "Đã kích hoạt khẩn cấp",
   emergencyActivatedBody: "Dịch vụ khẩn cấp đã được thông báo.",
+  emergencyFailedTitle: "Yêu cầu khẩn cấp thất bại",
+  emergencyFailedBody: "Vui lòng thử lại hoặc gọi trực tiếp dịch vụ khẩn cấp",
   emergencyCancelledTitle: "Đã hủy khẩn cấp",
   emergencyCancelledBody: "Cuộc gọi khẩn cấp đã được hủy.",
   sosNotificationChannel: "Thông báo SOS",
@@ -17,6 +21,8 @@ export const Vietnamese = {
 
 export const English = {
   title: "EMERGENCY SOS",
+  notifyingSubtitle: "Notifying your emergency contacts{newline}and local authorities in...",
+  actionRequired: "ACTION REQUIRED",
   seconds: "seconds",
   instruction:
     "Swipe the button below before {countdown}s to cancel emergency call",
@@ -25,6 +31,8 @@ export const English = {
   infoText: "Emergency contacts and location will be shared",
   emergencyActivatedTitle: "Emergency Activated",
   emergencyActivatedBody: "Emergency services have been notified.",
+  emergencyFailedTitle: "Emergency Request Failed",
+  emergencyFailedBody: "Please try again or call emergency services directly",
   emergencyCancelledTitle: "Emergency Cancelled",
   emergencyCancelledBody: "The emergency call has been cancelled.",
   sosNotificationChannel: "SOS Notifications",

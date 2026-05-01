@@ -16,6 +16,7 @@ import {
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
@@ -30,6 +31,29 @@ import {
   View,
 } from "react-native";
 import { FollowerInfo } from "./FollowerInfo";
+import { colors, radii, spacing } from "@/styles/styles";
+
+type StatTileProps = {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  unit?: string;
+};
+
+function StatTile({ icon, label, value, unit }: StatTileProps) {
+  return (
+    <View style={styles.statTile}>
+      <View style={styles.statIconRow}>
+        <Ionicons name={icon} size={13} color={colors.textMuted} />
+        <Text style={styles.statLabel}>{label}</Text>
+      </View>
+      <Text style={styles.statValue}>
+        {value}
+        {unit ? <Text style={styles.statUnit}> {unit}</Text> : null}
+      </Text>
+    </View>
+  );
+}
 
 function startOfDay(date: Date) {
   const d = new Date(date);
@@ -53,10 +77,21 @@ function formatDate(d: Date) {
 
 export const FollowerBottomSheet = ({
   follower,
+  speedKmh,
+  address,
+  onChatPress,
+  onCallPress,
+  onSosPress,
 }: {
   follower: Follower | null;
+  speedKmh?: number | null;
+  address?: string | null;
+  onChatPress?: () => void;
+  onCallPress?: () => void;
+  onSosPress?: () => void;
 }) => {
   const t = useTranslation(followerBottomSheetLang);
+  const router = useRouter();
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const filterSheetRef = useRef<BottomSheetModal>(null);
   const hasFetchedHistoryRef = useRef(false);
@@ -189,35 +224,110 @@ export const FollowerBottomSheet = ({
     return null;
   }
 
-  return (
-    <BottomSheetView
-      style={{
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        paddingBottom: 24,
-        gap: 12,
-      }}
-    >
-      <Pressable
-        onPress={() => setShowHistoryModal(true)}
-        style={styles.infoPress}
-      >
-        <FollowerInfo
-          follower={follower}
-          width={100}
-          height={100}
-          standMode="detailed"
-        />
-      </Pressable>
+  const getActivityState = (speed: number | null | undefined) => {
+    if (speed == null) return { label: t.stationary, icon: "pause-circle-outline" as const };
+    if (speed < 2) return { label: t.stationary, icon: "pause-circle-outline" as const };
+    if (speed <= 10) return { label: t.walking, icon: "walk-outline" as const };
+    return { label: t.driving, icon: "car-outline" as const };
+  };
+  const activity = getActivityState(speedKmh);
+  const battery = follower.batteryLevel;
 
-      <Button
-        color="#d97706"
-        title={t.reportMissing}
-        onPress={() => {
-          Alert.alert(t.reportSubmitted, t.thankYou);
-        }}
-      />
+  return (
+    <BottomSheetView style={styles.sheetContainer}>
+      <View style={styles.card}>
+        <View style={styles.topRow}>
+          <Pressable onPress={() => setShowHistoryModal(true)} style={styles.avatarFallback}>
+            <Text style={styles.avatarLetter}>
+              {follower.name.trim().charAt(0).toUpperCase() || "F"}
+            </Text>
+          </Pressable>
+          <View style={styles.nameBlock}>
+            <Text style={styles.title}>{follower.name}</Text>
+            <View style={styles.statusRow}>
+              <View style={styles.statusDot} />
+              <Text style={styles.statusText}>{t.activeNow}</Text>
+            </View>
+          </View>
+          <View style={styles.actionBtns}>
+            <Pressable style={styles.actionBtn} onPress={onChatPress}>
+              <Ionicons name="chatbubble-outline" size={18} color={colors.textSecondary} />
+            </Pressable>
+            <Pressable style={styles.actionBtn} onPress={onCallPress}>
+              <Ionicons name="call-outline" size={18} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.locationRow}>
+          <View style={styles.locationIconWrap}>
+            <Ionicons name="location" size={14} color={colors.primary} />
+          </View>
+          <View style={styles.locationTexts}>
+            <Text style={styles.locationLabel}>{t.currentLocation}</Text>
+            <Text style={styles.locationAddress} numberOfLines={1}>
+              {address ?? t.resolvingAddress}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.statsRow}>
+          <StatTile
+            icon={activity.icon}
+            label={activity.label}
+            value={speedKmh != null ? `${speedKmh}` : "—"}
+            unit={speedKmh != null ? "km/h" : undefined}
+          />
+          {battery !== undefined ? (
+            <StatTile
+              icon="battery-half-outline"
+              label={t.battery}
+              value={`${battery}`}
+              unit="%"
+            />
+          ) : null}
+          <Pressable style={styles.sosBtn} onPress={onSosPress}>
+            <Text style={styles.sosBtnText}>{t.sos}</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.detailCard}>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>{t.nameLabel}</Text>
+            <Text style={styles.detailValue}>{follower.name}</Text>
+          </View>
+
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>{t.coordinatesLabel}</Text>
+            <Text style={styles.detailValue}>
+              {follower.latitude.toFixed(6)}, {follower.longitude.toFixed(6)}
+            </Text>
+          </View>
+
+          <View style={styles.detailRowLast}>
+            <Text style={styles.detailLabel}>{t.lastUpdatedLabel}</Text>
+            <Text style={styles.detailValue}>
+              {follower.lastActive ? new Date(follower.lastActive).toLocaleString() : t.notAvailable}
+            </Text>
+          </View>
+        </View>
+
+        <Button
+          color={colors.warn}
+          title={t.reportMissing}
+          onPress={() => {
+            router.push({
+              pathname: "/(app)/create-missing",
+              params: {
+                initialName: follower.name,
+                initialLat: follower.latitude.toString(),
+                initialLng: follower.longitude.toString(),
+                initialAvatar: follower.avatar || "",
+              },
+            });
+          }}
+        />
+      </View>
 
       <Modal
         visible={showHistoryModal}
@@ -394,8 +504,193 @@ export const FollowerBottomSheet = ({
 };
 
 const styles = StyleSheet.create({
-  infoPress: {
+  sheetContainer: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    gap: spacing.md,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: "#edf2f7",
+  },
+  topRow: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: spacing.md,
+  },
+  avatarFallback: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.primary,
+  },
+  avatarLetter: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  nameBlock: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: colors.textPrimary,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 3,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.success,
+  },
+  statusText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: "500",
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#f8fafc",
+    borderRadius: radii.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: "#edf2f7",
+  },
+  locationIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: `${colors.primary}18`,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  locationTexts: {
+    flex: 1,
+  },
+  locationLabel: {
+    fontSize: 11,
+    color: colors.textMuted,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  locationAddress: {
+    fontSize: 13,
+    color: colors.textPrimary,
+    fontWeight: "500",
+    marginTop: 1,
+  },
+  statsRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "stretch",
+  },
+  statTile: {
+    flex: 1,
+    backgroundColor: "#f8fafc",
+    borderRadius: radii.md,
+    padding: 10,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: "#edf2f7",
+  },
+  statIconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  statLabel: {
+    fontSize: 10,
+    color: colors.textMuted,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: colors.textPrimary,
+  },
+  statUnit: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: "500",
+  },
+  detailCard: {
+    backgroundColor: colors.bgSecondary,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    overflow: "hidden",
+  },
+  detailRow: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    gap: 4,
+  },
+  detailRowLast: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: 4,
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: "600",
+  },
+  detailValue: {
+    fontSize: 14,
+    color: colors.textPrimary,
+    fontWeight: "500",
+  },
+  actionBtns: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  actionBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bgSecondary,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  sosBtn: {
+    width: 52,
+    minHeight: 52,
+    borderRadius: radii.md,
+    backgroundColor: colors.danger,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sosBtnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
   modalContainer: {
     flex: 1,

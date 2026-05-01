@@ -2,6 +2,7 @@ import { DeveloperOptionsModal } from "@/components/SettingsModals/DeveloperOpti
 import { LanguageModal } from "@/components/SettingsModals/LanguageModal";
 import { LocationPermissionsModal } from "@/components/SettingsModals/LocationPermissionsModal";
 import { NotificationPermissionsModal } from "@/components/SettingsModals/NotificationPermissionsModal";
+import { PermissionsSummaryModal } from "@/components/SettingsModals/PermissionsSummaryModal";
 import { PrivacyModal } from "@/components/SettingsModals/PrivacyModal";
 import { LOCATION_HISTORY_KEY } from "@/constant";
 import { settings as settingsLang } from "@/constant/languages";
@@ -15,14 +16,28 @@ import { useTracking } from "@/contexts/TrackingContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { uploadPendingLocations } from "@/services/locationUpload";
 import { unregisterMobileDevice } from "@/services/notifier";
-import { SERVICE_URL_KEY, getServiceUrl } from "@/utils";
+import { colors, radii, spacing } from "@/styles/styles";
+import {
+  CRIMINAL_URL_KEY,
+  EMERGENCY_URL_KEY,
+  GRPC_URL_KEY,
+  SERVICE_URL_KEY,
+  getCriminalUrl,
+  getEmergencyUrl,
+  getGrpcUrl,
+  getServiceUrl,
+} from "@/utils";
+import {
+  requestPermissionsAndStart,
+  stopBackgroundLocationTracking,
+} from "@/utils/backgroundLocation";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { openSettings } from "expo-linking";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -37,30 +52,88 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const DEVICE_ID_KEY = "@tracknest/device_registration_id";
 
-type SettingItem = {
-  key: string;
+// ─── Setting Row ──────────────────────────────────────────────────────────────
+
+function SettingRow({
+  icon,
+  title,
+  subtitle,
+  onPress,
+  disabled,
+  switchValue,
+  onSwitchChange,
+  isLast,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
   title: string;
-  subtitle: string;
-  icon: string;
-  onPress: () => void;
+  subtitle?: string;
+  onPress?: () => void;
   disabled?: boolean;
   switchValue?: boolean;
-  onSwitchValueChange?: (value: boolean) => void;
-  switchDisabled?: boolean;
-};
+  onSwitchChange?: (v: boolean) => void;
+  isLast?: boolean;
+}) {
+  return (
+    <Pressable
+      style={[
+        styles.row,
+        isLast && styles.rowLast,
+        disabled && { opacity: 0.5 },
+      ]}
+      onPress={onPress}
+      disabled={disabled || !onPress}
+      android_ripple={{ color: "#e5e7eb" }}
+    >
+      <View style={styles.rowLeft}>
+        <View style={styles.iconCircle}>
+          <Ionicons name={icon} size={20} color={colors.primary} />
+        </View>
+        <View style={styles.rowTexts}>
+          <Text style={styles.rowTitle}>{title}</Text>
+          {subtitle ? <Text style={styles.rowSubtitle}>{subtitle}</Text> : null}
+        </View>
+      </View>
+      {switchValue !== undefined ? (
+        <Switch
+          value={switchValue}
+          onValueChange={onSwitchChange ?? (() => onPress?.())}
+          trackColor={{ false: "#d1d5db", true: colors.primary }}
+          thumbColor="#ffffff"
+          ios_backgroundColor="#d1d5db"
+        />
+      ) : (
+        <Ionicons name="chevron-forward" size={18} color="#c4c4c4" />
+      )}
+    </Pressable>
+  );
+}
 
-type SettingSection = {
-  key: string;
+// ─── Section Card ─────────────────────────────────────────────────────────────
+
+function SectionCard({
+  title,
+  children,
+}: {
   title: string;
-  items: SettingItem[];
-};
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionCard}>{children}</View>
+    </View>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function SettingsScreen() {
   const { language, setLanguage } = useLanguage();
   const { logout, isGuestMode } = useAuth();
-  const { tracking, shareLocation, setShareLocation } = useTracking();
-  const { profile, exportUserData, privacySettings, updatePrivacySetting } = useProfile();
-  const { guardians, voiceSettings, setVoiceEnabled, toggleCommand } = useSettings();
+  useTracking(); // keep context subscription alive
+  const { profile, exportUserData, privacySettings, updatePrivacySetting } =
+    useProfile();
+  const { guardians, voiceSettings, setVoiceEnabled } = useSettings();
   const router = useRouter();
   const t = useTranslation(settingsLang);
 
@@ -70,6 +143,12 @@ export default function SettingsScreen() {
   const [showDevModal, setShowDevModal] = useState(false);
   const [serverUrl, setServerUrl] = useState("");
   const [serverUrlInput, setServerUrlInput] = useState("");
+  const [emergencyUrl, setEmergencyUrl] = useState("");
+  const [emergencyUrlInput, setEmergencyUrlInput] = useState("");
+  const [criminalUrl, setCriminalUrl] = useState("");
+  const [criminalUrlInput, setCriminalUrlInput] = useState("");
+  const [grpcUrl, setGrpcUrl] = useState("");
+  const [grpcUrlInput, setGrpcUrlInput] = useState("");
   const [pendingDevMode, setPendingDevMode] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [notifStatus, setNotifStatus] = useState<string>("undetermined");
@@ -79,29 +158,64 @@ export default function SettingsScreen() {
   const [bgLocationStatus, setBgLocationStatus] =
     useState<string>("undetermined");
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showPermissionsSummaryModal, setShowPermissionsSummaryModal] =
+    useState(false);
   const [isManualUploading, setIsManualUploading] = useState(false);
 
+  // Footer triple tap logic
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<any>(null);
+
+  const { tracking, shareLocation, setShareLocation } = useTracking();
+
   useEffect(() => {
-    getServiceUrl().then((url) => {
-      setServerUrl(url);
-      setServerUrlInput(url);
+    Promise.all([
+      getServiceUrl(),
+      getEmergencyUrl(),
+      getCriminalUrl(),
+      getGrpcUrl(),
+    ]).then(([svcUrl, emUrl, crUrl, grpcUrlVal]) => {
+      setServerUrl(svcUrl);
+      setServerUrlInput(svcUrl);
+      setEmergencyUrl(emUrl);
+      setEmergencyUrlInput(emUrl);
+      setCriminalUrl(crUrl);
+      setCriminalUrlInput(crUrl);
+      setGrpcUrl(grpcUrlVal);
+      setGrpcUrlInput(grpcUrlVal);
     });
   }, []);
 
+  const upsertServiceUrl = async (key: string, value: string) => {
+    if (value) await AsyncStorage.setItem(key, value);
+    else await AsyncStorage.removeItem(key);
+  };
+
   const handleSaveDevOptions = async () => {
-    const trimmed = serverUrlInput.trim();
+    const ts = serverUrlInput.trim();
+    const te = emergencyUrlInput.trim();
+    const tc = criminalUrlInput.trim();
+    const tg = grpcUrlInput.trim();
     try {
-      if (trimmed) {
-        await AsyncStorage.setItem(SERVICE_URL_KEY, trimmed);
-      } else {
-        await AsyncStorage.removeItem(SERVICE_URL_KEY);
-      }
-      setServerUrl(trimmed || (process.env.EXPO_PUBLIC_SERVICE_URL ?? ""));
+      await Promise.all([
+        upsertServiceUrl(SERVICE_URL_KEY, ts),
+        upsertServiceUrl(EMERGENCY_URL_KEY, te),
+        upsertServiceUrl(CRIMINAL_URL_KEY, tc),
+        upsertServiceUrl(GRPC_URL_KEY, tg),
+      ]);
+      setServerUrl(ts);
+      setServerUrlInput(ts);
+      setEmergencyUrl(te);
+      setEmergencyUrlInput(te);
+      setCriminalUrl(tc);
+      setCriminalUrlInput(tc);
+      setGrpcUrl(tg);
+      setGrpcUrlInput(tg);
       await setDevMode(pendingDevMode);
       setShowDevModal(false);
-      Alert.alert(t.saveSuccessTitle, t.saveSuccessMessage);
+      showToast(t.saveSuccessMessage, t.saveSuccessTitle);
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e?.message ?? t.saveError);
+      showToast(e?.message ?? t.saveError, t.errorTitle);
     }
   };
 
@@ -113,19 +227,14 @@ export default function SettingsScreen() {
   const performLogout = async () => {
     setIsLoggingOut(true);
     try {
-      try {
-        const deviceId = await AsyncStorage.getItem(DEVICE_ID_KEY);
-        if (deviceId) {
-          await unregisterMobileDevice(deviceId);
-          await AsyncStorage.removeItem(DEVICE_ID_KEY);
-        }
-      } catch (err) {
-        console.warn("Failed to unregister device:", err);
+      const deviceId = await AsyncStorage.getItem(DEVICE_ID_KEY);
+      if (deviceId) {
+        await unregisterMobileDevice(deviceId).catch(() => {});
+        await AsyncStorage.removeItem(DEVICE_ID_KEY);
       }
       await logout();
-    } catch (error) {
-      console.error("Logout error:", error);
-      Alert.alert(t.errorTitle, t.signOutError);
+    } catch {
+      showToast(t.signOutError, t.errorTitle);
     } finally {
       setIsLoggingOut(false);
     }
@@ -134,49 +243,8 @@ export default function SettingsScreen() {
   const handleLogout = () => {
     Alert.alert(t.signOutTitle, t.signOutMessage, [
       { text: t.cancelButton, style: "cancel" },
-      {
-        text: t.signOutButton,
-        onPress: performLogout,
-        style: "destructive",
-      },
+      { text: t.signOutButton, onPress: performLogout, style: "destructive" },
     ]);
-  };
-
-  const handleLoginFromGuest = () => {
-    router.push("/auth/login");
-  };
-
-  const handleExportData = async () => {
-    try {
-      const data = await exportUserData();
-      Alert.alert(
-        "Data Export",
-        `Profile: ${data.profile?.username || "N/A"}\nEmail: ${data.profile?.email || "N/A"}\n\nPrivacy settings and preferences exported successfully.`,
-        [{ text: "OK" }]
-      );
-    } catch (error) {
-      Alert.alert("Error", "Failed to export data");
-    }
-  };
-
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      "Delete Account",
-      "Are you sure you want to delete your account? This action cannot be undone.",
-      [
-        { text: t.cancelButton, style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            Alert.alert(
-              "Account Deletion Requested",
-              "Your account deletion request has been submitted. Please contact support to complete the process."
-            );
-          },
-        },
-      ]
-    );
   };
 
   const openNotifModal = async () => {
@@ -195,6 +263,52 @@ export default function SettingsScreen() {
       setBgLocationStatus("unavailable");
     }
     setShowLocationModal(true);
+  };
+
+  const openPermissionsSummaryModal = async () => {
+    const notif = await Notifications.getPermissionsAsync();
+    setNotifStatus(notif.status);
+
+    const fg = await Location.getForegroundPermissionsAsync();
+    setFgLocationStatus(fg.status);
+
+    try {
+      const bg = await Location.getBackgroundPermissionsAsync();
+      setBgLocationStatus(bg.status);
+    } catch {
+      setBgLocationStatus("unavailable");
+    }
+
+    setShowPermissionsSummaryModal(true);
+  };
+
+  const handleToggleShareLocation = async (value: boolean) => {
+    setShareLocation(value);
+    if (value) {
+      await requestPermissionsAndStart();
+    } else {
+      await stopBackgroundLocationTracking();
+    }
+  };
+
+  const handleFooterTap = () => {
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) {
+      clearTimeout(tapTimerRef.current);
+    }
+
+    if (tapCountRef.current >= 3) {
+      tapCountRef.current = 0;
+      setServerUrlInput(serverUrl);
+      setEmergencyUrlInput(emergencyUrl);
+      setCriminalUrlInput(criminalUrl);
+      setPendingDevMode(devMode);
+      setShowDevModal(true);
+    } else {
+      tapTimerRef.current = setTimeout(() => {
+        tapCountRef.current = 0;
+      }, 500);
+    }
   };
 
   const handleRequestNotificationPermission = async () => {
@@ -225,23 +339,13 @@ export default function SettingsScreen() {
         onPress: async () => {
           try {
             const allKeys = await AsyncStorage.getAllKeys();
-            const tracknestKeys = allKeys.filter(
-              (key) =>
-                key.startsWith("@tracknest/") || key.startsWith("@TrackNest:"),
+            const keys = allKeys.filter(
+              (k) => k.startsWith("@tracknest/") || k.startsWith("@TrackNest:"),
             );
-
-            if (tracknestKeys.length > 0) {
-              await AsyncStorage.multiRemove(tracknestKeys);
-            }
-
-            setServerUrl(process.env.EXPO_PUBLIC_SERVICE_URL ?? "");
-            setServerUrlInput(process.env.EXPO_PUBLIC_SERVICE_URL ?? "");
-            Alert.alert(
-              t.clearedTitle,
-              t.allLocalDataClearedMessage ?? t.clearedMessage,
-            );
+            if (keys.length > 0) await AsyncStorage.multiRemove(keys);
+            showToast(t.allLocalDataClearedMessage ?? t.clearedMessage, t.clearedTitle);
           } catch (e: any) {
-            Alert.alert(t.errorTitle, e?.message ?? t.clearFailed);
+            showToast(e?.message ?? t.clearFailed, t.errorTitle);
           }
         },
       },
@@ -260,12 +364,9 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await AsyncStorage.removeItem(LOCATION_HISTORY_KEY);
-              Alert.alert(
-                t.clearedTitle,
-                t.locationHistoryClearedMessage ?? t.clearedMessage,
-              );
+              showToast(t.locationHistoryClearedMessage ?? t.clearedMessage, t.clearedTitle);
             } catch (e: any) {
-              Alert.alert(t.errorTitle, e?.message ?? t.clearFailed);
+              showToast(e?.message ?? t.clearFailed, t.errorTitle);
             }
           },
         },
@@ -275,425 +376,160 @@ export default function SettingsScreen() {
 
   const handleManualUpload = async () => {
     if (isManualUploading) return;
-
     setIsManualUploading(true);
     try {
       const result = await uploadPendingLocations(true);
-
       switch (result.status) {
         case "empty":
-          Alert.alert(t.uploadTitle, t.uploadEmptyMessage);
+          showToast(t.uploadEmptyMessage, t.uploadTitle);
           break;
         case "success":
-          Alert.alert(
+          showToast(
+            t.uploadCompleteMessage.replace("{{count}}", String(result.uploaded)),
             t.uploadCompleteTitle,
-            t.uploadCompleteMessage.replace(
-              "{{count}}",
-              String(result.uploaded),
-            ),
           );
           break;
         case "no_network":
-          Alert.alert(t.noNetworkTitle, t.noNetworkMessage);
+          showToast(t.noNetworkMessage, t.noNetworkTitle);
           break;
-        case "failed":
-          Alert.alert(
+        default:
+          showToast(
+            (t.uploadFailedMessage ?? "")
+              .replace("{{uploaded}}", String(result.uploaded ?? 0))
+              .replace("{{failed}}", String((result as any).failed ?? 0)),
             t.uploadFailedTitle,
-            result.reason
-              ? t.uploadFailedMessageWithReason
-                  .replace("{{uploaded}}", String(result.uploaded))
-                  .replace("{{failed}}", String(result.failed))
-                  .replace("{{reason}}", result.reason)
-              : t.uploadFailedMessage
-                  .replace("{{uploaded}}", String(result.uploaded))
-                  .replace("{{failed}}", String(result.failed)),
           );
-          break;
-        case "auth_paused":
-          Alert.alert(
-            t.uploadFailedTitle,
-            result.reason ??
-              "Login required. Upload is paused and will resume after authentication.",
-          );
-          break;
       }
     } catch (error: any) {
-      Alert.alert(t.uploadFailedTitle, error?.message ?? t.uploadUnknownError);
+      showToast(error?.message ?? t.uploadUnknownError, t.uploadFailedTitle);
     } finally {
       setIsManualUploading(false);
     }
   };
 
-  const generalItems: SettingItem[] = [
-    {
-      key: "trackingAlwaysOn",
-      title: t.trackingTitle,
-      subtitle: t.trackingAlwaysOnSubtitle,
-      icon: "locate",
-      onPress: () => {},
-      disabled: true,
-      switchValue: tracking,
-      onSwitchValueChange: () => {},
-      switchDisabled: false,
-    },
-    {
-      key: "shareLocation",
-      title: t.shareLocationTitle,
-      subtitle: t.shareLocationSubtitle,
-      icon: "share-social-outline",
-      onPress: () => setShareLocation(!shareLocation),
-      switchValue: shareLocation,
-      onSwitchValueChange: setShareLocation,
-      switchDisabled: false,
-    },
-    {
-      key: "language",
-      title: t.languageTitle,
-      subtitle:
-        language === "English" ? t.languageEnglishSubtitle : t.languageSubtitle,
-      icon: "language",
-      onPress: () => setShowLanguageModal(true),
-    },
-    {
-      key: "location",
-      title: t.locationTitle,
-      subtitle: t.locationSubtitle,
-      icon: "location-outline",
-      onPress: openLocationModal,
-    },
-    {
-      key: "notifications",
-      title: t.notificationsTitle,
-      subtitle: t.notificationsSubtitle,
-      icon: "notifications",
-      onPress: openNotifModal,
-    },
-    {
-      key: "profile",
-      title: "Profile",
-      subtitle: profile?.email || "View your profile",
-      icon: "person-outline",
-      onPress: () => Alert.alert("Profile", `Username: ${profile?.username || "N/A"}\nEmail: ${profile?.email || "N/A"}\nRole: ${profile?.role || "USER"}`),
-    },
-    {
-      key: "exportData",
-      title: "Export My Data",
-      subtitle: "Download your data",
-      icon: "download-outline",
-      onPress: handleExportData,
-    },
-    {
-      key: "deleteAccount",
-      title: "Delete Account",
-      subtitle: "Remove your account",
-      icon: "trash-outline",
-      onPress: handleDeleteAccount,
-      disabled: isGuestMode,
-    },
-    {
-      key: "guardianSettings",
-      title: "Guardian Settings",
-      subtitle: `${guardians.length} guardian(s) configured`,
-      icon: "people-outline",
-      onPress: () => {
-        const guardianList = guardians.map(g => `${g.name} (${g.role})`).join('\n');
-        Alert.alert(
-          "Guardian Settings",
-          guardians.length > 0 
-            ? `Configured Guardians:\n${guardianList}\n\nTo manage guardians, use the Family Circles feature in the app.`
-            : "No guardians configured.\n\nGuardians can be added through Family Circle management."
-        );
-      },
-    },
-    {
-      key: "voiceCommands",
-      title: "Voice Commands",
-      subtitle: voiceSettings.enabled ? "Enabled" : "Disabled",
-      icon: "mic-outline",
-      onPress: () => {
-        const enabledCommands = voiceSettings.commands.filter(c => c.enabled).map(c => c.command).join('\n');
-        Alert.alert(
-          "Voice Commands",
-          `Status: ${voiceSettings.enabled ? "Enabled" : "Disabled"}\n\nEnabled Commands:\n${enabledCommands || "None"}`,
-          [
-            { text: voiceSettings.enabled ? "Disable" : "Enable", onPress: () => setVoiceEnabled(!voiceSettings.enabled) },
-            { text: "OK" }
-          ]
-        );
-      },
-      switchValue: voiceSettings.enabled,
-      onSwitchValueChange: setVoiceEnabled,
-    },
-  ];
-
-  const mapsAndSafetyItems: SettingItem[] = [
-    {
-      key: "locationHistory",
-      title: t.locationHistoryTitle,
-      subtitle: t.locationHistorySubtitle,
-      icon: "map-outline",
-      onPress: () => router.push("../location-history"),
-    },
-    {
-      key: "safeZones",
-      title: t.safeZonesTitle,
-      subtitle: t.safeZonesSubtitle,
-      icon: "shield-checkmark-outline",
-      onPress: () => router.push("../safe-zones"),
-    },
-    {
-      key: "crimeHeatmap",
-      title: t.crimeHeatmapTitle,
-      subtitle: t.crimeHeatmapSubtitle,
-      icon: "flame-outline",
-      onPress: () => router.push("../crime-heatmap"),
-    },
-  ];
-
-  const syncItems: SettingItem[] = [
-    {
-      key: "uploadPendingLocations",
-      title: t.uploadPendingTitle,
-      subtitle: isManualUploading
-        ? t.uploadPendingInProgressSubtitle
-        : t.uploadPendingSubtitle,
-      icon: "cloud-upload-outline",
-      onPress: handleManualUpload,
-      disabled: isManualUploading,
-    },
-  ];
-
-  const privacyAndDevItems: SettingItem[] = [
-    {
-      key: "privacy",
-      title: t.privacyTitle,
-      subtitle: t.privacySubtitle,
-      icon: "shield-checkmark",
-      onPress: () => {
-        Alert.alert(
-          "Privacy Settings",
-          "Location Sharing:\n" +
-          `• Share with Family: ${privacySettings.shareLocationWithFamily ? "ON" : "OFF"}\n` +
-          `• Real-time Sharing: ${privacySettings.shareLocationInRealTime ? "ON" : "OFF"}\n` +
-          `• Location History: ${privacySettings.allowLocationHistory ? "ON" : "OFF"}\n\n` +
-          "Notifications:\n" +
-          `• Crime Alerts: ${privacySettings.allowCrimeNotifications ? "ON" : "OFF"}\n` +
-          `• Emergency Alerts: ${privacySettings.allowEmergencyAlerts ? "ON" : "OFF"}`
-        );
-      },
-    },
-    {
-      key: "shareLocationWithFamily",
-      title: "Share Location with Family",
-      subtitle: "Allow family members to see your location",
-      icon: "people",
-      onPress: () => {},
-      switchValue: privacySettings.shareLocationWithFamily,
-      onSwitchValueChange: (value: boolean) => updatePrivacySetting("shareLocationWithFamily", value),
-    },
-    {
-      key: "shareLocationInRealTime",
-      title: "Real-time Location",
-      subtitle: "Share location in real-time",
-      icon: "locate",
-      onPress: () => {},
-      switchValue: privacySettings.shareLocationInRealTime,
-      onSwitchValueChange: (value: boolean) => updatePrivacySetting("shareLocationInRealTime", value),
-    },
-    {
-      key: "allowLocationHistory",
-      title: "Location History",
-      subtitle: "Store location history data",
-      icon: "time-outline",
-      onPress: () => {},
-      switchValue: privacySettings.allowLocationHistory,
-      onSwitchValueChange: (value: boolean) => updatePrivacySetting("allowLocationHistory", value),
-    },
-    {
-      key: "allowCrimeNotifications",
-      title: "Crime Notifications",
-      subtitle: "Get alerts about nearby crimes",
-      icon: "warning-outline",
-      onPress: () => {},
-      switchValue: privacySettings.allowCrimeNotifications,
-      onSwitchValueChange: (value: boolean) => updatePrivacySetting("allowCrimeNotifications", value),
-    },
-    {
-      key: "allowEmergencyAlerts",
-      title: "Emergency Alerts",
-      subtitle: "Receive emergency notifications",
-      icon: "alert-circle-outline",
-      onPress: () => {},
-      switchValue: privacySettings.allowEmergencyAlerts,
-      onSwitchValueChange: (value: boolean) => updatePrivacySetting("allowEmergencyAlerts", value),
-    },
-    {
-      key: "developerOptions",
-      title: t.developerOptionsTitle,
-      subtitle: devMode ? t.developerOptionsOn : t.developerOptionsOff,
-      icon: "code-slash-outline",
-      onPress: () => {
-        setServerUrlInput(serverUrl);
-        setPendingDevMode(devMode);
-        setShowDevModal(true);
-      },
-    },
-  ];
-
-  const supportItems: SettingItem[] = [
-    {
-      key: "help",
-      title: t.helpTitle,
-      subtitle: t.helpSubtitle,
-      icon: "help-circle",
-      onPress: () => Alert.alert(t.helpTitle, t.helpComingSoon),
-    },
-  ];
-
-  const sections: SettingSection[] = [
-    {
-      key: "general",
-      title: t.sectionGeneral,
-      items: generalItems,
-    },
-    {
-      key: "mapsAndSafety",
-      title: t.sectionMapsAndSafety,
-      items: mapsAndSafetyItems,
-    },
-    {
-      key: "sync",
-      title: t.sectionSync,
-      items: syncItems,
-    },
-    {
-      key: "privacyAndDev",
-      title: t.sectionPrivacyAndDeveloper,
-      items: privacyAndDevItems,
-    },
-    {
-      key: "support",
-      title: t.sectionSupport,
-      items: supportItems,
-    },
-  ];
-
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>{t.pageTitle}</Text>
-      </View>
+    <SafeAreaView style={styles.screen} edges={["left", "right", "bottom"]}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Page title */}
+        <Text style={styles.pageTitle}>{t.pageTitle}</Text>
+        <Text style={styles.pageSubtitle}>{t.pageSubtitle}</Text>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {sections.map((section) => (
-          <View key={section.key} style={styles.sectionWrap}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            <View style={styles.sectionCard}>
-              {section.items.map((it, index) => (
-                <Pressable
-                  key={it.key}
-                  style={[
-                    styles.row,
-                    index === section.items.length - 1 && styles.rowLast,
-                    it.disabled && { opacity: 0.6 },
-                  ]}
-                  onPress={it.onPress}
-                  disabled={it.disabled}
-                  android_ripple={{ color: "#e5e7eb" }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 12,
-                    }}
-                  >
-                    <View style={styles.iconWrap}>
-                      <Ionicons
-                        name={it.icon as any}
-                        size={20}
-                        color="#74becb"
-                      />
-                    </View>
-                    <View>
-                      <Text style={styles.rowTitle}>{it.title}</Text>
-                      {it.subtitle ? (
-                        <Text style={styles.rowSubtitle}>{it.subtitle}</Text>
-                      ) : null}
-                    </View>
-                  </View>
-                  {it.switchValue !== undefined ? (
-                    <Switch
-                      value={it.switchValue}
-                      onValueChange={
-                        it.onSwitchValueChange ?? (() => it.onPress())
-                      }
-                      trackColor={{ false: "#d1d5db", true: "#74becb" }}
-                      thumbColor={it.switchValue ? "#ffffff" : "#f4f3f4"}
-                      ios_backgroundColor="#d1d5db"
-                      disabled={it.switchDisabled}
-                    />
-                  ) : (
-                    <Ionicons name="chevron-forward" size={18} color="#999" />
-                  )}
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        ))}
+        {/* General */}
+        <SectionCard title={t.sectionGeneral}>
+          <SettingRow
+            icon="people-outline"
+            title={t.manageCirclesTitle}
+            subtitle={t.manageCirclesSettingsSubtitle}
+            onPress={() => router.push("/(app)/family-circles/new" as any)}
+          />
+          <SettingRow
+            icon="notifications-outline"
+            title={t.notificationsTitle}
+            subtitle={t.notificationsSubtitle}
+            onPress={openNotifModal}
+            isLast
+          />
+        </SectionCard>
 
-        <View style={styles.sectionWrap}>
-          <Text style={styles.sectionTitle}>{t.sectionAccount}</Text>
+        {/* Maps & Safety */}
+        <SectionCard title={t.sectionMapsAndSafety}>
+          <SettingRow
+            icon="time-outline"
+            title={t.locationHistoryTitle}
+            onPress={() => router.push("../location-history")}
+          />
+          <SettingRow
+            icon="location-outline"
+            title={t.shareLocationTitle || "Share Background Location"}
+            subtitle={
+              t.shareLocationSubtitle ||
+              "Continuously upload location to family"
+            }
+            switchValue={shareLocation}
+            onSwitchChange={handleToggleShareLocation}
+          />
+          <SettingRow
+            icon="mic-outline"
+            title={t.voiceSosCommandTitle}
+            subtitle={voiceSettings.enabled ? t.enabled : t.disabled}
+            onPress={() => setVoiceEnabled(!voiceSettings.enabled)}
+            switchValue={voiceSettings.enabled}
+            onSwitchChange={setVoiceEnabled}
+            isLast
+          />
+        </SectionCard>
+
+        {/* Privacy */}
+        <SectionCard title={t.sectionPrivacy}>
+          <SettingRow
+            icon="lock-closed-outline"
+            title={t.dataPermissionsTitle || "App Permissions Summary"}
+            subtitle={t.dataPermissionsSubtitle || "View granted permissions"}
+            onPress={openPermissionsSummaryModal}
+            isLast
+          />
+        </SectionCard>
+
+        {/* Developer options — only in dev mode */}
+        {devMode && (
+          <SectionCard title={t.developerSectionTitle}>
+            <SettingRow
+              icon="cloud-upload-outline"
+              title={t.uploadPendingTitle}
+              subtitle={
+                isManualUploading
+                  ? t.uploadPendingInProgressSubtitle
+                  : t.uploadPendingSubtitle
+              }
+              onPress={handleManualUpload}
+              disabled={isManualUploading}
+              isLast
+            />
+          </SectionCard>
+        )}
+
+        {/* Sign Out */}
+        <View style={styles.signOutWrap}>
           {isGuestMode ? (
-            <Pressable style={styles.loginRow} onPress={handleLoginFromGuest}>
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
-              >
-                <View style={[styles.iconWrap, { backgroundColor: "#e8f4ff" }]}>
-                  <Ionicons name="log-in-outline" size={20} color="#1d4ed8" />
-                </View>
-                <View>
-                  <Text style={[styles.rowTitle, { color: "#1d4ed8" }]}>
-                    {t.guestLoginTitle}
-                  </Text>
-                  <Text style={styles.rowSubtitle}>{t.guestLoginSubtitle}</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color="#999" />
+            <Pressable
+              style={styles.loginBtn}
+              onPress={() => router.push("/auth/login")}
+            >
+              <Ionicons name="log-in-outline" size={20} color="#1d4ed8" />
+              <Text style={styles.loginBtnText}>{t.guestLoginTitle}</Text>
             </Pressable>
           ) : (
             <Pressable
-              style={styles.signOutRow}
+              style={styles.signOutBtn}
               onPress={handleLogout}
               disabled={isLoggingOut}
             >
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
-              >
-                <View style={[styles.iconWrap, { backgroundColor: "#fdeaea" }]}>
-                  {isLoggingOut ? (
-                    <ActivityIndicator size="small" color="#e74c3c" />
-                  ) : (
-                    <Ionicons name="log-out" size={20} color="#e74c3c" />
-                  )}
-                </View>
-                <Text style={[styles.rowTitle, { color: "#e74c3c" }]}>
-                  {isLoggingOut ? t.signingOut : t.signOutButton}
-                </Text>
-              </View>
-              {!isLoggingOut && (
-                <Ionicons name="chevron-forward" size={18} color="#999" />
+              {isLoggingOut ? (
+                <ActivityIndicator size="small" color={colors.textSecondary} />
+              ) : (
+                <Ionicons
+                  name="log-out-outline"
+                  size={20}
+                  color={colors.textSecondary}
+                />
               )}
+              <Text style={styles.signOutBtnText}>
+                {isLoggingOut ? t.signingOut : t.signOutButton}
+              </Text>
             </Pressable>
           )}
         </View>
 
-        <View style={styles.footerWrap}>
-          <Text style={{ color: "#999" }}>{t.appName}</Text>
-          <Text style={{ color: "#999", marginTop: 4 }}>
-            {t.versionLabel} 1.0.0
+        <Pressable onPress={handleFooterTap} style={styles.footerContainer}>
+          <Text style={styles.footerText}>
+            TrackNest - Empowering family safety
           </Text>
-        </View>
+        </Pressable>
+
+        <View style={{ height: spacing.xl }} />
       </ScrollView>
 
       <LanguageModal
@@ -703,7 +539,6 @@ export default function SettingsScreen() {
         onSelectLanguage={handleLanguageSelect}
         t={t}
       />
-
       <NotificationPermissionsModal
         visible={showNotifModal}
         onClose={() => setShowNotifModal(false)}
@@ -712,7 +547,6 @@ export default function SettingsScreen() {
         onOpenSystemSettings={openSettings}
         t={t}
       />
-
       <LocationPermissionsModal
         visible={showLocationModal}
         onClose={() => setShowLocationModal(false)}
@@ -723,7 +557,18 @@ export default function SettingsScreen() {
         onOpenSystemSettings={openSettings}
         t={t}
       />
-
+      <PermissionsSummaryModal
+        visible={showPermissionsSummaryModal}
+        onClose={() => setShowPermissionsSummaryModal(false)}
+        fgLocationStatus={fgLocationStatus}
+        bgLocationStatus={bgLocationStatus}
+        notifStatus={notifStatus}
+        onRequestForegroundPermission={handleRequestForegroundPermission}
+        onRequestBackgroundPermission={handleRequestBackgroundPermission}
+        onRequestNotificationPermission={handleRequestNotificationPermission}
+        onOpenSystemSettings={openSettings}
+        t={t}
+      />
       <PrivacyModal
         visible={showPrivacyModal}
         onClose={() => setShowPrivacyModal(false)}
@@ -731,16 +576,20 @@ export default function SettingsScreen() {
         onClearLocalCache={handleClearLocalCache}
         t={t}
       />
-
       <DeveloperOptionsModal
         visible={showDevModal}
         onClose={() => setShowDevModal(false)}
         serverUrlInput={serverUrlInput}
         onChangeServerUrlInput={setServerUrlInput}
+        emergencyUrlInput={emergencyUrlInput}
+        onChangeEmergencyUrlInput={setEmergencyUrlInput}
+        criminalUrlInput={criminalUrlInput}
+        onChangeCriminalUrlInput={setCriminalUrlInput}
+        grpcUrlInput={grpcUrlInput}
+        onChangeGrpcUrlInput={setGrpcUrlInput}
         pendingDevMode={pendingDevMode}
         onChangePendingDevMode={setPendingDevMode}
         onSave={handleSaveDevOptions}
-        defaultServiceUrl={process.env.EXPO_PUBLIC_SERVICE_URL ?? ""}
         t={t}
       />
     </SafeAreaView>
@@ -748,83 +597,109 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f7fa" },
-  content: {
-    paddingHorizontal: 12,
-    paddingBottom: 18,
-  },
-  headerRow: {
-    marginBottom: 8,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "center",
-  },
-  headerTitle: { fontSize: 18, fontWeight: "600" },
-  sectionWrap: {
-    marginTop: 10,
-  },
-  sectionTitle: {
-    fontSize: 12,
+  screen: { flex: 1, backgroundColor: "#f5f7fa" },
+  scroll: { paddingHorizontal: spacing.lg, paddingTop: 4 },
+
+  pageTitle: {
+    fontSize: 28,
     fontWeight: "700",
-    color: "#64748b",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 6,
-    marginLeft: 4,
+    color: colors.textPrimary,
+    marginBottom: 4,
+    marginTop: spacing.sm,
+  },
+  pageSubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: spacing.xl,
+  },
+
+  section: { marginBottom: spacing.lg },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.textSecondary,
+    marginBottom: 10,
+    marginLeft: 2,
   },
   sectionCard: {
-    borderRadius: 12,
     backgroundColor: "#fff",
-    overflow: "hidden",
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: "#edf2f7",
+    overflow: "hidden",
   },
+
   row: {
-    paddingVertical: 14,
-    paddingHorizontal: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: "#f2f2f2",
+    borderBottomColor: "#f5f5f5",
   },
-  rowLast: {
-    borderBottomWidth: 0,
-  },
-  iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: "#eef2ff",
+  rowLast: { borderBottomWidth: 0 },
+  rowLeft: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1 },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(116,190,203,0.15)",
     alignItems: "center",
     justifyContent: "center",
   },
-  rowTitle: { fontWeight: "600" },
-  rowSubtitle: { color: "#666", fontSize: 12 },
-  signOutRow: {
-    paddingVertical: 14,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#fde2e2",
+  rowTexts: { flex: 1 },
+  rowTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.textPrimary,
+  },
+  rowSubtitle: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+
+  signOutWrap: { marginTop: spacing.sm, marginBottom: spacing.md },
+  signOutBtn: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap: 10,
+    backgroundColor: "#f0f0f0",
+    paddingVertical: 16,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
   },
-  loginRow: {
-    paddingVertical: 14,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    backgroundColor: "#fff",
+  signOutBtnText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.textSecondary,
+  },
+  loginBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    backgroundColor: "#eff6ff",
+    paddingVertical: 16,
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: "#dbeafe",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
   },
-  footerWrap: {
+  loginBtnText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1d4ed8",
+  },
+  footerContainer: {
+    paddingVertical: 16,
     alignItems: "center",
-    marginTop: 18,
+  },
+  footerText: {
+    fontSize: 12,
+    color: "#9ca3af",
+    fontWeight: "500",
   },
 });

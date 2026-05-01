@@ -25,6 +25,7 @@ const GeneralFollowerInfoSheet = ({
       maxDynamicContentSize={Math.floor(screenHeight * 0.45)}
       index={0}
       enableContentPanningGesture={false}
+      bottomInset={tabBarHeight}
       containerStyle={{ bottom: tabBarHeight }}
     >
       <BottomSheetFlatList

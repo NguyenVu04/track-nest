@@ -17,6 +17,9 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.location.ActivityRecognition
+import com.google.android.gms.location.ActivityRecognitionClient
+import com.google.android.gms.location.DetectedActivity
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -27,24 +30,36 @@ class NativeLocationService : Service() {
     private const val FOREGROUND_NOTIFICATION_ID = 43010
     private const val PREFS_NAME = "tracknest_native_location"
     private const val BUFFER_KEY = "location_buffer"
-    private const val FAST_SPEED_UPGRADE_KMH = 30.0
-    private const val FAST_SPEED_DOWNGRADE_KMH = 20.0
+    private const val FAST_SPEED_UPGRADE_KMH = 10.0
+    private const val FAST_SPEED_DOWNGRADE_KMH = 10.0
 
-    private const val NORMAL_UPDATE_INTERVAL_MS = 30_000L
-    private const val NORMAL_MIN_UPDATE_INTERVAL_MS = 15_000L
-    private const val NORMAL_MIN_DISTANCE_M = 100f
+    private const val NORMAL_UPDATE_INTERVAL_MS = 60_000L
+    private const val NORMAL_MIN_UPDATE_INTERVAL_MS = 30_000L
+    private const val NORMAL_MIN_DISTANCE_M = 0f
 
     private const val NAV_UPDATE_INTERVAL_MS = 5_000L
     private const val NAV_MIN_UPDATE_INTERVAL_MS = 2_000L
-    private const val NAV_MIN_DISTANCE_M = 5f
+    private const val NAV_MIN_DISTANCE_M = 0f
 
     private const val DRIVING_CRASH_THRESHOLD = 2.5
     private const val CRASH_COOLDOWN_MS = 15_000L
+
+    private const val ACCURACY_THRESHOLD = 30f
+    private const val MAX_DISPLACEMENT_METERS = 50f
+    private const val ACTIVITY_UPDATE_INTERVAL_MS = 5_000L
   }
 
   private enum class TrackingMode {
     NORMAL,
     NAVIGATION,
+  }
+
+  private enum class UserActivity {
+    STILL,
+    WALKING,
+    RUNNING,
+    DRIVING,
+    UNKNOWN,
   }
 
   private data class RequestConfig(
@@ -55,8 +70,10 @@ class NativeLocationService : Service() {
   )
 
   private lateinit var fusedClient: FusedLocationProviderClient
+  private lateinit var activityClient: ActivityRecognitionClient
   private lateinit var prefs: SharedPreferences
   private var trackingMode: TrackingMode = TrackingMode.NORMAL
+  private var currentActivity: UserActivity = UserActivity.UNKNOWN
 
   private val locationCallback = object : LocationCallback() {
     override fun onLocationResult(result: LocationResult) {
@@ -76,17 +93,58 @@ class NativeLocationService : Service() {
           put("timestamp", location.time)
         }
         buffer.put(item)
+
+        // In navigation mode emit directly to JS so the marker updates
+        // immediately instead of waiting for the JS-side buffer poll.
+        if (trackingMode == TrackingMode.NAVIGATION) {
+          NativeLocationModule.emitLocationUpdate(
+            location.latitude,
+            location.longitude,
+            location.speed.toDouble(),
+          )
+        }
       }
 
       prefs.edit().putString(BUFFER_KEY, buffer.toString()).apply()
     }
   }
 
+  private val activityReceiver = object : android.content.BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+      if (com.google.android.gms.location.ActivityRecognitionResult.hasResult(intent)) {
+        val result = com.google.android.gms.location.ActivityRecognitionResult.extractResult(intent)
+        result?.mostProbableActivity?.let { activity ->
+          val newActivity = when (activity.type) {
+            DetectedActivity.STILL -> UserActivity.STILL
+            DetectedActivity.WALKING -> UserActivity.WALKING
+            DetectedActivity.RUNNING -> UserActivity.RUNNING
+            DetectedActivity.IN_VEHICLE, DetectedActivity.ON_BICYCLE -> UserActivity.DRIVING
+            else -> UserActivity.UNKNOWN
+          }
+          if (newActivity != currentActivity) {
+            currentActivity = newActivity
+            NativeLocationModule.emitActivityChange(newActivity.name)
+          }
+        }
+      }
+    }
+  }
+
   override fun onCreate() {
     super.onCreate()
     fusedClient = LocationServices.getFusedLocationProviderClient(this)
+    activityClient = ActivityRecognition.getClient(this)
     prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     ensureChannel()
+
+    val filter = android.content.IntentFilter("com.project.tracknest.ACTIVITY_UPDATE")
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      registerReceiver(activityReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+    } else {
+      registerReceiver(activityReceiver, filter)
+    }
+
+    startActivityRecognition()
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -97,6 +155,8 @@ class NativeLocationService : Service() {
 
   override fun onDestroy() {
     stopLocationUpdates()
+    stopActivityRecognition()
+    unregisterReceiver(activityReceiver)
     super.onDestroy()
   }
 
@@ -143,7 +203,7 @@ class NativeLocationService : Service() {
         }
       }
       TrackingMode.NAVIGATION -> {
-        if (speedKmh <= FAST_SPEED_DOWNGRADE_KMH) {
+        if (speedKmh < FAST_SPEED_DOWNGRADE_KMH) {
           switchTrackingMode(TrackingMode.NORMAL)
         }
       }
@@ -190,6 +250,30 @@ class NativeLocationService : Service() {
 
   private fun stopLocationUpdates() {
     fusedClient.removeLocationUpdates(locationCallback)
+  }
+
+  private lateinit var activityPendingIntent: android.app.PendingIntent
+
+  private fun startActivityRecognition() {
+    val intent = Intent("com.project.tracknest.ACTIVITY_UPDATE")
+    intent.setPackage(packageName)
+    val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_MUTABLE
+    } else {
+      android.app.PendingIntent.FLAG_UPDATE_CURRENT
+    }
+    activityPendingIntent = android.app.PendingIntent.getBroadcast(this, 0, intent, flags)
+
+    try {
+      activityClient.requestActivityUpdates(ACTIVITY_UPDATE_INTERVAL_MS, activityPendingIntent)
+    } catch (_: SecurityException) {
+    }
+  }
+
+  private fun stopActivityRecognition() {
+    if (::activityPendingIntent.isInitialized) {
+      activityClient.removeActivityUpdates(activityPendingIntent)
+    }
   }
 
   private fun ensureChannel() {

@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { showToast } from "@/utils";
 
 import { trackingManagerTest as trackingManagerTestLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -89,7 +89,7 @@ export default function TrackingManagerTestScreen() {
   // Handlers
   const handleCreateFamilyCircle = useCallback(async () => {
     if (!createName.trim() || !createRole.trim()) {
-      Alert.alert(t.errorTitle, t.enterNameAndRole);
+      showToast(t.enterNameAndRole, t.errorTitle);
       return;
     }
     try {
@@ -98,7 +98,7 @@ export default function TrackingManagerTestScreen() {
       const response = await createFamilyCircle(createName, createRole);
       setCreateResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsCreating(false);
     }
@@ -107,7 +107,7 @@ export default function TrackingManagerTestScreen() {
   const handleListFamilyCircles = useCallback(async () => {
     const pageSize = parseInt(listPageSize, 10);
     if (isNaN(pageSize) || pageSize <= 0) {
-      Alert.alert(t.errorTitle, t.validPageSize);
+      showToast(t.validPageSize, t.errorTitle);
       return;
     }
     try {
@@ -119,7 +119,7 @@ export default function TrackingManagerTestScreen() {
       );
       setListResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsListing(false);
     }
@@ -127,7 +127,7 @@ export default function TrackingManagerTestScreen() {
 
   const handleDeleteFamilyCircle = useCallback(async () => {
     if (!deleteCircleId.trim()) {
-      Alert.alert(t.errorTitle, t.enterFamilyCircleId);
+      showToast(t.enterFamilyCircleId, t.errorTitle);
       return;
     }
     try {
@@ -136,7 +136,7 @@ export default function TrackingManagerTestScreen() {
       const response = await deleteFamilyCircle(deleteCircleId);
       setDeleteResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsDeleting(false);
     }
@@ -144,7 +144,7 @@ export default function TrackingManagerTestScreen() {
 
   const handleUpdateFamilyCircle = useCallback(async () => {
     if (!updateCircleId.trim() || !updateName.trim()) {
-      Alert.alert(t.errorTitle, t.enterCircleIdAndName);
+      showToast(t.enterCircleIdAndName, t.errorTitle);
       return;
     }
     try {
@@ -153,7 +153,7 @@ export default function TrackingManagerTestScreen() {
       const response = await updateFamilyCircle(updateCircleId, updateName);
       setUpdateResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsUpdating(false);
     }
@@ -161,7 +161,7 @@ export default function TrackingManagerTestScreen() {
 
   const handleUpdateFamilyRole = useCallback(async () => {
     if (!roleCircleId.trim() || !newRole.trim()) {
-      Alert.alert(t.errorTitle, t.enterCircleIdAndRole);
+      showToast(t.enterCircleIdAndRole, t.errorTitle);
       return;
     }
     try {
@@ -170,7 +170,7 @@ export default function TrackingManagerTestScreen() {
       const response = await updateFamilyRole(roleCircleId, newRole);
       setRoleResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsUpdatingRole(false);
     }
@@ -178,7 +178,7 @@ export default function TrackingManagerTestScreen() {
 
   const handleCreateParticipationPermission = useCallback(async () => {
     if (!otpCircleId.trim()) {
-      Alert.alert(t.errorTitle, t.enterFamilyCircleId);
+      showToast(t.enterFamilyCircleId, t.errorTitle);
       return;
     }
     try {
@@ -190,7 +190,7 @@ export default function TrackingManagerTestScreen() {
       );
       setOtpResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsCreatingOtp(false);
     }
@@ -198,7 +198,7 @@ export default function TrackingManagerTestScreen() {
 
   const handleParticipateInFamilyCircle = useCallback(async () => {
     if (!joinOtp.trim()) {
-      Alert.alert(t.errorTitle, t.enterOtp);
+      showToast(t.enterOtp, t.errorTitle);
       return;
     }
     try {
@@ -207,7 +207,7 @@ export default function TrackingManagerTestScreen() {
       const response = await participateInFamilyCircle(joinOtp);
       setJoinResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsJoining(false);
     }
@@ -215,7 +215,7 @@ export default function TrackingManagerTestScreen() {
 
   const handleLeaveFamilyCircle = useCallback(async () => {
     if (!leaveCircleId.trim()) {
-      Alert.alert(t.errorTitle, t.enterFamilyCircleId);
+      showToast(t.enterFamilyCircleId, t.errorTitle);
       return;
     }
     try {
@@ -224,7 +224,7 @@ export default function TrackingManagerTestScreen() {
       const response = await leaveFamilyCircle(leaveCircleId);
       setLeaveResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsLeaving(false);
     }
@@ -232,7 +232,7 @@ export default function TrackingManagerTestScreen() {
 
   const handleRemoveMemberFromFamilyCircle = useCallback(async () => {
     if (!removeMemberCircleId.trim() || !removeMemberId.trim()) {
-      Alert.alert(t.errorTitle, t.enterCircleAndMemberId);
+      showToast(t.enterCircleAndMemberId, t.errorTitle);
       return;
     }
     try {
@@ -244,7 +244,7 @@ export default function TrackingManagerTestScreen() {
       );
       setRemoveResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsRemoving(false);
     }
@@ -257,7 +257,7 @@ export default function TrackingManagerTestScreen() {
 
   const handleAssignFamilyCircleAdmin = useCallback(async () => {
     if (!adminCircleId.trim() || !adminMemberId.trim()) {
-      Alert.alert(t.errorTitle, t.enterCircleAndMemberId);
+      showToast(t.enterCircleAndMemberId, t.errorTitle);
       return;
     }
     try {
@@ -269,14 +269,14 @@ export default function TrackingManagerTestScreen() {
       );
       setAdminResult(JSON.stringify(response, null, 2));
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error.message);
+      showToast(error.message, t.errorTitle);
     } finally {
       setIsAssigningAdmin(false);
     }
   }, [adminCircleId, adminMemberId, t.enterCircleAndMemberId, t.errorTitle]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>{t.title}</Text>
 

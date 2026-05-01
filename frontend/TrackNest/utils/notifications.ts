@@ -1,4 +1,4 @@
-import { LOCATION_UPLOAD_CHANNEL_ID } from "@/constant";
+import { CHAT_NOTIFICATION_CHANNEL_ID, LOCATION_UPLOAD_CHANNEL_ID } from "@/constant";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
@@ -9,13 +9,21 @@ import { Platform } from "react-native";
  */
 export function configureNotificationHandler() {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-    }),
+    handleNotification: async (notification) => {
+      // Suppress the FCM banner for chat messages while the app is in the
+      // foreground. The persistent gRPC stream (useChatStream) already fires a
+      // local notification and updates the badge when the chat tab is not
+      // focused, so showing the FCM banner on top would be a duplicate.
+      const isChatFcm =
+        notification.request.content.data?.type === "chat_message";
+      return {
+        shouldShowAlert: !isChatFcm,
+        shouldShowBanner: !isChatFcm,
+        shouldShowList: true,
+        shouldPlaySound: !isChatFcm,
+        shouldSetBadge: true,
+      };
+    },
   });
 }
 
@@ -63,7 +71,7 @@ export async function registerForPushNotificationsAsync(): Promise<
 
   // Get the native FCM token (Android) / APNs token (iOS)
   const { data: token } = await Notifications.getDevicePushTokenAsync();
-  console.log("FCM device token:", token);
+  /* console.log("FCM device token:", token) */;
   return token;
 }
 
@@ -141,6 +149,38 @@ export async function setupUploadNotificationChannel(): Promise<void> {
         sound: undefined,
       },
     );
+  }
+}
+
+export async function setupChatNotificationChannel(): Promise<void> {
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync(CHAT_NOTIFICATION_CHANNEL_ID, {
+      name: "Family Chat",
+      description: "New messages from your family circle",
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      enableVibrate: true,
+      sound: "default",
+    });
+  }
+}
+
+export async function scheduleChatMessageNotification(
+  senderName: string,
+  content: string,
+): Promise<void> {
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: senderName,
+        body: content,
+        data: { route: "/(app)/(tabs)/family-chat" },
+        ...(Platform.OS === "android" && { channelId: CHAT_NOTIFICATION_CHANNEL_ID }),
+      },
+      trigger: null,
+    });
+  } catch (err) {
+    console.warn("Failed to schedule chat notification:", err);
   }
 }
 

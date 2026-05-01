@@ -27,6 +27,7 @@ const MapTypesSheet = ({
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
       enableDynamicSizing={true}
+      bottomInset={tabBarHeight}
       containerStyle={{ bottom: tabBarHeight }}
     >
       <MapTypeBottomSheet

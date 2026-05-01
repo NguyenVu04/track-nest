@@ -1,0 +1,48 @@
+export const Vietnamese = {
+  title: "Kiểm tra nhận dạng giọng nói",
+  statusLabel: "Trạng thái:",
+  statusRecording: "Đang ghi âm...",
+  statusReady: "Sẵn sàng",
+  stopRecording: "Dừng ghi âm",
+  startRecording: "Bắt đầu ghi âm",
+  currentResult: "Kết quả hiện tại:",
+  recordingHistory: "Lịch sử ghi âm",
+  howToUse: "Cách sử dụng:",
+  howToUseSteps:
+    "1. Nhấn nút để bắt đầu ghi âm{newline}2. Nói rõ ràng{newline}3. Trình nhận dạng sẽ phát hiện khi bạn kết thúc{newline}4. Giọng nói của bạn sẽ hiển thị bên dưới",
+  notAvailable: "Không khả dụng",
+  notAvailableMessage: "Nhận dạng giọng nói không khả dụng trên thiết bị này",
+  permissionDenied: "Từ chối quyền",
+  permissionDeniedMessage: "Cần quyền micro để nhận dạng giọng nói",
+  permissionRequired: "Yêu cầu quyền",
+  permissionRequiredMessage: "Vui lòng bật quyền micro trong cài đặt",
+  errorStoppingRecording: "Lỗi khi dừng ghi âm",
+  alreadyRecording: "Đang ghi âm",
+  failedToStart: "Không thể bắt đầu",
+  errorPrefix: "Lỗi",
+};
+
+export const English = {
+  title: "Voice Recognition Test",
+  statusLabel: "Status:",
+  statusRecording: "Recording...",
+  statusReady: "Ready",
+  stopRecording: "Stop Recording",
+  startRecording: "Start Recording",
+  currentResult: "Current Result:",
+  recordingHistory: "Recording History",
+  howToUse: "How to use:",
+  howToUseSteps:
+    "1. Press the button to start recording{newline}2. Speak clearly{newline}3. The recognizer will detect when you finish{newline}4. Your speech will be displayed below",
+  notAvailable: "Not Available",
+  notAvailableMessage: "Speech recognition is not available on this device",
+  permissionDenied: "Permission Denied",
+  permissionDeniedMessage:
+    "Microphone permission is required for voice recognition",
+  permissionRequired: "Permission Required",
+  permissionRequiredMessage: "Please enable microphone permissions in settings",
+  errorStoppingRecording: "Error stopping recording",
+  alreadyRecording: "Already recording",
+  failedToStart: "Failed to start",
+  errorPrefix: "Error",
+};

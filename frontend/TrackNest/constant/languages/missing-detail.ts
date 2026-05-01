@@ -19,6 +19,10 @@ export const Vietnamese = {
   callPolice: "Gọi cảnh sát",
   share: "Chia sẻ",
   sendTip: "Gửi mẹo",
+  activeSearch: "Đang tìm kiếm",
+  shareForHelp: "Chia sẻ để giúp đỡ",
+  contactAuthorities: "Liên hệ cơ quan",
+  communityNote: "Ghi chú cộng đồng",
 };
 
 export const English = {
@@ -42,4 +46,8 @@ export const English = {
   callPolice: "Call Police",
   share: "Share",
   sendTip: "Send a Tip",
+  activeSearch: "Active Search",
+  shareForHelp: "Share for Help",
+  contactAuthorities: "Contact Authorities",
+  communityNote: "Community Note",
 };

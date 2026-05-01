@@ -89,11 +89,13 @@ export default function ManageTrackersScreen() {
     if (!selectedCircle) return;
     Alert.alert(
       t.deleteConfirm,
-      `Remove ${member.memberUsername} from "${selectedCircle.name}"?`,
+      t.removeFromCircleMessage
+        .replace("{{member}}", member.memberUsername)
+        .replace("{{circle}}", selectedCircle.name),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t.cancelButton, style: "cancel" },
         {
-          text: "Remove",
+          text: t.removeButton,
           style: "destructive",
           onPress: async () => {
             try {
@@ -105,7 +107,7 @@ export default function ManageTrackersScreen() {
                 prev.filter((m) => m.memberId !== member.memberId),
               );
             } catch (err: any) {
-              Alert.alert("Error", err?.message ?? "Failed to remove member");
+              showToast(err?.message ?? t.removeFailedMessage, t.errorTitle);
             }
           },
         },
@@ -160,7 +162,7 @@ export default function ManageTrackersScreen() {
               <Ionicons name="people-outline" size={14} color="#6b7280" />
               <Text style={styles.metaText}>
                 {item.familyRole}
-                {item.isAdmin ? " (Admin)" : ""}
+                {item.isAdmin ? ` ${t.adminSuffix}` : ""}
               </Text>
             </View>
             <View style={styles.metaRow}>

@@ -1,80 +1,48 @@
 import { getEmergencyUrl } from "@/utils";
 import { getAuthMetadata } from "@/utils/auth";
 import axios from "axios";
+import {
+  EmergencyStatus,
+  type AcceptEmergencyRequestResponse,
+  type CheckEmergencyRequestAllowedResponse,
+  type CloseEmergencyRequestResponse,
+  type CreateEmergencyRequestData,
+  type DeleteSafeZoneResponse,
+  type EmergencyRequest,
+  type EmergencyResponderTarget,
+  type EmergencyServiceLocation,
+  type Location,
+  type NearestSafeZonesQuery,
+  type PageResponse,
+  type PatchEmergencyServiceLocationResponse,
+  type PostEmergencyRequestResponse,
+  type PostSafeZoneResponse,
+  type PutSafeZoneResponse,
+  type RejectEmergencyRequestResponse,
+  type SafeZone,
+} from "@/types/emergency";
 
-// Emergency Types
-export interface Location {
-  latitude: number;
-  longitude: number;
-}
+export {
+  EmergencyStatus,
+  type AcceptEmergencyRequestResponse,
+  type CheckEmergencyRequestAllowedResponse,
+  type CloseEmergencyRequestResponse,
+  type CreateEmergencyRequestData,
+  type DeleteSafeZoneResponse,
+  type EmergencyRequest,
+  type EmergencyResponderTarget,
+  type EmergencyServiceLocation,
+  type Location,
+  type NearestSafeZonesQuery,
+  type PageResponse,
+  type PatchEmergencyServiceLocationResponse,
+  type PostEmergencyRequestResponse,
+  type PostSafeZoneResponse,
+  type PutSafeZoneResponse,
+  type RejectEmergencyRequestResponse,
+  type SafeZone,
+};
 
-export interface EmergencyRequest {
-  id: string;
-  openAt: string;
-  closeAt?: string;
-  senderId: string;
-  targetId: string;
-  emergencyServiceId: string;
-  statusName: "PENDING" | "ACCEPTED" | "REJECTED" | "COMPLETED";
-  longitude: number;
-  latitude: number;
-}
-
-export enum EmergencyStatus {
-  PENDING = "PENDING",
-  ACCEPTED = "ACCEPTED",
-  REJECTED = "REJECTED",
-  COMPLETED = "COMPLETED",
-}
-
-export interface SafeZone {
-  id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-  radius: number;
-  createdAt: string;
-  emergencyServiceId: string;
-}
-
-export interface PageResponse<T> {
-  content: T[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  first: boolean;
-  last: boolean;
-}
-
-export interface EmergencyServiceLocation {
-  emergencyServiceId: string;
-  latitude: number;
-  longitude: number;
-  updatedAt: string;
-}
-
-export interface EmergencyResponderTarget {
-  userId: string;
-  lastLatitude: number;
-  lastLongitude: number;
-  lastUpdateTime: string;
-}
-
-export interface CreateEmergencyRequestData {
-  targetId: string;
-  lastLatitudeDegrees: number;
-  lastLongitudeDegrees: number;
-}
-
-export interface NearestSafeZonesQuery {
-  lat: number;
-  lng: number;
-  maxDistance?: number;
-  maxNumber?: number;
-}
-
-// Emergency Operations Service Client
 class EmergencyOperationsService {
   private baseUrl: string = "";
 
@@ -90,14 +58,23 @@ class EmergencyOperationsService {
     });
   }
 
-  // Emergency Request Management
   async createEmergencyRequest(
     data: CreateEmergencyRequestData,
-  ): Promise<EmergencyRequest> {
+  ): Promise<PostEmergencyRequestResponse> {
     const client = await this.getApiClient();
     const response = await client.post(
       "/emergency-request-receiver/request",
       data,
+    );
+    return response.data;
+  }
+
+  async checkEmergencyRequestAllowed(
+    targetId: string,
+  ): Promise<CheckEmergencyRequestAllowedResponse> {
+    const client = await this.getApiClient();
+    const response = await client.get(
+      `/emergency-request-receiver/user/${targetId}/emergency-request-allowed`,
     );
     return response.data;
   }
@@ -129,17 +106,14 @@ class EmergencyOperationsService {
     const client = await this.getApiClient();
     const response = await client.get(
       `/emergency-request-manager/requests/count`,
-      {
-        params: { status: EmergencyStatus.PENDING },
-      },
+      { params: { status: EmergencyStatus.PENDING } },
     );
     return response.data.count;
   }
 
-  // Emergency Service Management (for responders)
   async acceptEmergencyRequest(
     requestId: string,
-  ): Promise<EmergencyRequest> {
+  ): Promise<AcceptEmergencyRequestResponse> {
     const client = await this.getApiClient();
     const response = await client.patch(
       `/emergency-request-manager/requests/${requestId}/accept`,
@@ -149,7 +123,7 @@ class EmergencyOperationsService {
 
   async rejectEmergencyRequest(
     requestId: string,
-  ): Promise<EmergencyRequest> {
+  ): Promise<RejectEmergencyRequestResponse> {
     const client = await this.getApiClient();
     const response = await client.patch(
       `/emergency-request-manager/requests/${requestId}/reject`,
@@ -159,7 +133,7 @@ class EmergencyOperationsService {
 
   async closeEmergencyRequest(
     requestId: string,
-  ): Promise<EmergencyRequest> {
+  ): Promise<CloseEmergencyRequestResponse> {
     const client = await this.getApiClient();
     const response = await client.patch(
       `/emergency-request-manager/requests/${requestId}/close`,
@@ -177,13 +151,13 @@ class EmergencyOperationsService {
 
   async updateEmergencyServiceLocation(
     location: Location,
-  ): Promise<EmergencyServiceLocation> {
+  ): Promise<PatchEmergencyServiceLocationResponse> {
     const client = await this.getApiClient();
     const response = await client.patch(
       `/emergency-request-manager/emergency-service/location`,
       {
-        latitude: location.latitude,
-        longitude: location.longitude,
+        latitudeDegrees: location.latitude,
+        longitudeDegrees: location.longitude,
       },
     );
     return response.data;
@@ -200,7 +174,6 @@ class EmergencyOperationsService {
     return response.data;
   }
 
-  // Safe Zone Management
   async getNearestSafeZones(query: NearestSafeZonesQuery): Promise<SafeZone[]> {
     const client = await this.getApiClient();
     const response = await client.get(`/safe-zone-locator/safe-zones/nearest`, {
@@ -211,7 +184,6 @@ class EmergencyOperationsService {
         maxNumberOfSafeZones: query.maxNumber ?? 10,
       },
     });
-    // Backend returns { safeZoneId, safeZoneName, latitudeDegrees, longitudeDegrees, radiusMeters }
     return response.data.map((item: {
       safeZoneId: string;
       safeZoneName: string;
@@ -229,7 +201,9 @@ class EmergencyOperationsService {
     }));
   }
 
-  async createSafeZone(safeZone: Omit<SafeZone, "id" | "createdAt" | "emergencyServiceId">): Promise<SafeZone> {
+  async createSafeZone(
+    safeZone: Omit<SafeZone, "id" | "createdAt" | "emergencyServiceId">,
+  ): Promise<PostSafeZoneResponse> {
     const client = await this.getApiClient();
     const response = await client.post(`/safe-zone-manager/safe-zone`, {
       name: safeZone.name,
@@ -255,27 +229,23 @@ class EmergencyOperationsService {
   async updateSafeZone(
     id: string,
     safeZone: Partial<Pick<SafeZone, "name" | "latitude" | "longitude" | "radius">>,
-  ): Promise<SafeZone> {
+  ): Promise<PutSafeZoneResponse> {
     const client = await this.getApiClient();
-    const response = await client.put(
-      `/safe-zone-manager/safe-zone/${id}`,
-      {
-        name: safeZone.name,
-        latitudeDegrees: safeZone.latitude,
-        longitudeDegrees: safeZone.longitude,
-        radiusMeters: safeZone.radius,
-      },
-    );
+    const response = await client.put(`/safe-zone-manager/safe-zone/${id}`, {
+      name: safeZone.name,
+      latitudeDegrees: safeZone.latitude,
+      longitudeDegrees: safeZone.longitude,
+      radiusMeters: safeZone.radius,
+    });
     return response.data;
   }
 
-  async deleteSafeZone(id: string): Promise<{ id: string; deleted: boolean }> {
+  async deleteSafeZone(id: string): Promise<DeleteSafeZoneResponse> {
     const client = await this.getApiClient();
     const response = await client.delete(`/safe-zone-manager/safe-zone/${id}`);
     return response.data;
   }
 }
 
-// Export singleton instance
 export const emergencyService = new EmergencyOperationsService();
 export default emergencyService;

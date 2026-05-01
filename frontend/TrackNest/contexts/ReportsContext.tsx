@@ -6,17 +6,16 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-import {
+import type {
   CrimeReport,
   MissingPersonReport,
   GuidelinesDocument,
   CreateCrimeReportInput,
   CreateMissingPersonReportInput,
-  criminalReportsService,
-  getSeverityLabel,
-  getSeverityColor,
-} from "@/services/criminalReports";
+} from "@/types/criminalReports";
+import { criminalReportsService } from "@/services/criminalReports";
 import { minioService } from "@/services/mediaUpload";
+import { getSeverityLabel, getSeverityColor } from "@/utils/crimeHelpers";
 import { useAuth } from "./AuthContext";
 
 interface ReportsContextType {

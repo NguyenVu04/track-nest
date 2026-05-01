@@ -7,6 +7,11 @@ type FollowerInfoSheetProps = {
   renderBackdrop: (props: any) => React.ReactElement;
   selectedFollower: any;
   tabBarHeight?: number;
+  speedKmh: number | null;
+  address: string | null;
+  onChatPress: () => void;
+  onCallPress: () => void;
+  onSosPress: () => void;
 };
 
 const FollowerInfoSheet = ({
@@ -14,6 +19,11 @@ const FollowerInfoSheet = ({
   renderBackdrop,
   selectedFollower,
   tabBarHeight = 0,
+  speedKmh,
+  address,
+  onChatPress,
+  onCallPress,
+  onSosPress,
 }: FollowerInfoSheetProps) => {
   const handleSheetChanges = (index: number) => {};
 
@@ -22,9 +32,17 @@ const FollowerInfoSheet = ({
       ref={followerInfoSheetRef ?? undefined}
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
+      bottomInset={tabBarHeight}
       containerStyle={{ bottom: tabBarHeight }}
     >
-      <FollowerBottomSheet follower={selectedFollower} />
+      <FollowerBottomSheet 
+        follower={selectedFollower} 
+        speedKmh={speedKmh}
+        address={address}
+        onChatPress={onChatPress}
+        onCallPress={onCallPress}
+        onSosPress={onSosPress}
+      />
     </BottomSheetModal>
   );
 };

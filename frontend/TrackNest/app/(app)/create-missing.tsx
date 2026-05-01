@@ -3,7 +3,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useReports } from "@/contexts/ReportsContext";
 import { useAppModal } from "@/components/Modals/AppModal";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
 import React, { useState } from "react";
@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radii, spacing } from "@/styles/styles";
+import { LocationPickerModal } from "@/components/Modals/LocationPickerModal";
 
 export default function CreateMissingScreen() {
   const router = useRouter();
@@ -27,15 +28,25 @@ export default function CreateMissingScreen() {
   const { modal, showAlert } = useAppModal();
   const { createMissingPersonReport } = useReports();
 
+  const { initialName, initialLat, initialLng, initialAvatar } = useLocalSearchParams<{
+    initialName?: string;
+    initialLat?: string;
+    initialLng?: string;
+    initialAvatar?: string;
+  }>();
+
   const [title, setTitle] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [fullName, setFullName] = useState(initialName || "");
   const [personalId, setPersonalId] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [description, setDescription] = useState("");
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photoUri, setPhotoUri] = useState<string | null>(initialAvatar || null);
+  const [latitude, setLatitude] = useState(initialLat ? parseFloat(initialLat) : 10.7769);
+  const [longitude, setLongitude] = useState(initialLng ? parseFloat(initialLng) : 106.6424);
   const [loading, setLoading] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   const handlePickPhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -55,15 +66,23 @@ export default function CreateMissingScreen() {
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      showAlert("Error", t.titleRequired, "warning");
+      showAlert(t.errorTitle, t.titleRequired, "warning");
       return;
     }
     if (!fullName.trim()) {
-      showAlert("Error", t.fullNameRequired, "warning");
+      showAlert(t.errorTitle, t.fullNameRequired, "warning");
       return;
     }
     if (!description.trim()) {
-      showAlert("Error", t.descriptionRequired, "warning");
+      showAlert(t.errorTitle, t.descriptionRequired, "warning");
+      return;
+    }
+    if (!personalId.trim()) {
+      showAlert(t.errorTitle, t.personalIdRequired, "warning");
+      return;
+    }
+    if (!contactPhone.trim()) {
+      showAlert(t.errorTitle, t.contactPhoneRequired, "warning");
       return;
     }
 
@@ -73,20 +92,22 @@ export default function CreateMissingScreen() {
         {
           title: title.trim(),
           fullName: fullName.trim(),
-          personalId: personalId.trim() || undefined,
-          contactPhone: contactPhone.trim() || undefined,
+          personalId: personalId.trim(),
+          contactPhone: contactPhone.trim(),
           contactEmail: contactEmail.trim() || undefined,
           date,
           content: description.trim(),
+          latitude,
+          longitude,
         },
         photoUri ?? undefined,
       );
-      showAlert("Success", t.submitSuccess, "success", "OK", () =>
+      showAlert(t.successTitle, t.submitSuccess, "success", t.okButton, () =>
         router.back(),
       );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t.submitError;
-      showAlert("Error", msg, "error");
+      showAlert(t.errorTitle, msg, "error");
     } finally {
       setLoading(false);
     }
@@ -184,7 +205,7 @@ export default function CreateMissingScreen() {
               style={styles.input}
               value={date}
               onChangeText={setDate}
-              placeholder="YYYY-MM-DD"
+              placeholder={t.datePlaceholder}
               placeholderTextColor="#999"
               keyboardType="numeric"
             />
@@ -229,8 +250,33 @@ export default function CreateMissingScreen() {
             />
           </View>
 
+          <View style={styles.section}>
+            <Text style={styles.label}>Location *</Text>
+            <Pressable
+              style={styles.locationButton}
+              onPress={() => setShowLocationPicker(true)}
+            >
+              <Ionicons name="map-outline" size={20} color={colors.primary} />
+              <Text style={styles.locationButtonText}>
+                {latitude.toFixed(6)}, {longitude.toFixed(6)}
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color="#999" />
+            </Pressable>
+          </View>
+
           <View style={{ height: 40 }} />
         </ScrollView>
+
+        <LocationPickerModal
+          visible={showLocationPicker}
+          onClose={() => setShowLocationPicker(false)}
+          onSelectLocation={(lat, lng) => {
+            setLatitude(lat);
+            setLongitude(lng);
+          }}
+          initialLatitude={latitude}
+          initialLongitude={longitude}
+        />
 
         {loading && (
           <View style={styles.loadingOverlay}>
@@ -309,6 +355,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     textAlign: "center",
+  },
+  locationButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.sm,
+  },
+  locationButtonText: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.textPrimary,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

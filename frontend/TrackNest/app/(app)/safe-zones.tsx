@@ -1,5 +1,7 @@
 import { SafeZone } from "@/constant/types";
+import { safeZones as safeZonesLang } from "@/constant/languages";
 import useDeviceLocation from "@/hooks/useDeviceLocation";
+import { useTranslation } from "@/hooks/useTranslation";
 import { emergencyService } from "@/services/emergency";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -48,6 +50,7 @@ const MAX_RESULTS = 20;
 
 export default function SafeZonesScreen() {
   const router = useRouter();
+  const t = useTranslation(safeZonesLang);
   const mapRef = useRef<MapView>(null);
   const [safeZones, setSafeZones] = useState<SafeZone[]>([]);
   const [loading, setLoading] = useState(false);
@@ -143,9 +146,9 @@ export default function SafeZonesScreen() {
           <Ionicons name="arrow-back" size={24} color="#0f172a" />
         </Pressable>
         <View style={styles.headerTextWrap}>
-          <Text style={styles.title}>Safe Zones</Text>
+          <Text style={styles.title}>{t.title}</Text>
           <Text style={styles.subtitle}>
-            Nearest safe areas within {MAX_DISTANCE_METERS / 1000}km
+            {t.subtitle.replace("{km}", String(MAX_DISTANCE_METERS / 1000))}
           </Text>
         </View>
         <Pressable
@@ -168,7 +171,7 @@ export default function SafeZonesScreen() {
           style={styles.searchInput}
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search safe zone by name"
+          placeholder={t.searchPlaceholder}
           placeholderTextColor="#9ca3af"
         />
       </View>
@@ -196,7 +199,10 @@ export default function SafeZonesScreen() {
             key={`safe-zone-marker-${zone.id}`}
             coordinate={{ latitude: zone.latitude, longitude: zone.longitude }}
             title={zone.name}
-            description={`Safe radius: ${zone.radius}m`}
+            description={t.safeRadiusWithMeters.replace(
+              "{meters}",
+              String(zone.radius),
+            )}
             pinColor="#2ecc71"
             onPress={() => handleFocusZone(zone)}
           />
@@ -220,7 +226,7 @@ export default function SafeZonesScreen() {
               <View style={styles.itemTextWrap}>
                 <Text style={styles.itemTitle}>{item.zone.name}</Text>
                 <Text style={styles.itemMeta}>
-                  Radius {item.zone.radius}m
+                  {t.radiusWithMeters.replace("{meters}", String(item.zone.radius))}
                 </Text>
               </View>
             </View>
@@ -235,8 +241,8 @@ export default function SafeZonesScreen() {
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyText}>
               {loading
-                ? "Loading safe zones..."
-                : "No safe zones found nearby."}
+                ? t.loading
+                : t.empty}
             </Text>
           </View>
         }

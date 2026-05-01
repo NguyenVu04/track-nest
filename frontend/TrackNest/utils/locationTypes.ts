@@ -14,3 +14,9 @@ export type StoredLatestLocation = {
   timestamp?: number;
   time_spent?: number;
 };
+
+export type LocationMergeState = {
+  latest: StoredLatestLocation | null;
+  queue: StoredLocationEntry[];
+  history: StoredLocationEntry[];
+};

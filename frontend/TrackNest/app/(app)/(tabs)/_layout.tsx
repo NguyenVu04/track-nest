@@ -1,22 +1,64 @@
+import AppHeader from "@/components/AppHeader";
+import {
+  CHAT_BADGE_CHANGED_EVENT,
+  CHAT_UNREAD_KEY,
+  OPEN_GENERAL_INFO_SHEET_EVENT,
+} from "@/constant";
 import { tabs as tabsLang } from "@/constant/languages";
 import { useRequireAuth } from "@/contexts/AuthContext";
 import { useDevMode } from "@/contexts/DevModeContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import { colors, radii, spacing } from "@/styles/styles";
+import { colors, spacing } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Tabs, useRouter, useSegments } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { DeviceEventEmitter } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 const TAB_BAR_HEIGHT = 70;
+const APP_HEADER_CONTENT_HEIGHT = 46;
 
 export default function RootLayout() {
   const t = useTranslation(tabsLang);
   const { devMode } = useDevMode();
+  const router = useRouter();
+  const segments = useSegments();
   const insets = useSafeAreaInsets();
-  const tabBarBottomPadding = Math.max(insets.bottom, spacing.sm);
+  const appHeaderHeight = insets.top + APP_HEADER_CONTENT_HEIGHT;
+  const tabBarBottomPadding = Math.max(insets.bottom, spacing.xs);
   const tabBarHeight = TAB_BAR_HEIGHT + tabBarBottomPadding;
 
   const { isAuthenticated, isGuestMode } = useRequireAuth();
-  const showDevTabs = devMode || __DEV__;
+  const showDevTabs = devMode;
+  const [chatBadge, setChatBadge] = useState(0);
+
+  useEffect(() => {
+    AsyncStorage.getItem(CHAT_UNREAD_KEY)
+      .then((val) => setChatBadge(parseInt(val ?? "0", 10) || 0))
+      .catch(() => {});
+
+    const sub = DeviceEventEmitter.addListener(
+      CHAT_BADGE_CHANGED_EVENT,
+      (count: number) => setChatBadge(count),
+    );
+    return () => sub.remove();
+  }, []);
+
+  const handleFamilyPress = useCallback(() => {
+    const emitOpenSheet = () => {
+      DeviceEventEmitter.emit(OPEN_GENERAL_INFO_SHEET_EVENT);
+    };
+
+    const activeRoute = segments[segments.length - 1];
+    if (activeRoute === "map") {
+      emitOpenSheet();
+      return;
+    }
+
+    router.push("/(app)/(tabs)/map");
+    setTimeout(emitOpenSheet, 300);
+  }, [router, segments]);
 
   if (!isAuthenticated && !isGuestMode && !__DEV__) return null;
 
@@ -24,30 +66,37 @@ export default function RootLayout() {
     <Tabs
       initialRouteName="map"
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
+        header: () => <AppHeader onFamilyPress={handleFamilyPress} />,
+        headerStyle: {
+          height: appHeaderHeight,
+          backgroundColor: "transparent",
+        },
+        headerShadowVisible: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "600",
-          marginBottom: spacing.xs,
+          marginTop: 2,
         },
+        tabBarAllowFontScaling: true,
         tabBarStyle: {
-          height: tabBarHeight,
-          paddingTop: spacing.sm,
+          minHeight: tabBarHeight,
           borderTopWidth: 1,
           borderTopColor: colors.borderLight,
-          backgroundColor: colors.bg,
+          backgroundColor: colors.surfaceLight,
           elevation: 12,
-          shadowColor: colors.primaryDark,
-          shadowOpacity: 0.15,
-          shadowRadius: 10,
-          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.1,
           paddingBottom: tabBarBottomPadding,
+          shadowOffset: { width: 0, height: -5 },
         },
         tabBarItemStyle: {
-          marginVertical: spacing.xs,
-          borderRadius: radii.md,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "auto",
+          borderRadius: 16,
         },
       }}
     >
@@ -58,7 +107,21 @@ export default function RootLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "map" : "map-outline"}
-              size={22}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="family-chat"
+        options={{
+          title: t.familyChat,
+          tabBarBadge: chatBadge > 0 ? chatBadge : undefined,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "chatbubbles" : "chatbubbles-outline"}
+              size={32}
               color={color}
             />
           ),
@@ -70,8 +133,21 @@ export default function RootLayout() {
           title: t.reports,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "list" : "list-outline"}
-              size={22}
+              name={focused ? "bar-chart" : "bar-chart-outline"}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: "Dashboard",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "grid" : "grid-outline"}
+              size={24}
               color={color}
             />
           ),
@@ -84,7 +160,7 @@ export default function RootLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "settings" : "settings-outline"}
-              size={22}
+              size={24}
               color={color}
             />
           ),
@@ -99,7 +175,7 @@ export default function RootLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "person" : "person-outline"}
-              size={22}
+              size={24}
               color={color}
             />
           ),
@@ -113,7 +189,7 @@ export default function RootLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "people" : "people-outline"}
-              size={22}
+              size={24}
               color={color}
             />
           ),
@@ -127,7 +203,7 @@ export default function RootLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "notifications" : "notifications-outline"}
-              size={22}
+              size={24}
               color={color}
             />
           ),
@@ -145,7 +221,7 @@ export default function RootLayout() {
                   ? "notifications-circle"
                   : "notifications-circle-outline"
               }
-              size={22}
+              size={24}
               color={color}
             />
           ),
@@ -159,7 +235,7 @@ export default function RootLayout() {
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "mic" : "mic-outline"}
-              size={22}
+              size={24}
               color={color}
             />
           ),

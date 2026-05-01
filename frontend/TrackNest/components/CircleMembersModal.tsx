@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Modal,
@@ -19,6 +20,7 @@ import {
   removeMemberFromFamilyCircle,
   updateFamilyRole,
 } from "@/services/trackingManager";
+import { showToast } from "@/utils";
 
 export type CircleMember = {
   id: string;
@@ -34,6 +36,7 @@ interface CircleMembersModalProps {
   members: CircleMember[];
   onRefresh?: () => void;
   isAdmin?: boolean;
+  isLoading?: boolean;
 }
 
 export const CircleMembersModal: React.FC<CircleMembersModalProps> = ({
@@ -43,6 +46,7 @@ export const CircleMembersModal: React.FC<CircleMembersModalProps> = ({
   members,
   onRefresh,
   isAdmin = false,
+  isLoading = false,
 }) => {
   const t = useTranslation(circleMembersModalLang);
   const [editingRoleMember, setEditingRoleMember] =
@@ -69,7 +73,7 @@ export const CircleMembersModal: React.FC<CircleMembersModalProps> = ({
               );
               onRefresh?.();
             } catch (error: any) {
-              Alert.alert(t.errorTitle, error?.message ?? t.removeMemberFailed);
+              showToast(error?.message ?? t.removeMemberFailed, t.errorTitle);
             }
           },
         },
@@ -93,7 +97,7 @@ export const CircleMembersModal: React.FC<CircleMembersModalProps> = ({
               await assignFamilyCircleAdmin(circle.familyCircleId, member.id);
               onRefresh?.();
             } catch (error: any) {
-              Alert.alert(t.errorTitle, error?.message ?? t.assignAdminFailed);
+              showToast(error?.message ?? t.assignAdminFailed, t.errorTitle);
             }
           },
         },
@@ -109,7 +113,7 @@ export const CircleMembersModal: React.FC<CircleMembersModalProps> = ({
       setNewRole("");
       onRefresh?.();
     } catch (error: any) {
-      Alert.alert(t.errorTitle, error?.message ?? t.updateRoleFailed);
+      showToast(error?.message ?? t.updateRoleFailed, t.errorTitle);
     }
   };
 
@@ -174,7 +178,11 @@ export const CircleMembersModal: React.FC<CircleMembersModalProps> = ({
                 <Ionicons name="close" size={24} color="#666" />
               </Pressable>
             </View>
-            {members.length === 0 ? (
+            {isLoading ? (
+              <View style={styles.empty}>
+                <ActivityIndicator size="large" color="#74becb" />
+              </View>
+            ) : members.length === 0 ? (
               <View style={styles.empty}>
                 <Ionicons name="people-outline" size={48} color="#ccc" />
                 <Text style={styles.emptyText}>{t.noMembers}</Text>

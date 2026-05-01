@@ -1,9 +1,8 @@
-import {
-  criminalReportsService,
-  CrimeAnalysisReportResponse,
-  getSeverityColor,
-  getSeverityLabel,
-} from "@/services/criminalReports";
+import { criminalReportsService } from "@/services/criminalReports";
+import type { CrimeAnalysisReportResponse } from "@/types/criminalReports";
+import { getSeverityColor, getSeverityLabel } from "@/utils/crimeHelpers";
+import { crimeAnalysis as crimeAnalysisLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -36,6 +35,7 @@ function formatDisplay(d: Date): string {
 
 export default function CrimeAnalysisScreen() {
   const router = useRouter();
+  const t = useTranslation(crimeAnalysisLang);
 
   const today = new Date();
   const thirtyDaysAgo = new Date(today);
@@ -61,7 +61,7 @@ export default function CrimeAnalysisScreen() {
 
   const handleGenerate = async () => {
     if (startDate > endDate) {
-      setError("Start date must be before end date.");
+      setError(t.errorDateOrder);
       return;
     }
     try {
@@ -73,7 +73,7 @@ export default function CrimeAnalysisScreen() {
       );
       setData(res);
     } catch (e) {
-      setError("Failed to load crime analysis.");
+      setError(t.errorLoad);
       console.error(e);
     } finally {
       setLoading(false);
@@ -87,8 +87,8 @@ export default function CrimeAnalysisScreen() {
           <Ionicons name="arrow-back" size={24} color="#0f172a" />
         </Pressable>
         <View style={styles.headerTextWrap}>
-          <Text style={styles.title}>Crime Analysis</Text>
-          <Text style={styles.subtitle}>Trends, hotspots & statistics</Text>
+          <Text style={styles.title}>{t.title}</Text>
+          <Text style={styles.subtitle}>{t.subtitle}</Text>
         </View>
       </View>
 
@@ -96,7 +96,7 @@ export default function CrimeAnalysisScreen() {
       <View style={styles.filterCard}>
         <View style={styles.dateRow}>
           <View style={styles.datePart}>
-            <Text style={styles.dateLabel}>From</Text>
+            <Text style={styles.dateLabel}>{t.from}</Text>
             <Pressable
               style={styles.datePill}
               onPress={() => setShowPicker("start")}
@@ -107,7 +107,7 @@ export default function CrimeAnalysisScreen() {
           </View>
           <Ionicons name="arrow-forward" size={16} color="#94a3b8" />
           <View style={styles.datePart}>
-            <Text style={styles.dateLabel}>To</Text>
+            <Text style={styles.dateLabel}>{t.to}</Text>
             <Pressable
               style={styles.datePill}
               onPress={() => setShowPicker("end")}
@@ -130,7 +130,7 @@ export default function CrimeAnalysisScreen() {
           ) : (
             <>
               <Ionicons name="bar-chart-outline" size={16} color="#fff" />
-              <Text style={styles.generateText}>Generate Report</Text>
+              <Text style={styles.generateText}>{t.generateReport}</Text>
             </>
           )}
         </Pressable>
@@ -152,36 +152,36 @@ export default function CrimeAnalysisScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Summary Stats */}
-          <Text style={styles.sectionTitle}>Summary</Text>
+          <Text style={styles.sectionTitle}>{t.summary}</Text>
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{data.totalCrimeReports}</Text>
-              <Text style={styles.statLabel}>Crime Reports</Text>
+              <Text style={styles.statLabel}>{t.crimeReports}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{data.totalMissingPersonReports}</Text>
-              <Text style={styles.statLabel}>Missing Persons</Text>
+              <Text style={styles.statLabel}>{t.missingPersons}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={[styles.statValue, { color: "#22c55e" }]}>{data.totalArrests}</Text>
-              <Text style={styles.statLabel}>Arrests</Text>
+              <Text style={styles.statLabel}>{t.arrests}</Text>
             </View>
           </View>
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={[styles.statValue, { color: "#ef4444" }]}>{data.totalVictims}</Text>
-              <Text style={styles.statLabel}>Victims</Text>
+              <Text style={styles.statLabel}>{t.victims}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={[styles.statValue, { color: "#f59e0b" }]}>{data.totalOffenders}</Text>
-              <Text style={styles.statLabel}>Offenders</Text>
+              <Text style={styles.statLabel}>{t.offenders}</Text>
             </View>
           </View>
 
           {/* Crime Trend */}
           {data.crimeTrend.length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>Crime Trend</Text>
+              <Text style={styles.sectionTitle}>{t.crimeTrend}</Text>
               <View style={styles.trendWrap}>
                 {data.crimeTrend.map((point, i) => (
                   <View key={i} style={styles.trendRow}>
@@ -206,7 +206,7 @@ export default function CrimeAnalysisScreen() {
           {/* Crimes by Severity */}
           {Object.keys(data.crimesBySeverity).length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>By Severity</Text>
+              <Text style={styles.sectionTitle}>{t.bySeverity}</Text>
               <View style={styles.listCard}>
                 {Object.entries(data.crimesBySeverity)
                   .sort(([a], [b]) => Number(b) - Number(a))
@@ -222,7 +222,7 @@ export default function CrimeAnalysisScreen() {
                             ]}
                           />
                           <Text style={styles.listName}>
-                            {getSeverityLabel(n)} (Level {sev})
+                            {getSeverityLabel(n)} ({t.level} {sev})
                           </Text>
                         </View>
                         <Text style={styles.listValue}>{count}</Text>
@@ -236,7 +236,7 @@ export default function CrimeAnalysisScreen() {
           {/* Crimes by Type */}
           {Object.keys(data.crimesByType).length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>By Type</Text>
+              <Text style={styles.sectionTitle}>{t.byType}</Text>
               <View style={styles.listCard}>
                 {Object.entries(data.crimesByType)
                   .sort(([, a], [, b]) => b - a)
@@ -254,7 +254,7 @@ export default function CrimeAnalysisScreen() {
           {data.hotspots.length > 0 && (
             <>
               <Text style={styles.sectionTitle}>
-                Hotspots ({data.hotspots.length})
+                {`${t.hotspots} (${data.hotspots.length})`}
               </Text>
               <FlatList
                 data={data.hotspots}
@@ -276,7 +276,7 @@ export default function CrimeAnalysisScreen() {
                           {item.latitude.toFixed(4)}, {item.longitude.toFixed(4)}
                         </Text>
                         <Text style={styles.hotspotMeta}>
-                          {item.incidentCount} incidents • Avg severity{" "}
+                          {item.incidentCount} {t.incidents} • {t.avgSeverity}{" "}
                           {item.averageSeverity.toFixed(1)}
                         </Text>
                       </View>
@@ -302,9 +302,7 @@ export default function CrimeAnalysisScreen() {
       {!data && !loading && (
         <View style={styles.emptyWrap}>
           <Ionicons name="bar-chart-outline" size={48} color="#cbd5e1" />
-          <Text style={styles.emptyText}>
-            Select a date range and tap{"\n"}Generate Report to see analysis.
-          </Text>
+          <Text style={styles.emptyText}>{t.emptyHint}</Text>
         </View>
       )}
     </SafeAreaView>

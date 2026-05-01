@@ -1,11 +1,10 @@
 import { colors, shadows } from "@/styles/styles";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
   Pressable,
   StyleProp,
   StyleSheet,
-  View,
+  Text,
   ViewStyle,
 } from "react-native";
 
@@ -16,42 +15,36 @@ type SosFabProps = {
 export default function SosFab({ style }: SosFabProps) {
   const router = useRouter();
 
-  const handlePress = () => {
-    // Navigate to SOS screen on tap
-    router.push("/sos");
-  };
-
   return (
-    <View style={[styles.container, style]}>
-      <Pressable onPress={handlePress} style={styles.button}>
-        {/* Icon */}
-        <Ionicons
-          name="alert-circle"
-          size={28}
-          color="#fff"
-          style={styles.icon}
-        />
-      </Pressable>
-    </View>
+    <Pressable
+      onPress={() => router.push("/sos")}
+      style={[styles.button, style]}
+    >
+      <Text style={styles.iconStar}>✳</Text>
+      <Text style={styles.label}>SOS</Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    marginBottom: 16,
-  },
   button: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 55,
+    height: 55,
+    borderRadius: 10,
     backgroundColor: colors.danger,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
-    ...shadows.medium,
+    ...shadows.small,
   },
-  icon: {
-    zIndex: 1,
+  label: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  iconStar: {
+    fontSize: 28,
+    fontWeight: 900,
+    color: "#fff",
   },
 });
