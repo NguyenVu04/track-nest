@@ -165,6 +165,29 @@ export interface GuidelinesDocumentResponse {
   isPublic: boolean;
 }
 
+export interface ChatbotSessionResponse {
+  sessionId: string;
+  createdAtMs: number;
+}
+
+export interface ChatbotMessageResponse {
+  response: string;
+  createdAt: number;
+}
+
+export interface ChatbotSessionMessage {
+  role: "USER" | "MODEL";
+  content: string;
+  createdAtMs: number;
+}
+
+export interface ChatbotSession {
+  documentId: string;
+  messages: ChatbotSessionMessage[];
+  messageLeft: number;
+  createdAtMs: number;
+}
+
 export interface PageResponse<T> {
   content: T[];
   page: number;
@@ -428,6 +451,35 @@ export const criminalReportsService = {
     const response = await api.get<PageResponse<GuidelinesDocumentResponse>>(
       "/report-manager/guidelines",
       { params },
+    );
+    return response.data;
+  },
+
+  // Chatbot endpoints
+  startChatbotSession: async (data: {
+    documentId: string;
+  }): Promise<ChatbotSessionResponse> => {
+    const response = await api.post<ChatbotSessionResponse>(
+      "/chatbot/session",
+      data,
+    );
+    return response.data;
+  },
+
+  sendChatbotMessage: async (data: {
+    sessionId: string;
+    message: string;
+  }): Promise<ChatbotMessageResponse> => {
+    const response = await api.post<ChatbotMessageResponse>(
+      "/chatbot/message",
+      data,
+    );
+    return response.data;
+  },
+
+  getChatbotSession: async (sessionId: string): Promise<ChatbotSession> => {
+    const response = await api.get<ChatbotSession>(
+      `/chatbot/session/${sessionId}`,
     );
     return response.data;
   },

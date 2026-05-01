@@ -13,6 +13,7 @@ import { useState } from "react";
 import type { MissingPerson, UserRole } from "@/types";
 import { MapView } from "../shared/MapView";
 import { ConfirmModal } from "../shared/ConfirmModal";
+import { ChatbotPanel } from "../shared/ChatbotPanel";
 import { useTranslations } from "next-intl";
 
 interface MissingPersonDetailProps {
@@ -174,7 +175,10 @@ export function MissingPersonDetail({
                 center={[person.latitude, person.longitude]}
                 markers={[
                   {
-                    position: [person.latitude, person.longitude] as [number, number],
+                    position: [person.latitude, person.longitude] as [
+                      number,
+                      number,
+                    ],
                     label: person.fullName,
                   },
                 ]}
@@ -183,6 +187,12 @@ export function MissingPersonDetail({
           )}
         </div>
       </div>
+
+      <ChatbotPanel
+        documentId={person.id}
+        title="Missing Person Report Chat"
+        emptyState="Ask a question about this report."
+      />
 
       {confirmAction === "publish" && (
         <ConfirmModal
