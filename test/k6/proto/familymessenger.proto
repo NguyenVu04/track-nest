@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package project.tracknest.usertracking.proto.v1;
+
+import "google/rpc/status.proto";
+
+option java_multiple_files = true;
+option java_package = "project.tracknest.usertracking.proto.lib";
+option java_outer_classname = "FamilyMessengerProto";
+
+// Service for sending messages within a family circle.
+// This service allows authenticated members of a family circle to send messages
+// to each other. Messages are stored and can be retrieved by members of the circle. All RPCs assume
+// appropriate authentication and authorization for the targeted `family_circle_id`. Errors are reported using `google.rpc.Status`.
+service FamilyMessengerController {
+  // SendMessage
+  // Allows a member of a family circle to send a message to the circle.
+  // The request includes the `family_circle_id`, `sender_member_id`, and the `message_content`. On success, returns a `message_id` and `sent_at_ms` timestamp. Errors such as "not a member" or "circle not found" are reported in the `status` field of the response.
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+
+  // ListMessages
+  // Retrieves a paginated list of messages for a specified family circle. The request includes `family_circle_id`, `page_size`, and `page_token`. The response contains a list of messages along with a `next_page_token` for pagination. Errors such as "not a member" or "circle not found" are reported in the `status` field of the response.
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+
+  // ReceiveMessageStream
+  // Streams new messages for a specified family circle in real-time. The client sends a single request with the `family_circle_id`, and the server responds with a stream of `Message` messages
+  // as they are sent by members of the circle. The stream may be closed by the server on authorization failure or when the family circle no longer exists. Clients should handle reconnection and backoff.
+  rpc ReceiveMessageStream(ReceiveMessageStreamRequest) returns (stream Message);
+}
+
+message SendMessageRequest {
+  string family_circle_id = 1;
+  string message_content = 2;
+}
+
+message SendMessageResponse {
+  string message_id = 1;
+  int64 sent_at_ms = 2;
+  google.rpc.Status status = 3;
+}
+
+message ListMessagesRequest {
+  string family_circle_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListMessagesResponse {
+  repeated Message messages = 1;
+  string next_page_token = 2;
+  google.rpc.Status status = 3;
+}
+
+message Message {
+  string message_id = 1;
+  string sender_id = 2;
+  string message_content = 3;
+  int64 sent_at_ms = 4;
+}
+
+message ReceiveMessageStreamRequest {
+  string family_circle_id = 1;
+}

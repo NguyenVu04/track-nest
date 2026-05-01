@@ -1,31 +1,34 @@
 {
-  "name": "k6",
+  "name": "tracknest-k6",
   "version": "1.0.0",
-  "description": "TrackNest k6 performance test suite",
-  "main": "index.js",
+  "description": "k6 performance tests for TrackNest user-tracking gRPC service",
+  "directories": {
+    "lib": "lib"
+  },
   "scripts": {
-    "web:smoke": "k6 run scripts/web/smoke.js",
-    "web:load": "k6 run scripts/web/load.js",
-    "web:soak": "k6 run scripts/web/soak.js",
-    "web:stress": "k6 run scripts/web/stress.js",
-    "criminal:smoke": "k6 run scripts/criminal-reports/smoke.js",
-    "criminal:load": "k6 run scripts/criminal-reports/load.js",
-    "criminal:spike": "k6 run scripts/criminal-reports/spike.js",
-    "criminal:stress": "k6 run scripts/criminal-reports/stress.js",
-    "emergency:smoke": "k6 run scripts/emergency-ops/smoke.js",
-    "emergency:load": "k6 run scripts/emergency-ops/load.js",
-    "emergency:spike": "k6 run scripts/emergency-ops/spike.js",
-    "emergency:stress": "k6 run scripts/emergency-ops/stress.js",
-    "tracking:smoke": "k6 run scripts/user-tracking/smoke.js",
-    "tracking:load": "k6 run scripts/user-tracking/load.js",
-    "tracking:spike": "k6 run scripts/user-tracking/spike.js",
+    "tracking:smoke":  "k6 run scripts/user-tracking/smoke.js",
+    "tracking:load":   "k6 run scripts/user-tracking/load.js",
     "tracking:stress": "k6 run scripts/user-tracking/stress.js",
-    "run:distributed": "pwsh -ExecutionPolicy Bypass -File ./run-distributed.ps1"
+    "tracking:spike":  "k6 run scripts/user-tracking/spike.js",
+
+    "tracking:smoke:out":  "k6 run --out json=results/user-tracking-smoke-raw.json  scripts/user-tracking/smoke.js",
+    "tracking:load:out":   "k6 run --out json=results/user-tracking-load-raw.json   scripts/user-tracking/load.js",
+    "tracking:stress:out": "k6 run --out json=results/user-tracking-stress-raw.json scripts/user-tracking/stress.js",
+    "tracking:spike:out":  "k6 run --out json=results/user-tracking-spike-raw.json  scripts/user-tracking/spike.js",
+
+    "emergency:smoke":  "k6 run scripts/emergency-ops/smoke.js",
+    "emergency:load":   "k6 run scripts/emergency-ops/load.js",
+    "emergency:stress": "k6 run scripts/emergency-ops/stress.js",
+    "emergency:spike":  "k6 run scripts/emergency-ops/spike.js",
+
+    "emergency:smoke:out":  "k6 run --out json=results/emergency-ops-smoke-raw.json  scripts/emergency-ops/smoke.js",
+    "emergency:load:out":   "k6 run --out json=results/emergency-ops-load-raw.json   scripts/emergency-ops/load.js",
+    "emergency:stress:out": "k6 run --out json=results/emergency-ops-stress-raw.json scripts/emergency-ops/stress.js",
+    "emergency:spike:out":  "k6 run --out json=results/emergency-ops-spike-raw.json  scripts/emergency-ops/spike.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
     "@types/k6": "^1.7.0"
   }

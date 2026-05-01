@@ -1,0 +1,1151 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Emergency Operations Service API",
+        "version": "v1"
+    },
+    "servers": [
+        {
+            "url": "https://api.tracknestapp.org/emergency-ops",
+            "description": "Generated server url"
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ],
+    "paths": {
+        "/safe-zone-manager/safe-zone/{safeZoneId}": {
+            "put": {
+                "tags": [
+                    "safe-zone-manager-controller"
+                ],
+                "operationId": "updateSafeZone",
+                "parameters": [
+                    {
+                        "name": "safeZoneId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PutSafeZoneRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PutSafeZoneResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "safe-zone-manager-controller"
+                ],
+                "operationId": "deleteSafeZone",
+                "parameters": [
+                    {
+                        "name": "safeZoneId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeleteSafeZoneResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/safe-zone-manager/safe-zone": {
+            "post": {
+                "tags": [
+                    "safe-zone-manager-controller"
+                ],
+                "operationId": "postSafeZone",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostSafeZoneRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostSafeZoneResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/emergency-request-receiver/request": {
+            "post": {
+                "tags": [
+                    "emergency-request-receiver-controller"
+                ],
+                "operationId": "postEmergencyRequest",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostEmergencyRequestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostEmergencyRequestResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/emergency-request-manager/requests/{requestId}/reject": {
+            "patch": {
+                "tags": [
+                    "emergency-request-manager-controller"
+                ],
+                "operationId": "rejectEmergencyRequest",
+                "parameters": [
+                    {
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RejectEmergencyRequestResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/emergency-request-manager/requests/{requestId}/close": {
+            "patch": {
+                "tags": [
+                    "emergency-request-manager-controller"
+                ],
+                "operationId": "closeEmergencyRequest",
+                "parameters": [
+                    {
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CloseEmergencyRequestResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/emergency-request-manager/requests/{requestId}/accept": {
+            "patch": {
+                "tags": [
+                    "emergency-request-manager-controller"
+                ],
+                "operationId": "acceptEmergencyRequest",
+                "parameters": [
+                    {
+                        "name": "requestId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AcceptEmergencyRequestResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/emergency-request-manager/emergency-service/location": {
+            "get": {
+                "tags": [
+                    "emergency-request-manager-controller"
+                ],
+                "operationId": "getEmergencyServiceLocation",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetEmergencyServiceLocationResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "emergency-request-manager-controller"
+                ],
+                "operationId": "updateEmergencyServiceLocation",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchEmergencyServiceLocationRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PatchEmergencyServiceLocationResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/safe-zone-manager/safe-zones": {
+            "get": {
+                "tags": [
+                    "safe-zone-manager-controller"
+                ],
+                "operationId": "getServiceSafeZones",
+                "parameters": [
+                    {
+                        "name": "nameFilter",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "minLength": 0
+                        }
+                    },
+                    {
+                        "name": "pageable",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/Pageable"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageResponseGetServiceSafeZonesResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/safe-zone-locator/safe-zones/nearest": {
+            "get": {
+                "tags": [
+                    "safe-zone-locator-controller"
+                ],
+                "operationId": "getNearestSafeZones",
+                "parameters": [
+                    {
+                        "name": "latitudeDegrees",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "double",
+                            "maximum": 9223372036854775807,
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "longitudeDegrees",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "double",
+                            "maximum": 9223372036854775807,
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "maxDistanceMeters",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float",
+                            "maximum": 9223372036854775807,
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "maxNumberOfSafeZones",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "maximum": 9223372036854775807,
+                            "minimum": 0
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/GetNearestSafeZonesResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/emergency-responder/targets": {
+            "get": {
+                "tags": [
+                    "emergency-responder-controller"
+                ],
+                "operationId": "getEmergencyServiceTargets",
+                "parameters": [
+                    {
+                        "name": "pageable",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/Pageable"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageResponseGetEmergencyServiceTargetsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/emergency-request-receiver/user/{targetId}/emergency-request-allowed": {
+            "get": {
+                "tags": [
+                    "emergency-request-receiver-controller"
+                ],
+                "operationId": "checkEmergencyRequestAllowed",
+                "parameters": [
+                    {
+                        "name": "targetId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CheckEmergencyRequestAllowedResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/emergency-request-receiver/requests": {
+            "get": {
+                "tags": [
+                    "emergency-request-receiver-controller"
+                ],
+                "operationId": "getTrackerEmergencyRequests",
+                "parameters": [
+                    {
+                        "name": "pageable",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/Pageable"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageResponseGetTrackerEmergencyRequestsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/emergency-request-manager/requests": {
+            "get": {
+                "tags": [
+                    "emergency-request-manager-controller"
+                ],
+                "operationId": "getEmergencyRequests",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "PENDING",
+                                "REJECTED",
+                                "ACCEPTED",
+                                "CLOSED"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "pageable",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/Pageable"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageResponseGetEmergencyRequestsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/emergency-request-manager/requests/count": {
+            "get": {
+                "tags": [
+                    "emergency-request-manager-controller"
+                ],
+                "operationId": "getPendingRequestCount",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "PENDING",
+                                "REJECTED",
+                                "ACCEPTED",
+                                "CLOSED"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetRequestCountResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "PutSafeZoneRequest": {
+                "type": "object",
+                "properties": {
+                    "latitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "longitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "radiusMeters": {
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 4
+                    }
+                }
+            },
+            "PutSafeZoneResponse": {
+                "type": "object",
+                "properties": {
+                    "updatedAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                }
+            },
+            "PostSafeZoneRequest": {
+                "type": "object",
+                "properties": {
+                    "latitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "longitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 4
+                    },
+                    "radiusMeters": {
+                        "type": "number",
+                        "format": "float",
+                        "minimum": 0
+                    }
+                }
+            },
+            "PostSafeZoneResponse": {
+                "type": "object",
+                "properties": {
+                    "createdAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                }
+            },
+            "PostEmergencyRequestRequest": {
+                "type": "object",
+                "properties": {
+                    "targetId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "lastLatitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "lastLongitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "PostEmergencyRequestResponse": {
+                "type": "object",
+                "properties": {
+                    "createdAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                }
+            },
+            "RejectEmergencyRequestResponse": {
+                "type": "object",
+                "properties": {
+                    "rejectedAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                }
+            },
+            "CloseEmergencyRequestResponse": {
+                "type": "object",
+                "properties": {
+                    "closedAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                }
+            },
+            "AcceptEmergencyRequestResponse": {
+                "type": "object",
+                "properties": {
+                    "acceptedAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                }
+            },
+            "PatchEmergencyServiceLocationRequest": {
+                "type": "object",
+                "properties": {
+                    "latitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "longitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "PatchEmergencyServiceLocationResponse": {
+                "type": "object",
+                "properties": {
+                    "updatedAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                }
+            },
+            "Pageable": {
+                "type": "object",
+                "properties": {
+                    "page": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 0
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 1
+                    },
+                    "sort": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "GetServiceSafeZonesResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "radius": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "PageResponseGetServiceSafeZonesResponse": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GetServiceSafeZonesResponse"
+                        }
+                    },
+                    "totalItems": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "currentPage": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "GetNearestSafeZonesResponse": {
+                "type": "object",
+                "properties": {
+                    "safeZoneId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "safeZoneName": {
+                        "type": "string"
+                    },
+                    "latitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "longitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "radiusMeters": {
+                        "type": "number",
+                        "format": "float"
+                    }
+                }
+            },
+            "GetEmergencyServiceTargetsResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "lastName": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "phoneNumber": {
+                        "type": "string"
+                    },
+                    "avatarUrl": {
+                        "type": "string"
+                    },
+                    "lastLatitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "lastLongitudeDegrees": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "lastUpdateTimeMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "PageResponseGetEmergencyServiceTargetsResponse": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GetEmergencyServiceTargetsResponse"
+                        }
+                    },
+                    "totalItems": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "currentPage": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "CheckEmergencyRequestAllowedResponse": {
+                "type": "object",
+                "properties": {
+                    "allowed": {
+                        "type": "boolean"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "checkedAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "GetTrackerEmergencyRequestsResponse": {
+                "type": "object",
+                "properties": {
+                    "requestId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "serviceId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "serviceName": {
+                        "type": "string"
+                    },
+                    "servicePhoneNumber": {
+                        "type": "string"
+                    },
+                    "createdAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "closedAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "targetId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "targetUsername": {
+                        "type": "string"
+                    },
+                    "targetPhoneNumber": {
+                        "type": "string"
+                    },
+                    "targetEmail": {
+                        "type": "string"
+                    },
+                    "targetFirstName": {
+                        "type": "string"
+                    },
+                    "targetLastName": {
+                        "type": "string"
+                    },
+                    "targetAvatarUrl": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PageResponseGetTrackerEmergencyRequestsResponse": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GetTrackerEmergencyRequestsResponse"
+                        }
+                    },
+                    "totalItems": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "currentPage": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "GetEmergencyRequestsResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "senderId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "senderUsername": {
+                        "type": "string"
+                    },
+                    "senderFirstName": {
+                        "type": "string"
+                    },
+                    "senderLastName": {
+                        "type": "string"
+                    },
+                    "senderPhoneNumber": {
+                        "type": "string"
+                    },
+                    "senderEmail": {
+                        "type": "string"
+                    },
+                    "senderAvatarUrl": {
+                        "type": "string"
+                    },
+                    "targetId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "targetUsername": {
+                        "type": "string"
+                    },
+                    "targetFirstName": {
+                        "type": "string"
+                    },
+                    "targetLastName": {
+                        "type": "string"
+                    },
+                    "targetPhoneNumber": {
+                        "type": "string"
+                    },
+                    "targetEmail": {
+                        "type": "string"
+                    },
+                    "targetAvatarUrl": {
+                        "type": "string"
+                    },
+                    "openedAt": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "closedAt": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "targetLastLatitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "targetLastLongitude": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "PageResponseGetEmergencyRequestsResponse": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GetEmergencyRequestsResponse"
+                        }
+                    },
+                    "totalItems": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "currentPage": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "GetRequestCountResponse": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "timestampMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "GetEmergencyServiceLocationResponse": {
+                "type": "object",
+                "properties": {
+                    "latitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "updatedAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "DeleteSafeZoneResponse": {
+                "type": "object",
+                "properties": {
+                    "deletedAtMs": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    }
+}

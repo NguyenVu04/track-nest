@@ -1,125 +1,73 @@
-/**
- * Keycloak authentication helpers for k6 performance tests.
- *
- * Auth flow: Resource Owner Password Credentials (ROPC) grant.
- * Each VU caches its token for the lifetime of the test iteration loop.
- *
- * Usage:
- *   import { getMobileToken, getWebToken, bearerHeaders, decodeUserId } from '../../lib/auth.js';
- *
- *   const mobileToken = getMobileToken('username', 'password');
- *   const webToken = getWebToken('username', 'password');
- *   const userId = decodeUserId(mobileToken);    // JWT sub claim
- *   const headers = bearerHeaders(mobileToken);
- *   const headers = bearerHeaders(mobileToken, { 'X-User-Id': userId });
- */
-
 import http from 'k6/http';
-import encoding from 'k6/encoding';
-import { check } from 'k6';
 
-const env = JSON.parse(open('./data/env.json'));
-const KEYCLOAK_URL = env.KEYCLOAK_URL || 'http://localhost/auth';
-const PUBLIC_REALM = env.KEYCLOAK_PUBLIC_REALM || 'public-dev';
-const RESTRICTED_REALM = env.KEYCLOAK_RESTRICTED_REALM || 'restricted-dev';
-const MOBILE_CLIENT_ID = env.KEYCLOAK_MOBILE_CLIENT_ID || 'mobile';
-const WEB_CLIENT_ID = env.KEYCLOAK_WEB_CLIENT_ID || 'web';
+const KEYCLOAK_URL         = __ENV.KEYCLOAK_URL             || 'https://api.tracknestapp.org/auth';
+const PUBLIC_CLIENT_ID     = __ENV.PUBLIC_CLIENT_ID         || 'mobile';
+const RESTRICTED_CLIENT_ID = __ENV.RESTRICTED_CLIENT_ID     || 'web';
 
-const TOKEN_PUBLIC_ENDPOINT = `${KEYCLOAK_URL}/realms/${PUBLIC_REALM}/protocol/openid-connect/token`;
-const TOKEN_RESTRICTED_ENDPOINT = `${KEYCLOAK_URL}/realms/${RESTRICTED_REALM}/protocol/openid-connect/token`;
+const PUBLIC_REALM     = 'public-dev';
+const RESTRICTED_REALM = 'restricted-dev';
 
-/**
- * Obtain a Keycloak access token via ROPC grant.
- * Returns the raw JWT string, or null on failure.
- */
-export function getPublicToken(username, password) {
-  const res = http.post(
-    TOKEN_PUBLIC_ENDPOINT,
-    {
-      grant_type: 'password',
-      client_id:  MOBILE_CLIENT_ID,
-      username,
-      password,
-      scope: 'openid profile email',
-    },
-    { tags: { name: 'keycloak_token' } }
-  );
+// ── Core ──────────────────────────────────────────────────────────────────────
 
-  const ok = check(res, { 'auth: 200 OK': (r) => r.status === 200 });
-  if (!ok) {
-    console.error(`getPublicToken failed for ${username}: HTTP ${res.status} – ${res.body}`);
+function getToken(username, password, realm) {
+  const clientId = realm === RESTRICTED_REALM ? RESTRICTED_CLIENT_ID : PUBLIC_CLIENT_ID;
+  const url      = `${KEYCLOAK_URL}/realms/${realm}/protocol/openid-connect/token`;
+  const res = http.post(url, {
+    grant_type: 'password',
+    client_id:  clientId,
+    username:   username,
+    password:   password,
+  });
+  if (res.status !== 200) {
+    const body = typeof res.body === 'string' ? res.body : '';
+    console.error(`[auth] token fetch failed for ${username}@${realm}: HTTP ${res.status} — ${body}`);
     return null;
   }
-  return res.json('access_token');
+  return JSON.parse(res.body).access_token;
 }
 
-export function getRestrictedToken(username, password) {
-  const res = http.post(
-    TOKEN_RESTRICTED_ENDPOINT,
-    {
-      grant_type: 'password',
-      client_id:  WEB_CLIENT_ID,
-      username,
-      password,
-      scope: 'openid profile email',
-    },
-    { tags: { name: 'keycloak_token' } }
-  );
+// ── Public realm (public-dev) ─────────────────────────────────────────────────
+// Users follow the pattern: username = password (e.g. user1/user1)
 
-  const ok = check(res, { 'auth: 200 OK': (r) => r.status === 200 });
-  if (!ok) {
-    console.error(`getRestrictedToken failed for ${username}: HTTP ${res.status} – ${res.body}`);
-    return null;
+export function getUserToken(username) {
+  return getToken(username, username, PUBLIC_REALM);
+}
+
+// Backward-compatible: accepts array of { username } objects (used by user-tracking)
+export function getTokensForUsers(users) {
+  const tokens = {};
+  for (const user of users) {
+    tokens[user.username] = getUserToken(user.username);
   }
-  return res.json('access_token');
+  return tokens;
 }
 
-// Backward-compatible aliases used in older scripts.
-export function getMobileToken(username, password) {
-  return getPublicToken(username, password);
+// ── Restricted realm (restricted-dev) ────────────────────────────────────────
+// Emergency services: emgser1/emgser1, emgser2/emgser2, …
+// Reporters:         reporter1/reporter1, reporter2/reporter2, …
+
+export function getEmergencyServiceToken(username) {
+  return getToken(username, username, RESTRICTED_REALM);
 }
 
-export function getWebToken(username, password) {
-  return getRestrictedToken(username, password);
+export function getReporterToken(username) {
+  return getToken(username, username, RESTRICTED_REALM);
 }
 
-/**
- * Generic token helper with explicit realm selection.
- * realm: 'public' | 'restricted'
- */
-export function getToken(username, password, realm = 'public') {
-  return realm === 'restricted'
-    ? getRestrictedToken(username, password)
-    : getPublicToken(username, password);
-}
-
-/**
- * Decode the JWT payload and return the `sub` claim (user UUID).
- * k6 does not have atob(), so we use k6/encoding.
- */
-export function decodeUserId(token) {
-  if (!token) return null;
-  try {
-    const payloadB64 = token.split('.')[1];
-    const payload = JSON.parse(encoding.b64decode(payloadB64, 'rawurl', 's'));
-    return payload.sub || null;
-  } catch (_) {
-    return null;
+// Returns a { username → token } map for an array of emergency-service usernames
+export function getEmergencyServiceTokens(usernames) {
+  const tokens = {};
+  for (const username of usernames) {
+    tokens[username] = getEmergencyServiceToken(username);
   }
+  return tokens;
 }
 
-/**
- * Build an HTTP headers object for authenticated requests.
- *
- * @param {string} token - Bearer JWT
- * @param {Object} extra - additional headers to merge (e.g. { 'X-User-Id': id })
- */
-export function bearerHeaders(token, extra = {}) {
-  return Object.assign(
-    {
-      'Authorization': token ? `Bearer ${token}` : '',
-      'Content-Type':  'application/json',
-    },
-    extra
-  );
+// Returns a { username → token } map for an array of reporter usernames
+export function getReporterTokens(usernames) {
+  const tokens = {};
+  for (const username of usernames) {
+    tokens[username] = getReporterToken(username);
+  }
+  return tokens;
 }

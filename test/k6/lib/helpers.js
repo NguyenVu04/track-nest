@@ -1,73 +1,60 @@
-/**
- * Shared k6 helpers: response checks, random data pickers, sleep utilities.
- */
-
 import { check, sleep } from 'k6';
-import { Trend, Rate, Counter } from 'k6/metrics';
+import grpc from 'k6/net/grpc';
 
-// ── Custom metrics (import in scripts that need them) ─────────────────────────
+// Seed test users (matches 01-user-tracking-seed.sql)
+export const USERS = [
+  { id: 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', username: 'user1', lat: 10.776889, lon: 106.700981 },
+  { id: '8c52c01e-42a7-45cc-9254-db8a7601c764', username: 'user2', lat: 21.028511, lon: 105.854167 },
+  { id: '4405a37d-bc86-403e-b605-bedd7db88d37', username: 'user3', lat: 16.047079, lon: 108.220833 },
+  { id: '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', username: 'user4', lat: 16.463713, lon: 107.590866 },
+];
 
-export const errorRate    = new Rate('custom_error_rate');
-export const writeLatency = new Trend('custom_write_latency_ms', true);
-export const readLatency  = new Trend('custom_read_latency_ms', true);
+// circle_id → array of USERS indices that are members (admin excluded from test pool)
+export const CIRCLES = {
+  'cccccccc-1000-4000-8000-cccccccccccc': [0, 1, 2],
+  'cccccccc-1001-4000-8000-cccccccccccc': [2, 3],
+  'cccccccc-1002-4000-8000-cccccccccccc': [2],
+  'cccccccc-1003-4000-8000-cccccccccccc': [0, 2],
+  'cccccccc-1004-4000-8000-cccccccccccc': [3],
+};
 
-// ── Response checks ────────────────────────────────────────────────────────────
+// user index → array of circle IDs the user belongs to
+export const USER_CIRCLES = {
+  0: ['cccccccc-1000-4000-8000-cccccccccccc', 'cccccccc-1003-4000-8000-cccccccccccc'],
+  1: ['cccccccc-1000-4000-8000-cccccccccccc'],
+  2: ['cccccccc-1000-4000-8000-cccccccccccc', 'cccccccc-1001-4000-8000-cccccccccccc',
+      'cccccccc-1002-4000-8000-cccccccccccc', 'cccccccc-1003-4000-8000-cccccccccccc'],
+  3: ['cccccccc-1001-4000-8000-cccccccccccc', 'cccccccc-1004-4000-8000-cccccccccccc'],
+};
 
-export function checkOk(res, tag) {
-  const ok = check(res, {
-    [`${tag}: status 2xx`]: (r) => r.status >= 200 && r.status < 300,
-  });
-  errorRate.add(!ok);
-  return ok;
-}
-
-export function checkStatus(res, expected, tag) {
-  const ok = check(res, {
-    [`${tag}: status ${expected}`]: (r) => r.status === expected,
-  });
-  errorRate.add(!ok);
-  return ok;
-}
-
-export function checkJson(res, tag) {
-  const ok = check(res, {
-    [`${tag}: body is JSON`]: (r) => {
-      try { JSON.parse(r.body); return true; } catch (_) { return false; }
-    },
-  });
-  return ok;
-}
-
-// ── Sleep helpers ──────────────────────────────────────────────────────────────
-
-/** Pause between think-time (1–3 s by default). */
-export function thinkTime(minSec = 1, maxSec = 3) {
-  sleep(minSec + Math.random() * (maxSec - minSec));
-}
-
-// ── Data helpers ───────────────────────────────────────────────────────────────
-
-/** Pick a random element from an array. */
-export function randomItem(arr) {
+export function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-/** Return today's date as an ISO local-date string (YYYY-MM-DD). */
-export function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+// Uniform random sleep in [minSec, maxSec] to simulate real user think time
+export function thinkTime(minSec, maxSec) {
+  sleep(minSec + Math.random() * (maxSec - minSec));
 }
 
-/** Return a date N days ago as ISO local-date string. */
-export function daysAgoIso(n) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+// Small coordinate noise so UpdateUserLocation creates distinct points each call
+export function jitter(value, magnitude) {
+  return value + (Math.random() - 0.5) * 2 * magnitude;
 }
 
-/** Add small Gaussian-like jitter to a coordinate (±~50 m at equator). */
-export function jitterCoord(lat, lng, maxDeltaDeg = 0.0005) {
-  return {
-    lat: lat + (Math.random() * 2 - 1) * maxDeltaDeg,
-    lng: lng + (Math.random() * 2 - 1) * maxDeltaDeg,
-  };
+// Pick a peer member (different from userIdx) in the given circle
+export function pickPeerInCircle(circleId, userIdx) {
+  const members = CIRCLES[circleId];
+  const peers = members.filter(idx => idx !== userIdx);
+  return peers.length > 0 ? USERS[pickRandom(peers)] : USERS[members[0]];
+}
+
+// Assert gRPC response is OK and record to Rate metric (optional)
+export function checkGrpcOk(res, successRate, label) {
+  const ok = res !== null && res.status === grpc.StatusOK;
+  check(res, { [`${label || 'gRPC'} status OK`]: () => ok });
+  if (successRate) successRate.add(ok ? 1 : 0);
+  if (!ok && res) {
+    console.warn(`[${label}] error: ${JSON.stringify(res.error)}`);
+  }
+  return ok;
 }

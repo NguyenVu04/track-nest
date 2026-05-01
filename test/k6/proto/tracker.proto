@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package project.tracknest.usertracking.proto.v1;
+
+import "google/rpc/status.proto";
+
+option java_multiple_files = true;
+option java_package = "project.tracknest.usertracking.proto.lib";
+option java_outer_classname = "TrackerProto";
+
+// Service for tracking family member locations.
+//
+// This service exposes streaming and unary RPCs to:
+//  - stream live location updates for members of a family circle,
+//  - query historical location points for a specific member, and
+//  - accept location updates from authenticated users.
+//
+// All RPCs assume authenticated callers and appropriate authorization for
+// the targeted `family_circle_id` / `member_id`. Errors are reported using
+// `google.rpc.Status` where applicable.
+service TrackerController {
+  // Streams live location updates for members of the specified family circle.
+  //
+  // Client:
+  //  - sends a single StreamFamilyMemberLocationsRequest containing
+  //    `family_circle_id`.
+  // Server:
+  //  - returns a server-side stream of FamilyMemberLocation messages as
+  //    members update their positions or status (online/offline).
+  // The stream may be closed by the server on authorization failure, or
+  // when the family circle no longer exists. Clients should handle
+  // reconnection and backoff.
+  rpc StreamFamilyMemberLocations(StreamFamilyMemberLocationsRequest)
+      returns (stream FamilyMemberLocation);
+
+  // Returns a history of location points for a given family member.
+  //
+  // Request contains `family_circle_id`, `member_id` and optional spatial
+  // query parameters (center and radius). Response includes a `google.rpc.Status`
+  // and a repeated list of FamilyMemberLocation messages. Location results are
+  // best-effort and may be bounded by retention or access policies.
+  rpc ListFamilyMemberLocationHistory(ListFamilyMemberLocationHistoryRequest)
+      returns (ListFamilyMemberLocationHistoryResponse);
+
+  // Updates the caller's current location.
+  //
+  // Request carries the location fields (latitude, longitude, accuracy, velocity).
+  // Server validates and persists the new location, and returns an UpdateUserLocationResponse
+  // with a `google.rpc.Status` indicating success or the reason for failure
+  // (e.g., invalid payload, rate-limited, or unauthorized).
+  rpc UpdateUserLocation(UpdateUserLocationRequest)
+      returns (UpdateUserLocationResponse);
+}
+
+message StreamFamilyMemberLocationsRequest {
+   string family_circle_id = 1;
+}
+
+message FamilyMemberLocation {
+   string member_id = 1;
+   string member_username = 2;
+   optional string member_avatar_url = 3;
+   double latitude_deg = 4;
+   double longitude_deg = 5;
+   float accuracy_meter = 6;
+   float velocity_mps = 7;
+   uint64 timestamp_ms = 8;
+   bool online = 9;
+   uint64 last_active_ms = 10;
+}
+
+message ListFamilyMemberLocationHistoryRequest {
+   string family_circle_id = 1;
+   string member_id = 2;
+   optional double center_latitude_deg = 5;
+   optional double center_longitude_deg = 6;
+   optional float radius_meter = 7;
+}
+
+message ListFamilyMemberLocationHistoryResponse {
+   google.rpc.Status status = 1;
+   repeated FamilyMemberLocation locations = 2;
+}
+
+message UserLocation {
+   double latitude_deg = 1;
+   double longitude_deg = 2;
+   float accuracy_meter = 3;
+   float velocity_mps = 4;
+   uint64 timestamp_ms = 5;
+}
+
+message UpdateUserLocationRequest {
+   repeated UserLocation locations = 1;
+}
+
+message UpdateUserLocationResponse {
+   google.rpc.Status status = 1;
+}

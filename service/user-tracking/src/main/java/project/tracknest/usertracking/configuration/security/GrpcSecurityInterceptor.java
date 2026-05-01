@@ -2,10 +2,12 @@ package project.tracknest.usertracking.configuration.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.*;
+import io.grpc.Contexts;
 import io.grpc.ForwardingServerCallListener.SimpleForwardingServerCallListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import project.tracknest.usertracking.configuration.security.datatype.KeycloakAuthorizationHeader;
 import project.tracknest.usertracking.core.datatype.KeycloakPrincipal;
@@ -23,9 +25,11 @@ import java.util.regex.Pattern;
 public class GrpcSecurityInterceptor implements ServerInterceptor {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final int MAX_HEADER_LENGTH = 4096;
-    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$");;
+    private static final Pattern BEARER_TOKEN_PATTERN = Pattern.compile("^Bearer [A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$");
     private static final Metadata.Key<String> AUTHORIZATION_KEY =
             Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER);
+    // gRPC Context propagates across thread handoffs; SecurityContextHolder (ThreadLocal) does not
+    private static final Context.Key<SecurityContext> SECURITY_CTX_KEY = Context.key("security-context");
 
     private final SecurityUserRepository userRepository;
 
@@ -34,17 +38,18 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
     }
 
     @Override
-    public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
-            ServerCall<ReqT, RespT> call,
+    public <R, S> ServerCall.Listener<R> interceptCall(
+            ServerCall<R, S> call,
             Metadata headers,
-            ServerCallHandler<ReqT, RespT> next) {
+            ServerCallHandler<R, S> next) {
 
         String authorizationHeader = headers.get(AUTHORIZATION_KEY);
         KeycloakAuthorizationHeader decoded = decodeKeycloakauthorizationHeader(authorizationHeader);
 
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+
         if (decoded != null) {
             try {
-                // build principal and user details (same mapping as KeycloakFilter)
                 KeycloakPrincipal principal = new KeycloakPrincipal(decoded.getUserId());
 
                 List<SimpleGrantedAuthority> roles = decoded
@@ -65,22 +70,21 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(principal, authorizationHeader, roles);
                 authentication.setDetails(userDetails);
+                securityContext.setAuthentication(authentication);
 
                 Optional<User> userOpt = userRepository.findById(decoded.getUserId());
 
                 OffsetDateTime now = OffsetDateTime.now();
                 if (userOpt.isEmpty()) {
                     log.warn("User not found in database for ID: {}", decoded.getUserId());
-
-                    User user = User
+                    userRepository.save(User
                             .builder()
                             .id(decoded.getUserId())
                             .username(decoded.getUsername())
                             .connected(true)
                             .lastActive(now)
                             .avatarUrl(decoded.getAvatar())
-                            .build();
-                    userRepository.save(user);
+                            .build());
                 } else {
                     User user = userOpt.get();
                     user.setConnected(true);
@@ -91,17 +95,21 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
                 }
 
                 log.info("Setting gRPC security context with user: {}", principal.getName());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception ex) {
                 log.warn("Failed to set gRPC security context from authorization header: {}", ex.getMessage());
             }
         }
 
-        ServerCall.Listener<ReqT> delegate = next.startCall(call, headers);
+        // Attach to gRPC Context so it survives thread handoffs in the executor pool.
+        // SecurityContextHolder is ThreadLocal and would be lost when the gRPC framework
+        // dispatches onHalfClose on a different thread than interceptCall.
+        Context grpcContext = Context.current().withValue(SECURITY_CTX_KEY, securityContext);
+        ServerCall.Listener<R> delegate = Contexts.interceptCall(grpcContext, call, headers, next);
 
         return new SimpleForwardingServerCallListener<>(delegate) {
             @Override
             public void onHalfClose() {
+                SecurityContextHolder.setContext(SECURITY_CTX_KEY.get());
                 try {
                     super.onHalfClose();
                 } finally {

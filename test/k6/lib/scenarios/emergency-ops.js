@@ -1,462 +1,172 @@
-/**
- * Shared scenario logic for the emergency-ops REST service (port 28080).
- *
- * Auth notes:
- *  - Two distinct Keycloak roles drive two separate token pools per VU:
- *      USER              → emergency-request-receiver, safe-zone-locator
- *      EMERGENCY-SERVICE → emergency-request-manager, emergency-responder, safe-zone-manager
- *  - User accounts come from data/users.json
- *  - Service accounts come from data/emergency-services.json (same {username,password,userId} shape)
- *  - User ID is extracted server-side from JWT sub; no extra header needed.
- *
- * Three composite scenarios for ~90% endpoint coverage:
- *   userEmergencyScenario          — citizen view: safe-zone lookup + request lifecycle
- *   serviceOperationsScenario      — operator view: location updates + request triage
- *   safeZoneManagementScenario     — operator view: safe-zone CRUD + tracked targets
- */
+// Shared scenario for emergency-ops HTTP performance tests.
+// Run k6 from test/k6/:  k6 run scripts/emergency-ops/smoke.js
+//
+// Token lifetime note: Keycloak default access token lifespan is 5 minutes.
+// For stress/spike tests (>5 min), increase Access Token Lifespan in the
+// restricted-dev and public-dev realm settings before running.
 
 import http from 'k6/http';
-import { SharedArray } from 'k6/data';
-import exec from 'k6/execution';
 import { check } from 'k6';
-import { getPublicToken, getRestrictedToken, bearerHeaders, decodeUserId } from '../auth.js';
-import { checkOk, readLatency, writeLatency, thinkTime, randomItem, jitterCoord, errorRate } from '../helpers.js';
+import { Trend, Rate } from 'k6/metrics';
+import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.2/index.js';
 
-const env = JSON.parse(open('../data/env.json'));
-const BASE_URL = env.EMERGENCY_OPS_URL || 'http://localhost:28080';
+import { getEmergencyServiceTokens, getTokensForUsers } from '../auth.js';
+import { USERS, pickRandom, thinkTime } from '../helpers.js';
 
-const users    = new SharedArray('eo_users',    () => JSON.parse(open('../data/users.json')));
-const services = new SharedArray('eo_services', () => JSON.parse(open('../data/emergency-services.json')));
-const locations = new SharedArray('eo_locations', () => JSON.parse(open('../data/locations.json')));
+// ── Seed data (matches 01-emergency-ops-seed.sql) ────────────────────────────
+// 'admin' service (0e745cb3-...) is excluded from the test pool.
 
-// Per-VU state (isolated JS runtime per VU — these are VU-local).
-let _userToken    = null;
-let _serviceToken = null;
-let _userId       = null;
+const EMERGENCY_SERVICES = [
+  { id: '6c6ca52f-46b9-472b-8868-86ab2775b187', username: 'emgser1', lat: 10.778,  lon: 106.702  },
+  { id: '2c57e800-b4e2-48ba-b43c-b61075530236', username: 'emgser2', lat: 21.0295, lon: 105.855  },
+  { id: '168d6df2-21ef-4773-8a38-6fad42d527e9', username: 'emgser3', lat: 16.0482, lon: 108.2218 },
+  { id: '7ed33501-bcf8-4944-b043-44b328a3a071', username: 'emgser4', lat: 16.4648, lon: 107.5918 },
+  { id: '2077665d-ecaa-44f6-82ee-a721bf7785bd', username: 'emgser5', lat: 10.0462, lon: 105.7858 },
+];
 
-function ensureUserAuth() {
-  if (_userToken) return;
-  const user  = users[exec.vu.idInTest % users.length];
-  _userToken  = getPublicToken(user.username, user.password);
-  _userId     = decodeUserId(_userToken) || user.userId;
+// emergency_service_tracks_user: service username → USERS index (user1-4 only;
+// emgser5 tracks user5/admin which is excluded from the test user pool)
+const SERVICE_TRACKS_USER_IDX = {
+  emgser1: 0,
+  emgser2: 1,
+  emgser3: 2,
+  emgser4: 3,
+};
+
+const REQUEST_STATUSES = ['PENDING', 'REJECTED', 'ACCEPTED', 'CLOSED'];
+
+// ── Config ────────────────────────────────────────────────────────────────────
+
+const EMERGENCY_SERVICE_USERNAMES = EMERGENCY_SERVICES.map(s => s.username);
+
+const EMERGENCY_OPS_URL = __ENV.EMERGENCY_OPS_URL || 'https://api.tracknestapp.org/emergency-ops';
+
+// ── Custom metrics ────────────────────────────────────────────────────────────
+
+export const metrics = {
+  safeZones:       { d: new Trend('eo_safe_zones_duration',       true), s: new Rate('eo_safe_zones_success') },
+  requestCount:    { d: new Trend('eo_request_count_duration',    true), s: new Rate('eo_request_count_success') },
+  requests:        { d: new Trend('eo_requests_duration',         true), s: new Rate('eo_requests_success') },
+  trackerRequests: { d: new Trend('eo_tracker_requests_duration', true), s: new Rate('eo_tracker_requests_success') },
+};
+
+// ── Internal helpers ──────────────────────────────────────────────────────────
+
+function authHeader(token) {
+  return { headers: { Authorization: `Bearer ${token}` } };
 }
 
-function ensureServiceAuth() {
-  if (_serviceToken) return;
-  const svc    = services[exec.vu.idInTest % services.length];
-  _serviceToken = getRestrictedToken(svc.username, svc.password);
-}
-
-function userHeaders()    { return bearerHeaders(_userToken);    }
-function serviceHeaders() { return bearerHeaders(_serviceToken); }
-
-// ── Safe-zone locator (USER) ──────────────────────────────────────────────────
-
-export function getNearestSafeZones() {
-  ensureUserAuth();
-  const loc = randomItem(locations);
-  const { lat, lng } = jitterCoord(loc.lat, loc.lng);
-  const start = Date.now();
-  const res = http.get(
-    `${BASE_URL}/safe-zone-locator/safe-zones/nearest` +
-    `?latitudeDegrees=${lat}&longitudeDegrees=${lng}&maxDistanceMeters=5000&maxNumberOfSafeZones=5`,
-    { headers: userHeaders(), tags: { name: 'GET /safe-zone-locator/safe-zones/nearest' } }
-  );
-  readLatency.add(Date.now() - start);
-  checkOk(res, 'GET /safe-zone-locator/safe-zones/nearest');
-}
-
-// ── Emergency request receiver (USER) ─────────────────────────────────────────
-
-export function createEmergencyRequest() {
-  ensureUserAuth();
-  const loc    = randomItem(locations);
-  const { lat, lng } = jitterCoord(loc.lat, loc.lng);
-  // targetId must be an EmergencyService UUID; use first seeded service account.
-  const targetId = services[0].userId;
-  const start  = Date.now();
-  const res = http.post(
-    `${BASE_URL}/emergency-request-receiver/request`,
-    JSON.stringify({
-      targetId,
-      lastLatitudeDegrees:  lat,
-      lastLongitudeDegrees: lng,
-    }),
-    { headers: userHeaders(), tags: { name: 'POST /emergency-request-receiver/request' } }
-  );
-  writeLatency.add(Date.now() - start);
-  const ok = checkOk(res, 'POST /emergency-request-receiver/request');
-  if (ok && res.json('id')) return res.json('id');
-  return null;
-}
-
-export function getMyEmergencyRequests() {
-  ensureUserAuth();
-  const start = Date.now();
-  const res = http.get(
-    `${BASE_URL}/emergency-request-receiver/requests?page=0&size=10`,
-    { headers: userHeaders(), tags: { name: 'GET /emergency-request-receiver/requests' } }
-  );
-  readLatency.add(Date.now() - start);
-  checkOk(res, 'GET /emergency-request-receiver/requests');
-}
-
-export function checkEmergencyAllowed() {
-  ensureUserAuth();
-  // Check eligibility against the first seeded emergency service.
-  const targetId = services[0].userId;
-  const start    = Date.now();
-  const res = http.get(
-    `${BASE_URL}/emergency-request-receiver/user/${targetId}/emergency-request-allowed`,
-    { headers: userHeaders(), tags: { name: 'GET /emergency-request-receiver/user/:id/emergency-request-allowed' } }
-  );
-  readLatency.add(Date.now() - start);
-  checkOk(res, 'GET /emergency-request-receiver/allowed');
-}
-
-// ── Emergency request manager (EMERGENCY-SERVICE) ────────────────────────────
-
-export function updateServiceLocation() {
-  ensureServiceAuth();
-  const loc = randomItem(locations);
-  const { lat, lng } = jitterCoord(loc.lat, loc.lng);
-  const start = Date.now();
-  const res = http.patch(
-    `${BASE_URL}/emergency-request-manager/emergency-service/location`,
-    JSON.stringify({ latitudeDegrees: lat, longitudeDegrees: lng }),
-    { headers: serviceHeaders(), tags: { name: 'PATCH /emergency-request-manager/emergency-service/location' } }
-  );
-  writeLatency.add(Date.now() - start);
-  checkOk(res, 'PATCH /emergency-request-manager/emergency-service/location');
-}
-
-export function getServiceLocation() {
-  ensureServiceAuth();
-  const start = Date.now();
-  const res = http.get(
-    `${BASE_URL}/emergency-request-manager/emergency-service/location`,
-    { headers: serviceHeaders(), tags: { name: 'GET /emergency-request-manager/emergency-service/location' } }
-  );
-  readLatency.add(Date.now() - start);
-  checkOk(res, 'GET /emergency-request-manager/emergency-service/location');
-}
-
-export function getRequestCount(status) {
-  ensureServiceAuth();
-  const qs    = status ? `?status=${status}` : '';
-  const tag   = `GET /emergency-request-manager/requests/count${status ? `?status=${status}` : ''}`;
-  const start = Date.now();
-  const res = http.get(
-    `${BASE_URL}/emergency-request-manager/requests/count${qs}`,
-    { headers: serviceHeaders(), tags: { name: tag } }
-  );
-  readLatency.add(Date.now() - start);
-  checkOk(res, tag);
-}
-
-/**
- * Returns the first item's id from the response, or null.
- * Pass status='PENDING'|'ACCEPTED'|'REJECTED'|'CLOSED' to filter.
- */
-export function getServiceRequests(status) {
-  ensureServiceAuth();
-  const qs    = status ? `?status=${status}&page=0&size=5` : '?page=0&size=5';
-  const tag   = `GET /emergency-request-manager/requests${status ? `?status=${status}` : ''}`;
-  const start = Date.now();
-  const res = http.get(
-    `${BASE_URL}/emergency-request-manager/requests${qs}`,
-    { headers: serviceHeaders(), tags: { name: tag } }
-  );
-  readLatency.add(Date.now() - start);
-  const ok = checkOk(res, tag);
-  if (ok) {
-    const body  = res.json();
-    const items = body && body.items;
-    if (items && items.length > 0) return items[0].id;
+function checkHttp(res, metric, label) {
+  const ok = res.status === 200;
+  check(res, { [`${label} status 200`]: () => ok });
+  metric.s.add(ok ? 1 : 0);
+  if (!ok) {
+    const body = typeof res.body === 'string' ? res.body.slice(0, 200) : '';
+    console.warn(`[${label}] HTTP ${res.status}: ${body}`);
   }
-  return null;
+  return ok;
 }
 
-/**
- * Accept a PENDING request. Concurrent VUs may race to accept the same request;
- * 4xx responses are treated as expected contention, not errors.
- */
-export function acceptEmergencyRequest(requestId) {
-  if (!requestId) return;
-  ensureServiceAuth();
+function get(url, params, metric, label) {
   const start = Date.now();
-  const res = http.patch(
-    `${BASE_URL}/emergency-request-manager/requests/${requestId}/accept`,
-    null,
-    { headers: serviceHeaders(), tags: { name: 'PATCH /emergency-request-manager/requests/:id/accept' } }
-  );
-  writeLatency.add(Date.now() - start);
-  // Accept 2xx (success) or 4xx (concurrent conflict) as non-errors.
-  const ok = check(res, { 'accept: not 5xx': (r) => r.status < 500 });
-  errorRate.add(!ok);
+  const res   = http.get(url, params);
+  metric.d.add(Date.now() - start);
+  checkHttp(res, metric, label);
+  return res;
 }
 
-/**
- * Reject a PENDING request. Same contention-tolerant check as accept.
- */
-export function rejectEmergencyRequest(requestId) {
-  if (!requestId) return;
-  ensureServiceAuth();
-  const start = Date.now();
-  const res = http.patch(
-    `${BASE_URL}/emergency-request-manager/requests/${requestId}/reject`,
-    null,
-    { headers: serviceHeaders(), tags: { name: 'PATCH /emergency-request-manager/requests/:id/reject' } }
-  );
-  writeLatency.add(Date.now() - start);
-  const ok = check(res, { 'reject: not 5xx': (r) => r.status < 500 });
-  errorRate.add(!ok);
-}
+// ── setup() ───────────────────────────────────────────────────────────────────
 
-/**
- * Close an ACCEPTED request. Same contention-tolerant check.
- */
-export function closeEmergencyRequest(requestId) {
-  if (!requestId) return;
-  ensureServiceAuth();
-  const start = Date.now();
-  const res = http.patch(
-    `${BASE_URL}/emergency-request-manager/requests/${requestId}/close`,
-    null,
-    { headers: serviceHeaders(), tags: { name: 'PATCH /emergency-request-manager/requests/:id/close' } }
-  );
-  writeLatency.add(Date.now() - start);
-  const ok = check(res, { 'close: not 5xx': (r) => r.status < 500 });
-  errorRate.add(!ok);
-}
+export function setup() {
+  const emgTokens  = getEmergencyServiceTokens(EMERGENCY_SERVICE_USERNAMES);
+  const userTokens = getTokensForUsers(USERS);
 
-// ── Emergency responder (EMERGENCY-SERVICE) ───────────────────────────────────
-
-export function getServiceTargets() {
-  ensureServiceAuth();
-  const start = Date.now();
-  const res = http.get(
-    `${BASE_URL}/emergency-responder/targets?page=0&size=10`,
-    { headers: serviceHeaders(), tags: { name: 'GET /emergency-responder/targets' } }
-  );
-  readLatency.add(Date.now() - start);
-  checkOk(res, 'GET /emergency-responder/targets');
-}
-
-// ── Safe-zone manager (EMERGENCY-SERVICE) ─────────────────────────────────────
-
-/**
- * Creates a safe zone and returns its UUID, or null on failure.
- */
-export function createSafeZone() {
-  ensureServiceAuth();
-  const loc  = randomItem(locations);
-  const { lat, lng } = jitterCoord(loc.lat, loc.lng);
-  const name = `K6-Zone-VU${__VU}-${Date.now()}`;
-  const start = Date.now();
-  const res = http.post(
-    `${BASE_URL}/safe-zone-manager/safe-zone`,
-    JSON.stringify({
-      latitudeDegrees:  lat,
-      longitudeDegrees: lng,
-      name,
-      radiusMeters: 200 + Math.floor(Math.random() * 800),
-    }),
-    { headers: serviceHeaders(), tags: { name: 'POST /safe-zone-manager/safe-zone' } }
-  );
-  writeLatency.add(Date.now() - start);
-  const ok = checkOk(res, 'POST /safe-zone-manager/safe-zone');
-  if (ok && res.json('id')) return res.json('id');
-  return null;
-}
-
-export function listSafeZones(nameFilter) {
-  ensureServiceAuth();
-  const qs    = nameFilter ? `?nameFilter=${encodeURIComponent(nameFilter)}&page=0&size=10` : '?page=0&size=10';
-  const start = Date.now();
-  const res = http.get(
-    `${BASE_URL}/safe-zone-manager/safe-zones${qs}`,
-    { headers: serviceHeaders(), tags: { name: 'GET /safe-zone-manager/safe-zones' } }
-  );
-  readLatency.add(Date.now() - start);
-  const ok = checkOk(res, 'GET /safe-zone-manager/safe-zones');
-  if (ok) {
-    const body  = res.json();
-    const items = body && body.items;
-    if (items && items.length > 0) return items[0].id;
+  for (const svc of EMERGENCY_SERVICES) {
+    if (!emgTokens[svc.username]) {
+      console.error(`[setup] no token for ${svc.username} — check KEYCLOAK_URL / restricted-dev realm`);
+    }
   }
-  return null;
-}
-
-export function updateSafeZone(safeZoneId) {
-  if (!safeZoneId) return;
-  ensureServiceAuth();
-  const loc  = randomItem(locations);
-  const { lat, lng } = jitterCoord(loc.lat, loc.lng);
-  const start = Date.now();
-  const res = http.put(
-    `${BASE_URL}/safe-zone-manager/safe-zone/${safeZoneId}`,
-    JSON.stringify({
-      latitudeDegrees:  lat,
-      longitudeDegrees: lng,
-      radiusMeters: 300 + Math.floor(Math.random() * 500),
-      name: `K6-Zone-Updated-VU${__VU}-${Date.now()}`,
-    }),
-    { headers: serviceHeaders(), tags: { name: 'PUT /safe-zone-manager/safe-zone/:id' } }
-  );
-  writeLatency.add(Date.now() - start);
-  checkOk(res, 'PUT /safe-zone-manager/safe-zone/:id');
-}
-
-export function deleteSafeZone(safeZoneId) {
-  if (!safeZoneId) return;
-  ensureServiceAuth();
-  const start = Date.now();
-  const res = http.del(
-    `${BASE_URL}/safe-zone-manager/safe-zone/${safeZoneId}`,
-    null,
-    { headers: serviceHeaders(), tags: { name: 'DELETE /safe-zone-manager/safe-zone/:id' } }
-  );
-  writeLatency.add(Date.now() - start);
-  checkOk(res, 'DELETE /safe-zone-manager/safe-zone/:id');
-}
-
-// ── Scenario 1: User Emergency ────────────────────────────────────────────────
-// Citizen-side hot path: locate safe zones → eligibility check → send request → review.
-//
-// Endpoints: GET /safe-zone-locator/safe-zones/nearest,
-//            GET /emergency-request-receiver/user/:id/emergency-request-allowed,
-//            POST /emergency-request-receiver/request,
-//            GET /emergency-request-receiver/requests (×2 — before and after submit)
-export function userEmergencyScenario() {
-  // Pre-flight: find nearest safe zones and check if a request is allowed.
-  getNearestSafeZones();
-  thinkTime(0.5, 1);
-
-  checkEmergencyAllowed();
-  thinkTime(0.5, 1);
-
-  getMyEmergencyRequests();
-  thinkTime(0.5, 1);
-
-  // Submit emergency request (infrequent — 1 in 3 iterations to avoid flooding).
-  if (__ITER % 3 === 0) {
-    createEmergencyRequest();
-    thinkTime(1, 2);
-    getMyEmergencyRequests();
+  for (const user of USERS) {
+    if (!userTokens[user.username]) {
+      console.error(`[setup] no token for ${user.username} — check KEYCLOAK_URL / public-dev realm`);
+    }
   }
 
-  // Follow-up safe-zone lookup (user may move to a new position).
-  thinkTime(0.5, 1);
-  getNearestSafeZones();
+  return { emgTokens, userTokens };
 }
 
-// ── Scenario 2: Service Operations ───────────────────────────────────────────
-// Operator triage path: update GPS → count/list PENDING requests → accept → close.
-//
-// Endpoints: PATCH /emergency-request-manager/emergency-service/location,
-//            GET  /emergency-request-manager/emergency-service/location,
-//            GET  /emergency-request-manager/requests/count (all + PENDING + ACCEPTED),
-//            GET  /emergency-request-manager/requests (PENDING + ACCEPTED),
-//            PATCH /emergency-request-manager/requests/:id/accept,
-//            PATCH /emergency-request-manager/requests/:id/close
-export function serviceOperationsScenario() {
-  updateServiceLocation();
-  thinkTime(0.3, 0.7);
+// ── runIteration() ────────────────────────────────────────────────────────────
 
-  getServiceLocation();
-  thinkTime(0.3, 0.7);
+export function runIteration(data) {
+  const svc      = pickRandom(EMERGENCY_SERVICES);
+  const emgToken = data.emgTokens[svc.username];
 
-  // Dashboard counts across all statuses.
-  getRequestCount();
-  thinkTime(0.2, 0.5);
-  getRequestCount('PENDING');
-  thinkTime(0.2, 0.5);
-  getRequestCount('ACCEPTED');
-  thinkTime(0.3, 0.7);
+  // Prefer the user tracked by this service; fall back to any non-admin user
+  const trackedIdx = SERVICE_TRACKS_USER_IDX[svc.username];
+  const user       = trackedIdx === undefined ? pickRandom(USERS) : USERS[trackedIdx];
+  const userToken  = data.userTokens[user.username];
 
-  // Triage: pick first PENDING → accept it.
-  const pendingId = getServiceRequests('PENDING');
-  thinkTime(0.5, 1);
-  if (pendingId) {
-    acceptEmergencyRequest(pendingId);
-    thinkTime(0.5, 1);
+  if (!emgToken || !userToken) {
+    console.warn('[VU] skipping iteration — missing token');
+    return;
   }
 
-  // Review accepted queue → close first item.
-  const acceptedId = getServiceRequests('ACCEPTED');
-  thinkTime(0.5, 1);
-  if (acceptedId) {
-    closeEmergencyRequest(acceptedId);
-    thinkTime(0.5, 1);
-  }
+  const emgAuth  = authHeader(emgToken);
+  const userAuth = authHeader(userToken);
 
-  // Verify closed queue.
-  getServiceRequests('CLOSED');
-  thinkTime(0.3, 0.7);
-  getRequestCount('CLOSED');
+  // Randomise the optional status filter to spread load across query paths
+  const status          = pickRandom([...REQUEST_STATUSES, null]);
+  const statusSuffix    = status ? `?status=${status}` : '';
+  const statusAmpSuffix = status ? `&status=${status}` : '';
+
+  // 1. GET /safe-zone-manager/safe-zones — emergency service sees its own zones
+  get(
+    `${EMERGENCY_OPS_URL}/safe-zone-manager/safe-zones?page=0&size=10`,
+    emgAuth,
+    metrics.safeZones,
+    'GetSafeZones',
+  );
+
+  // 2. GET /emergency-request-manager/requests/count — optionally filtered by status
+  thinkTime(0.3, 1);
+  get(
+    `${EMERGENCY_OPS_URL}/emergency-request-manager/requests/count${statusSuffix}`,
+    emgAuth,
+    metrics.requestCount,
+    'GetRequestCount',
+  );
+
+  // 3. GET /emergency-request-manager/requests — operator reads the list
+  thinkTime(0.5, 1.5);
+  get(
+    `${EMERGENCY_OPS_URL}/emergency-request-manager/requests?page=0&size=10${statusAmpSuffix}`,
+    emgAuth,
+    metrics.requests,
+    'GetRequests',
+  );
+
+  // 4. GET /emergency-request-receiver/requests — user checks their own requests
+  thinkTime(0.5, 2);
+  get(
+    `${EMERGENCY_OPS_URL}/emergency-request-receiver/requests?page=0&size=10`,
+    userAuth,
+    metrics.trackerRequests,
+    'GetTrackerRequests',
+  );
+
+  // Inter-iteration think time: operator acts on results before next cycle
+  thinkTime(1, 3);
 }
 
-// ── Scenario 3: Safe-Zone Management ──────────────────────────────────────────
-// Operator admin path: create safe zone → list → update → view targets → reject request → delete.
-//
-// Endpoints: POST /safe-zone-manager/safe-zone,
-//            GET  /safe-zone-manager/safe-zones (plain + name-filtered),
-//            PUT  /safe-zone-manager/safe-zone/:id,
-//            DELETE /safe-zone-manager/safe-zone/:id,
-//            GET  /emergency-responder/targets,
-//            GET  /emergency-request-manager/requests (PENDING),
-//            PATCH /emergency-request-manager/requests/:id/reject
-export function safeZoneManagementScenario() {
-  // Create a new safe zone and hold its id for update/delete.
-  const newZoneId = createSafeZone();
-  thinkTime(0.5, 1);
+// ── makeHandleSummary() ───────────────────────────────────────────────────────
 
-  // List all zones, then list with name filter.
-  listSafeZones();
-  thinkTime(0.3, 0.7);
-  listSafeZones('K6');
-  thinkTime(0.3, 0.7);
-
-  // Update then delete the zone created above (cleanup keeps DB size bounded).
-  if (newZoneId) {
-    updateSafeZone(newZoneId);
-    thinkTime(0.5, 1);
-    deleteSafeZone(newZoneId);
-    thinkTime(0.3, 0.7);
-  }
-
-  // Check tracked targets (read-only, exercises EmergencyResponderService).
-  getServiceTargets();
-  thinkTime(0.5, 1);
-
-  // Reject a PENDING request — exercises the alternative request lifecycle path.
-  const pendingId = getServiceRequests('PENDING');
-  thinkTime(0.5, 1);
-  if (pendingId) {
-    rejectEmergencyRequest(pendingId);
-    thinkTime(0.3, 0.7);
-  }
-
-  getServiceRequests('REJECTED');
-  thinkTime(0.3, 0.5);
-  getRequestCount('REJECTED');
-}
-
-// ── Legacy journeys (preserved for backward compatibility) ────────────────────
-
-export function safeZoneBrowseJourney() {
-  getNearestSafeZones();
-  thinkTime(1, 2);
-  getMyEmergencyRequests();
-  thinkTime(1, 2);
-  checkEmergencyAllowed();
-}
-
-export function emergencyRequestJourney() {
-  getNearestSafeZones();
-  thinkTime(0.5, 1);
-  createEmergencyRequest();
-  thinkTime(1, 2);
-  getMyEmergencyRequests();
+export function makeHandleSummary(scriptType) {
+  return function handleSummary(data) {
+    const ts       = new Date().toISOString().replace(/[:.]/g, '-');
+    const jsonPath = `results/emergency-ops-${scriptType}-${ts}.json`;
+    return {
+      [jsonPath]: JSON.stringify(data, null, 2),
+      stdout:     textSummary(data, { indent: ' ', enableColors: true }),
+    };
+  };
 }

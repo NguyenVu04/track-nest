@@ -1,69 +1,176 @@
-/**
- * Shared options builder for k6 scripts.
- *
- * Supports consistent scaling across all tests via env vars:
- * - K6_VU_SCALE: multiply VU targets (default: 1)
- * - K6_DURATION_SCALE: multiply stage/duration times (default: 1)
- * - K6_MAX_VUS_PER_INSTANCE: cap VUs per worker (default: 0 = no cap)
- * - K6_FORCE_VUS: override smoke VUs
- * - K6_FORCE_DURATION: override smoke duration
- */
+// Shared k6 option configs for all performance tests.
+// All duration thresholds are in milliseconds.
 
-function parseNumber(name, fallback) {
-  const raw = __ENV[name];
-  if (raw === undefined || raw === null || raw === '') return fallback;
-  const value = Number(raw);
-  return Number.isFinite(value) ? value : fallback;
-}
+const commonThresholds = {
+  // Built-in gRPC duration (all methods combined)
+  grpc_req_duration: [],
+  // All check() assertions
+  checks: [],
+  // Per-RPC success rates
+  rpc_send_message_success:                 ['rate>0.95'],
+  rpc_list_messages_success:                ['rate>0.95'],
+  rpc_list_tracking_notifications_success:  ['rate>0.95'],
+  rpc_list_risk_notifications_success:      ['rate>0.95'],
+  rpc_update_location_success:              ['rate>0.95'],
+  rpc_list_location_history_success:        ['rate>0.95'],
+  rpc_list_family_circles_success:          ['rate>0.95'],
+};
 
-function clampTarget(target, maxVusPerInstance) {
-  if (!Number.isFinite(maxVusPerInstance) || maxVusPerInstance <= 0) return target;
-  return Math.min(target, Math.max(0, Math.floor(maxVusPerInstance)));
-}
+export const smokeOptions = {
+  vus: 1,
+  duration: '30s',
+  thresholds: {
+    ...commonThresholds,
+    grpc_req_duration:                    ['p(95)<500'],
+    checks:                               ['rate>0.99'],
+    rpc_send_message_duration:            ['p(95)<500'],
+    rpc_list_messages_duration:           ['p(95)<500'],
+    rpc_list_tracking_notifications_duration: ['p(95)<400'],
+    rpc_list_risk_notifications_duration: ['p(95)<400'],
+    rpc_update_location_duration:         ['p(95)<600'],
+    rpc_list_location_history_duration:   ['p(95)<600'],
+    rpc_list_family_circles_duration:     ['p(95)<400'],
+  },
+};
 
-function scaleDuration(duration, factor) {
-  if (!duration || factor === 1) return duration;
-  const match = String(duration).trim().match(/^(\d+(?:\.\d+)?)(ms|s|m|h)$/);
-  if (!match) return duration;
+export const loadOptions = {
+  stages: [
+    { duration: '5m', target: 100 },
+    { duration: '8m', target: 100 },
+    { duration: '2m', target: 0 },
+  ],
+  thresholds: {
+    ...commonThresholds,
+    grpc_req_duration:                    ['p(95)<600'],
+    checks:                               ['rate>0.95'],
+    rpc_send_message_duration:            ['p(95)<600'],
+    rpc_list_messages_duration:           ['p(95)<600'],
+    rpc_list_tracking_notifications_duration: ['p(95)<500'],
+    rpc_list_risk_notifications_duration: ['p(95)<500'],
+    rpc_update_location_duration:         ['p(95)<800'],
+    rpc_list_location_history_duration:   ['p(95)<800'],
+    rpc_list_family_circles_duration:     ['p(95)<500'],
+  },
+};
 
-  const amount = Number(match[1]);
-  const unit = match[2];
-  const scaled = Math.max(0.1, amount * factor);
+export const stressOptions = {
+  stages: [
+    { duration: '3m', target: 100 },
+    { duration: '5m', target: 100 },
+    { duration: '3m', target: 150 },
+    { duration: '5m', target: 150 },
+    { duration: '2m', target: 0   },
+  ],
+  thresholds: {
+    ...commonThresholds,
+    grpc_req_duration:                    ['p(95)<1200'],
+    checks:                               ['rate>0.90'],
+    rpc_send_message_duration:            ['p(95)<1200'],
+    rpc_list_messages_duration:           ['p(95)<1200'],
+    rpc_list_tracking_notifications_duration: ['p(95)<1000'],
+    rpc_list_risk_notifications_duration: ['p(95)<1000'],
+    rpc_update_location_duration:         ['p(95)<1500'],
+    rpc_list_location_history_duration:   ['p(95)<1500'],
+    rpc_list_family_circles_duration:     ['p(95)<1000'],
+    // Relax success rate threshold under stress
+    rpc_send_message_success:             ['rate>0.85'],
+    rpc_update_location_success:          ['rate>0.85'],
+  },
+};
 
-  if (unit === 'ms') return `${Math.max(1, Math.round(scaled))}ms`;
-  if (Number.isInteger(scaled)) return `${scaled}${unit}`;
-  return `${scaled.toFixed(1)}${unit}`;
-}
+export const spikeOptions = {
+  stages: [
+    { duration: '30s', target: 150 },
+    { duration: '1m',  target: 150 },
+    { duration: '30s', target: 0   },
+  ],
+  thresholds: {
+    ...commonThresholds,
+    grpc_req_duration: ['p(95)<2000'],
+    checks:            ['rate>0.80'],
+    // Under spike, only enforce that the service doesn't fully collapse
+    rpc_send_message_success:                 ['rate>0.70'],
+    rpc_list_messages_success:                ['rate>0.70'],
+    rpc_list_tracking_notifications_success:  ['rate>0.70'],
+    rpc_list_risk_notifications_success:      ['rate>0.70'],
+    rpc_update_location_success:              ['rate>0.70'],
+    rpc_list_location_history_success:        ['rate>0.70'],
+    rpc_list_family_circles_success:          ['rate>0.70'],
+  },
+};
 
-function scaledStages(stages, vuScale, durationScale, maxVusPerInstance) {
-  return stages.map((stage) => ({
-    duration: scaleDuration(stage.duration, durationScale),
-    target: clampTarget(Math.max(0, Math.round(stage.target * vuScale)), maxVusPerInstance),
-  }));
-}
+// ── Emergency-ops HTTP options ────────────────────────────────────────────────
 
-export function createSmokeOptions({ vus, duration, thresholds }) {
-  const vuScale = parseNumber('K6_VU_SCALE', 1);
-  const maxVusPerInstance = parseNumber('K6_MAX_VUS_PER_INSTANCE', 0);
+const eoCommonThresholds = {
+  http_req_duration: [],
+  checks:            [],
+  eo_safe_zones_success:       ['rate>0.95'],
+  eo_request_count_success:    ['rate>0.95'],
+  eo_requests_success:         ['rate>0.95'],
+  eo_tracker_requests_success: ['rate>0.95'],
+};
 
-  const forceVus = __ENV.K6_FORCE_VUS;
-  const forceDuration = __ENV.K6_FORCE_DURATION;
-  const scaledVus = clampTarget(Math.max(1, Math.round(vus * vuScale)), maxVusPerInstance);
+export const eoSmokeOptions = {
+  vus: 1,
+  duration: '30s',
+  thresholds: {
+    ...eoCommonThresholds,
+    checks:                    ['rate>0.99'],
+    eo_safe_zones_duration:       ['p(95)<300'],
+    eo_request_count_duration:    ['p(95)<200'],
+    eo_requests_duration:         ['p(95)<400'],
+    eo_tracker_requests_duration: ['p(95)<400'],
+  },
+};
 
-  return {
-    vus: forceVus ? Math.max(1, Number(forceVus)) : scaledVus,
-    duration: forceDuration || duration,
-    thresholds,
-  };
-}
+export const eoLoadOptions = {
+  stages: [
+    { duration: '2m', target: 100 },
+    { duration: '5m', target: 100 },
+    { duration: '2m', target: 0   },
+  ],
+  thresholds: {
+    ...eoCommonThresholds,
+    checks:                    ['rate>0.95'],
+    eo_safe_zones_duration:       ['p(95)<500'],
+    eo_request_count_duration:    ['p(95)<300'],
+    eo_requests_duration:         ['p(95)<600'],
+    eo_tracker_requests_duration: ['p(95)<600'],
+  },
+};
 
-export function createStageOptions({ stages, thresholds }) {
-  const vuScale = parseNumber('K6_VU_SCALE', 1);
-  const durationScale = parseNumber('K6_DURATION_SCALE', 1);
-  const maxVusPerInstance = parseNumber('K6_MAX_VUS_PER_INSTANCE', 0);
+export const eoStressOptions = {
+  stages: [
+    { duration: '3m', target: 100 },
+    { duration: '5m', target: 100 },
+    { duration: '3m', target: 150 },
+    { duration: '5m', target: 150 },
+    { duration: '2m', target: 0   },
+  ],
+  thresholds: {
+    ...eoCommonThresholds,
+    checks:                    ['rate>0.90'],
+    eo_safe_zones_duration:       ['p(95)<1200'],
+    eo_request_count_duration:    ['p(95)<800'],
+    eo_requests_duration:         ['p(95)<1500'],
+    eo_tracker_requests_duration: ['p(95)<1500'],
+    eo_safe_zones_success:        ['rate>0.85'],
+    eo_requests_success:          ['rate>0.85'],
+  },
+};
 
-  return {
-    stages: scaledStages(stages, vuScale, durationScale, maxVusPerInstance),
-    thresholds,
-  };
-}
+export const eoSpikeOptions = {
+  stages: [
+    { duration: '30s', target: 150 },
+    { duration: '1m',  target: 150 },
+    { duration: '30s', target: 0   },
+  ],
+  thresholds: {
+    ...eoCommonThresholds,
+    checks:                    ['rate>0.80'],
+    eo_safe_zones_success:        ['rate>0.70'],
+    eo_request_count_success:     ['rate>0.70'],
+    eo_requests_success:          ['rate>0.70'],
+    eo_tracker_requests_success:  ['rate>0.70'],
+  },
+};
