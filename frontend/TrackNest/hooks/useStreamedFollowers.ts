@@ -146,7 +146,7 @@ export function useStreamedFollowers(
         }
       } catch (err: any) {
         if (!cancelled) {
-          console.error("Failed to start stream:", err.message);
+          // console.error("Failed to start stream:", err.message);
           setError(err.message);
           setIsStreaming(false);
         }

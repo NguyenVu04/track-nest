@@ -37,6 +37,7 @@ export interface MissingPerson {
   fullName: string;
   personalId: string;
   photo?: string;
+  contentDocId: string;
   date: string;
   content: string;
   latitude?: number;
@@ -56,6 +57,7 @@ export interface CrimeReport {
   id: string;
   title: string;
   content: string;
+  contentDocId: string;
   severity: CrimeSeverity;
   date: string;
   longitude: number;
@@ -75,6 +77,7 @@ export interface Guideline {
   title: string;
   abstractText: string;
   content: string;
+  contentDocId: string;
   createdAt: string;
   reporterId: string;
   isPublic: boolean;

@@ -1,5 +1,7 @@
 import { settings as settingsLang } from "@/constant/languages";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettings } from "@/contexts/SettingsContext";
+import { useChatStream } from "@/hooks/useChatStream";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useVoiceSosActivation } from "@/hooks/useVoiceSosActivation";
@@ -20,13 +22,15 @@ global.fetch = global.fetch || fetch;
 
 export default function AppLayout() {
   const { isAuthenticated, isGuestMode, isLoading } = useAuth();
+  const { voiceSettings } = useSettings();
   const router = useRouter();
   const t = useTranslation(settingsLang);
   const promptOpenRef = useRef(false);
   const guestLoginSheetRef = useRef<BottomSheetModal>(null);
 
   usePushNotifications(isAuthenticated);
-  useVoiceSosActivation(isAuthenticated || __DEV__);
+  useChatStream(isAuthenticated);
+  useVoiceSosActivation((isAuthenticated || __DEV__) && voiceSettings.enabled);
 
   useEffect(() => {
     if (!isGuestMode || isAuthenticated || isLoading) {
@@ -42,7 +46,7 @@ export default function AppLayout() {
     };
 
     const initialTimer = setTimeout(showPrompt, 1000);
-    const intervalTimer = setInterval(showPrompt, 300000);
+    const intervalTimer = setInterval(showPrompt, 1800000);
 
     return () => {
       clearTimeout(initialTimer);
@@ -81,61 +85,77 @@ export default function AppLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="family-circles/new" />
-          <Stack.Screen name="location-history" />
-          <Stack.Screen name="manage-trackers" />
-          <Stack.Screen name="safe-zones" />
-          <Stack.Screen name="crime-heatmap" />
-          <Stack.Screen name="crime-dashboard" />
-          <Stack.Screen name="crime-analysis" />
-          <Stack.Screen name="missing-detail" />
-          <Stack.Screen name="report-detail" />
-          <Stack.Screen name="create-report" />
-          <Stack.Screen name="create-missing" />
-          <Stack.Screen
-            name="sos"
-            options={{
-              gestureEnabled: false,
-              animation: "none",
-              headerBackVisible: false,
+    <>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <BottomSheetModalProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: "slide_from_right",
+              animationDuration: 280,
             }}
-          />
-        </Stack>
+          >
+            <Stack.Screen name="(tabs)" options={{ animation: "none" }} />
+            <Stack.Screen name="family-circles/new" />
+            <Stack.Screen name="location-history" />
+            <Stack.Screen name="manage-trackers" />
+            <Stack.Screen name="safe-zones" />
+            <Stack.Screen name="crime-heatmap" />
+            <Stack.Screen name="crime-dashboard" />
+            <Stack.Screen name="crime-analysis" />
+            <Stack.Screen name="missing-detail" />
+            <Stack.Screen name="report-detail" />
+            <Stack.Screen name="notifications" />
+            <Stack.Screen
+              name="create-report"
+              options={{ animation: "slide_from_bottom" }}
+            />
+            <Stack.Screen
+              name="create-missing"
+              options={{ animation: "slide_from_bottom" }}
+            />
+            <Stack.Screen
+              name="sos"
+              options={{
+                gestureEnabled: false,
+                animation: "none",
+                headerBackVisible: false,
+              }}
+            />
+          </Stack>
+          <BottomSheetModal
+            ref={guestLoginSheetRef}
+            index={0}
+            snapPoints={["38%"]}
+            backdropComponent={renderBackdrop}
+            enablePanDownToClose
+            onChange={(index) => {
+              if (index < 0) {
+                promptOpenRef.current = false;
+              }
+            }}
+          >
+            <BottomSheetView style={styles.sheetContainer}>
+              <Text style={styles.sheetTitle}>{t.guestModePromptTitle}</Text>
+              <Text style={styles.sheetMessage}>
+                {t.guestModePromptMessage}
+              </Text>
 
-        <BottomSheetModal
-          ref={guestLoginSheetRef}
-          index={0}
-          snapPoints={["38%"]}
-          backdropComponent={renderBackdrop}
-          enablePanDownToClose
-          onChange={(index) => {
-            if (index < 0) {
-              promptOpenRef.current = false;
-            }
-          }}
-        >
-          <BottomSheetView style={styles.sheetContainer}>
-            <Text style={styles.sheetTitle}>{t.guestModePromptTitle}</Text>
-            <Text style={styles.sheetMessage}>{t.guestModePromptMessage}</Text>
+              <Pressable style={styles.loginButton} onPress={goToLogin}>
+                <Text style={styles.loginButtonText}>{t.loginNowButton}</Text>
+              </Pressable>
 
-            <Pressable style={styles.loginButton} onPress={goToLogin}>
-              <Text style={styles.loginButtonText}>{t.loginNowButton}</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.cancelButton}
-              onPress={closeGuestLoginSheet}
-            >
-              <Text style={styles.cancelButtonText}>{t.cancelButton}</Text>
-            </Pressable>
-          </BottomSheetView>
-        </BottomSheetModal>
-      </BottomSheetModalProvider>
-    </GestureHandlerRootView>
+              <Pressable
+                style={styles.cancelButton}
+                onPress={closeGuestLoginSheet}
+              >
+                <Text style={styles.cancelButtonText}>{t.cancelButton}</Text>
+              </Pressable>
+            </BottomSheetView>
+          </BottomSheetModal>
+        </BottomSheetModalProvider>
+      </GestureHandlerRootView>
+    </>
   );
 }
 

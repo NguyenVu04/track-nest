@@ -1,58 +1,25 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import type {
+  GuardianMember,
+  GuardianPermission,
+  GuardianRole,
+  VoiceCommand,
+  VoiceSettings,
+} from "@/types/guardianSettings";
+import { DEFAULT_VOICE_COMMANDS } from "@/types/guardianSettings";
+export type {
+  GuardianMember,
+  GuardianPermission,
+  GuardianRole,
+  VoiceCommand,
+  VoiceSettings,
+} from "@/types/guardianSettings";
+export { DEFAULT_VOICE_COMMANDS } from "@/types/guardianSettings";
 
-// Guardian/Voice Preferences Storage Keys
 const GUARDIAN_SETTINGS_KEY = "@TrackNest:guardian_settings";
 const VOICE_SETTINGS_KEY = "@TrackNest:voice_settings";
 
-// Guardian Role Types
-export type GuardianRole = "Parent" | "Child" | "Guardian" | "Grandparent" | "Spouse" | "Other";
-
-// Guardian Member
-export interface GuardianMember {
-  id: string;
-  name: string;
-  role: GuardianRole;
-  phoneNumber?: string;
-  email?: string;
-  addedAt: number;
-  permissions: GuardianPermission[];
-}
-
-// Guardian Permissions
-export type GuardianPermission = 
-  | "view_location" 
-  | "view_history" 
-  | "receive_emergency_alerts" 
-  | "manage_circle";
-
-// Voice Command
-export interface VoiceCommand {
-  id: string;
-  command: string;
-  action: "sos" | "location_share" | "stop_tracking" | "start_tracking";
-  enabled: boolean;
-}
-
-// Voice Settings
-export interface VoiceSettings {
-  enabled: boolean;
-  commands: VoiceCommand[];
-  language: string;
-}
-
-// Default voice commands
-export const DEFAULT_VOICE_COMMANDS: VoiceCommand[] = [
-  { id: "1", command: "help me", action: "sos", enabled: true },
-  { id: "2", command: "emergency", action: "sos", enabled: true },
-  { id: "3", command: "help", action: "sos", enabled: true },
-  { id: "4", command: "share my location", action: "location_share", enabled: true },
-  { id: "5", command: "stop tracking", action: "stop_tracking", enabled: true },
-  { id: "6", command: "start tracking", action: "start_tracking", enabled: true },
-];
-
-// Guardian Settings Service
 class GuardianSettingsService {
-  // Get guardian settings
   async getGuardianSettings(): Promise<GuardianMember[]> {
     try {
       const data = await AsyncStorage.getItem(GUARDIAN_SETTINGS_KEY);
@@ -66,7 +33,6 @@ class GuardianSettingsService {
     }
   }
 
-  // Save guardian settings
   async saveGuardianSettings(guardians: GuardianMember[]): Promise<void> {
     try {
       await AsyncStorage.setItem(GUARDIAN_SETTINGS_KEY, JSON.stringify(guardians));
@@ -76,8 +42,9 @@ class GuardianSettingsService {
     }
   }
 
-  // Add a guardian
-  async addGuardian(guardian: Omit<GuardianMember, "id" | "addedAt">): Promise<GuardianMember> {
+  async addGuardian(
+    guardian: Omit<GuardianMember, "id" | "addedAt">,
+  ): Promise<GuardianMember> {
     const guardians = await this.getGuardianSettings();
     const newGuardian: GuardianMember = {
       ...guardian,
@@ -89,10 +56,12 @@ class GuardianSettingsService {
     return newGuardian;
   }
 
-  // Update a guardian
-  async updateGuardian(id: string, updates: Partial<GuardianMember>): Promise<GuardianMember> {
+  async updateGuardian(
+    id: string,
+    updates: Partial<GuardianMember>,
+  ): Promise<GuardianMember> {
     const guardians = await this.getGuardianSettings();
-    const index = guardians.findIndex(g => g.id === id);
+    const index = guardians.findIndex((g) => g.id === id);
     if (index === -1) {
       throw new Error("Guardian not found");
     }
@@ -101,17 +70,18 @@ class GuardianSettingsService {
     return guardians[index];
   }
 
-  // Remove a guardian
   async removeGuardian(id: string): Promise<void> {
     const guardians = await this.getGuardianSettings();
-    const filtered = guardians.filter(g => g.id !== id);
+    const filtered = guardians.filter((g) => g.id !== id);
     await this.saveGuardianSettings(filtered);
   }
 
-  // Update guardian permissions
-  async updateGuardianPermissions(id: string, permissions: GuardianPermission[]): Promise<void> {
+  async updateGuardianPermissions(
+    id: string,
+    permissions: GuardianPermission[],
+  ): Promise<void> {
     const guardians = await this.getGuardianSettings();
-    const index = guardians.findIndex(g => g.id === id);
+    const index = guardians.findIndex((g) => g.id === id);
     if (index === -1) {
       throw new Error("Guardian not found");
     }
@@ -119,7 +89,6 @@ class GuardianSettingsService {
     await this.saveGuardianSettings(guardians);
   }
 
-  // Get default permissions for a role
   getDefaultPermissions(role: GuardianRole): GuardianPermission[] {
     switch (role) {
       case "Parent":
@@ -136,16 +105,13 @@ class GuardianSettingsService {
   }
 }
 
-// Voice Settings Service
 class VoiceSettingsService {
-  // Get voice settings
   async getVoiceSettings(): Promise<VoiceSettings> {
     try {
       const data = await AsyncStorage.getItem(VOICE_SETTINGS_KEY);
       if (data) {
         return JSON.parse(data);
       }
-      // Return default settings
       return {
         enabled: true,
         commands: DEFAULT_VOICE_COMMANDS,
@@ -161,7 +127,6 @@ class VoiceSettingsService {
     }
   }
 
-  // Save voice settings
   async saveVoiceSettings(settings: VoiceSettings): Promise<void> {
     try {
       await AsyncStorage.setItem(VOICE_SETTINGS_KEY, JSON.stringify(settings));
@@ -171,24 +136,21 @@ class VoiceSettingsService {
     }
   }
 
-  // Toggle voice recognition enabled
   async setVoiceEnabled(enabled: boolean): Promise<void> {
     const settings = await this.getVoiceSettings();
     settings.enabled = enabled;
     await this.saveVoiceSettings(settings);
   }
 
-  // Toggle a specific command
   async toggleCommand(commandId: string, enabled: boolean): Promise<void> {
     const settings = await this.getVoiceSettings();
-    const command = settings.commands.find(c => c.id === commandId);
+    const command = settings.commands.find((c) => c.id === commandId);
     if (command) {
       command.enabled = enabled;
       await this.saveVoiceSettings(settings);
     }
   }
 
-  // Add a custom voice command
   async addCommand(command: Omit<VoiceCommand, "id">): Promise<VoiceCommand> {
     const settings = await this.getVoiceSettings();
     const newCommand: VoiceCommand = {
@@ -200,37 +162,33 @@ class VoiceSettingsService {
     return newCommand;
   }
 
-  // Remove a voice command
   async removeCommand(commandId: string): Promise<void> {
     const settings = await this.getVoiceSettings();
-    settings.commands = settings.commands.filter(c => c.id !== commandId);
+    settings.commands = settings.commands.filter((c) => c.id !== commandId);
     await this.saveVoiceSettings(settings);
   }
 
-  // Set language
   async setLanguage(language: string): Promise<void> {
     const settings = await this.getVoiceSettings();
     settings.language = language;
     await this.saveVoiceSettings(settings);
   }
 
-  // Check if a transcript matches any enabled SOS commands
   async checkForSOSCommand(transcript: string): Promise<boolean> {
     const settings = await this.getVoiceSettings();
     if (!settings.enabled) return false;
-    
+
     const lowerTranscript = transcript.toLowerCase();
     const sosCommands = settings.commands.filter(
-      c => c.action === "sos" && c.enabled
+      (c) => c.action === "sos" && c.enabled,
     );
-    
-    return sosCommands.some(cmd => 
-      lowerTranscript.includes(cmd.command.toLowerCase())
+
+    return sosCommands.some((cmd) =>
+      lowerTranscript.includes(cmd.command.toLowerCase()),
     );
   }
 }
 
-// Export singleton instances
 export const guardianSettingsService = new GuardianSettingsService();
 export const voiceSettingsService = new VoiceSettingsService();
 

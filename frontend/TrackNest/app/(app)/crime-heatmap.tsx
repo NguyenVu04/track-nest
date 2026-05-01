@@ -1,10 +1,9 @@
-import {
-  criminalReportsService,
-  CrimeReport as BackendCrimeReport,
-  getSeverityLabel,
-  getSeverityColor,
-} from "@/services/criminalReports";
+import { criminalReportsService } from "@/services/criminalReports";
+import type { CrimeReport as BackendCrimeReport } from "@/types/criminalReports";
+import { getSeverityLabel } from "@/utils/crimeHelpers";
+import { crimeHeatmap as crimeHeatmapLang } from "@/constant/languages";
 import useDeviceLocation from "@/hooks/useDeviceLocation";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -82,6 +81,7 @@ function getSeverityMarkerColor(severity: number): string {
 
 export default function CrimeHeatmapScreen() {
   const router = useRouter();
+  const t = useTranslation(crimeHeatmapLang);
   const mapRef = useRef<MapView>(null);
   const { location } = useDeviceLocation(false);
 
@@ -182,10 +182,10 @@ export default function CrimeHeatmapScreen() {
         0,
       ),
       highestSeverityLabel:
-        highestSeverity > 0 ? getSeverityLabel(highestSeverity) : "N/A",
+        highestSeverity > 0 ? getSeverityLabel(highestSeverity) : t.severityNA,
       highestSeverity,
     };
-  }, [regionReports]);
+  }, [regionReports, t.severityNA]);
 
   const renderReport = ({ item }: { item: ReportWithDistance }) => {
     const markerColor = getSeverityMarkerColor(item.report.severity);
@@ -212,7 +212,7 @@ export default function CrimeHeatmapScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.reportTitle}>{item.report.title}</Text>
               <Text style={styles.reportMeta}>
-                Victims: {item.report.numberOfVictims ?? 0} • Offenders:{" "}
+                {t.victimsLabel}: {item.report.numberOfVictims ?? 0} • {t.offendersLabel}:{" "}
                 {item.report.numberOfOffenders ?? 0}
               </Text>
             </View>
@@ -223,8 +223,8 @@ export default function CrimeHeatmapScreen() {
         </View>
         <Text style={styles.reportDistance}>
           {Number.isFinite(item.distanceKm)
-            ? `${item.distanceKm.toFixed(2)} km away`
-            : "Distance unavailable"}
+            ? `${item.distanceKm.toFixed(2)} ${t.kmAway}`
+            : t.distanceUnavailable}
         </Text>
       </Pressable>
     );
@@ -241,9 +241,9 @@ export default function CrimeHeatmapScreen() {
           <Ionicons name="arrow-back" size={24} color="#0f172a" />
         </Pressable>
         <View style={styles.headerTextWrap}>
-          <Text style={styles.title}>Crime Heatmap</Text>
+          <Text style={styles.title}>{t.title}</Text>
           <Text style={styles.subtitle}>
-            Crime reports within {USER_AREA_RADIUS_KM}km of your area
+            {t.subtitleArea.replace("{km}", String(USER_AREA_RADIUS_KM))}
           </Text>
         </View>
         <Pressable
@@ -263,11 +263,11 @@ export default function CrimeHeatmapScreen() {
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{regionalSummary.incidents}</Text>
-          <Text style={styles.summaryLabel}>Incidents</Text>
+          <Text style={styles.summaryLabel}>{t.incidents}</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>{regionalSummary.victims}</Text>
-          <Text style={styles.summaryLabel}>Victims</Text>
+          <Text style={styles.summaryLabel}>{t.victims}</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text
@@ -280,7 +280,7 @@ export default function CrimeHeatmapScreen() {
           >
             {regionalSummary.highestSeverityLabel.toUpperCase()}
           </Text>
-          <Text style={styles.summaryLabel}>Danger</Text>
+          <Text style={styles.summaryLabel}>{t.danger}</Text>
         </View>
       </View>
 
@@ -310,7 +310,7 @@ export default function CrimeHeatmapScreen() {
               longitude: report.longitude,
             }}
             title={report.title}
-            description={`Severity: ${getSeverityLabel(report.severity)} • Victims: ${report.numberOfVictims ?? 0}`}
+            description={`${t.severityLabel}: ${getSeverityLabel(report.severity)} • ${t.victimsLabel}: ${report.numberOfVictims ?? 0}`}
             pinColor={getSeverityMarkerColor(report.severity)}
           />
         ))}
@@ -339,7 +339,7 @@ export default function CrimeHeatmapScreen() {
 
       <View style={styles.radiusControls}>
         <Text style={styles.radiusLabel}>
-          Region ({effectiveRegionRadiusKm.toFixed(2)}km)
+          {`${t.region} (${effectiveRegionRadiusKm.toFixed(2)}km)`}
         </Text>
         <Pressable
           style={[
@@ -354,13 +354,13 @@ export default function CrimeHeatmapScreen() {
               useCustomRadius && styles.modeButtonTextActive,
             ]}
           >
-            {useCustomRadius ? "Custom: On" : "Custom: Off"}
+            {useCustomRadius ? t.customOn : t.customOff}
           </Text>
         </Pressable>
       </View>
 
       <View style={styles.radiusControlsSecondary}>
-        <Text style={styles.radiusLabel}>Custom radius:</Text>
+        <Text style={styles.radiusLabel}>{t.customRadius}</Text>
         {[1, 3, 5].map((r) => (
           <Pressable
             key={r}
@@ -394,8 +394,8 @@ export default function CrimeHeatmapScreen() {
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyText}>
               {loading
-                ? "Loading..."
-                : "No crime reports found in this region."}
+                ? t.loading
+                : t.emptyList}
             </Text>
           </View>
         }

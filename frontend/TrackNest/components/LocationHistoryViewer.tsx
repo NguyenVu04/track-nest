@@ -417,6 +417,9 @@ export function LocationHistoryViewer({
           contentContainerStyle={{ paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
           onScrollToIndexFailed={(info) => {
+            /* console.log('offset:', info.index, " ", info.averageItemLength) */;
+            
+
             listRef.current?.scrollToOffset({
               offset: info.averageItemLength * info.index,
               animated: true,

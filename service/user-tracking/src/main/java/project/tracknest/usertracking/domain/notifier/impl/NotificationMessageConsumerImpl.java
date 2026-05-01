@@ -67,7 +67,11 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
         boolean anyDelivered = false;
         for (User member : familyMembers) {
             List<String> deviceTokens = tokensByMember.getOrDefault(member.getId(), List.of());
-            int sent = fcmService.sendToTokens(deviceTokens, message.title(), message.content());
+            int sent = fcmService.sendToTokensWithData(
+                    deviceTokens,
+                    message.title(),
+                    message.content(),
+                    Map.of("type", message.type()));
             if (sent > 0) anyDelivered = true;
 
             TrackerTrackingNotification.TrackerTrackingNotificationId trackerTrackingNotificationId =

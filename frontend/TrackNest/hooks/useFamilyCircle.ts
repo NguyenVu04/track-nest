@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FamilyCircle } from "@/constant/types";
 import { listFamilyCircles } from "@/services/trackingManager";
 
-const STORAGE_KEY = "@tracknest/selected_family_circle";
+export const STORAGE_KEY = "@tracknest/selected_family_circle";
 const CIRCLES_CACHE_KEY = "@tracknest/family_circles_cache";
 const PAGE_SIZE = 50;
 
@@ -40,7 +40,7 @@ export const useFamilyCircle = () => {
         const cached = await AsyncStorage.getItem(CIRCLES_CACHE_KEY);
         if (cached) {
           const parsed = JSON.parse(cached) as FamilyCircle[];
-          setCircles(parsed);
+          setCircles([...parsed]);
           return parsed;
         }
       } catch (cacheError) {

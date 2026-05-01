@@ -1,4 +1,4 @@
-﻿import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import React, { useCallback, useState } from "react";
 import {
@@ -25,28 +25,37 @@ import {
   createParticipationPermission,
   deleteFamilyCircle,
   leaveFamilyCircle,
+  listFamilyCircleMembers,
   participateInFamilyCircle,
   updateFamilyCircle,
   updateFamilyRole,
 } from "@/services/trackingManager";
 import { BottomSheetFlatList, BottomSheetView } from "@gorhom/bottom-sheet";
-import { useRouter } from "expo-router";
 import { CircleMember, CircleMembersModal } from "./CircleMembersModal";
+import { getUserId, showToast } from "@/utils";
+import { scheduleLocalNotification } from "@/utils/notifications";
 
 interface FamilyCircleBottomSheetProps {
   selectedCircleId: string | null;
   onSelectCircle: (circle: FamilyCircle) => void;
   familyCircles: FamilyCircle[];
   onRefresh?: () => Promise<void>;
+  onAddFamilyCircle?: () => void;
+  tabBarHeight?: number;
 }
 
 export const FamilyCircleBottomSheet: React.FC<
   FamilyCircleBottomSheetProps
-> = ({ selectedCircleId, onSelectCircle, familyCircles, onRefresh }) => {
+> = ({
+  selectedCircleId,
+  onSelectCircle,
+  familyCircles,
+  onRefresh,
+  onAddFamilyCircle,
+  tabBarHeight = 0,
+}) => {
   const t = useTranslation(mapLang);
-  const router = useRouter();
   const { height: screenHeight } = useWindowDimensions();
-  const listMaxHeight = Math.floor(screenHeight * 0.45);
 
   const roleOptions = [
     { value: "Parent", label: t.roleParent },
@@ -66,7 +75,9 @@ export const FamilyCircleBottomSheet: React.FC<
   const [isSavingRole, setIsSavingRole] = useState(false);
 
   const [showMembersModal, setShowMembersModal] = useState(false);
-  const [circleMembers] = useState<CircleMember[]>([]);
+  const [circleMembers, setCircleMembers] = useState<CircleMember[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteOtp, setInviteOtp] = useState("");
@@ -78,11 +89,46 @@ export const FamilyCircleBottomSheet: React.FC<
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinOtp, setJoinOtp] = useState("");
 
-  const handleOpenManage = useCallback((circle: FamilyCircle) => {
+  const handleOpenManage = useCallback(async (circle: FamilyCircle) => {
     setManagingCircle(circle);
     setEditName(circle.name);
-    setMyRole(circle.role ?? "");
-  }, []);
+    setMyRole("");
+    setCircleMembers([]);
+    setIsCurrentUserAdmin(false);
+    setLoadingMembers(true);
+
+    try {
+      const [membersRes, currentUserId] = await Promise.all([
+        listFamilyCircleMembers(circle.familyCircleId),
+        getUserId().catch(() => null),
+      ]);
+
+      const mapped: CircleMember[] = membersRes.membersList.map((m) => ({
+        id: m.memberId,
+        name: m.memberUsername,
+        role: m.familyRole,
+        isAdmin: m.isAdmin,
+      }));
+      setCircleMembers(mapped);
+
+      if (currentUserId) {
+        const me = membersRes.membersList.find(
+          (m) => m.memberId === currentUserId,
+        );
+        if (me) {
+          setMyRole(me.familyRole);
+          setIsCurrentUserAdmin(me.isAdmin);
+        }
+      }
+    } catch (e: any) {
+      showToast(
+        e?.message ?? "Failed to load circle members",
+        t.errorTitle ?? "Error",
+      );
+    } finally {
+      setLoadingMembers(false);
+    }
+  }, [t.errorTitle]);
 
   const handleSaveName = useCallback(async () => {
     if (!managingCircle || !editName.trim()) return;
@@ -94,10 +140,7 @@ export const FamilyCircleBottomSheet: React.FC<
       );
       await onRefresh?.();
     } catch (e: any) {
-      Alert.alert(
-        t.errorTitle ?? "Error",
-        e?.message ?? t.saveError ?? "Failed to rename circle.",
-      );
+      showToast(e?.message ?? t.saveError ?? "Failed to rename circle.", t.errorTitle ?? "Error");
     } finally {
       setIsSavingName(false);
     }
@@ -106,28 +149,26 @@ export const FamilyCircleBottomSheet: React.FC<
   const handleSelectRole = useCallback(
     async (role: string) => {
       if (!managingCircle || isSavingRole) return;
+      const prevRole = myRole;
       setMyRole(role);
       setIsSavingRole(true);
       try {
         await updateFamilyRole(managingCircle.familyCircleId, role);
         await onRefresh?.();
       } catch (e: any) {
-        Alert.alert(
-          t.errorTitle ?? "Error",
-          e?.message ?? t.updateRoleFailed ?? "Failed to update role.",
-        );
-        setMyRole(managingCircle.role ?? "");
+        showToast(e?.message ?? t.updateRoleFailed ?? "Failed to update role.", t.errorTitle ?? "Error");
+        setMyRole(prevRole);
       } finally {
         setIsSavingRole(false);
       }
     },
-    [managingCircle, isSavingRole, onRefresh, t.errorTitle, t.updateRoleFailed],
+    [managingCircle, myRole, isSavingRole, onRefresh, t.errorTitle, t.updateRoleFailed],
   );
 
   const handleLeave = useCallback(() => {
     if (!managingCircle) return;
-    if (managingCircle.role === "admin") {
-      Alert.alert(t.cannotLeaveTitle, t.cannotLeaveMessage);
+    if (isCurrentUserAdmin) {
+      showToast(t.cannotLeaveMessage, t.cannotLeaveTitle);
       return;
     }
     Alert.alert(
@@ -143,7 +184,7 @@ export const FamilyCircleBottomSheet: React.FC<
               const res = await leaveFamilyCircle(
                 managingCircle.familyCircleId,
               );
-              console.log("Leave response:", res);
+              /* console.log("Leave response:", res) */;
 
               if (res.status?.code === 9) {
                 throw new Error(t.lastMemberCannotLeave);
@@ -152,7 +193,7 @@ export const FamilyCircleBottomSheet: React.FC<
               setManagingCircle(null);
               await onRefresh?.();
             } catch (e: any) {
-              Alert.alert(t.errorTitle ?? "Error", e?.message ?? t.leaveFailed);
+              showToast(e?.message ?? t.leaveFailed, t.errorTitle ?? "Error");
             }
           },
         },
@@ -161,6 +202,7 @@ export const FamilyCircleBottomSheet: React.FC<
   }, [
     managingCircle,
     onRefresh,
+    t.lastMemberCannotLeave,
     t.cannotLeaveMessage,
     t.cannotLeaveTitle,
     t.leave,
@@ -188,14 +230,11 @@ export const FamilyCircleBottomSheet: React.FC<
               );
               setManagingCircle(null);
 
-              console.log("Delete response:", res);
+              /* console.log("Delete response:", res) */;
 
               await onRefresh?.();
             } catch (e: any) {
-              Alert.alert(
-                t.errorTitle ?? "Error",
-                e?.message ?? t.deleteFailed,
-              );
+              showToast(e?.message ?? t.deleteFailed, t.errorTitle ?? "Error");
             }
           },
         },
@@ -219,17 +258,22 @@ export const FamilyCircleBottomSheet: React.FC<
           circle.familyCircleId,
         );
 
-        console.log("Invite result:", result);
+        /* console.log("Invite result:", result) */;
         if (result.status?.code === 7) {
           throw new Error(result.status.message);
         }
+
+        scheduleLocalNotification(
+          "Invite Code Ready",
+          "An invite code has been generated. Share it with someone to join your circle.",
+        );
 
         setInvitingCircle(circle);
         setInviteOtp(result.otp);
         setInviteExpiry(result.expiredAtMs);
         setShowInviteModal(true);
       } catch (error: any) {
-        Alert.alert(t.errorTitle ?? "Error", error?.message ?? t.inviteFailed);
+        showToast(error?.message ?? t.inviteFailed, t.errorTitle ?? "Error");
       }
     },
     [t.errorTitle, t.inviteFailed],
@@ -242,9 +286,9 @@ export const FamilyCircleBottomSheet: React.FC<
       setShowJoinModal(false);
       setJoinOtp("");
       await onRefresh?.();
-      Alert.alert(t.successTitle, t.joinSuccessMessage);
+      showToast(t.joinSuccessMessage, t.successTitle);
     } catch (error: any) {
-      Alert.alert(t.errorTitle ?? "Error", error?.message ?? t.joinFailed);
+      showToast(error?.message ?? t.joinFailed, t.errorTitle ?? "Error");
     }
   }, [
     joinOtp,
@@ -309,18 +353,23 @@ export const FamilyCircleBottomSheet: React.FC<
     [
       onSelectCircle,
       selectedCircleId,
+      t.admin,
       t.members,
       handleInvite,
       handleOpenManage,
     ],
   );
 
-  const onAddFamilyCircle = () => {
-    router.push("/family-circles/new");
-  };
-
   const ActionButtons = () => (
-    <View style={{ flexDirection: "row", gap: 8, marginTop: 16 }}>
+    <View
+      style={{
+        flexDirection: "row",
+        gap: 8,
+        marginTop: 16,
+        paddingHorizontal: 16,
+        marginBottom: 12,
+      }}
+    >
       <TouchableOpacity style={styles.addBtn} onPress={onAddFamilyCircle}>
         <Text style={{ color: "#fff", fontWeight: "600", textAlign: "center" }}>
           {t.addFamilyCircle}
@@ -341,7 +390,7 @@ export const FamilyCircleBottomSheet: React.FC<
 
   if (familyCircles.length === 0) {
     return (
-      <BottomSheetView style={styles.container}>
+      <BottomSheetView style={[styles.container, { flex: 1 }]}>
         <Text style={styles.title}>{t.familyCircles}</Text>
         <View style={styles.emptyContainer}>
           <Ionicons name="people-outline" size={48} color="#ccc" />
@@ -352,26 +401,22 @@ export const FamilyCircleBottomSheet: React.FC<
     );
   }
 
-  const isAdmin = managingCircle?.role === "admin";
+  const isAdmin = isCurrentUserAdmin;
 
   return (
-    <BottomSheetView style={styles.container}>
+    <>
       <Text style={styles.title}>{t.selectFamilyCircle}</Text>
-      <View style={styles.listContainer}>
-        <BottomSheetFlatList
-          data={familyCircles}
-          keyExtractor={(item: FamilyCircle) => item.familyCircleId}
-          renderItem={renderItem}
-          ListFooterComponent={ActionButtons}
-          showsVerticalScrollIndicator={true}
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            gap: 24,
-            paddingBottom: 16,
-          }}
-          style={{ maxHeight: listMaxHeight, flexGrow: 0 }}
-        />
-      </View>
+      <BottomSheetFlatList
+        data={familyCircles}
+        keyExtractor={(item: FamilyCircle) => item.familyCircleId}
+        renderItem={renderItem}
+        contentContainerStyle={{
+          gap: 24,
+          paddingBottom: 8,
+          paddingHorizontal: 16,
+        }}
+      />
+      <ActionButtons />
 
       <Modal
         visible={!!managingCircle}
@@ -468,12 +513,17 @@ export const FamilyCircleBottomSheet: React.FC<
                 <Pressable
                   style={styles.menuRow}
                   onPress={() => setShowMembersModal(true)}
+                  disabled={loadingMembers}
                 >
                   <View style={styles.menuRowLeft}>
                     <Ionicons name="people-outline" size={20} color="#74becb" />
                     <Text style={styles.menuRowText}>{t.manageMembers}</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color="#999" />
+                  {loadingMembers ? (
+                    <ActivityIndicator size="small" color="#74becb" />
+                  ) : (
+                    <Ionicons name="chevron-forward" size={18} color="#999" />
+                  )}
                 </Pressable>
               </View>
               {/* )} */}
@@ -515,6 +565,7 @@ export const FamilyCircleBottomSheet: React.FC<
         circle={managingCircle}
         members={circleMembers}
         isAdmin={isAdmin}
+        isLoading={loadingMembers}
         onRefresh={() => {
           onRefresh?.();
         }}
@@ -547,7 +598,7 @@ export const FamilyCircleBottomSheet: React.FC<
                 if (Platform.OS === "android") {
                   ToastAndroid.show(t.inviteCodeCopied, ToastAndroid.SHORT);
                 } else {
-                  Alert.alert(t.copiedTitle, t.inviteCodeCopied);
+                  showToast(t.inviteCodeCopied, t.copiedTitle);
                 }
               }}
             >
@@ -627,14 +678,14 @@ export const FamilyCircleBottomSheet: React.FC<
           </Pressable>
         </KeyboardAvoidingView>
       </Modal>
-    </BottomSheetView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   title: {
     fontSize: 18,

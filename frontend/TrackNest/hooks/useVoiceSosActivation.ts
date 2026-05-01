@@ -30,13 +30,21 @@ export function useVoiceSosActivation(enabled: boolean = true) {
   // pathname or router identity changes (which happens on every navigation).
   const routerRef = useRef(router);
   const pathnameRef = useRef(pathname);
-  useEffect(() => { routerRef.current = router; }, [router]);
-  useEffect(() => { pathnameRef.current = pathname; }, [pathname]);
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const shouldListenRef = useRef(false);
   const keyboardVisibleRef = useRef(false);
   const lastTriggerAtRef = useRef(0);
+  const restartAfterKeyboardRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const startAttemptSeqRef = useRef(0);
 
   const normalizedPhrases = useMemo(
     () => DEFAULT_TRIGGER_PHRASES.map((phrase) => normalize(phrase)),
@@ -45,6 +53,7 @@ export function useVoiceSosActivation(enabled: boolean = true) {
 
   const stopListening = useCallback(() => {
     shouldListenRef.current = false;
+    startAttemptSeqRef.current += 1;
     try {
       ExpoSpeechRecognitionModule.stop();
     } catch {
@@ -54,24 +63,31 @@ export function useVoiceSosActivation(enabled: boolean = true) {
 
   const startListening = useCallback(async () => {
     if (!enabled || appStateRef.current !== "active") return;
+    if (keyboardVisibleRef.current) return;
     if (!ExpoSpeechRecognitionModule.isRecognitionAvailable()) {
       console.warn("Speech recognition is not available on this device");
       return;
     }
 
-    // Do not start while keyboard is open — starting the recognizer on Android
-    // requests input focus and causes the system to dismiss the keyboard.
-    if (keyboardVisibleRef.current) return;
+    const attemptId = ++startAttemptSeqRef.current;
+    const isAttemptValid = () =>
+      attemptId === startAttemptSeqRef.current &&
+      shouldListenRef.current &&
+      enabled &&
+      appStateRef.current === "active" &&
+      !keyboardVisibleRef.current;
 
     shouldListenRef.current = true;
 
     const permission =
       await ExpoSpeechRecognitionModule.getMicrophonePermissionsAsync();
 
+    if (!isAttemptValid()) return;
+
     if (!permission.granted && permission.canAskAgain) {
       const requested =
         await ExpoSpeechRecognitionModule.requestMicrophonePermissionsAsync();
-      if (!requested.granted) {
+      if (!requested.granted || !isAttemptValid()) {
         shouldListenRef.current = false;
         return;
       }
@@ -80,8 +96,11 @@ export function useVoiceSosActivation(enabled: boolean = true) {
       return;
     }
 
+    if (!isAttemptValid()) return;
+
     try {
       const state = await ExpoSpeechRecognitionModule.getStateAsync();
+      if (!isAttemptValid()) return;
       if (state === "recognizing" || state === "starting") return;
       ExpoSpeechRecognitionModule.start({
         lang: "en-US",
@@ -112,29 +131,38 @@ export function useVoiceSosActivation(enabled: boolean = true) {
 
   // Stable callback with empty deps — reads router/pathname through refs so it
   // is never re-created on navigation, preventing listener re-registration.
-  const onResult = useCallback((event: { results: { transcript: string }[] }) => {
-    const transcript = normalize(event.results[0]?.transcript ?? "");
-    if (!transcript) return;
+  const onResult = useCallback(
+    (event: { results: { transcript: string }[] }) => {
+      const transcript = normalize(event.results[0]?.transcript ?? "");
+      if (!transcript) return;
 
-    const matched = normalizedPhrases.some((phrase) =>
-      transcript.includes(phrase),
-    );
-    if (!matched) return;
+      const matched = normalizedPhrases.some((phrase) =>
+        transcript.includes(phrase),
+      );
+      if (!matched) return;
 
-    const now = Date.now();
-    if (now - lastTriggerAtRef.current < 3000) return;
-    lastTriggerAtRef.current = now;
+      const now = Date.now();
+      if (now - lastTriggerAtRef.current < 3000) return;
 
-    if (pathnameRef.current !== "/sos") {
-      routerRef.current.push("/sos");
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [normalizedPhrases]); // normalizedPhrases is stable (useMemo with [])
+      if (pathnameRef.current !== "/sos") {
+        routerRef.current.push("/sos");
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [normalizedPhrases],
+  ); // normalizedPhrases is stable (useMemo with [])
 
   useSpeechRecognitionEvent("result", onResult);
 
   useEffect(() => {
     startListening();
+
+    const clearKeyboardRestartTimer = () => {
+      if (restartAfterKeyboardRef.current) {
+        clearTimeout(restartAfterKeyboardRef.current);
+        restartAfterKeyboardRef.current = null;
+      }
+    };
 
     const appStateSub = AppState.addEventListener("change", (nextState) => {
       appStateRef.current = nextState;
@@ -151,13 +179,20 @@ export function useVoiceSosActivation(enabled: boolean = true) {
     // restart cycle doesn't steal focus and dismiss the keyboard.
     const keyboardShowSub = Keyboard.addListener("keyboardDidShow", () => {
       keyboardVisibleRef.current = true;
+      clearKeyboardRestartTimer();
       stopListening();
     });
 
     const keyboardHideSub = Keyboard.addListener("keyboardDidHide", () => {
       keyboardVisibleRef.current = false;
       if (enabled && appStateRef.current === "active") {
-        startListening();
+        clearKeyboardRestartTimer();
+        // Delay restart briefly so Android can settle input focus first.
+        restartAfterKeyboardRef.current = setTimeout(() => {
+          if (enabled && appStateRef.current === "active") {
+            startListening();
+          }
+        }, 300);
       }
     });
 
@@ -165,6 +200,7 @@ export function useVoiceSosActivation(enabled: boolean = true) {
       appStateSub.remove();
       keyboardShowSub.remove();
       keyboardHideSub.remove();
+      clearKeyboardRestartTimer();
       stopListening();
     };
   }, [enabled, startListening, stopListening]);

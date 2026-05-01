@@ -6,16 +6,15 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-import {
+import type {
   GuardianMember,
   GuardianRole,
   GuardianPermission,
   VoiceSettings,
   VoiceCommand,
-  guardianSettingsService,
-  voiceSettingsService,
-  DEFAULT_VOICE_COMMANDS,
-} from "@/services/guardianSettings";
+} from "@/types/guardianSettings";
+import { DEFAULT_VOICE_COMMANDS } from "@/types/guardianSettings";
+import { guardianSettingsService, voiceSettingsService } from "@/services/guardianSettings";
 import { useAuth } from "./AuthContext";
 
 interface SettingsContextType {

@@ -1,11 +1,25 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Save, X, MapPin, User, Calendar, FileText, Phone, Mail, Upload, Trash2 } from "lucide-react";
+import {
+  Save,
+  X,
+  MapPin,
+  User,
+  Calendar,
+  FileText,
+  Phone,
+  Mail,
+  Upload,
+  Trash2,
+} from "lucide-react";
 import Image from "next/image";
 import type { MissingPerson } from "@/types";
-import { criminalReportsService, CreateMissingPersonReportRequest, UpdateMissingPersonReportRequest } from "@/services/criminalReportsService";
+import {
+  criminalReportsService,
+  UpdateMissingPersonReportRequest,
+} from "@/services/criminalReportsService";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -50,8 +64,8 @@ export function MissingPersonForm({
   const tCommon = useTranslations("common");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState<Partial<MissingPerson>>(
     person || {
       fullName: "",
@@ -63,24 +77,82 @@ export function MissingPersonForm({
       contactPhone: "",
       title: "",
       status: "PENDING",
-    }
+    },
   );
 
   const [coordinates, setCoordinates] = useState<[number, number]>(
-    person ? [10.8231, 106.6297] : [10.8231, 106.6297]
+    person?.latitude != null && person?.longitude != null
+      ? [person.latitude, person.longitude]
+      : [10.8231, 106.6297],
   );
 
-  const handlePhotoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // In create mode the photo File is held locally and submitted together with
+  // the form via submitMissingPersonReport (multipart). The backend's
+  // /missing-person-request-receiver/submit endpoint handles the MinIO upload
+  // atomically — ROLE_USER or ROLE_ADMIN is required for that path.
+  // In edit mode the photo field holds the existing stored key/URL.
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string>(
+    mode === "edit" ? (person?.photo ?? "") : "",
+  );
+
+  useEffect(() => {
+    if (mode !== "edit") return;
+    const photoValue = person?.photo ?? "";
+    if (!photoValue) {
+      setPhotoPreviewUrl("");
+      return;
+    }
+    if (photoValue.startsWith("http")) {
+      setPhotoPreviewUrl(photoValue);
+      return;
+    }
+
+    if (person?.id) {
+      setPhotoPreviewUrl(
+        criminalReportsService.getMissingPersonPhotoUrl(person.id),
+      );
+      return;
+    }
+
+    let isActive = true;
+    criminalReportsService
+      .getFileUrl("criminal-reports", photoValue)
+      .then((url) => {
+        if (isActive) setPhotoPreviewUrl(url);
+      })
+      .catch((error) => {
+        console.error("Failed to resolve photo preview URL:", error);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [mode, person?.photo]);
+
+  const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsUploadingPhoto(true);
+
+    if (mode === "create") {
+      setPhotoFile(file);
+      setPhotoPreviewUrl(URL.createObjectURL(file));
+    } else {
+      handleEditPhotoUpload(file);
+    }
+  };
+
+  const handleEditPhotoUpload = async (file: File) => {
     try {
-      const result = await criminalReportsService.uploadFile(file, "criminal-reports");
+      const result = await criminalReportsService.uploadFile(
+        file,
+        "criminal-reports",
+      );
       setFormData((prev) => ({ ...prev, photo: result.url }));
+      setPhotoPreviewUrl(result.url);
     } catch {
       toast.error(t("uploadPhotoError"));
     } finally {
-      setIsUploadingPhoto(false);
       if (photoInputRef.current) photoInputRef.current.value = "";
     }
   };
@@ -89,10 +161,14 @@ export function MissingPersonForm({
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
-    handlePhotoFileChange({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
+    handlePhotoFileChange({
+      target: { files: e.dataTransfer.files },
+    } as React.ChangeEvent<HTMLInputElement>);
   };
 
   const handleRemovePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreviewUrl("");
     setFormData((prev) => ({ ...prev, photo: "" }));
     if (photoInputRef.current) photoInputRef.current.value = "";
   };
@@ -103,21 +179,24 @@ export function MissingPersonForm({
 
     try {
       if (mode === "create") {
-        const request: CreateMissingPersonReportRequest = {
-          title: formData.title || formData.fullName || "Missing Person Report",
-          fullName: formData.fullName!,
-          personalId: formData.personalId!,
-          photo: formData.photo || undefined,
-          date: formData.date!,
-          content: formData.content!,
-          latitude: coordinates[0],
-          longitude: coordinates[1],
-          contactEmail: formData.contactEmail || undefined,
-          contactPhone: formData.contactPhone!,
-        };
-
-        const response = await criminalReportsService.createMissingPersonReport(request);
-        const newPerson: MissingPerson = {
+        // Uses the multipart submit endpoint (ROLE_USER or ROLE_ADMIN).
+        // Photo upload is handled atomically server-side.
+        const response = await criminalReportsService.submitMissingPersonReport(
+          {
+            title:
+              formData.title || formData.fullName || "Missing Person Report",
+            fullName: formData.fullName!,
+            personalId: formData.personalId!,
+            photo: photoFile ?? undefined,
+            date: formData.date!,
+            content: formData.content!,
+            contactEmail: formData.contactEmail || "",
+            contactPhone: formData.contactPhone!,
+            latitude: coordinates[0],
+            longitude: coordinates[1],
+          },
+        );
+        onSave({
           id: response.id,
           title: response.title,
           fullName: response.fullName,
@@ -134,8 +213,7 @@ export function MissingPersonForm({
           status: response.status as MissingPerson["status"],
           reporterId: response.reporterId,
           isPublic: response.isPublic,
-        };
-        onSave(newPerson);
+        });
       } else {
         const updateRequest: UpdateMissingPersonReportRequest = {
           title: formData.title,
@@ -153,7 +231,7 @@ export function MissingPersonForm({
           person!.id,
           updateRequest,
         );
-        const updatedPerson: MissingPerson = {
+        onSave({
           id: response.id,
           title: response.title,
           fullName: response.fullName,
@@ -170,15 +248,19 @@ export function MissingPersonForm({
           status: response.status as MissingPerson["status"],
           reporterId: response.reporterId,
           isPublic: response.isPublic,
-        };
-        onSave(updatedPerson);
+        });
       }
     } catch (error) {
       console.error("Error saving missing person report:", error);
+      toast.error(
+        mode === "create" ? t("toastCreateError") : t("toastUpdateError"),
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const currentPhotoSrc = photoPreviewUrl || formData.photo || "";
 
   return (
     <div className="max-w-4xl">
@@ -197,7 +279,8 @@ export function MissingPersonForm({
             <label htmlFor="title" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                {t("formReportTitle")}{tCommon("requiredSuffix")}
+                {t("formReportTitle")}
+                {tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -217,7 +300,8 @@ export function MissingPersonForm({
             <label htmlFor="fullName" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <User className="w-4 h-4" />
-                {t("formFullName")}{tCommon("requiredSuffix")}
+                {t("formFullName")}
+                {tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -235,7 +319,8 @@ export function MissingPersonForm({
 
           <div>
             <label htmlFor="personalId" className="block text-gray-700 mb-2">
-              {t("formPersonalId")}{tCommon("requiredSuffix")}
+              {t("formPersonalId")}
+              {tCommon("requiredSuffix")}
             </label>
             <input
               id="personalId"
@@ -254,7 +339,8 @@ export function MissingPersonForm({
             <label htmlFor="date" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                {t("formDateMissing")}{tCommon("requiredSuffix")}
+                {t("formDateMissing")}
+                {tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -270,12 +356,14 @@ export function MissingPersonForm({
           </div>
 
           <div>
-            <label className="block text-gray-700 mb-2">{t("formPhotoUrl")}</label>
+            <label className="block text-gray-700 mb-2">
+              {t("formPhotoUrl")}
+            </label>
 
-            {formData.photo ? (
+            {currentPhotoSrc ? (
               <div className="relative w-full rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
                 <Image
-                  src={formData.photo}
+                  src={currentPhotoSrc}
                   alt="Uploaded photo"
                   width={400}
                   height={200}
@@ -294,29 +382,25 @@ export function MissingPersonForm({
             ) : (
               <div
                 className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
-                onClick={() => !isUploadingPhoto && photoInputRef.current?.click()}
+                onClick={() => photoInputRef.current?.click()}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handlePhotoDrop}
               >
-                {isUploadingPhoto ? (
-                  <div className="flex flex-col items-center gap-2 text-gray-500">
-                    <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm">{t("uploadingPhoto")}</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-gray-500 pointer-events-none">
-                    <Upload className="w-7 h-7 text-gray-400" />
-                    <span className="text-sm font-medium">{t("uploadPhotoBtn")}</span>
-                    <span className="text-xs text-gray-400">{t("uploadPhotoHint")}</span>
-                  </div>
-                )}
+                <div className="flex flex-col items-center gap-2 text-gray-500 pointer-events-none">
+                  <Upload className="w-7 h-7 text-gray-400" />
+                  <span className="text-sm font-medium">
+                    {t("uploadPhotoBtn")}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {t("uploadPhotoHint")}
+                  </span>
+                </div>
                 <input
                   ref={photoInputRef}
                   type="file"
                   accept="image/*"
                   className="hidden"
                   onChange={handlePhotoFileChange}
-                  disabled={isUploadingPhoto}
                 />
               </div>
             )}
@@ -326,7 +410,7 @@ export function MissingPersonForm({
             <label className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                {t("formLocationCoords")}{tCommon("requiredSuffix")}
+                {t("formLocationCoords")}
               </span>
             </label>
             <LocationPicker
@@ -339,14 +423,13 @@ export function MissingPersonForm({
             <label htmlFor="content" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                {t("formContent")}{tCommon("requiredSuffix")}
+                {t("formContent")}
+                {tCommon("requiredSuffix")}
               </span>
             </label>
             <RichTextEditor
               value={formData.content || ""}
-              onChange={(html) =>
-                setFormData({ ...formData, content: html })
-              }
+              onChange={(html) => setFormData({ ...formData, content: html })}
               placeholder={t("placeholderContent")}
             />
           </div>
@@ -374,7 +457,8 @@ export function MissingPersonForm({
             <label htmlFor="contactPhone" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                {t("formContactPhone")}{tCommon("requiredSuffix")}
+                {t("formContactPhone")}
+                {tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -398,7 +482,11 @@ export function MissingPersonForm({
             className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            {isSubmitting ? tCommon("saving") : mode === "create" ? t("createButton") : tCommon("save")}
+            {isSubmitting
+              ? tCommon("saving")
+              : mode === "create"
+                ? t("createButton")
+                : tCommon("save")}
           </button>
           <button
             type="button"

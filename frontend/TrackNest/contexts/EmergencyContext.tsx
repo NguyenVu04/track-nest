@@ -5,13 +5,13 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-import {
+import type {
   EmergencyRequest,
-  EmergencyStatus,
+  PostEmergencyRequestResponse,
   SafeZone,
   CreateEmergencyRequestData,
-  emergencyService,
-} from "@/services/emergency";
+} from "@/types/emergency";
+import { emergencyService } from "@/services/emergency";
 import * as Location from "expo-location";
 
 interface EmergencyContextType {
@@ -19,7 +19,7 @@ interface EmergencyContextType {
   activeEmergency: EmergencyRequest | null;
   
   // Actions (only what's needed for SOS screen)
-  createEmergencyRequest: (targetId: string) => Promise<EmergencyRequest>;
+  createEmergencyRequest: (targetId: string) => Promise<PostEmergencyRequestResponse>;
   
   // Safe Zone actions (for finding nearest safe locations during emergency)
   getNearestSafeZones: (location?: {lat: number; lng: number}) => Promise<SafeZone[]>;
@@ -46,9 +46,8 @@ export const EmergencyProvider: React.FC<EmergencyProviderProps> = ({
   const [activeEmergency, setActiveEmergency] = useState<EmergencyRequest | null>(null);
 
   // Create emergency request (called only from SOS screen timeout)
-  const createEmergencyRequest = useCallback(async (targetId: string): Promise<EmergencyRequest> => {
+  const createEmergencyRequest = useCallback(async (targetId: string): Promise<PostEmergencyRequestResponse> => {
     try {
-      // Get current location
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
@@ -59,14 +58,7 @@ export const EmergencyProvider: React.FC<EmergencyProviderProps> = ({
         lastLongitudeDegrees: location.coords.longitude,
       };
 
-      const newRequest = await emergencyService.createEmergencyRequest(requestData);
-      
-      // Track active emergency for potential future use
-      if (newRequest.status === EmergencyStatus.PENDING) {
-        setActiveEmergency(newRequest);
-      }
-      
-      return newRequest;
+      return await emergencyService.createEmergencyRequest(requestData);
     } catch (error) {
       console.error("Failed to create emergency request:", error);
       throw error;

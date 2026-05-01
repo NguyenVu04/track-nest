@@ -1,8 +1,8 @@
+import { FamilyCircle } from "@/constant/types";
+import { colors } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-
-import { FamilyCircle } from "@/constant/types";
+import { Pressable, StyleSheet, Text } from "react-native";
 
 interface FamilyCircleSelectorProps {
   selectedCircle: FamilyCircle | null;
@@ -14,48 +14,36 @@ export const FamilyCircleSelector: React.FC<FamilyCircleSelectorProps> = ({
   onPress,
 }) => {
   return (
-    <Pressable style={styles.container} onPress={onPress}>
-      <View style={styles.iconContainer}>
-        <Ionicons name="people-circle-outline" size={24} color="#74becb" />
-      </View>
+    <Pressable style={styles.pill} onPress={onPress}>
+      <Ionicons name="home" size={16} color="#0c6874" />
       <Text style={styles.text} numberOfLines={1}>
-        {selectedCircle?.name ?? "Select Circle"}
+        {selectedCircle?.name ?? "Family Circle"}
       </Text>
-      <Ionicons name="chevron-down" size={18} color="#666" />
+      <Ionicons name="chevron-down" size={16} color="#0c6874" />
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  pill: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 24,
-    gap: 8,
+    gap: 12,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
-    width: "100%",
-    textAlign: "center"
-  },
-  iconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#e0f2f5",
-    alignItems: "center",
-    justifyContent: "center",
+    maxWidth: 200,
   },
   text: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#333",
-    flex: 1,
-    textAlign: "center"
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#0c6874",
+    flexShrink: 1,
   },
 });

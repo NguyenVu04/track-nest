@@ -38,4 +38,22 @@ export const DRIVING_CRASH_THRESHOLD = 2.5;
 // React Native event emitted by NativeLocationModule when tracking mode changes.
 export const TRACKING_MODE_CHANGED_EVENT = "trackingModeChanged";
 
+// React Native event emitted from AppHeader to open general information sheet.
+export const OPEN_GENERAL_INFO_SHEET_EVENT = "openGeneralInfoSheet";
+
+// Family chat — notification channel
+export const CHAT_NOTIFICATION_CHANNEL_ID = "family-chat";
+
+// Family chat — AsyncStorage key for persisted unread count
+export const CHAT_UNREAD_KEY = "@tracknest/chat_unread_count";
+
+// Background FCM data-message handler task name
+export const BACKGROUND_NOTIFICATION_TASK_NAME = "background-notification-task";
+
+// Family chat — DeviceEventEmitter events
+export const CHAT_NEW_MESSAGE_EVENT = "chatNewMessage";
+export const CHAT_BADGE_CHANGED_EVENT = "chatBadgeChanged";
+export const CHAT_FOCUS_EVENT = "chatFocusChanged";
+export const CHAT_CIRCLE_CHANGED_EVENT = "chatCircleChanged";
+
 export type TrackingMode = "NORMAL" | "NAVIGATION";

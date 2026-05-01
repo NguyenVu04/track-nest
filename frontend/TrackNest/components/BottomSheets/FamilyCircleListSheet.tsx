@@ -1,5 +1,5 @@
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import React from "react";
+import React, { useMemo } from "react";
 import { useWindowDimensions } from "react-native";
 
 import { FamilyCircle } from "@/constant/types";
@@ -12,6 +12,7 @@ type FamilyCircleProps = {
   handleSelectFamilyCircle: (circle: FamilyCircle) => void;
   familyCircles: FamilyCircle[];
   onRefresh?: () => Promise<void>;
+  onAddFamilyCircle?: () => void;
   tabBarHeight?: number;
 };
 
@@ -22,20 +23,24 @@ const FamilyCircleListSheet = ({
   handleSelectFamilyCircle,
   familyCircles,
   onRefresh,
+  onAddFamilyCircle,
   tabBarHeight = 0,
 }: FamilyCircleProps) => {
   const { height: screenHeight } = useWindowDimensions();
   const handleSheetChanges = (index: number) => {};
+  // const snapPoints = useMemo(() => ["50%"], []);
 
   return (
     <BottomSheetModal
       ref={familyCircleSheetRef}
       onChange={handleSheetChanges}
       backdropComponent={renderBackdrop}
-      enableDynamicSizing={true}
-      maxDynamicContentSize={Math.floor(screenHeight * 0.8)}
+      // snapPoints={snapPoints}
+      enableDynamicSizing
+      maxDynamicContentSize={screenHeight * 0.6}
       index={0}
-      enableContentPanningGesture={true}
+      enableContentPanningGesture={false}
+      bottomInset={tabBarHeight}
       containerStyle={{ bottom: tabBarHeight }}
     >
       <FamilyCircleBottomSheet
@@ -43,6 +48,8 @@ const FamilyCircleListSheet = ({
         onSelectCircle={handleSelectFamilyCircle}
         familyCircles={familyCircles}
         onRefresh={onRefresh}
+        onAddFamilyCircle={onAddFamilyCircle}
+        tabBarHeight={tabBarHeight}
       />
     </BottomSheetModal>
   );

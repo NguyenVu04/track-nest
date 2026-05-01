@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.content.ContextCompat
+import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -17,11 +18,26 @@ class NativeLocationModule(private val reactContext: ReactApplicationContext) :
     private const val PREFS_NAME = "tracknest_native_location"
     private const val BUFFER_KEY = "location_buffer"
     const val EVENT_MODE_CHANGED = "trackingModeChanged"
+    const val EVENT_ACTIVITY_CHANGED = "activityChanged"
+    const val EVENT_LOCATION_UPDATED = "locationUpdated"
 
     private var instance: NativeLocationModule? = null
 
     fun emitModeChange(mode: String) {
       instance?.sendEvent(EVENT_MODE_CHANGED, mode)
+    }
+
+    fun emitActivityChange(activity: String) {
+      instance?.sendEvent(EVENT_ACTIVITY_CHANGED, activity)
+    }
+
+    fun emitLocationUpdate(latitude: Double, longitude: Double, speed: Double) {
+      val map = Arguments.createMap().apply {
+        putDouble("latitude", latitude)
+        putDouble("longitude", longitude)
+        putDouble("speed", speed)
+      }
+      instance?.sendEvent(EVENT_LOCATION_UPDATED, map)
     }
   }
 

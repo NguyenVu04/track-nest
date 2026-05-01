@@ -2,7 +2,8 @@ import axios from "axios";
 import { authService } from "./authService";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL || "http://localhost:8800/criminal-reports";
+  process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL ||
+  "http://localhost:8800/criminal-reports";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -34,16 +35,16 @@ api.interceptors.request.use(async (config) => {
 });
 
 export interface SubmitMissingPersonReportRequest {
-  userId: string;
-  reporterId: string;
   title: string;
   fullName: string;
   personalId: string;
-  photo?: string;
-  contactEmail?: string;
+  photo?: File;
+  contactEmail: string;
   contactPhone: string;
   date: string;
   content: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface CreateMissingPersonReportRequest {
@@ -105,12 +106,10 @@ export interface CreateCrimeReportRequest {
 }
 
 export interface UpdateCrimeReportRequest {
-  title?: string;
+  title: string;
   content?: string;
-  severity?: number;
-  date?: string;
-  longitude?: number;
-  latitude?: number;
+  severity: number;
+  date: string;
   numberOfVictims?: number;
   numberOfOffenders?: number;
   arrested?: boolean;
@@ -164,6 +163,29 @@ export interface GuidelinesDocumentResponse {
   createdAt: string;
   reporterId: string;
   isPublic: boolean;
+}
+
+export interface ChatbotSessionResponse {
+  sessionId: string;
+  createdAtMs: number;
+}
+
+export interface ChatbotMessageResponse {
+  response: string;
+  createdAt: number;
+}
+
+export interface ChatbotSessionMessage {
+  role: "USER" | "MODEL";
+  content: string;
+  createdAtMs: number;
+}
+
+export interface ChatbotSession {
+  documentId: string;
+  messages: ChatbotSessionMessage[];
+  messageLeft: number;
+  createdAtMs: number;
 }
 
 export interface PageResponse<T> {
@@ -433,6 +455,35 @@ export const criminalReportsService = {
     return response.data;
   },
 
+  // Chatbot endpoints
+  startChatbotSession: async (data: {
+    documentId: string;
+  }): Promise<ChatbotSessionResponse> => {
+    const response = await api.post<ChatbotSessionResponse>(
+      "/chatbot/session",
+      data,
+    );
+    return response.data;
+  },
+
+  sendChatbotMessage: async (data: {
+    sessionId: string;
+    message: string;
+  }): Promise<ChatbotMessageResponse> => {
+    const response = await api.post<ChatbotMessageResponse>(
+      "/chatbot/message",
+      data,
+    );
+    return response.data;
+  },
+
+  getChatbotSession: async (sessionId: string): Promise<ChatbotSession> => {
+    const response = await api.get<ChatbotSession>(
+      `/chatbot/session/${sessionId}`,
+    );
+    return response.data;
+  },
+
   // ReportViewer endpoints
   viewMissingPersonReport: async (
     reportId: string,
@@ -499,10 +550,22 @@ export const criminalReportsService = {
   submitMissingPersonReport: async (
     data: SubmitMissingPersonReportRequest,
   ): Promise<MissingPersonReportResponse> => {
+    const formData = new FormData();
+    formData.append("title", data.title);
+    formData.append("fullName", data.fullName);
+    formData.append("personalId", data.personalId);
+    formData.append("content", data.content);
+    formData.append("contactEmail", data.contactEmail);
+    formData.append("contactPhone", data.contactPhone);
+    formData.append("date", data.date);
+    if (data.latitude != null) formData.append("latitude", data.latitude.toString());
+    if (data.longitude != null) formData.append("longitude", data.longitude.toString());
+    if (data.photo) formData.append("photo", data.photo);
+
     const response = await api.post<MissingPersonReportResponse>(
       "/missing-person-request-receiver/submit",
-      null,
-      { params: data },
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
     );
     return response.data;
   },
@@ -576,9 +639,13 @@ export const criminalReportsService = {
     const formData = new FormData();
     formData.append("file", file);
     if (bucket) formData.append("bucket", bucket);
-    const response = await api.post<FileUploadResponse>("/file/upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await api.post<FileUploadResponse>(
+      "/file/upload",
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
     return response.data;
   },
 
@@ -613,5 +680,7 @@ export const criminalReportsService = {
     const response = await api.get<string>(`/file/${bucket}/${filename}`);
     return response.data;
   },
-};
 
+  getMissingPersonPhotoUrl: (reportId: string): string =>
+    `${API_URL}/report-viewer/missing-person-reports/${reportId}/photo`,
+};

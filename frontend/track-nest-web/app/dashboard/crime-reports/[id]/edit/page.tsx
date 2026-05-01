@@ -27,10 +27,31 @@ export default function EditCrimeReportPage() {
       try {
         setIsLoading(true);
         const response = await criminalReportsService.getCrimeReport(id);
+        let contentValue = response.content;
+        if (contentValue) {
+          try {
+            let contentUrl = contentValue;
+            if (
+              !contentUrl.trim().startsWith("<") &&
+              !contentUrl.startsWith("http")
+            ) {
+              contentUrl = await criminalReportsService.getFileUrl(
+                "criminal-reports",
+                contentUrl,
+              );
+            }
+            if (contentUrl.startsWith("http")) {
+              const contentResponse = await fetch(contentUrl);
+              contentValue = await contentResponse.text();
+            }
+          } catch (error) {
+            console.error("Failed to resolve report content:", error);
+          }
+        }
         setReport({
           id: response.id,
           title: response.title,
-          content: response.content,
+          content: contentValue,
           severity: response.severity as CrimeReport["severity"],
           date: response.date,
           longitude: response.longitude,
@@ -38,6 +59,7 @@ export default function EditCrimeReportPage() {
           numberOfVictims: response.numberOfVictims,
           numberOfOffenders: response.numberOfOffenders,
           arrested: response.arrested,
+          photos: response.photos ?? [],
           createdAt: response.createdAt,
           updatedAt: response.updatedAt,
           reporterId: response.reporterId,
@@ -77,11 +99,10 @@ export default function EditCrimeReportPage() {
       content: updated.content,
       severity: updated.severity,
       date: updated.date,
-      longitude: updated.longitude,
-      latitude: updated.latitude,
       numberOfVictims: updated.numberOfVictims,
       numberOfOffenders: updated.numberOfOffenders,
       arrested: updated.arrested,
+      photos: updated.photos,
     };
     await criminalReportsService.updateCrimeReport(id, request);
     toast.success("Report updated successfully");

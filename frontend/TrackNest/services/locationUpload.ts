@@ -8,28 +8,12 @@ import {
 } from "@/utils";
 import { scheduleUploadStatusNotification } from "@/utils/notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-export type LocationQueueEntry = {
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  speed: number;
-  timestamp: number;
-};
-
-export type LocationUploadStatus =
-  | "success"
-  | "failed"
-  | "no_network"
-  | "auth_paused"
-  | "empty";
-
-export type LocationUploadResult = {
-  status: LocationUploadStatus;
-  uploaded: number;
-  failed: number;
-  reason?: string;
-};
+import type { LocationQueueEntry, LocationUploadResult } from "@/types/locationUpload";
+export type {
+  LocationQueueEntry,
+  LocationUploadResult,
+  LocationUploadStatus,
+} from "@/types/locationUpload";
 
 export function isNetworkError(err: any): boolean {
   if (!err) return false;
@@ -54,7 +38,6 @@ export async function uploadPendingLocations(
     const shareLocationEnabled =
       (await AsyncStorage.getItem(SHARE_LOCATION_KEY)) === "true";
     if (!shareLocationEnabled) {
-      console.log("Upload task: sharing location is disabled.");
       return { status: "empty", uploaded: 0, failed: 0 };
     }
 
@@ -65,11 +48,8 @@ export async function uploadPendingLocations(
     );
 
     if (!queue || queue.length === 0) {
-      console.log("Upload task: no pending locations.");
       return { status: "empty", uploaded: 0, failed: 0 };
     }
-
-    console.log(`Upload task: uploading ${queue.length} location(s)...`);
 
     const locations = queue.map((entry) => ({
       latitudeDeg: entry.latitude,
@@ -82,7 +62,6 @@ export async function uploadPendingLocations(
     try {
       await updateUserLocation(locations);
       await saveKey(LOCATION_UPLOAD_QUEUE_KEY, []);
-      console.log("Upload task: queue flushed.");
 
       if (notify) {
         await scheduleUploadStatusNotification(

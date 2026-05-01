@@ -56,6 +56,7 @@ message Message {
   string sender_id = 2;
   string message_content = 3;
   int64 sent_at_ms = 4;
+  string sender_name = 5;
 }
 
 message ReceiveMessageStreamRequest {

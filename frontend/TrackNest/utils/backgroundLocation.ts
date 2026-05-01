@@ -3,62 +3,53 @@ import * as BackgroundTask from "expo-background-task";
 import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 import { NativeModules, Platform } from "react-native";
-import { mergeStoredLocationSamplesWithTimeSpent } from "./locationMerge";
+import { syncLocationSamples } from "./locationMerge";
 import { StoredLocationEntry } from "./locationTypes";
 
-type NativeLocationModule = {
+// ─── Native module bridge (Android only) ──────────────────────────────────────
+
+type NativeLocationModuleType = {
   start: () => void;
   stop: () => void;
   consumeBufferedLocations: () => Promise<string>;
 };
 
-const nativeLocationModule =
+const nativeModule =
   Platform.OS === "android"
-    ? (NativeModules.NativeLocationModule as NativeLocationModule | undefined)
+    ? (NativeModules.NativeLocationModule as NativeLocationModuleType | undefined)
     : undefined;
 
-export async function requestPermissionsAndStart() {
-  const { status: fgStatus } =
-    await Location.requestForegroundPermissionsAsync();
+// ─── Permissions + tracking lifecycle ─────────────────────────────────────────
 
-  if (fgStatus !== "granted") {
-    return;
-  }
+export async function requestPermissionsAndStart(): Promise<void> {
+  const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
+  if (fgStatus !== "granted") return;
 
-  const { status: bgStatus } =
-    await Location.requestBackgroundPermissionsAsync();
+  const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
+  if (bgStatus !== "granted") return;
 
-  if (bgStatus !== "granted") {
-    return;
-  }
-
-  if (Platform.OS === "android" && nativeLocationModule?.start) {
-    nativeLocationModule.start();
+  if (nativeModule?.start) {
+    nativeModule.start();
   } else {
-    await Location.startLocationUpdatesAsync(
-      BACKGROUND_USER_LOCATION_TASK_NAME,
-      {
-        accuracy: Location.Accuracy.BestForNavigation,
-        mayShowUserSettingsDialog: true,
-        // Foreground service notification shown while tracking in background
-        foregroundService: {
-          notificationTitle: "TrackNest is tracking your location",
-          notificationBody: "",
-          notificationColor: "#74becb",
-          killServiceOnDestroy: false,
-        },
-        timeInterval: 5000, // milliseconds - update every 5 seconds
-        distanceInterval: 10, // meters - update after 10m movement
-        showsBackgroundLocationIndicator: true,
+    await Location.startLocationUpdatesAsync(BACKGROUND_USER_LOCATION_TASK_NAME, {
+      accuracy: Location.Accuracy.BestForNavigation,
+      mayShowUserSettingsDialog: true,
+      foregroundService: {
+        notificationTitle: "TrackNest is tracking your location",
+        notificationBody: "",
+        notificationColor: "#74becb",
+        killServiceOnDestroy: false,
       },
-    );
+      timeInterval: 5000,
+      distanceInterval: 10,
+      showsBackgroundLocationIndicator: true,
+    });
   }
 }
 
-export async function stopBackgroundLocationTracking() {
-  if (Platform.OS === "android" && nativeLocationModule?.stop) {
-    nativeLocationModule.stop();
-    console.log("Native background location tracking stopped.");
+export async function stopBackgroundLocationTracking(): Promise<void> {
+  if (nativeModule?.stop) {
+    nativeModule.stop();
     return;
   }
 
@@ -67,59 +58,38 @@ export async function stopBackgroundLocationTracking() {
   );
   if (isRegistered) {
     await Location.stopLocationUpdatesAsync(BACKGROUND_USER_LOCATION_TASK_NAME);
-    console.log("Background location tracking stopped.");
   }
 }
 
-export async function registerBackgroundTaskAsync(taskName: string) {
-  console.log(`Registering background task: ${taskName}`);
+// ─── Background task registration ─────────────────────────────────────────────
 
-  const status = await BackgroundTask.getStatusAsync();
+export async function registerBackgroundTaskAsync(taskName: string): Promise<void> {
   const isAlreadyRegistered = await TaskManager.isTaskRegisteredAsync(taskName);
-
-  console.log(
-    `Background task status: ${status}, alreadyRegistered: ${isAlreadyRegistered}`,
-  );
-
-  if (isAlreadyRegistered) {
-    return;
-  }
+  if (isAlreadyRegistered) return;
 
   await BackgroundTask.registerTaskAsync(taskName, {
-    minimumInterval: 15 * 60, // 15 minutes
+    minimumInterval: 15 * 60,
   });
-
-  const isRegisteredAfter = await TaskManager.isTaskRegisteredAsync(taskName);
-  console.log(`Background task registered (${taskName}): ${isRegisteredAfter}`);
 }
 
-// 3. (Optional) Unregister tasks by specifying the task name
-// This will cancel any future background task calls that match the given name
-// Note: This does NOT need to be in the global scope and CAN be used in your React components!
-export async function unregisterBackgroundTaskAsync(taskName: string) {
-  console.log(`Unregistering background task: ${taskName}`);
+export async function unregisterBackgroundTaskAsync(taskName: string): Promise<void> {
   return BackgroundTask.unregisterTaskAsync(taskName);
 }
 
+// ─── Native location buffer ────────────────────────────────────────────────────
+// Drains the SharedPreferences buffer written by NativeLocationService,
+// validates the entries, then syncs them into AsyncStorage.
+
 export async function flushNativeLocationBufferToStorage(): Promise<number> {
-  if (
-    !(
-      Platform.OS === "android" &&
-      nativeLocationModule?.consumeBufferedLocations
-    )
-  ) {
-    return 0;
-  }
+  if (!nativeModule?.consumeBufferedLocations) return 0;
 
   try {
-    const payload = await nativeLocationModule.consumeBufferedLocations();
+    const payload = await nativeModule.consumeBufferedLocations();
     const parsed = JSON.parse(payload || "[]") as StoredLocationEntry[];
 
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      return 0;
-    }
+    if (!Array.isArray(parsed) || parsed.length === 0) return 0;
 
-    const validSamples = parsed
+    const valid = parsed
       .filter(
         (item) =>
           Number.isFinite(item.latitude) &&
@@ -134,12 +104,10 @@ export async function flushNativeLocationBufferToStorage(): Promise<number> {
         timestamp: Number(item.timestamp),
       }));
 
-    if (validSamples.length === 0) {
-      return 0;
-    }
+    if (valid.length === 0) return 0;
 
-    await mergeStoredLocationSamplesWithTimeSpent(validSamples);
-    return validSamples.length;
+    await syncLocationSamples(valid);
+    return valid.length;
   } catch (error) {
     console.warn("Failed to flush native location buffer:", error);
     return 0;

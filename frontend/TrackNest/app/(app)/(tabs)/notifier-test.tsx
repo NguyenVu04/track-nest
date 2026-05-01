@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { showToast } from "@/utils";
 
 import { notifierTest as notifierTestLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -106,7 +106,7 @@ export default function NotifierTestScreen() {
 
   const handleRegisterDevice = useCallback(async () => {
     if (!regDeviceToken.trim()) {
-      Alert.alert(t.errorTitle, t.enterDeviceToken);
+      showToast(t.enterDeviceToken, t.errorTitle);
       return;
     }
     try {
@@ -119,7 +119,7 @@ export default function NotifierTestScreen() {
       );
       setRegisterResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsRegistering(false);
     }
@@ -127,7 +127,7 @@ export default function NotifierTestScreen() {
 
   const handleUpdateDevice = useCallback(async () => {
     if (!updateId.trim() || !updateDeviceToken.trim()) {
-      Alert.alert(t.errorTitle, t.enterIdAndToken);
+      showToast(t.enterIdAndToken, t.errorTitle);
       return;
     }
     try {
@@ -141,7 +141,7 @@ export default function NotifierTestScreen() {
       );
       setUpdateDeviceResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsUpdatingDevice(false);
     }
@@ -156,7 +156,7 @@ export default function NotifierTestScreen() {
 
   const handleUnregisterDevice = useCallback(async () => {
     if (!unregId.trim()) {
-      Alert.alert(t.errorTitle, t.enterDeviceId);
+      showToast(t.enterDeviceId, t.errorTitle);
       return;
     }
     try {
@@ -165,7 +165,7 @@ export default function NotifierTestScreen() {
       const res = await unregisterMobileDevice(unregId);
       setUnregisterResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsUnregistering(false);
     }
@@ -174,7 +174,7 @@ export default function NotifierTestScreen() {
   const handleListTrackingNotifications = useCallback(async () => {
     const size = parseInt(trackPageSize, 10);
     if (isNaN(size) || size <= 0) {
-      Alert.alert(t.errorTitle, t.validPageSize);
+      showToast(t.validPageSize, t.errorTitle);
       return;
     }
     try {
@@ -186,7 +186,7 @@ export default function NotifierTestScreen() {
       );
       setListTrackResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsListingTrack(false);
     }
@@ -194,7 +194,7 @@ export default function NotifierTestScreen() {
 
   const handleDeleteTrackingNotification = useCallback(async () => {
     if (!delTrackId.trim()) {
-      Alert.alert(t.errorTitle, t.enterNotificationId);
+      showToast(t.enterNotificationId, t.errorTitle);
       return;
     }
     try {
@@ -203,7 +203,7 @@ export default function NotifierTestScreen() {
       const res = await deleteTrackingNotification(delTrackId);
       setDelTrackResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsDeletingTrack(false);
     }
@@ -215,7 +215,7 @@ export default function NotifierTestScreen() {
       .map((s) => s.trim())
       .filter(Boolean);
     if (ids.length === 0) {
-      Alert.alert(t.errorTitle, t.enterCommaIds);
+      showToast(t.enterCommaIds, t.errorTitle);
       return;
     }
     try {
@@ -224,7 +224,7 @@ export default function NotifierTestScreen() {
       const res = await deleteTrackingNotifications(ids);
       setDelTracksResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsDeletingTracks(false);
     }
@@ -237,7 +237,7 @@ export default function NotifierTestScreen() {
       const res = await clearTrackingNotifications();
       setClearTrackResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsClearingTrack(false);
     }
@@ -250,7 +250,7 @@ export default function NotifierTestScreen() {
       const res = await countTrackingNotifications();
       setCountTrackResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsCountingTrack(false);
     }
@@ -259,7 +259,7 @@ export default function NotifierTestScreen() {
   const handleListRiskNotifications = useCallback(async () => {
     const size = parseInt(riskPageSize, 10);
     if (isNaN(size) || size <= 0) {
-      Alert.alert(t.errorTitle, t.validPageSize);
+      showToast(t.validPageSize, t.errorTitle);
       return;
     }
     try {
@@ -268,7 +268,7 @@ export default function NotifierTestScreen() {
       const res = await listRiskNotifications(size, riskPageToken || undefined);
       setListRiskResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsListingRisk(false);
     }
@@ -276,7 +276,7 @@ export default function NotifierTestScreen() {
 
   const handleDeleteRiskNotification = useCallback(async () => {
     if (!delRiskId.trim()) {
-      Alert.alert(t.errorTitle, t.enterNotificationId);
+      showToast(t.enterNotificationId, t.errorTitle);
       return;
     }
     try {
@@ -285,7 +285,7 @@ export default function NotifierTestScreen() {
       const res = await deleteRiskNotification(delRiskId);
       setDelRiskResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsDeletingRisk(false);
     }
@@ -297,7 +297,7 @@ export default function NotifierTestScreen() {
       .map((s) => s.trim())
       .filter(Boolean);
     if (ids.length === 0) {
-      Alert.alert(t.errorTitle, t.enterCommaIds);
+      showToast(t.enterCommaIds, t.errorTitle);
       return;
     }
     try {
@@ -306,7 +306,7 @@ export default function NotifierTestScreen() {
       const res = await deleteRiskNotifications(ids);
       setDelRisksResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsDeletingRisks(false);
     }
@@ -319,7 +319,7 @@ export default function NotifierTestScreen() {
       const res = await clearRiskNotifications();
       setClearRiskResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsClearingRisk(false);
     }
@@ -332,7 +332,7 @@ export default function NotifierTestScreen() {
       const res = await countRiskNotifications();
       setCountRiskResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsCountingRisk(false);
     }
@@ -379,7 +379,7 @@ export default function NotifierTestScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>{t.title}</Text>
 

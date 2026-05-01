@@ -88,7 +88,7 @@ app:
     client-secret: ${KEYCLOAK_CLIENT_SECRET:2Bu3haFOwsOW7ONprnSGnmVoU8SvHLmy}
     public-realm: ${KEYCLOAK_PUBLIC_REALM:public-dev}
   security:
-    allowed-origins: ${ALLOWED_ORIGINS:http://localhost}
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost,http://localhost:3000}
     allowed-methods:
       - GET
       - POST

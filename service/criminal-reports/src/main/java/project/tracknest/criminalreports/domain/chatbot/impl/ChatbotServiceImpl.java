@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 @Slf4j
 class ChatbotServiceImpl implements ChatbotService {
-    private static final String DEFAULT_FILE_NAME = "index.html";
+    private static final String DEFAULT_FILE_EXTENSION = ".html";
     private static final short MESSAGE_LIMIT = 15;
     private static final String SYSTEM_PROMPT = """
             You are a professional historical assistant.
@@ -221,6 +221,6 @@ class ChatbotServiceImpl implements ChatbotService {
     }
 
     private String objectName(UUID documentId) {
-        return documentId + "/" + DEFAULT_FILE_NAME;
+        return documentId + DEFAULT_FILE_EXTENSION;
     }
 }

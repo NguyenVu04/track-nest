@@ -16,5 +16,7 @@ public interface MissingPersonRequestReceiverService {
             String photo,
             String contactEmail,
             String contactPhone,
-            LocalDate date);
+            LocalDate date,
+            double latitude,
+            double longitude);
 }

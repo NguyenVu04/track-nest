@@ -1,133 +1,252 @@
 import { reportDetail as reportDetailLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
-import { getReportById, Report } from "@/services/reports";
+import { criminalReportsService } from "@/services/criminalReports";
+import type { CrimeReport } from "@/types/criminalReports";
+import { colors, radii, spacing } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Linking,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function severityColors(n: number): { bg: string; text: string } {
+  if (n >= 4) return { bg: "#ffd6d6", text: "#c0392b" };
+  if (n >= 2) return { bg: "#fff0d6", text: "#e67e22" };
+  return { bg: "#d6f0e0", text: "#1e8449" };
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function InfoRow({
+  icon,
+  label,
+  value,
+  last,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  label: string;
+  value: string;
+  last?: boolean;
+}) {
+  return (
+    <View style={[styles.infoRow, last && { borderBottomWidth: 0 }]}>
+      <View style={styles.infoIconBox}>
+        <Ionicons name={icon} size={18} color={colors.primary} />
+      </View>
+      <View style={styles.infoTextBox}>
+        <Text style={styles.infoLabel}>{label}</Text>
+        <Text style={styles.infoValue}>{value}</Text>
+      </View>
+    </View>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ReportDetailScreen() {
   const router = useRouter();
   const t = useTranslation(reportDetailLang);
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [report, setReport] = useState<Report | null>(null);
+  const [report, setReport] = useState<CrimeReport | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadReport = async () => {
-      if (!id) return;
-      try {
-        const data = await getReportById(id);
-        setReport(data || null);
-      } catch (err) {
-        console.error("Failed to load report:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadReport();
+    if (!id) return;
+    criminalReportsService
+      .getPublicCrimeReportById(id)
+      .then((data) => setReport(data))
+      .catch((err) => console.error("Failed to load report:", err))
+      .finally(() => setLoading(false));
   }, [id]);
+
+  const handleShare = async () => {
+    if (!report) return;
+    try {
+      await Share.share({
+        message: `[TrackNest] ${report.title}\nLocation: ${report.latitude.toFixed(6)}, ${report.longitude.toFixed(6)}\n${report.content}`,
+      });
+    } catch (_) {}
+  };
+
+  const handleGetDirections = () => {
+    if (!report) return;
+    Linking.openURL(
+      `https://www.google.com/maps/dir/?api=1&destination=${report.latitude},${report.longitude}`
+    );
+  };
+
+  const handleFollowIncident = () => {
+    showToast("You will be notified of any updates to this incident.", t.followIncident);
+  };
+
+  // ── Loading ───────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-        >
-          <ActivityIndicator size="large" color="#74becb" />
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </SafeAreaView>
     );
   }
+
+  // ── Not Found ─────────────────────────────────────────────────────────────
 
   if (!report) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.push("/reports")}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
+          <Pressable onPress={() => router.back()} style={styles.headerBtn}>
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </Pressable>
           <Text style={styles.headerTitle}>{t.pageTitle}</Text>
-          <View style={{ width: 24 }} />
+          <View style={{ width: 40 }} />
         </View>
-        <View
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-        >
-          <Text style={{ fontSize: 16, color: "#666" }}>
-            {t.reportNotFound}
-          </Text>
+        <View style={styles.center}>
+          <Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
+          <Text style={styles.emptyText}>{t.reportNotFound}</Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  // ── Derived Values ────────────────────────────────────────────────────────
+
+  const sev = severityColors(report.severity);
+  const sevLabel =
+    report.severity >= 4
+      ? t.highSeverity
+      : report.severity >= 2
+      ? t.mediumSeverity
+      : t.lowSeverity;
+
+  const statusLabel = report.arrested ? "Resolved" : t.underInvestigation;
+  const statusColor = report.arrested ? colors.success : colors.primary;
+
+  const incidentDateStr = report.date
+    ? new Date(report.date).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "—";
+
+  const timeOfEventStr =
+    new Date(report.createdAt).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }) + " (Estimated)";
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
+        <Pressable onPress={() => router.back()} style={styles.headerBtn}>
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle}>{t.pageTitle}</Text>
-        <View style={{ width: 24 }} />
+        <Pressable onPress={handleShare} style={styles.headerBtn}>
+          <Ionicons name="share-social-outline" size={22} color={colors.primary} />
+        </Pressable>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.detailCard}>
-          <View style={styles.titleRow}>
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
-            >
-              <Ionicons name="warning-outline" size={28} color="#ff4d4f" />
-              <Text style={styles.title}>{report.title}</Text>
-            </View>
-            <View
-              style={[
-                styles.severityChip,
-                report.severity === "High"
-                  ? styles.sevHigh
-                  : report.severity === "Medium"
-                    ? styles.sevMed
-                    : styles.sevLow,
-              ]}
-            >
-              <Text style={styles.severityText}>{report.severity}</Text>
-            </View>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* ── Hero Map ── */}
+        <View style={styles.heroMapContainer}>
+          <MapView
+            provider={PROVIDER_GOOGLE}
+            style={styles.heroMap}
+            initialRegion={{
+              latitude: report.latitude,
+              longitude: report.longitude,
+              latitudeDelta: 0.012,
+              longitudeDelta: 0.012,
+            }}
+            scrollEnabled={false}
+            zoomEnabled={false}
+          >
+            <Marker
+              coordinate={{ latitude: report.latitude, longitude: report.longitude }}
+              pinColor={colors.danger}
+              title={report.title}
+            />
+          </MapView>
+          <View style={styles.getDirectionsBtnWrapper}>
+            <Pressable style={styles.getDirectionsBtn} onPress={handleGetDirections}>
+              <Ionicons name="navigate-outline" size={15} color={colors.primary} />
+              <Text style={styles.getDirectionsBtnText}>{t.getDirections}</Text>
+            </Pressable>
           </View>
+        </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.location}</Text>
-            <View style={styles.infoRow}>
-              <Ionicons name="location" size={20} color="#74becb" />
-              <Text style={styles.infoText}>{report.address}</Text>
-            </View>
+        {/* ── Title Block ── */}
+        <View style={styles.titleBlock}>
+          <View style={[styles.sevBadge, { backgroundColor: sev.bg }]}>
+            <Text style={[styles.sevText, { color: sev.text }]}>{sevLabel}</Text>
           </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.dateTime}</Text>
-            <View style={styles.infoRow}>
-              <Ionicons name="calendar" size={20} color="#74becb" />
-              <Text style={styles.infoText}>{report.date}</Text>
-            </View>
+          <Text style={styles.reportTitle}>{report.title}</Text>
+          <View style={styles.statusRow}>
+            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+            <Text style={[styles.statusLabel, { color: statusColor }]}>{statusLabel}</Text>
           </View>
+        </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.description}</Text>
-            <Text style={styles.description}>{report.description}</Text>
-          </View>
+        <View style={styles.divider} />
 
-          {report.photos && report.photos.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Photos ({report.photos.length})</Text>
+        {/* ── Info Rows ── */}
+        <View style={styles.infoCard}>
+          <InfoRow
+            icon="location-outline"
+            label="LOCATION"
+            value={`${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}`}
+          />
+          <InfoRow
+            icon="calendar-outline"
+            label={t.reportedOn.toUpperCase()}
+            value={incidentDateStr}
+          />
+          <InfoRow
+            icon="time-outline"
+            label={t.timeOfEvent.toUpperCase()}
+            value={timeOfEventStr}
+            last
+          />
+        </View>
+
+        <View style={styles.divider} />
+
+        {/* ── Incident Overview ── */}
+        <View style={styles.overviewSection}>
+          <Text style={styles.overviewTitle}>{t.incidentOverview}</Text>
+          <Text style={styles.overviewText}>{report.content}</Text>
+        </View>
+
+        {/* ── Photos ── */}
+        {report.photos && report.photos.length > 0 && (
+          <>
+            <View style={styles.divider} />
+            <View style={styles.overviewSection}>
+              <Text style={styles.overviewTitle}>
+                {t.photosCount.replace("{{count}}", String(report.photos.length))}
+              </Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -143,145 +262,205 @@ export default function ReportDetailScreen() {
                 ))}
               </ScrollView>
             </View>
-          )}
+          </>
+        )}
 
-          <View style={styles.actionButtons}>
-            <Pressable style={[styles.button, styles.callButton]}>
-              <Ionicons name="call" size={20} color="#fff" />
-              <Text style={styles.buttonText}>{t.callPolice}</Text>
-            </Pressable>
-            <Pressable style={[styles.button, styles.shareButton]}>
-              <Ionicons name="share-social" size={20} color="#74becb" />
-              <Text style={[styles.buttonText, { color: "#74becb" }]}>
-                {t.share}
-              </Text>
-            </Pressable>
-          </View>
+        {/* ── Action Buttons ── */}
+        <View style={styles.actionRow}>
+          <Pressable style={[styles.actionBtn, styles.shareBtn]} onPress={handleShare}>
+            <Ionicons name="share-social-outline" size={20} color={colors.textPrimary} />
+            <Text style={styles.shareBtnText}>{t.share}</Text>
+          </Pressable>
+          <Pressable style={[styles.actionBtn, styles.followBtn]} onPress={handleFollowIncident}>
+            <Ionicons name="notifications" size={20} color="#fff" />
+            <Text style={styles.followBtnText}>{t.followIncident}</Text>
+          </Pressable>
         </View>
+
+        <View style={{ height: 32 }} />
       </ScrollView>
+
+      {/* Floating Chatbot Panel */}
+      <ChatbotPanel 
+        documentId={report.content} 
+        title={report.title} 
+        emptyState="Ask a question about this crime report." 
+      />
     </SafeAreaView>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
+  container: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
+  emptyText: { fontSize: 16, color: colors.textSecondary },
+
+  // Header
   header: {
     height: 56,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: colors.border,
+    backgroundColor: colors.bg,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+  headerTitle: { fontSize: 17, fontWeight: "700", color: colors.textPrimary },
+  headerBtn: { padding: 6, borderRadius: radii.sm },
+
+  scroll: { flex: 1 },
+
+  // Hero Map
+  heroMapContainer: {
+    height: 230,
+    width: "100%",
+    backgroundColor: colors.bgSecondary,
   },
-  content: {
-    flex: 1,
-    padding: 16,
+  heroMap: { flex: 1 },
+  getDirectionsBtnWrapper: {
+    position: "absolute",
+    bottom: spacing.md,
+    left: 0,
+    right: 0,
+    alignItems: "center",
   },
-  detailCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  titleRow: {
+  getDirectionsBtn: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 24,
-    gap: 12,
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.bg,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  title: {
-    fontSize: 24,
+  getDirectionsBtnText: {
+    fontSize: 13,
     fontWeight: "700",
-    flex: 1,
+    color: colors.primary,
   },
-  severityChip: {
-    paddingVertical: 6,
+
+  // Title Block
+  titleBlock: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    gap: spacing.xs,
+    backgroundColor: colors.bg,
+  },
+  sevBadge: {
+    alignSelf: "flex-start",
     paddingHorizontal: 12,
-    borderRadius: 16,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginBottom: 4,
   },
-  severityText: {
-    fontSize: 12,
-    fontWeight: "600",
+  sevText: { fontSize: 11, fontWeight: "800", letterSpacing: 0.6 },
+  reportTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: colors.textPrimary,
+    lineHeight: 32,
   },
-  sevHigh: {
-    backgroundColor: "#ffd6d6",
-  },
-  sevMed: {
-    backgroundColor: "#fff0d6",
-  },
-  sevLow: {
-    backgroundColor: "#f2fff0",
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 10,
+  statusRow: { flexDirection: "row", alignItems: "center", gap: 7, marginTop: 2 },
+  statusDot: { width: 9, height: 9, borderRadius: 5 },
+  statusLabel: { fontSize: 14, fontWeight: "600" },
+
+  divider: { height: 1, backgroundColor: colors.border },
+
+  // Info Card
+  infoCard: {
+    backgroundColor: colors.bg,
   },
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  infoText: {
-    fontSize: 16,
-    color: "#555",
-    flex: 1,
+  infoIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.primaryMuted,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  description: {
+  infoTextBox: { flex: 1 },
+  infoLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.textMuted,
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
+  infoValue: { fontSize: 15, fontWeight: "600", color: colors.textPrimary },
+
+  // Incident Overview
+  overviewSection: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    gap: spacing.sm,
+    backgroundColor: colors.bg,
+  },
+  overviewTitle: {
     fontSize: 16,
-    color: "#666",
+    fontWeight: "700",
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  overviewText: {
+    fontSize: 15,
+    color: colors.textSecondary,
     lineHeight: 24,
   },
-  photoRow: {
-    flexDirection: "row",
-    gap: 8,
-    paddingVertical: 4,
-  },
+
+  // Photos
+  photoRow: { flexDirection: "row", gap: spacing.sm },
   photo: {
     width: 160,
     height: 120,
-    borderRadius: 10,
-    backgroundColor: "#f0f0f0",
+    borderRadius: radii.md,
+    backgroundColor: colors.border,
   },
-  actionButtons: {
+
+  // Action Buttons
+  actionRow: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 24,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.bg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
-  button: {
+  actionBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 14,
+    borderRadius: radii.lg,
     gap: 8,
   },
-  callButton: {
-    backgroundColor: "#ff4d4f",
+  shareBtn: {
+    backgroundColor: colors.bg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
-  shareButton: {
-    backgroundColor: "#f0f0f0",
-  },
-  buttonText: {
-    fontWeight: "600",
-    fontSize: 14,
-    color: "#fff",
-  },
+  shareBtnText: { fontWeight: "700", fontSize: 14, color: colors.textPrimary },
+  followBtn: { backgroundColor: colors.primary },
+  followBtnText: { fontWeight: "700", fontSize: 14, color: "#fff" },
 });

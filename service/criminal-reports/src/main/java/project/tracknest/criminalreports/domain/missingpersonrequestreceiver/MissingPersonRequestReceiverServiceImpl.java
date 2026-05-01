@@ -44,7 +44,9 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
             String photo,
             String contactEmail,
             String contactPhone,
-            LocalDate date
+            LocalDate date,
+            double latitude,
+            double longitude
     ) {
 
         log.info("Submitting missing person report for user: {}", userId);
@@ -72,6 +74,8 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
                 .reporter(reporter)
                 .status(status)
                 .createdAt(OffsetDateTime.now())
+                .latitude(latitude)
+                .longitude(longitude)
                 .build();
 
         MissingPersonReport saved = missingPersonReportRepository.saveAndFlush(report);

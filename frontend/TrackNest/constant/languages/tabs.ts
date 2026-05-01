@@ -1,6 +1,7 @@
 export const Vietnamese = {
   map: "Bản đồ",
   reports: "Báo cáo",
+  familyChat: "Trò chuyện",
   settings: "Cài đặt",
   trackerTest: "Kiểm thử Tracker",
   trackingManagerTest: "Kiểm thử TM",
@@ -11,6 +12,7 @@ export const Vietnamese = {
 export const English = {
   map: "Map",
   reports: "Reports",
+  familyChat: "Chat",
   settings: "Settings",
   trackerTest: "Tracker Test",
   trackingManagerTest: "TM Test",

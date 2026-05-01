@@ -1,11 +1,13 @@
+import { useAppModal } from "@/components/Modals/AppModal";
+import { LocationPickerModal } from "@/components/Modals/LocationPickerModal";
 import { createReport as createReportLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
-import { createCrimeReport } from "@/services/criminalReports";
-import { useAppModal } from "@/components/Modals/AppModal";
+import { createCrimeReport } from "@/utils/crimeHelpers";
+import { colors, radii, spacing } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -19,7 +21,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, radii, spacing } from "@/styles/styles";
 
 const MAX_IMAGES = 5;
 
@@ -30,10 +31,11 @@ export default function CreateReportScreen() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState<"Low" | "Medium" | "High">("Medium");
-  const [latitude, setLatitude] = useState("10.7769");
-  const [longitude, setLongitude] = useState("106.6424");
+  const [latitude, setLatitude] = useState(10.7769);
+  const [longitude, setLongitude] = useState(106.6424);
   const [photoUris, setPhotoUris] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   const handleAddPhoto = async () => {
     if (photoUris.length >= MAX_IMAGES) return;
@@ -42,7 +44,7 @@ export default function CreateReportScreen() {
     if (status !== "granted") return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: false,
       quality: 0.8,
     });
@@ -58,30 +60,39 @@ export default function CreateReportScreen() {
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      showAlert("Error", "Please enter a title", "warning");
+      showAlert(t.errorTitle, t.titleRequired, "warning");
       return;
     }
     if (!description.trim()) {
-      showAlert("Error", "Please enter a description", "warning");
+      showAlert(t.errorTitle, t.descriptionRequired, "warning");
       return;
     }
 
     setLoading(true);
     try {
+      console.log("Create report with: ", {
+        title: title.trim(),
+        description: description.trim(),
+        severity,
+        latitude,
+        longitude,
+        images: photoUris,
+      });
+
       await createCrimeReport({
         title: title.trim(),
         description: description.trim(),
         severity,
-        latitude: parseFloat(latitude) || 10.7769,
-        longitude: parseFloat(longitude) || 106.6424,
+        latitude,
+        longitude,
         images: photoUris,
       });
-      showAlert("Success", "Report submitted successfully", "success", "OK", () =>
+      showAlert(t.successTitle, t.submitSuccess, "success", t.okButton, () =>
         router.back(),
       );
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to submit report";
-      showAlert("Error", msg, "error");
+      const msg = err instanceof Error ? err.message : t.submitError;
+      showAlert(t.errorTitle, msg, "error");
     } finally {
       setLoading(false);
     }
@@ -207,34 +218,31 @@ export default function CreateReportScreen() {
 
           <View style={styles.section}>
             <Text style={styles.label}>{t.locationLabel}</Text>
-            <View style={styles.locationRow}>
-              <View style={styles.locationInput}>
-                <Text style={styles.locationLabel}>Lat</Text>
-                <TextInput
-                  style={styles.input}
-                  value={latitude}
-                  onChangeText={setLatitude}
-                  keyboardType="numeric"
-                  placeholder="10.7769"
-                  placeholderTextColor="#999"
-                />
-              </View>
-              <View style={styles.locationInput}>
-                <Text style={styles.locationLabel}>Lng</Text>
-                <TextInput
-                  style={styles.input}
-                  value={longitude}
-                  onChangeText={setLongitude}
-                  keyboardType="numeric"
-                  placeholder="106.6424"
-                  placeholderTextColor="#999"
-                />
-              </View>
-            </View>
+            <Pressable
+              style={styles.locationButton}
+              onPress={() => setShowLocationPicker(true)}
+            >
+              <Ionicons name="map-outline" size={20} color={colors.primary} />
+              <Text style={styles.locationButtonText}>
+                {latitude.toFixed(6)}, {longitude.toFixed(6)}
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color="#999" />
+            </Pressable>
           </View>
 
           <View style={{ height: 40 }} />
         </ScrollView>
+
+        <LocationPickerModal
+          visible={showLocationPicker}
+          onClose={() => setShowLocationPicker(false)}
+          onSelectLocation={(lat, lng) => {
+            setLatitude(lat);
+            setLongitude(lng);
+          }}
+          initialLatitude={latitude}
+          initialLongitude={longitude}
+        />
 
         {loading && (
           <View style={styles.loadingOverlay}>
@@ -265,7 +273,12 @@ const styles = StyleSheet.create({
   disabledText: { opacity: 0.5 },
   content: { flex: 1, padding: spacing.md },
   section: { marginBottom: spacing.lg },
-  label: { fontSize: 14, fontWeight: "600", color: colors.textPrimary, marginBottom: spacing.sm },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+  },
   labelHint: { fontWeight: "400", color: colors.textSecondary },
   input: {
     backgroundColor: colors.surface,
@@ -323,9 +336,21 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   addImageText: { fontSize: 11, color: colors.textSecondary },
-  locationRow: { flexDirection: "row", gap: spacing.md },
-  locationInput: { flex: 1 },
-  locationLabel: { fontSize: 12, color: colors.textSecondary, marginBottom: 4 },
+  locationButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.sm,
+  },
+  locationButtonText: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.textPrimary,
+  },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(255,255,255,0.6)",

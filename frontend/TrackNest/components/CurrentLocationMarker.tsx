@@ -10,6 +10,7 @@ type Props = {
   longitude: number;
   speed?: number | null; // speed in m/s
   disabled?: boolean; // when true show subdued grey dot and pause pulse
+  handlePress?: () => void; // optional press handler for the marker
 };
 
 const MIN_MARKER_MOVEMENT_DELTA = 0.00003;
@@ -19,6 +20,7 @@ export default function CurrentLocationMarker({
   longitude,
   speed,
   disabled = false,
+  handlePress,
 }: Props) {
   // const t = useTranslation(currentLocationMarkerLang);
   const { heading } = useDeviceHeading(!disabled);
@@ -141,14 +143,16 @@ export default function CurrentLocationMarker({
   const innerColor = disabled ? "#999" : "#74becb";
   // const pulseColor = disabled ? "rgba(0,0,0,0)" : "rgba(116,190,203,0.25)";
 
-  console.log("HEading", heading, "Speed", speedKmh, "Disabled", disabled);
-
   return (
     <Marker
       ref={markerRef}
       coordinate={markerCoordinate}
-      // tracksViewChanges={tracksViewChanges}
+      tracksViewChanges={tracksViewChanges}
       anchor={{ x: 0.5, y: 0.5 }}
+      onPress={(e) => {
+        e.stopPropagation();
+        handlePress?.();
+      }}
     >
       <View style={localStyles.wrapper}>
         {/* <Animated.View
@@ -191,7 +195,7 @@ const localStyles = StyleSheet.create({
   wrapper: {
     width: 60,
     height: 60,
-  alignItems: "center",
+    alignItems: "center",
     justifyContent: "center",
   },
   pulse: {

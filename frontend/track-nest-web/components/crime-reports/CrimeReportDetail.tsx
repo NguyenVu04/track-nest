@@ -13,6 +13,7 @@ import Image from "next/image";
 import type { CrimeReport, UserRole } from "@/types";
 import { MapView } from "../shared/MapView";
 import { ConfirmModal } from "../shared/ConfirmModal";
+import { ChatbotPanel } from "../shared/ChatbotPanel";
 import { useTranslations } from "next-intl";
 
 interface CrimeReportDetailProps {
@@ -42,21 +43,31 @@ export function CrimeReportDetail({
 
   const getSeverityColor = (severity: number) => {
     switch (severity) {
-      case 5: return "bg-red-100 text-red-800";
-      case 4: return "bg-orange-100 text-orange-800";
-      case 3: return "bg-yellow-100 text-yellow-800";
-      case 2: return "bg-blue-100 text-blue-800";
-      default: return "bg-green-100 text-green-800";
+      case 5:
+        return "bg-red-100 text-red-800";
+      case 4:
+        return "bg-orange-100 text-orange-800";
+      case 3:
+        return "bg-yellow-100 text-yellow-800";
+      case 2:
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-green-100 text-green-800";
     }
   };
 
   const getSeverityLabel = (severity: number) => {
     switch (severity) {
-      case 5: return t("severityVeryHigh");
-      case 4: return t("severityHigh");
-      case 3: return t("severityMedium");
-      case 2: return t("severityLow");
-      default: return t("severityVeryLow");
+      case 5:
+        return t("severityVeryHigh");
+      case 4:
+        return t("severityHigh");
+      case 3:
+        return t("severityMedium");
+      case 2:
+        return t("severityLow");
+      default:
+        return t("severityVeryLow");
     }
   };
 
@@ -139,17 +150,37 @@ export function CrimeReportDetail({
 
               <div className="pt-4 border-t border-gray-200">
                 <p className="text-gray-700 mb-2">{tCommon("description")}</p>
-                <div
-                  className="text-gray-900 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: report.content || "" }}
-                />
+                <div className="text-gray-900 prose prose-sm max-w-none">
+                  {report.content?.startsWith("http") ? (
+                    <iframe
+                      title="Crime report content"
+                      src={report.content}
+                      className="w-full min-h-[280px] rounded-lg border border-gray-200 bg-white"
+                    />
+                  ) : report.content?.trim().startsWith("<") ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: report.content || "" }}
+                    />
+                  ) : (
+                    <p className="whitespace-pre-line">
+                      {report.content || ""}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="pt-4 border-t border-gray-200">
                 <p className="text-gray-700 mb-2">{t("detailAdditional")}</p>
-                <p className="text-gray-600 text-sm">{t("detailVictims")}: {report.numberOfVictims}</p>
-                <p className="text-gray-600 text-sm">{t("detailOffenders")}: {report.numberOfOffenders}</p>
-                <p className="text-gray-600 text-sm">{t("detailArrested")}: {report.arrested ? tCommon("yes") : tCommon("no")}</p>
+                <p className="text-gray-600 text-sm">
+                  {t("detailVictims")}: {report.numberOfVictims}
+                </p>
+                <p className="text-gray-600 text-sm">
+                  {t("detailOffenders")}: {report.numberOfOffenders}
+                </p>
+                <p className="text-gray-600 text-sm">
+                  {t("detailArrested")}:{" "}
+                  {report.arrested ? tCommon("yes") : tCommon("no")}
+                </p>
               </div>
 
               {report.photos && report.photos.length > 0 && (
@@ -157,8 +188,17 @@ export function CrimeReportDetail({
                   <p className="text-gray-700 mb-3">{t("formPhotos")}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {report.photos.map((url) => (
-                      <div key={url} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200">
-                        <Image src={url} alt="Crime scene photo" fill className="object-cover" unoptimized />
+                      <div
+                        key={url}
+                        className="relative aspect-video rounded-lg overflow-hidden border border-gray-200"
+                      >
+                        <Image
+                          src={url}
+                          alt="Crime scene photo"
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
                       </div>
                     ))}
                   </div>
@@ -183,6 +223,12 @@ export function CrimeReportDetail({
           </div>
         </div>
       </div>
+
+      <ChatbotPanel
+        documentId={report.contentDocId}
+        title="Crime Report Chat"
+        emptyState="Ask a question about this report."
+      />
 
       {confirmDelete && (
         <ConfirmModal

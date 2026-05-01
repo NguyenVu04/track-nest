@@ -12,7 +12,11 @@ import { PageTransition } from "@/components/animations/PageTransition";
 import { useDebouncedCallback } from "use-debounce";
 import { LoadingCard } from "@/components/loading/LoadingCard";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { criminalReportsService, CrimeReportResponse, PageResponse } from "@/services/criminalReportsService";
+import {
+  criminalReportsService,
+  CrimeReportResponse,
+  PageResponse,
+} from "@/services/criminalReportsService";
 import { Loading } from "@/components/loading/Loading";
 import { useTranslations } from "next-intl";
 
@@ -44,11 +48,12 @@ export default function CrimeReportsPage() {
     const fetchCrimeReports = async () => {
       try {
         setIsLoading(true);
-        const response: PageResponse<CrimeReportResponse> = await criminalReportsService.listCrimeReports({
-          isPublic: false,
-          page: 0,
-          size: 100,
-        });
+        const response: PageResponse<CrimeReportResponse> =
+          await criminalReportsService.listCrimeReports({
+            isPublic: false,
+            page: 0,
+            size: 100,
+          });
 
         const mappedReports: CrimeReport[] = response.content.map((item) => ({
           id: item.id,
@@ -99,9 +104,7 @@ export default function CrimeReportsPage() {
       try {
         await criminalReportsService.publishCrimeReport(id);
         setCrimeReports(
-          crimeReports.map((r) =>
-            r.id === id ? { ...r, isPublic: true } : r,
-          ),
+          crimeReports.map((r) => (r.id === id ? { ...r, isPublic: true } : r)),
         );
         toast.success("Report published successfully");
       } catch (error) {
@@ -140,12 +143,23 @@ export default function CrimeReportsPage() {
   );
 
   const filteredReports = useMemo(() => {
+    const getSearchableContent = (value: string) => {
+      if (!value) return "";
+      const trimmed = value.trim();
+      if (trimmed.startsWith("<")) return trimmed;
+      if (trimmed.startsWith("http") || trimmed.endsWith(".html")) return "";
+      return trimmed;
+    };
+
     return crimeReports.filter((report) => {
       const matchesSearch =
         report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        report.content.toLowerCase().includes(searchQuery.toLowerCase());
+        getSearchableContent(report.content || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
 
-      const severityMatch = severityFilter === "all" ||
+      const severityMatch =
+        severityFilter === "all" ||
         report.severity.toString() === severityFilter;
 
       return matchesSearch && severityMatch;
@@ -159,9 +173,7 @@ export default function CrimeReportsPage() {
   }
 
   if (viewMode === "heatmap") {
-    return (
-      <CrimeHeatmapView onBack={handleBackToList} />
-    );
+    return <CrimeHeatmapView onBack={handleBackToList} />;
   }
 
   return (
@@ -169,7 +181,9 @@ export default function CrimeReportsPage() {
       <div>
         <Breadcrumbs items={[{ label: t("pageTitle") }]} />
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="text-gray-900 text-xl font-semibold">{t("pageTitle")}</h2>
+          <h2 className="text-gray-900 text-xl font-semibold">
+            {t("pageTitle")}
+          </h2>
           <div className="flex items-center gap-2">
             <button
               onClick={handleViewHeatmap}

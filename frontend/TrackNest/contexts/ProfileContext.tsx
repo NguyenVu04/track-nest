@@ -6,13 +6,10 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-import {
-  UserProfile,
-  PrivacySettings,
-  DEFAULT_PRIVACY_SETTINGS,
-  profileService,
-  privacySettingsService,
-} from "@/services/profileSettings";
+import type { UserProfile, PrivacySettings } from "@/types/profileSettings";
+import { DEFAULT_PRIVACY_SETTINGS } from "@/types/profileSettings";
+import { profileService, privacySettingsService } from "@/services/profileSettings";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "./AuthContext";
 
 interface ProfileContextType {
@@ -119,12 +116,29 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
 
   // Export user data
   const exportUserData = useCallback(async () => {
-    return privacySettingsService.exportUserData();
+    const [currentPrivacySettings, profileData, userProfile] = await Promise.all([
+      privacySettingsService.getPrivacySettings(),
+      profileService.getProfileData(),
+      profileService.getProfile(),
+    ]);
+    const preferences = {
+      language: await AsyncStorage.getItem("@TrackNest:language"),
+      tracking: await AsyncStorage.getItem("@TrackNest:tracking"),
+      shareLocation: await AsyncStorage.getItem("@TrackNest:shareLocation"),
+    };
+    return {
+      profile: { ...userProfile, ...profileData } as UserProfile,
+      privacySettings: currentPrivacySettings,
+      preferences,
+    };
   }, []);
 
   // Request account deletion
   const requestAccountDeletion = useCallback(async () => {
-    await privacySettingsService.requestAccountDeletion();
+    await AsyncStorage.setItem(
+      "@TrackNest:account_deletion_requested",
+      JSON.stringify({ requestedAt: new Date().toISOString(), status: "pending" }),
+    );
   }, []);
 
   // Refresh all

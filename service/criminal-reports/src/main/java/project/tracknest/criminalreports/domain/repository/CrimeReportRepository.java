@@ -64,4 +64,12 @@ public interface CrimeReportRepository extends JpaRepository<CrimeReport, UUID> 
             @Param("latitude") double latitude, 
             @Param("radius") double radius,
             Pageable pageable);
+
+    @Query(value = "SELECT count(*) FROM crime_report c WHERE c.public = true AND c.severity >= :minSeverity AND ST_DWithin(c.geom::geography, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography, :radius)",
+           nativeQuery = true)
+    long countPublicWithinRadiusWithMinSeverity(
+            @Param("longitude") double longitude,
+            @Param("latitude") double latitude,
+            @Param("radius") double radius,
+            @Param("minSeverity") int minSeverity);
 }

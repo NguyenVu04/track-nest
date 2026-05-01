@@ -20,11 +20,7 @@ const MapContext = createContext<MapContextType | undefined>(undefined);
 const isValidMapType = (value: string): value is MapType => {
   return [
     "standard",
-    "satellite",
     "hybrid",
-    "terrain",
-    "none",
-    "mutedStandard",
   ].includes(value);
 };
 
@@ -39,6 +35,13 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
   const loadMapType = async () => {
     try {
       const savedMapType = await AsyncStorage.getItem(MAP_TYPE_KEY);
+
+      console.log(
+        "Is valid map type?: ",
+        isValidMapType(savedMapType!),
+        savedMapType,
+      );
+
       if (savedMapType !== null && isValidMapType(savedMapType)) {
         setMapTypeState(savedMapType);
       }

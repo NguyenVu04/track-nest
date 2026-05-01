@@ -25,6 +25,8 @@ import project.tracknest.criminalreports.domain.repository.MissingPersonReportRe
 import project.tracknest.criminalreports.domain.repository.MissingPersonReportStatusRepository;
 import project.tracknest.criminalreports.domain.repository.ReporterRepository;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -180,11 +182,12 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .orElseGet(() -> reporterRepository.save(Reporter.builder().id(reporterId).build()));
 
         UUID reportId = UUID.randomUUID();
+        String contentObjectName = uploadHtmlContent(request.getContent());
 
         CrimeReport report = CrimeReport.builder()
                 .id(reportId)
                 .title(request.getTitle())
-                .content(request.getContent() != null ? request.getContent() : "")
+            .content(contentObjectName)
                 .severity(request.getSeverity())
                 .date(request.getDate())
                 .longitude(request.getLongitude())
@@ -216,7 +219,9 @@ class ReportManagerServiceImpl implements ReportManagerService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot update a published crime report");
         }
         report.setTitle(request.getTitle());
-        if (request.getContent() != null) report.setContent(request.getContent());
+        if (request.getContent() != null) {
+            report.setContent(uploadHtmlContent(request.getContent()));
+        }
         report.setSeverity(request.getSeverity());
         report.setDate(request.getDate());
         report.setNumberOfVictims(request.getNumberOfVictims());
@@ -288,12 +293,13 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .orElseGet(() -> reporterRepository.save(Reporter.builder().id(reporterId).build()));
 
         UUID documentId = UUID.randomUUID();
+        String contentObjectName = uploadHtmlContent(request.getContent());
 
         GuidelinesDocument document = GuidelinesDocument.builder()
                 .id(documentId)
                 .title(request.getTitle())
                 .abstractText(request.getAbstractText())
-                .content(request.getContent() != null ? request.getContent() : "")
+            .content(contentObjectName)
                 .isPublic(request.isPublic())
                 .reporter(reporter)
                 .createdAt(OffsetDateTime.now())
@@ -317,7 +323,9 @@ class ReportManagerServiceImpl implements ReportManagerService {
         }
         document.setTitle(request.getTitle());
         document.setAbstractText(request.getAbstractText());
-        if (request.getContent() != null) document.setContent(request.getContent());
+        if (request.getContent() != null) {
+            document.setContent(uploadHtmlContent(request.getContent()));
+        }
         return mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
     }
 
@@ -361,7 +369,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private MissingPersonReport findMissingPersonReportOwned(UUID reporterId, UUID reportId) {
-        return missingPersonReportRepository.findByReporterIdAndId(reporterId, reportId)
+        return missingPersonReportRepository.findByReporterIdOrUserIdAndId(reporterId, reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Missing person report not found"));
     }
 
@@ -427,6 +435,26 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .reporterId(document.getReporter() != null ? document.getReporter().getId() : null)
                 .publicFlag(document.isPublic())
                 .build();
+    }
+
+    private String uploadHtmlContent(String content) {
+        String htmlBody = content == null ? "" : content;
+        String htmlContent = "<!doctype html><html><head><meta charset=\"utf-8\"/></head><body>"
+                + htmlBody + "</body></html>";
+        String objectName = UUID.randomUUID() + ".html";
+        try {
+            objectStorage.uploadFile(
+                    bucketName,
+                    objectName,
+                    "text/html; charset=UTF-8",
+                    new ByteArrayInputStream(htmlContent.getBytes(StandardCharsets.UTF_8))
+            );
+        } catch (Exception e) {
+            log.error("Failed to upload content HTML: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to upload report content.");
+        }
+        return objectName;
     }
 
     private <T> PageResponse<T> mapToPageResponse(Page<T> page) {

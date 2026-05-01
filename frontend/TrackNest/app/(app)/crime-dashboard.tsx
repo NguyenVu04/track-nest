@@ -1,7 +1,7 @@
-import {
-  criminalReportsService,
-  DashboardSummaryResponse,
-} from "@/services/criminalReports";
+import { criminalReportsService } from "@/services/criminalReports";
+import type { DashboardSummaryResponse } from "@/types/criminalReports";
+import { crimeDashboard as crimeDashboardLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -37,6 +37,7 @@ function StatCard({
 
 export default function CrimeDashboardScreen() {
   const router = useRouter();
+  const t = useTranslation(crimeDashboardLang);
   const [data, setData] = useState<DashboardSummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,13 +49,13 @@ export default function CrimeDashboardScreen() {
         const res = await criminalReportsService.getDashboardSummary();
         setData(res);
       } catch (e) {
-        setError("Failed to load dashboard data.");
+        setError(t.errorLoad);
         console.error(e);
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [t.errorLoad]);
 
   if (loading) {
     return (
@@ -67,9 +68,9 @@ export default function CrimeDashboardScreen() {
   if (error || !data) {
     return (
       <SafeAreaView style={styles.center} edges={["top"]}>
-        <Text style={styles.errorText}>{error ?? "No data"}</Text>
+        <Text style={styles.errorText}>{error ?? t.noData}</Text>
         <Pressable style={styles.retryBtn} onPress={() => router.back()}>
-          <Text style={styles.retryText}>Go back</Text>
+          <Text style={styles.retryText}>{t.goBack}</Text>
         </Pressable>
       </SafeAreaView>
     );
@@ -82,8 +83,8 @@ export default function CrimeDashboardScreen() {
           <Ionicons name="arrow-back" size={24} color="#0f172a" />
         </Pressable>
         <View style={styles.headerTextWrap}>
-          <Text style={styles.title}>Dashboard Summary</Text>
-          <Text style={styles.subtitle}>Overview of all reports & activity</Text>
+          <Text style={styles.title}>{t.title}</Text>
+          <Text style={styles.subtitle}>{t.subtitle}</Text>
         </View>
       </View>
 
@@ -92,35 +93,35 @@ export default function CrimeDashboardScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Crime Stats */}
-        <Text style={styles.sectionTitle}>Crime Reports</Text>
+        <Text style={styles.sectionTitle}>{t.crimeReports}</Text>
         <View style={styles.statsRow}>
-          <StatCard label="Total" value={data.crimeStats.total} />
-          <StatCard label="Active" value={data.crimeStats.active} color="#ef4444" />
-          <StatCard label="Investigating" value={data.crimeStats.investigating} color="#f59e0b" />
-          <StatCard label="Resolved" value={data.crimeStats.resolved} color="#22c55e" />
+          <StatCard label={t.total} value={data.crimeStats.total} />
+          <StatCard label={t.active} value={data.crimeStats.active} color="#ef4444" />
+          <StatCard label={t.investigating} value={data.crimeStats.investigating} color="#f59e0b" />
+          <StatCard label={t.resolved} value={data.crimeStats.resolved} color="#22c55e" />
         </View>
 
         {/* Missing Person Stats */}
-        <Text style={styles.sectionTitle}>Missing Persons</Text>
+        <Text style={styles.sectionTitle}>{t.missingPersons}</Text>
         <View style={styles.statsRow}>
-          <StatCard label="Total" value={data.missingPersonStats.total} />
-          <StatCard label="Pending" value={data.missingPersonStats.pending} color="#f59e0b" />
-          <StatCard label="Published" value={data.missingPersonStats.published} color="#3b82f6" />
-          <StatCard label="Rejected" value={data.missingPersonStats.rejected} color="#ef4444" />
+          <StatCard label={t.total} value={data.missingPersonStats.total} />
+          <StatCard label={t.pending} value={data.missingPersonStats.pending} color="#f59e0b" />
+          <StatCard label={t.published} value={data.missingPersonStats.published} color="#3b82f6" />
+          <StatCard label={t.rejected} value={data.missingPersonStats.rejected} color="#ef4444" />
         </View>
 
         {/* Guidelines + Reporters */}
-        <Text style={styles.sectionTitle}>Other Stats</Text>
+        <Text style={styles.sectionTitle}>{t.otherStats}</Text>
         <View style={styles.statsRow}>
-          <StatCard label="Guidelines" value={data.guidelineStats.total} />
-          <StatCard label="This Month" value={data.guidelineStats.thisMonth} color="#74becb" />
-          <StatCard label="Reporters" value={data.reporterStats.totalReporters} color="#8b5cf6" />
+          <StatCard label={t.guidelines} value={data.guidelineStats.total} />
+          <StatCard label={t.thisMonth} value={data.guidelineStats.thisMonth} color="#74becb" />
+          <StatCard label={t.reporters} value={data.reporterStats.totalReporters} color="#8b5cf6" />
         </View>
 
         {/* Weekly Trend */}
         {data.weeklyTrend.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Weekly Trend</Text>
+            <Text style={styles.sectionTitle}>{t.weeklyTrend}</Text>
             <View style={styles.trendWrap}>
               {data.weeklyTrend.map((day, i) => (
                 <View key={i} style={styles.trendRow}>
@@ -156,11 +157,11 @@ export default function CrimeDashboardScreen() {
               <View style={styles.trendLegend}>
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: "#ef4444" }]} />
-                  <Text style={styles.legendText}>Crimes</Text>
+                  <Text style={styles.legendText}>{t.legendCrimes}</Text>
                 </View>
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: "#3b82f6" }]} />
-                  <Text style={styles.legendText}>Missing</Text>
+                  <Text style={styles.legendText}>{t.legendMissing}</Text>
                 </View>
               </View>
             </View>
@@ -170,7 +171,7 @@ export default function CrimeDashboardScreen() {
         {/* Severity Groups */}
         {data.severityGroups.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>By Severity</Text>
+            <Text style={styles.sectionTitle}>{t.bySeverity}</Text>
             <View style={styles.listCard}>
               {data.severityGroups.map((item, i) => (
                 <View key={i} style={styles.listRow}>
@@ -185,7 +186,7 @@ export default function CrimeDashboardScreen() {
         {/* Crime By Type */}
         {data.crimeByType.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>By Type</Text>
+            <Text style={styles.sectionTitle}>{t.byType}</Text>
             <View style={styles.listCard}>
               {data.crimeByType.map((item, i) => (
                 <View key={i} style={styles.listRow}>

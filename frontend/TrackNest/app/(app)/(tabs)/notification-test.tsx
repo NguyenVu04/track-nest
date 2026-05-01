@@ -2,8 +2,7 @@ import * as Clipboard from "expo-clipboard";
 import * as Notifications from "expo-notifications";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
+  ActivityIndicator,
   Platform,
   ScrollView,
   StyleSheet,
@@ -13,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { showToast } from "@/utils";
 
 import { notificationTest as notificationTestLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -84,10 +84,10 @@ export default function NotificationTestScreen() {
       if (token) {
         setFcmToken(token);
       } else {
-        Alert.alert(t.noTokenTitle, t.noTokenMessage);
+        showToast(t.noTokenMessage, t.noTokenTitle);
       }
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsFetchingToken(false);
     }
@@ -96,7 +96,7 @@ export default function NotificationTestScreen() {
   const handleCopyToken = useCallback(async () => {
     if (fcmToken) {
       await Clipboard.setStringAsync(fcmToken);
-      Alert.alert(t.copiedTitle, t.copiedTokenMessage);
+      showToast(t.copiedTokenMessage, t.copiedTitle);
     }
   }, [fcmToken, t.copiedTitle, t.copiedTokenMessage]);
 
@@ -106,7 +106,7 @@ export default function NotificationTestScreen() {
       const { status } = await Notifications.getPermissionsAsync();
       setPermissionStatus(status);
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsCheckingPermission(false);
     }
@@ -119,7 +119,7 @@ export default function NotificationTestScreen() {
       setPermissionStatus(status);
       await setupNotificationChannels();
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsCheckingPermission(false);
     }
@@ -127,7 +127,7 @@ export default function NotificationTestScreen() {
 
   const handleRegisterWithBackend = useCallback(async () => {
     if (!fcmToken) {
-      Alert.alert(t.errorTitle, t.getTokenFirst);
+      showToast(t.getTokenFirst, t.errorTitle);
       return;
     }
     try {
@@ -137,7 +137,7 @@ export default function NotificationTestScreen() {
       const res = await registerMobileDevice(fcmToken, platform, regLang);
       setRegisterResult(JSON.stringify(res, null, 2));
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsRegistering(false);
     }
@@ -146,7 +146,7 @@ export default function NotificationTestScreen() {
   const handleScheduleLocal = useCallback(async () => {
     const seconds = parseInt(delaySec, 10);
     if (isNaN(seconds) || seconds < 1) {
-      Alert.alert(t.errorTitle, t.delayAtLeastOne);
+      showToast(t.delayAtLeastOne, t.errorTitle);
       return;
     }
     try {
@@ -171,7 +171,7 @@ export default function NotificationTestScreen() {
       });
       setScheduleResult(`Scheduled! ID: ${id}\nWill fire in ${seconds}s`);
     } catch (e: any) {
-      Alert.alert(t.errorTitle, e.message);
+      showToast(e.message, t.errorTitle);
     } finally {
       setIsScheduling(false);
     }
@@ -187,21 +187,18 @@ export default function NotificationTestScreen() {
 
   const handleCancelAll = useCallback(async () => {
     await Notifications.cancelAllScheduledNotificationsAsync();
-    Alert.alert(t.doneTitle, t.cancelledAllScheduled);
+    showToast(t.cancelledAllScheduled, t.doneTitle);
     setScheduleResult(null);
   }, [t.cancelledAllScheduled, t.doneTitle]);
 
   const handleDismissAll = useCallback(async () => {
     await Notifications.dismissAllNotificationsAsync();
-    Alert.alert(t.doneTitle, t.dismissedAllDelivered);
+    showToast(t.dismissedAllDelivered, t.doneTitle);
   }, [t.dismissedAllDelivered, t.doneTitle]);
 
   const handleGetBadgeCount = useCallback(async () => {
     const count = await Notifications.getBadgeCountAsync();
-    Alert.alert(
-      t.badgeCountTitle,
-      t.badgeCountMessage.replace("{{count}}", String(count)),
-    );
+    showToast(t.badgeCountMessage.replace("{{count}}", String(count)), t.badgeCountTitle);
   }, [t.badgeCountMessage, t.badgeCountTitle]);
 
   const handleClearLog = useCallback(() => {
@@ -249,7 +246,7 @@ export default function NotificationTestScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>{t.title}</Text>
 

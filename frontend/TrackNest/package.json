@@ -9,8 +9,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "jest --watchAll=false",
-    "proto-gen": "protoc --proto_path=./proto --js_out=import_style=commonjs:./proto --grpc-web_out=import_style=typescript,mode=grpcwebtext:./proto tracker.proto trackingmanager.proto notifier.proto google/rpc/status.proto"
+    "proto-gen": "protoc --proto_path=./proto --js_out=import_style=commonjs:./proto --grpc-web_out=import_style=typescript,mode=grpcwebtext:./proto tracker.proto trackingmanager.proto notifier.proto familymessenger.proto google/rpc/status.proto"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.10.2",
@@ -57,6 +56,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-app-intro-slider": "^4.0.4",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-get-random-values": "^2.0.0",
     "react-native-maps": "1.20.1",
@@ -64,24 +64,22 @@
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
+    "react-native-svg": "^15.15.4",
     "react-native-url-polyfill": "^3.0.0",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.5.1",
+    "rn-tourguide": "^3.3.2",
     "text-encoding": "^0.7.0",
     "web-streams-polyfill": "^3.2.1"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.62.1",
     "@bufbuild/protoc-gen-es": "^2.10.2",
-    "@testing-library/react-native": "^13.3.3",
     "@types/google-protobuf": "^3.15.12",
-    "@types/jest": "^29.0.0",
     "@types/react": "~19.1.0",
     "baseline-browser-mapping": "^2.10.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
-    "jest": "^29.7.0",
-    "jest-expo": "^54.0.17",
     "typescript": "~5.9.2"
   },
   "private": true

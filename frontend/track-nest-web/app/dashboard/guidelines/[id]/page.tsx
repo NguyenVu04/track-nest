@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Trash2, Globe } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Guideline } from "@/types";
+import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
@@ -26,11 +27,27 @@ export default function GuidelineDetailPage() {
       try {
         setIsLoading(true);
         const response = await criminalReportsService.getGuidelinesDocument(id);
+        let contentValue = response.content;
+        if (
+          contentValue &&
+          !contentValue.trim().startsWith("<") &&
+          !contentValue.startsWith("http")
+        ) {
+          try {
+            contentValue = await criminalReportsService.getFileUrl(
+              "criminal-reports",
+              contentValue,
+            );
+          } catch (error) {
+            console.error("Failed to resolve guideline content URL:", error);
+          }
+        }
         setGuideline({
           id: response.id,
           title: response.title,
           abstractText: response.abstractText,
-          content: response.content,
+          content: contentValue,
+          contentDocId: response.content,
           createdAt: response.createdAt,
           reporterId: response.reporterId,
           isPublic: response.isPublic,
@@ -53,7 +70,10 @@ export default function GuidelineDetailPage() {
     return (
       <div className="text-gray-900">
         <h2 className="text-xl font-semibold mb-4">Guideline Not Found</h2>
-        <button onClick={() => router.back()} className="text-indigo-600 hover:text-indigo-700">
+        <button
+          onClick={() => router.back()}
+          className="text-indigo-600 hover:text-indigo-700"
+        >
           ← Go Back
         </button>
       </div>
@@ -73,8 +93,11 @@ export default function GuidelineDetailPage() {
 
   const handlePublish = async () => {
     try {
-      const response = await criminalReportsService.publishGuidelinesDocument(id);
-      setGuideline((prev) => prev ? { ...prev, isPublic: response.isPublic } : prev);
+      const response =
+        await criminalReportsService.publishGuidelinesDocument(id);
+      setGuideline((prev) =>
+        prev ? { ...prev, isPublic: response.isPublic } : prev,
+      );
       toast.success("Guideline published");
     } catch (error) {
       toast.error("Failed to publish guideline");
@@ -84,13 +107,18 @@ export default function GuidelineDetailPage() {
 
   return (
     <div className="max-w-4xl">
-      <button onClick={() => router.back()} className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-6">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-6"
+      >
         ← Back to Guidelines
       </button>
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-gray-900 mb-2 text-xl font-semibold">{guideline.title}</h2>
+            <h2 className="text-gray-900 mb-2 text-xl font-semibold">
+              {guideline.title}
+            </h2>
             <p className="text-gray-600">{guideline.abstractText}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -113,18 +141,40 @@ export default function GuidelineDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-4 text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">
-          <span>Created {new Date(guideline.createdAt).toLocaleDateString()}</span>
+          <span>
+            Created {new Date(guideline.createdAt).toLocaleDateString()}
+          </span>
           {guideline.isPublic && (
-            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">Published</span>
+            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
+              Published
+            </span>
           )}
         </div>
         <div className="prose max-w-none">
-          <div
-            className="text-gray-900"
-            dangerouslySetInnerHTML={{ __html: guideline.content || "" }}
-          />
+          {guideline.content?.startsWith("http") ? (
+            <iframe
+              title="Guideline content"
+              src={guideline.content}
+              className="w-full min-h-[320px] rounded-lg border border-gray-200 bg-white"
+            />
+          ) : guideline.content?.trim().startsWith("<") ? (
+            <div
+              className="text-gray-900"
+              dangerouslySetInnerHTML={{ __html: guideline.content || "" }}
+            />
+          ) : (
+            <p className="text-gray-700 whitespace-pre-line">
+              {guideline.content || ""}
+            </p>
+          )}
         </div>
       </div>
+
+      <ChatbotPanel
+        documentId={guideline.contentDocId}
+        title="Guideline Chat"
+        emptyState="Ask a question about this guideline."
+      />
 
       {confirmDelete && (
         <ConfirmModal

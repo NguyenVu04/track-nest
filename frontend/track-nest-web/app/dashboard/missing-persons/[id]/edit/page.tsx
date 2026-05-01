@@ -23,15 +23,41 @@ export default function EditMissingPersonPage() {
     const fetchReport = async () => {
       try {
         setIsLoading(true);
-        const response = await criminalReportsService.getMissingPersonReport(id);
+        const response =
+          await criminalReportsService.getMissingPersonReport(id);
+        let contentValue = response.content;
+        if (contentValue) {
+          try {
+            let contentUrl = contentValue;
+            if (
+              !contentUrl.trim().startsWith("<") &&
+              !contentUrl.startsWith("http")
+            ) {
+              contentUrl = await criminalReportsService.getFileUrl(
+                "criminal-reports",
+                contentUrl,
+              );
+            }
+            if (contentUrl.startsWith("http")) {
+              const contentResponse = await fetch(contentUrl);
+              contentValue = await contentResponse.text();
+            }
+          } catch (error) {
+            console.error("Failed to resolve report content:", error);
+          }
+        }
         setPerson({
           id: response.id,
           title: response.title,
           fullName: response.fullName,
           personalId: response.personalId,
-          photo: response.photo,
+          photo: response.photo
+            ? criminalReportsService.getMissingPersonPhotoUrl(response.id)
+            : "",
           date: response.date,
-          content: response.content,
+          content: contentValue,
+          latitude: response.latitude,
+          longitude: response.longitude,
           contactEmail: response.contactEmail,
           contactPhone: response.contactPhone,
           createdAt: response.createdAt,

@@ -25,15 +25,35 @@ export default function MissingPersonDetailPage() {
     const fetchReport = async () => {
       try {
         setIsLoading(true);
-        const response = await criminalReportsService.getMissingPersonReport(id);
+        const response =
+          await criminalReportsService.getMissingPersonReport(id);
+        let contentValue = response.content;
+        if (
+          contentValue &&
+          !contentValue.trim().startsWith("<") &&
+          !contentValue.startsWith("http")
+        ) {
+          try {
+            contentValue = await criminalReportsService.getFileUrl(
+              "criminal-reports",
+              contentValue,
+            );
+          } catch (error) {
+            console.error("Failed to resolve report content URL:", error);
+          }
+        }
+        const photoUrl = response.photo
+          ? criminalReportsService.getMissingPersonPhotoUrl(response.id)
+          : "";
         setPerson({
           id: response.id,
           title: response.title,
           fullName: response.fullName,
           personalId: response.personalId,
-          photo: response.photo,
+          photo: photoUrl,
           date: response.date,
-          content: response.content,
+          content: contentValue,
+          contentDocId: response.content,
           contactEmail: response.contactEmail,
           contactPhone: response.contactPhone,
           createdAt: response.createdAt,
@@ -77,9 +97,16 @@ export default function MissingPersonDetailPage() {
 
   const handlePublish = async (reportId: string) => {
     try {
-      const response = await criminalReportsService.publishMissingPersonReport(reportId);
+      const response =
+        await criminalReportsService.publishMissingPersonReport(reportId);
       setPerson((prev) =>
-        prev ? { ...prev, status: response.status as MissingPerson["status"], isPublic: response.isPublic } : prev,
+        prev
+          ? {
+              ...prev,
+              status: response.status as MissingPerson["status"],
+              isPublic: response.isPublic,
+            }
+          : prev,
       );
       toast.success("Report published successfully");
       addNotification({

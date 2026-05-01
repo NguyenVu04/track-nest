@@ -3,13 +3,13 @@
 // ====================
 import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
+  DeviceEventEmitter,
   Pressable,
   StyleSheet,
-  Text,
   View,
   useWindowDimensions,
 } from "react-native";
@@ -18,7 +18,13 @@ import MapView, {
   MapType,
   Marker,
   PROVIDER_GOOGLE,
+  Region,
 } from "react-native-maps";
+import {
+  TourGuideProvider,
+  TourGuideZoneByPosition,
+  useTourGuideController,
+} from "rn-tourguide";
 
 // ====================
 // Custom imports
@@ -27,6 +33,7 @@ import FamilyCircleListSheet from "@/components/BottomSheets/FamilyCircleListShe
 import FollowerInfoSheet from "@/components/BottomSheets/FollowerInfoSheet";
 import GeneralFollowerInfoSheet from "@/components/BottomSheets/GeneralFollowerInfoSheet";
 import MapTypesSheet from "@/components/BottomSheets/MapTypesSheet";
+import MyInfoSheet from "@/components/BottomSheets/MyInfoSheet";
 import CurrentLocationMarker from "@/components/CurrentLocationMarker";
 import { FollowerInfo } from "@/components/FollowerInfo";
 import FollowerMarker from "@/components/FollowerMarker";
@@ -34,6 +41,7 @@ import { LocationLoader } from "@/components/Loaders/LocationLoader";
 import { MapViewLoader } from "@/components/Loaders/MapViewLoader";
 import MapControls from "@/components/MapControls";
 import MapHeader from "@/components/MapHeader";
+import { OPEN_GENERAL_INFO_SHEET_EVENT } from "@/constant";
 import { map as mapLang } from "@/constant/languages";
 import { getMockFollowersForCircle } from "@/constant/mockFamilyCircles";
 import { FamilyCircle, Follower, SafeZone } from "@/constant/types";
@@ -49,7 +57,11 @@ import { useStreamedFollowers } from "@/hooks/useStreamedFollowers";
 import { useTranslation } from "@/hooks/useTranslation";
 import { emergencyService } from "@/services/emergency";
 import { updateUserLocation } from "@/services/tracker";
-import { colors, radii, spacing } from "@/styles/styles";
+import {
+  hasCompletedMapWalkthrough,
+  markMapWalkthroughCompleted,
+} from "@/utils/walkthrough";
+import { showToast } from "@/utils";
 
 function formatDuration(totalSeconds: number) {
   if (totalSeconds < 60) return `${totalSeconds}s`;
@@ -62,13 +74,63 @@ function formatDuration(totalSeconds: number) {
   return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
 }
 
+function isLongitudeVisible(lng: number, minLng: number, maxLng: number) {
+  if (minLng <= maxLng) {
+    return lng >= minLng && lng <= maxLng;
+  }
+
+  // Region crosses the antimeridian.
+  return lng >= minLng || lng <= maxLng;
+}
+
+function isCoordinateVisibleInRegion(
+  latitude: number,
+  longitude: number,
+  region: Region,
+) {
+  const halfLat = region.latitudeDelta / 2;
+  const halfLng = region.longitudeDelta / 2;
+
+  const minLat = region.latitude - halfLat;
+  const maxLat = region.latitude + halfLat;
+  const minLng = region.longitude - halfLng;
+  const maxLng = region.longitude + halfLng;
+
+  const inLatitudeRange = latitude >= minLat && latitude <= maxLat;
+  const inLongitudeRange = isLongitudeVisible(longitude, minLng, maxLng);
+
+  return inLatitudeRange && inLongitudeRange;
+}
+
 export default function MapScreen() {
+  const t = useTranslation(mapLang);
+
+  return (
+    <TourGuideProvider
+      androidStatusBarVisible
+      backdropColor="rgba(15,23,42,0.65)"
+      labels={{
+        previous: t.tourPrevious,
+        next: t.tourNext,
+        skip: t.tourSkip,
+        finish: t.tourFinish,
+      }}
+    >
+      <MapScreenContent />
+    </TourGuideProvider>
+  );
+}
+
+function MapScreenContent() {
   // ====================
   // State declarations
   // ====================
   const [isMapReady, setIsMapReady] = useState(false);
   const [showCrimeHeatmap, setShowCrimeHeatmap] = useState(false);
   const [showPOIs, setShowPOIs] = useState(true);
+  const [showSafeZones, setShowSafeZones] = useState(true);
+  const [shouldStartMapTour, setShouldStartMapTour] = useState(false);
+  const [visibleRegion, setVisibleRegion] = useState<Region | null>(null);
 
   // Keep the tab bar visible above any BottomSheetModal opened from this screen
   const tabBarHeight = useBottomTabBarHeight();
@@ -81,19 +143,23 @@ export default function MapScreen() {
   // Ref declarations
   // ====================
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const hasTriggeredMapTourRef = useRef(false);
+  const startTourRef = useRef<(() => void) | null>(null);
   const followerInfoSheetRef = useRef<BottomSheetModal>(null);
   const generalInfoSheetRef = useRef<BottomSheetModal>(null);
   const myInfoSheetRef = useRef<BottomSheetModal>(null);
   const mapTypeSheetRef = useRef<BottomSheetModal>(null);
   const familyCircleSheetRef = useRef<BottomSheetModal>(null);
   const [safeZones, setSafeZones] = useState<SafeZone[]>([]);
+  const router = useRouter();
 
   // ====================
   // Hook usages
   // ====================
+  const { canStart, start, eventEmitter } = useTourGuideController();
   const { mapRef, regionDelta, centerMap, resetCenterFlag } =
     useMapController();
-  const { height: screenHeight } = useWindowDimensions();
+  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const { mapType, setMapType } = useMapContext();
   const { tracking, shareLocation } = useTracking();
   const { crimeHeatmapPoints, loadCrimeHeatmap, nearbyPOIs, getPOIColor } =
@@ -102,10 +168,76 @@ export default function MapScreen() {
     useFamilyCircle();
   const t = useTranslation(mapLang);
   const { location } = useDeviceLocation(tracking);
+  const hasLocation = !!location;
   const myAddress = useAddressFromLocation(
     location?.latitude,
     location?.longitude,
   );
+
+  useEffect(() => {
+    startTourRef.current = start;
+  }, [start]);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        followerInfoSheetRef.current?.dismiss();
+        generalInfoSheetRef.current?.dismiss();
+        myInfoSheetRef.current?.dismiss();
+        mapTypeSheetRef.current?.dismiss();
+        familyCircleSheetRef.current?.dismiss();
+      };
+    }, [])
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    hasCompletedMapWalkthrough().then((completed) => {
+      if (!isMounted) return;
+      setShouldStartMapTour(!completed);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const onTourStop = () => {
+      setShouldStartMapTour(false);
+    };
+
+    eventEmitter?.on("stop", onTourStop);
+    return () => {
+      eventEmitter?.off("stop", onTourStop);
+    };
+  }, [eventEmitter]);
+
+  useEffect(() => {
+    if (!shouldStartMapTour || !canStart || !isMapReady || !hasLocation) {
+      return;
+    }
+
+    if (hasTriggeredMapTourRef.current) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      hasTriggeredMapTourRef.current = true;
+      markMapWalkthroughCompleted()
+        .catch(() => {
+          // non-critical persistence failure
+        })
+        .finally(() => {
+          startTourRef.current?.();
+        });
+    }, 700);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [canStart, hasLocation, isMapReady, shouldStartMapTour]);
 
   // ── Live streamed followers from the server ──
   const { followers: streamedFollowers } = useStreamedFollowers(
@@ -188,12 +320,27 @@ export default function MapScreen() {
   useEffect(() => {
     const mapKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!mapKey) {
-      Alert.alert(t.apiKeyMissingTitle, t.apiKeyMissingMessage);
+      showToast(t.apiKeyMissingMessage, t.apiKeyMissingTitle);
     }
   }, [t.apiKeyMissingMessage, t.apiKeyMissingTitle]);
 
   const { setSelectedFollowerId, selectedFollower } =
     useFollowers(followersToRender);
+
+  // Resolve address for the selected follower to show in the floating card
+  const selectedFollowerAddress = useAddressFromLocation(
+    selectedFollower?.latitude,
+    selectedFollower?.longitude,
+  );
+
+  // Speed in km/h for the selected follower (if available from stream data)
+  const selectedFollowerSpeedKmh = useMemo(() => {
+    if (!selectedFollower) return null;
+    const speed = (selectedFollower as any).speed as number | undefined;
+    if (speed != null && Number.isFinite(speed)) return Math.round(speed * 3.6);
+    return null;
+  }, [selectedFollower]);
+
   const meItem: Follower | null = useMemo(() => {
     if (!location) return null;
     return {
@@ -229,6 +376,25 @@ export default function MapScreen() {
     }
   }, [location, centerMap]);
 
+  const isCurrentMarkerVisible = useMemo(() => {
+    if (!location) return false;
+    if (!visibleRegion) return true;
+
+    return isCoordinateVisibleInRegion(
+      location.latitude,
+      location.longitude,
+      visibleRegion,
+    );
+  }, [location, visibleRegion]);
+
+  const handleRegionChangeComplete = useCallback(
+    (region: Region) => {
+      setVisibleRegion(region);
+      resetCenterFlag();
+    },
+    [resetCenterFlag],
+  );
+
   const handleFollowerInfoModalPress = useCallback(() => {
     followerInfoSheetRef.current?.present();
   }, [followerInfoSheetRef]);
@@ -236,6 +402,19 @@ export default function MapScreen() {
   const handleGeneralInfoModalPress = useCallback(() => {
     generalInfoSheetRef.current?.present();
   }, [generalInfoSheetRef]);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      OPEN_GENERAL_INFO_SHEET_EVENT,
+      () => {
+        handleGeneralInfoModalPress();
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [handleGeneralInfoModalPress]);
 
   const handleMyInfoModalPress = useCallback(() => {
     myInfoSheetRef.current?.present();
@@ -248,6 +427,14 @@ export default function MapScreen() {
   const handleFamilyCircleModalPress = useCallback(() => {
     familyCircleSheetRef.current?.present();
   }, [familyCircleSheetRef]);
+
+  const handleAddFamilyCircle = useCallback(() => {
+    familyCircleSheetRef.current?.dismiss();
+    // Let sheet dismissal animation complete before navigating.
+    setTimeout(() => {
+      router.push("/family-circles/new");
+    }, 200);
+  }, [router]);
 
   const handleSelectFamilyCircle = useCallback(
     (circle: FamilyCircle) => {
@@ -297,7 +484,7 @@ export default function MapScreen() {
       })
       .then(setSafeZones)
       .catch((err) => console.warn("Failed to load safe zones:", err.message));
-  }, [location?.latitude, location?.longitude]);
+  }, [location]);
 
   // Load crime heatmap when toggled on
   useEffect(() => {
@@ -311,6 +498,7 @@ export default function MapScreen() {
       <Pressable
         onPress={() => {
           if (item.id === "me") {
+            /* console.log("My info pressed") */;
             handleMyInfoModalPress();
           } else {
             setSelectedFollowerId(item.id);
@@ -356,9 +544,10 @@ export default function MapScreen() {
         disappearsOnIndex={-1}
         opacity={0.3}
         pressBehavior="close"
+        style={[props.style, { bottom: tabBarHeight }]}
       />
     ),
-    [],
+    [tabBarHeight],
   );
 
   // Show loading state until location is available
@@ -368,16 +557,60 @@ export default function MapScreen() {
 
   return (
     <>
-      <View style={styles.container}>
+      <View style={[styles.container]}>
         {/* Loading overlay with fade animation */}
         {!isMapReady && (
           <MapViewLoader fadeAnim={fadeAnim} isMapReady={isMapReady} />
         )}
 
-        <MapHeader
-          selectedCircle={selectedCircle}
-          handleFamilyCircleModalPress={handleFamilyCircleModalPress}
+        <TourGuideZoneByPosition
+          zone={1}
+          isTourGuide={shouldStartMapTour}
+          shape="rectangle"
+          top={Math.max(96, screenHeight * 0.14)}
+          left={12}
+          width={screenWidth - 24}
+          height={Math.max(220, screenHeight * 0.36)}
+          text={t.tourMapStep}
         />
+
+        <TourGuideZoneByPosition
+          zone={2}
+          isTourGuide={shouldStartMapTour}
+          shape="rectangle"
+          top={32}
+          left={10}
+          width={screenWidth - 20}
+          height={56}
+          text={t.tourHeaderStep}
+        />
+
+        <TourGuideZoneByPosition
+          zone={3}
+          isTourGuide={shouldStartMapTour}
+          shape="rectangle"
+          right={6}
+          bottom={tabBarHeight + 72}
+          width={84}
+          height={260}
+          text={t.tourControlsStep}
+        />
+
+        <View
+          style={{
+            position: "absolute",
+            top: 12,
+            left: 0,
+            right: 0,
+            zIndex: 9999,
+            gap: 12,
+          }}
+        >
+          <MapHeader
+            selectedCircle={selectedCircle}
+            handleFamilyCircleModalPress={handleFamilyCircleModalPress}
+          />
+        </View>
 
         <MapView
           loadingEnabled={true}
@@ -386,19 +619,19 @@ export default function MapScreen() {
           showsCompass={false}
           ref={mapRef}
           provider={PROVIDER_GOOGLE}
-          mapType={mapType}
-          style={StyleSheet.absoluteFillObject}
+          mapType={mapType || "standard"}
+          style={[StyleSheet.absoluteFillObject]}
           initialRegion={initialRegion}
           showsUserLocation={false}
           showsMyLocationButton={false}
           onMapReady={handleMapReady}
-          onRegionChangeComplete={resetCenterFlag}
+          onRegionChangeComplete={handleRegionChangeComplete}
           onPress={(e) => {
-            e.stopPropagation();
+            e.stopPropagation?.();
             setSelectedFollowerId(null);
           }}
         >
-          {safeZones.map((zone) => (
+          {showSafeZones && safeZones.map((zone) => (
             <Circle
               key={`safe-zone-area-${zone.id}`}
               center={{
@@ -412,7 +645,7 @@ export default function MapScreen() {
             />
           ))}
 
-          {safeZones.map((zone) => (
+          {showSafeZones && safeZones.map((zone) => (
             <Marker
               key={`safe-zone-marker-${zone.id}`}
               coordinate={{
@@ -420,7 +653,10 @@ export default function MapScreen() {
                 longitude: zone.longitude,
               }}
               title={zone.name}
-              description={`Safe radius: ${zone.radius}m`}
+              description={t.safeRadiusWithMeters.replace(
+                "{meters}",
+                String(zone.radius),
+              )}
               pinColor="#2ecc71"
             />
           ))}
@@ -491,29 +727,36 @@ export default function MapScreen() {
               longitude={location.longitude}
               speed={location.speed}
               disabled={!tracking}
+              handlePress={handleMyInfoModalPress}
             />
           ) : null}
         </MapView>
 
         <MapControls
           onCenter={checkBeforeCenterMap}
+          centerActive={isCurrentMarkerVisible}
           onZoomIn={null}
           onZoomOut={null}
-          onGeneralModalPress={handleGeneralInfoModalPress}
           onMapTypePress={handleMapTypeModalPress}
           onToggleHeatmap={() => setShowCrimeHeatmap(!showCrimeHeatmap)}
           onTogglePOIs={() => setShowPOIs(!showPOIs)}
+          onToggleSafeZones={() => setShowSafeZones(!showSafeZones)}
           mapType={mapType}
           showHeatmap={showCrimeHeatmap}
           showPOIs={showPOIs}
+          showSafeZones={showSafeZones}
         />
       </View>
-
       <FollowerInfoSheet
         followerInfoSheetRef={followerInfoSheetRef}
         renderBackdrop={renderBackdrop}
         selectedFollower={selectedFollower}
         tabBarHeight={tabBarHeight}
+        speedKmh={selectedFollowerSpeedKmh}
+        address={selectedFollowerAddress}
+        onChatPress={() => router.push("/(app)/family-chat" as any)}
+        onCallPress={() => {}}
+        onSosPress={() => router.push("/(app)/sos" as any)}
       />
 
       {generalInfoListData.length > 0 && (
@@ -525,54 +768,28 @@ export default function MapScreen() {
         />
       )}
 
-      <BottomSheetModal
-        ref={myInfoSheetRef}
-        backdropComponent={renderBackdrop}
-        enableDynamicSizing={true}
-        maxDynamicContentSize={Math.floor(screenHeight * 0.55)}
-        index={0}
+      <MyInfoSheet
+        myInfoSheetRef={myInfoSheetRef}
+        renderBackdrop={renderBackdrop}
+        tabBarHeight={tabBarHeight}
         containerStyle={sheetContainerStyle}
-      >
-        <View style={styles.myInfoContent}>
-          <Text style={styles.myInfoTitle}>{t.me}</Text>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Name</Text>
-            <Text style={styles.infoValue}>{t.me}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Full address</Text>
-            <Text style={styles.infoValue}>
-              {myAddress ?? "Resolving address..."}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Speed</Text>
-            <Text style={styles.infoValue}>
-              {speedKmh != null ? `${speedKmh} km/h` : "N/A"}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Time spent here</Text>
-            <Text style={styles.infoValue}>{timeSpentAtPlace ?? "N/A"}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Coordinates</Text>
-            <Text style={styles.infoValue}>
-              {`${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Last updated</Text>
-            <Text style={styles.infoValue}>{lastUpdatedText ?? "N/A"}</Text>
-          </View>
-        </View>
-      </BottomSheetModal>
+        maxDynamicContentSize={Math.floor(screenHeight * 0.55)}
+        title={t.me}
+        nameLabel={t.infoNameLabel}
+        addressLabel={t.infoAddressLabel}
+        speedLabel={t.infoSpeedLabel}
+        timeSpentLabel={t.infoTimeSpentLabel}
+        coordinatesLabel={t.infoCoordinatesLabel}
+        lastUpdatedLabel={t.infoLastUpdatedLabel}
+        resolvingAddressLabel={t.infoResolvingAddress}
+        notAvailableLabel={t.notAvailable}
+        myAddress={myAddress}
+        speedKmh={speedKmh}
+        timeSpentAtPlace={timeSpentAtPlace}
+        latitude={location.latitude}
+        longitude={location.longitude}
+        lastUpdatedText={lastUpdatedText}
+      />
 
       <MapTypesSheet
         mapTypeSheetRef={mapTypeSheetRef}
@@ -589,6 +806,7 @@ export default function MapScreen() {
         handleSelectFamilyCircle={handleSelectFamilyCircle}
         familyCircles={circles}
         onRefresh={refreshCircles}
+        onAddFamilyCircle={handleAddFamilyCircle}
         tabBarHeight={tabBarHeight}
       />
     </>
@@ -597,34 +815,4 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", position: "relative" },
-  myInfoContent: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-    gap: spacing.md,
-  },
-  myInfoTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  infoRow: {
-    backgroundColor: colors.bgSecondary,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    gap: 4,
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: "600",
-  },
-  infoValue: {
-    fontSize: 14,
-    color: colors.textPrimary,
-    fontWeight: "500",
-  },
 });

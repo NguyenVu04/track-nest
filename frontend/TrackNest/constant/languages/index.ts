@@ -4,10 +4,15 @@ import { AppLanguage } from "@/contexts/LanguageContext";
 // Central export for all language files
 export * as Card from "./Card";
 export * as CircleMembersModal from "./CircleMembersModal";
-export * as createReport from "./create-report";
 export * as createMissing from "./create-missing";
+export * as createReport from "./create-report";
+export * as crimeAnalysis from "./crime-analysis";
+export * as crimeDashboard from "./crime-dashboard";
+export * as crimeHeatmap from "./crime-heatmap";
 export * as CurrentLocationMarker from "./CurrentLocationMarker";
+export * as dashboard from "./dashboard";
 export * as Fab from "./Fab";
+export * as familyChat from "./family-chat";
 export * as familyCircleNew from "./family-circle-new";
 export * as FollowerBottomSheet from "./FollowerBottomSheet";
 export * as FollowerInfo from "./FollowerInfo";
@@ -21,13 +26,16 @@ export * as MapTypeBottomSheet from "./MapTypeBottomSheet";
 export * as missingDetail from "./missing-detail";
 export * as notificationTest from "./notification-test";
 export * as notifierTest from "./notifier-test";
+export * as onboarding from "./onboarding";
 export * as reportDetail from "./report-detail";
 export * as reports from "./reports";
+export * as safeZones from "./safe-zones";
 export * as settings from "./settings";
 export * as sos from "./sos";
 export * as tabs from "./tabs";
 export * as trackerTest from "./tracker-test";
 export * as trackingManagerTest from "./tracking-manager-test";
+export * as voiceTest from "./voice-test";
 
 export type TranslationModule = {
   Vietnamese: Record<string, string>;

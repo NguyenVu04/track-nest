@@ -1,41 +1,41 @@
 import { StyleSheet } from "react-native";
 
 export const colors = {
-  // Primary palette based on #74becb
-  primary: "#74becb",
-  primaryDark: "#5aa8b5",
-  primaryLight: "#a8d8e0",
-  primaryMuted: "#e0f2f5",
+  // Primary palette based on #0c6874
+  primary: "#0c6874",
+  primaryDark: "#084c55",
+  primaryLight: "#3e8d98",
+  primaryMuted: "#d8ecef",
 
   // Secondary/accent colors
-  secondary: "#5b9aa6",
-  accent: "#4a8a96",
+  secondary: "#2f7f8b",
+  accent: "#5aa8b5",
 
   // Semantic colors
-  danger: "#e74c3c",
+  danger: "#cc2e1d",
   dangerLight: "#fdeaea",
   warn: "#f39c12",
   warnLight: "#fef5e7",
   success: "#27ae60",
   successLight: "#e8f8ef",
-  info: "#74becb",
-  infoLight: "#e0f2f5",
+  info: "#2f8fa0",
+  infoLight: "#e8f4f6",
 
   // Neutral colors
   muted: "#666",
   textPrimary: "#1a1a1a",
-  textSecondary: "#6b7280",
-  textMuted: "#9ca3af",
+  textSecondary: "#4f6670",
+  textMuted: "#7b9098",
 
   // Background colors
   bg: "#fff",
-  bgSecondary: "#f8fafa",
-  surface: "#f2f2f2",
-  surfaceLight: "#fafafa",
+  bgSecondary: "#f3f8f9",
+  surface: "#edf5f6",
+  surfaceLight: "#f8fbfc",
 
   // Border colors
-  border: "#e5e7eb",
-  borderLight: "#f3f4f6",
+  border: "#d7e5e8",
+  borderLight: "#e8f1f3",
 };
 
 export const spacing = {

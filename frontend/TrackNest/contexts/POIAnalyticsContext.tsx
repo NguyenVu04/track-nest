@@ -6,15 +6,15 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-import {
+import type {
   PointOfInterest,
   POICategory,
   CrimeHeatmapPoint,
   CrimeAnalytics,
   CreatePOIInput,
-  poiService,
-  crimeAnalyticsService,
-} from "@/services/poiAndAnalytics";
+} from "@/types/poiAndAnalytics";
+import { poiService, crimeAnalyticsService } from "@/services/poiAndAnalytics";
+import { getPOIIcon, getPOIColor, calculateRiskLevel } from "@/utils/poiHelpers";
 import { useAuth } from "./AuthContext";
 import * as Location from "expo-location";
 
@@ -105,7 +105,7 @@ export const POIAnalyticsProvider: React.FC<POIAnalyticsProviderProps> = ({ chil
       const maxSeverity = response.content.reduce((max, crime) => 
         Math.max(max, crime.severity), 0
       );
-      const level = crimeAnalyticsService.calculateRiskLevel(response.totalElements, maxSeverity);
+      const level = calculateRiskLevel(response.totalElements, maxSeverity);
       setRiskLevel(level);
     } catch (error) {
       console.error("Failed to load crime heatmap:", error);
@@ -137,12 +137,12 @@ export const POIAnalyticsProvider: React.FC<POIAnalyticsProviderProps> = ({ chil
   }, []);
 
   // Helper functions
-  const getPOIIcon = useCallback((category: POICategory) => {
-    return poiService.getPOIIcon(category);
+  const getPOIIconCallback = useCallback((category: POICategory) => {
+    return getPOIIcon(category);
   }, []);
 
-  const getPOIColor = useCallback((category: POICategory) => {
-    return poiService.getPOIColor(category);
+  const getPOIColorCallback = useCallback((category: POICategory) => {
+    return getPOIColor(category);
   }, []);
 
   // Initial load
@@ -175,8 +175,8 @@ export const POIAnalyticsProvider: React.FC<POIAnalyticsProviderProps> = ({ chil
     crimeCount,
 
     // Helpers
-    getPOIIcon,
-    getPOIColor,
+    getPOIIcon: getPOIIconCallback,
+    getPOIColor: getPOIColorCallback,
   };
 
   return (
