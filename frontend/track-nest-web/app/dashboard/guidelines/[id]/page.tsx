@@ -170,7 +170,7 @@ export default function GuidelineDetailPage() {
       </div>
 
       <ChatbotPanel
-        documentId={guideline.id}
+        documentId={guideline.content}
         title="Guideline Chat"
         emptyState="Ask a question about this guideline."
       />

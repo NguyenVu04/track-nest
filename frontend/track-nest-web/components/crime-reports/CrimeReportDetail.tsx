@@ -225,7 +225,7 @@ export function CrimeReportDetail({
       </div>
 
       <ChatbotPanel
-        documentId={report.id}
+        documentId={report.content.replace(".html", "")}
         title="Crime Report Chat"
         emptyState="Ask a question about this report."
       />

@@ -16,10 +16,11 @@ const sessionKeyForDocument = (documentId: string) =>
   `chatbot-session:${documentId}`;
 
 export function ChatbotPanel({
-  documentId,
+  documentId: rawDocumentId,
   title = "Document Chat",
   emptyState = "Ask a question about this document.",
 }: ChatbotPanelProps) {
+  const documentId = rawDocumentId?.replace(/<[^>]*>?/gm, "")?.replace(/\.html$/i, "");
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatbotSessionMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
