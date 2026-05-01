@@ -1,0 +1,641 @@
+{
+  "state": {
+    "isStdOutTTY": true,
+    "isStdErrTTY": true,
+    "testRunDurationMs": 920325.5346
+  },
+  "metrics": {
+    "rpc_list_messages_success": {
+      "thresholds": {
+        "rate>0.95": {
+          "ok": true
+        }
+      },
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 1,
+        "passes": 3352,
+        "fails": 0
+      }
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 339,
+        "rate": 0.36834792391948484
+      }
+    },
+    "http_req_failed": {
+      "contains": "default",
+      "values": {
+        "rate": 0.029498525073746312,
+        "passes": 10,
+        "fails": 329
+      },
+      "type": "rate"
+    },
+    "http_req_duration{expected_response:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 510.0194255319149,
+        "min": 301.2834,
+        "med": 418.3097,
+        "max": 2202.1152,
+        "p(90)": 792.59708,
+        "p(95)": 1085.9874199999995
+      }
+    },
+    "rpc_list_risk_notifications_success": {
+      "contains": "default",
+      "values": {
+        "rate": 1,
+        "passes": 3352,
+        "fails": 0
+      },
+      "thresholds": {
+        "rate>0.95": {
+          "ok": true
+        }
+      },
+      "type": "rate"
+    },
+    "iteration_duration": {
+      "contains": "time",
+      "values": {
+        "avg": 20831.16893155864,
+        "min": 330.2339,
+        "med": 20876.423600000002,
+        "max": 27424.1972,
+        "p(90)": 23701.43738,
+        "p(95)": 24439.8754
+      },
+      "type": "trend"
+    },
+    "rpc_send_message_duration": {
+      "values": {
+        "avg": 267.71151551312647,
+        "min": 136,
+        "med": 238,
+        "max": 1239,
+        "p(90)": 396,
+        "p(95)": 479.4499999999998
+      },
+      "thresholds": {
+        "p(95)<1400": {
+          "ok": true
+        }
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_waiting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 2201.4696,
+        "p(90)": 806.4659199999995,
+        "p(95)": 1094.8371199999992,
+        "avg": 512.2759241887903,
+        "min": 300.9124,
+        "med": 418.1115
+      }
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 3362,
+        "rate": 3.653055221879965
+      }
+    },
+    "grpc_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 98.5021,
+        "med": 183.28515,
+        "max": 5498.528,
+        "p(90)": 439.58291,
+        "p(95)": 546.3771199999995,
+        "avg": 241.92184381179658
+      },
+      "thresholds": {
+        "p(95)<1600": {
+          "ok": true
+        }
+      }
+    },
+    "rpc_update_location_success": {
+      "thresholds": {
+        "rate>0.95": {
+          "ok": true
+        }
+      },
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.9991050119331742,
+        "passes": 3349,
+        "fails": 3
+      }
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0.3253,
+        "max": 10.5155,
+        "p(90)": 1.21908,
+        "p(95)": 1.5513399999999975,
+        "avg": 0.4901896755162242,
+        "min": 0
+      }
+    },
+    "data_received": {
+      "contains": "data",
+      "values": {
+        "count": 1580011237,
+        "rate": 1716796.0440071006
+      },
+      "type": "counter"
+    },
+    "rpc_list_tracking_notifications_success": {
+      "contains": "default",
+      "values": {
+        "rate": 1,
+        "passes": 3352,
+        "fails": 0
+      },
+      "thresholds": {
+        "rate>0.95": {
+          "ok": true
+        }
+      },
+      "type": "rate"
+    },
+    "checks": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 5,
+        "rate": 0.9997869076031367,
+        "passes": 23459
+      },
+      "thresholds": {
+        "rate>0.95": {
+          "ok": true
+        }
+      }
+    },
+    "rpc_update_location_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 1683,
+        "p(90)": 268,
+        "p(95)": 329,
+        "avg": 201.5414677804296,
+        "min": 123,
+        "med": 187
+      },
+      "thresholds": {
+        "p(95)<1600": {
+          "ok": true
+        }
+      }
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 1,
+        "min": 1,
+        "max": 100
+      }
+    },
+    "vus_max": {
+      "values": {
+        "value": 100,
+        "min": 100,
+        "max": 100
+      },
+      "type": "gauge",
+      "contains": "default"
+    },
+    "rpc_list_location_history_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 575.1279832935561,
+        "min": 262,
+        "med": 499,
+        "max": 5527,
+        "p(90)": 833.9000000000001,
+        "p(95)": 1021
+      },
+      "thresholds": {
+        "p(95)<1600": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_sending": {
+      "contains": "time",
+      "values": {
+        "avg": 0.23575309734513272,
+        "min": 0,
+        "med": 0,
+        "max": 1.4864,
+        "p(90)": 0.6340399999999999,
+        "p(95)": 0.7181299999999995
+      },
+      "type": "trend"
+    },
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 41.56836,
+        "avg": 11.161036578171089,
+        "min": 0,
+        "med": 0,
+        "max": 74.7023,
+        "p(90)": 37.45308
+      }
+    },
+    "http_req_blocked": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0,
+        "max": 554.2546,
+        "p(90)": 87.34034,
+        "p(95)": 94.20399999999994,
+        "avg": 27.308557227138653,
+        "min": 0
+      }
+    },
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 513.0018669616519,
+        "min": 301.2834,
+        "med": 418.7324,
+        "max": 2202.1152,
+        "p(90)": 807.6887199999995,
+        "p(95)": 1095.371299999999
+      }
+    },
+    "rpc_list_location_history_success": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0.9994033412887828,
+        "passes": 3350,
+        "fails": 2
+      },
+      "thresholds": {
+        "rate>0.95": {
+          "ok": true
+        }
+      }
+    },
+    "rpc_list_messages_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 2351,
+        "p(90)": 229.9000000000001,
+        "p(95)": 264,
+        "avg": 173.0450477326969,
+        "min": 107,
+        "med": 164
+      },
+      "thresholds": {
+        "p(95)<1400": {
+          "ok": true
+        }
+      }
+    },
+    "data_sent": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 16987583,
+        "rate": 18458.232833215145
+      }
+    },
+    "http_req_tls_handshaking": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 15.732071091445425,
+        "min": 0,
+        "med": 0,
+        "max": 517.9524,
+        "p(90)": 49.30256,
+        "p(95)": 51.959199999999946
+      }
+    },
+    "rpc_list_family_circles_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 163.68227923627686,
+        "min": 99,
+        "med": 156,
+        "max": 1139,
+        "p(90)": 214.9000000000001,
+        "p(95)": 251.44999999999982
+      },
+      "thresholds": {
+        "p(95)<1000": {
+          "ok": true
+        }
+      }
+    },
+    "rpc_list_family_circles_success": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 1,
+        "passes": 3352,
+        "fails": 0
+      },
+      "thresholds": {
+        "rate>0.95": {
+          "ok": true
+        }
+      }
+    },
+    "rpc_send_message_success": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "passes": 3352,
+        "fails": 0,
+        "rate": 1
+      },
+      "thresholds": {
+        "rate>0.95": {
+          "ok": true
+        }
+      }
+    },
+    "rpc_list_tracking_notifications_duration": {
+      "contains": "time",
+      "values": {
+        "p(95)": 280,
+        "avg": 179.6870525059666,
+        "min": 110,
+        "med": 171,
+        "max": 1874,
+        "p(90)": 236
+      },
+      "thresholds": {
+        "p(95)<1000": {
+          "ok": true
+        }
+      },
+      "type": "trend"
+    },
+    "rpc_list_risk_notifications_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 169.95733890214797,
+        "min": 103,
+        "med": 160,
+        "max": 2376,
+        "p(90)": 227,
+        "p(95)": 263
+      },
+      "thresholds": {
+        "p(95)<1000": {
+          "ok": true
+        }
+      }
+    }
+  },
+  "setup_data": {},
+  "root_group": {
+      "groups": [],
+      "checks": [
+          {
+            "name": "UpdateUserLocation [user3] status OK",
+            "path": "::UpdateUserLocation [user3] status OK",
+            "id": "d1bd7745513215dd598ef15d0e24f13b",
+            "passes": 836,
+            "fails": 0
+          },
+          {
+            "passes": 835,
+            "fails": 1,
+            "name": "UpdateUserLocation [user4] status OK",
+            "path": "::UpdateUserLocation [user4] status OK",
+            "id": "6b62d0459ba37223e53ec45b7f83510b"
+          },
+          {
+            "name": "SendMessage [user3] status OK",
+            "path": "::SendMessage [user3] status OK",
+            "id": "5ce262f2c808584374a7ee92491a360b",
+            "passes": 836,
+            "fails": 0
+          },
+          {
+            "name": "SendMessage [user4] status OK",
+            "path": "::SendMessage [user4] status OK",
+            "id": "0a6a11856650cbf9a04d8111b6ef58bd",
+            "passes": 836,
+            "fails": 0
+          },
+          {
+            "fails": 0,
+            "name": "ListMessages [user3] status OK",
+            "path": "::ListMessages [user3] status OK",
+            "id": "0ca471e0d026729d2c304de0efdede95",
+            "passes": 836
+          },
+          {
+            "name": "ListMessages [user4] status OK",
+            "path": "::ListMessages [user4] status OK",
+            "id": "611dbf6554a1f4af3909e5430969d554",
+            "passes": 836,
+            "fails": 0
+          },
+          {
+            "name": "ListTrackingNotifications [user3] status OK",
+            "path": "::ListTrackingNotifications [user3] status OK",
+            "id": "ccb9366be3d91eb1b7a77488d8029f2c",
+            "passes": 836,
+            "fails": 0
+          },
+          {
+            "passes": 836,
+            "fails": 0,
+            "name": "ListTrackingNotifications [user4] status OK",
+            "path": "::ListTrackingNotifications [user4] status OK",
+            "id": "8a80de0c7dcf928f9a475b6bc4abb141"
+          },
+          {
+            "name": "ListRiskNotifications [user3] status OK",
+            "path": "::ListRiskNotifications [user3] status OK",
+            "id": "2b2c18199dbffdd2d178eed04bbcb804",
+            "passes": 836,
+            "fails": 0
+          },
+          {
+            "name": "UpdateUserLocation [user1] status OK",
+            "path": "::UpdateUserLocation [user1] status OK",
+            "id": "4ee85a50d4613f51d25f31cb57cb2e5e",
+            "passes": 834,
+            "fails": 1
+          },
+          {
+            "name": "ListRiskNotifications [user4] status OK",
+            "path": "::ListRiskNotifications [user4] status OK",
+            "id": "10bdde02ab6936dc832542a39cf91a4a",
+            "passes": 836,
+            "fails": 0
+          },
+          {
+            "name": "UpdateUserLocation [user2] status OK",
+            "path": "::UpdateUserLocation [user2] status OK",
+            "id": "bdb445a736f9d3fb628a4da90a789190",
+            "passes": 844,
+            "fails": 1
+          },
+          {
+            "name": "SendMessage [user1] status OK",
+            "path": "::SendMessage [user1] status OK",
+            "id": "424d14b998d55cdc1c8fe4ed7677e27d",
+            "passes": 835,
+            "fails": 0
+          },
+          {
+            "name": "ListFamilyMemberLocationHistory [user4] status OK",
+            "path": "::ListFamilyMemberLocationHistory [user4] status OK",
+            "id": "bc41421e3f8a49d464ed78866de52795",
+            "passes": 836,
+            "fails": 0
+          },
+          {
+            "name": "ListMessages [user1] status OK",
+            "path": "::ListMessages [user1] status OK",
+            "id": "c2d1aca4564dfeee217f884c492b2906",
+            "passes": 835,
+            "fails": 0
+          },
+          {
+            "name": "ListFamilyCircles [user4] status OK",
+            "path": "::ListFamilyCircles [user4] status OK",
+            "id": "ff7e6eb6413548e8d5eb83439c1a2b03",
+            "passes": 836,
+            "fails": 0
+          },
+          {
+            "fails": 0,
+            "name": "SendMessage [user2] status OK",
+            "path": "::SendMessage [user2] status OK",
+            "id": "a187afed4740861bed70564b669660f4",
+            "passes": 845
+          },
+          {
+            "fails": 1,
+            "name": "ListFamilyMemberLocationHistory [user3] status OK",
+            "path": "::ListFamilyMemberLocationHistory [user3] status OK",
+            "id": "fa41ca7be626a5c248f7a3564644af57",
+            "passes": 835
+          },
+          {
+            "name": "ListTrackingNotifications [user1] status OK",
+            "path": "::ListTrackingNotifications [user1] status OK",
+            "id": "a53d2e1f7b6accc3b751d8faa20902d2",
+            "passes": 835,
+            "fails": 0
+          },
+          {
+            "name": "ListMessages [user2] status OK",
+            "path": "::ListMessages [user2] status OK",
+            "id": "9a8ccafef8ec2fcb030a3803f8b42cfd",
+            "passes": 845,
+            "fails": 0
+          },
+          {
+            "id": "12c817f8fe595f7a28d9553cf78a72b2",
+            "passes": 836,
+            "fails": 0,
+            "name": "ListFamilyCircles [user3] status OK",
+            "path": "::ListFamilyCircles [user3] status OK"
+          },
+          {
+            "path": "::ListRiskNotifications [user1] status OK",
+            "id": "3b0472f10837f000ebe7cbbccb174a72",
+            "passes": 835,
+            "fails": 0,
+            "name": "ListRiskNotifications [user1] status OK"
+          },
+          {
+            "name": "ListTrackingNotifications [user2] status OK",
+            "path": "::ListTrackingNotifications [user2] status OK",
+            "id": "bf05b5c511abae5c85ea05a1dbc37a01",
+            "passes": 845,
+            "fails": 0
+          },
+          {
+            "passes": 845,
+            "fails": 0,
+            "name": "ListRiskNotifications [user2] status OK",
+            "path": "::ListRiskNotifications [user2] status OK",
+            "id": "de565291cf75d83db493020c3f5bc20a"
+          },
+          {
+            "path": "::ListFamilyMemberLocationHistory [user1] status OK",
+            "id": "af9aa58f50806717ec398f8614fc5b6b",
+            "passes": 834,
+            "fails": 1,
+            "name": "ListFamilyMemberLocationHistory [user1] status OK"
+          },
+          {
+            "path": "::ListFamilyCircles [user1] status OK",
+            "id": "af58767a0a772664dd24e4d56003bf8f",
+            "passes": 835,
+            "fails": 0,
+            "name": "ListFamilyCircles [user1] status OK"
+          },
+          {
+            "name": "ListFamilyMemberLocationHistory [user2] status OK",
+            "path": "::ListFamilyMemberLocationHistory [user2] status OK",
+            "id": "6df2c730d1679382de10486423ba5d9f",
+            "passes": 845,
+            "fails": 0
+          },
+          {
+            "name": "ListFamilyCircles [user2] status OK",
+            "path": "::ListFamilyCircles [user2] status OK",
+            "id": "8f6ade499fc8740d1e39cfc2c20d4362",
+            "passes": 845,
+            "fails": 0
+          }
+        ],
+      "name": "",
+      "path": "",
+      "id": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+  "options": {
+      "summaryTrendStats": [
+        "avg",
+        "min",
+        "med",
+        "max",
+        "p(90)",
+        "p(95)"
+      ],
+      "summaryTimeUnit": "",
+      "noColor": false
+    }
+}

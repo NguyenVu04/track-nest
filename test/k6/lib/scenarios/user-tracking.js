@@ -91,6 +91,10 @@ function invoke(method, payload, meta, metric, label, username) {
   return res;
 }
 
+// Inter-iteration pacing — overridable per scenario via options.env
+const ITER_THINK_MIN = Number.parseFloat(__ENV.ITER_THINK_MIN || '3');
+const ITER_THINK_MAX = Number.parseFloat(__ENV.ITER_THINK_MAX || '8');
+
 // ── runIteration() ────────────────────────────────────────────────────────────
 // Main VU body — called by each script's default() export.
 export function runIteration(_data) {
@@ -110,7 +114,7 @@ export function runIteration(_data) {
     const circleId = pickRandom(USER_CIRCLES[userIdx]);
     const peer     = pickPeerInCircle(circleId, userIdx);
 
-    // 1. UpdateUserLocation — write path, most latency-sensitive
+    // 1. UpdateUserLocation — background GPS push, no user think time before it
     invoke(M.updateLocation, {
       locations: [{
         latitude_deg:   jitter(user.lat, 0.002),
@@ -122,40 +126,40 @@ export function runIteration(_data) {
     }, meta, metrics.updateLocation, 'UpdateUserLocation', user.username);
 
     // 2. SendMessage — user composes and sends a message
-    thinkTime(1, 2);
+    thinkTime(2, 5);
     invoke(M.sendMessage, {
       family_circle_id: circleId,
       message_content:  `k6 load test @ ${Date.now()}`,
     }, meta, metrics.sendMessage, 'SendMessage', user.username);
 
     // 3. ListMessages — user reads conversation
-    thinkTime(1, 2);
+    thinkTime(1, 3);
     invoke(M.listMessages, {
       family_circle_id: circleId,
       page_size:        10,
     }, meta, metrics.listMessages, 'ListMessages', user.username);
 
-    // 4. ListTrackingNotifications — user checks tracking alerts
-    thinkTime(1, 2);
+    // 4. ListTrackingNotifications — user glances at tracking alerts
+    thinkTime(0.5, 1.5);
     invoke(M.listTrackingNotifications, {
       page_size: 10,
     }, meta, metrics.listTrackingNotifications, 'ListTrackingNotifications', user.username);
 
-    // 5. ListRiskNotifications — user checks risk alerts
-    thinkTime(1, 2);
+    // 5. ListRiskNotifications — user glances at risk alerts
+    thinkTime(0.5, 1.5);
     invoke(M.listRiskNotifications, {
       page_size: 10,
     }, meta, metrics.listRiskNotifications, 'ListRiskNotifications', user.username);
 
-    // 6. ListFamilyMemberLocationHistory — user views a member's route
-    thinkTime(1, 2);
+    // 6. ListFamilyMemberLocationHistory — user studies a member's route on map
+    thinkTime(3, 7);
     invoke(M.listLocationHistory, {
       family_circle_id: circleId,
       member_id:        peer.id,
     }, meta, metrics.listLocationHistory, 'ListFamilyMemberLocationHistory', user.username);
 
-    // 7. ListFamilyCircles — user browses circle list
-    thinkTime(1, 2);
+    // 7. ListFamilyCircles — user scans circle list
+    thinkTime(0.5, 1.5);
     invoke(M.listFamilyCircles, {
       page_size: 10,
     }, meta, metrics.listFamilyCircles, 'ListFamilyCircles', user.username);
@@ -164,8 +168,8 @@ export function runIteration(_data) {
     client.close();
   }
 
-  // Inter-iteration think time: user switches context before next action cycle
-  thinkTime(1, 2);
+  // Inter-iteration think time — controlled per scenario via ITER_THINK_MIN/MAX env vars
+  thinkTime(ITER_THINK_MIN, ITER_THINK_MAX);
 }
 
 // ── makeHandleSummary() ───────────────────────────────────────────────────────
