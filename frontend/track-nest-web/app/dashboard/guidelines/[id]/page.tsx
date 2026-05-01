@@ -47,6 +47,7 @@ export default function GuidelineDetailPage() {
           title: response.title,
           abstractText: response.abstractText,
           content: contentValue,
+          contentDocId: response.content,
           createdAt: response.createdAt,
           reporterId: response.reporterId,
           isPublic: response.isPublic,
@@ -170,7 +171,7 @@ export default function GuidelineDetailPage() {
       </div>
 
       <ChatbotPanel
-        documentId={guideline.content}
+        documentId={guideline.contentDocId}
         title="Guideline Chat"
         emptyState="Ask a question about this guideline."
       />

@@ -53,6 +53,7 @@ export default function MissingPersonDetailPage() {
           photo: photoUrl,
           date: response.date,
           content: contentValue,
+          contentDocId: response.content,
           contactEmail: response.contactEmail,
           contactPhone: response.contactPhone,
           createdAt: response.createdAt,

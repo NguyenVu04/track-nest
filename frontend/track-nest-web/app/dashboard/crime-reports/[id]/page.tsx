@@ -57,6 +57,7 @@ export default function CrimeReportDetailPage() {
           id: response.id,
           title: response.title,
           content: contentValue,
+          contentDocId: response.content,
           severity: response.severity as CrimeReport["severity"],
           date: response.date,
           longitude: response.longitude,

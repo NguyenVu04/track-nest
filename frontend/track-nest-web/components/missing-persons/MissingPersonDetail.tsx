@@ -202,7 +202,7 @@ export function MissingPersonDetail({
       </div>
 
       <ChatbotPanel
-        documentId={person.content.replace(".html", "")}
+        documentId={person.contentDocId}
         title="Missing Person Report Chat"
         emptyState="Ask a question about this report."
       />
