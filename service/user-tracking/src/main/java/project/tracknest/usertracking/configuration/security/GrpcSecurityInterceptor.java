@@ -109,7 +109,7 @@ public class GrpcSecurityInterceptor implements ServerInterceptor {
         return new SimpleForwardingServerCallListener<>(delegate) {
             @Override
             public void onHalfClose() {
-                SecurityContextHolder.setContext(SECURITY_CTX_KEY.get());
+                SecurityContextHolder.setContext(securityContext);
                 try {
                     super.onHalfClose();
                 } finally {
