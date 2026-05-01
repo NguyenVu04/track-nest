@@ -27,11 +27,26 @@ export default function GuidelineDetailPage() {
       try {
         setIsLoading(true);
         const response = await criminalReportsService.getGuidelinesDocument(id);
+        let contentValue = response.content;
+        if (
+          contentValue &&
+          !contentValue.trim().startsWith("<") &&
+          !contentValue.startsWith("http")
+        ) {
+          try {
+            contentValue = await criminalReportsService.getFileUrl(
+              "criminal-reports",
+              contentValue,
+            );
+          } catch (error) {
+            console.error("Failed to resolve guideline content URL:", error);
+          }
+        }
         setGuideline({
           id: response.id,
           title: response.title,
           abstractText: response.abstractText,
-          content: response.content,
+          content: contentValue,
           createdAt: response.createdAt,
           reporterId: response.reporterId,
           isPublic: response.isPublic,
@@ -135,10 +150,22 @@ export default function GuidelineDetailPage() {
           )}
         </div>
         <div className="prose max-w-none">
-          <div
-            className="text-gray-900"
-            dangerouslySetInnerHTML={{ __html: guideline.content || "" }}
-          />
+          {guideline.content?.startsWith("http") ? (
+            <iframe
+              title="Guideline content"
+              src={guideline.content}
+              className="w-full min-h-[320px] rounded-lg border border-gray-200 bg-white"
+            />
+          ) : guideline.content?.trim().startsWith("<") ? (
+            <div
+              className="text-gray-900"
+              dangerouslySetInnerHTML={{ __html: guideline.content || "" }}
+            />
+          ) : (
+            <p className="text-gray-700 whitespace-pre-line">
+              {guideline.content || ""}
+            </p>
+          )}
         </div>
       </div>
 

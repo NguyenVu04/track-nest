@@ -43,7 +43,7 @@ export interface SubmitMissingPersonReportRequest {
   contactPhone: string;
   date: string;
   content: string;
-  latitue?: number;
+  latitude?: number;
   longitude?: number;
 }
 
@@ -558,6 +558,8 @@ export const criminalReportsService = {
     formData.append("contactEmail", data.contactEmail);
     formData.append("contactPhone", data.contactPhone);
     formData.append("date", data.date);
+    if (data.latitude != null) formData.append("latitude", data.latitude.toString());
+    if (data.longitude != null) formData.append("longitude", data.longitude.toString());
     if (data.photo) formData.append("photo", data.photo);
 
     const response = await api.post<MissingPersonReportResponse>(
@@ -678,4 +680,7 @@ export const criminalReportsService = {
     const response = await api.get<string>(`/file/${bucket}/${filename}`);
     return response.data;
   },
+
+  getMissingPersonPhotoUrl: (reportId: string): string =>
+    `${API_URL}/report-viewer/missing-person-reports/${reportId}/photo`,
 };

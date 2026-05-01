@@ -27,10 +27,31 @@ export default function EditCrimeReportPage() {
       try {
         setIsLoading(true);
         const response = await criminalReportsService.getCrimeReport(id);
+        let contentValue = response.content;
+        if (contentValue) {
+          try {
+            let contentUrl = contentValue;
+            if (
+              !contentUrl.trim().startsWith("<") &&
+              !contentUrl.startsWith("http")
+            ) {
+              contentUrl = await criminalReportsService.getFileUrl(
+                "criminal-reports",
+                contentUrl,
+              );
+            }
+            if (contentUrl.startsWith("http")) {
+              const contentResponse = await fetch(contentUrl);
+              contentValue = await contentResponse.text();
+            }
+          } catch (error) {
+            console.error("Failed to resolve report content:", error);
+          }
+        }
         setReport({
           id: response.id,
           title: response.title,
-          content: response.content,
+          content: contentValue,
           severity: response.severity as CrimeReport["severity"],
           date: response.date,
           longitude: response.longitude,

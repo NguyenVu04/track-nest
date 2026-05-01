@@ -24,10 +24,39 @@ export default function CrimeReportDetailPage() {
       try {
         setIsLoading(true);
         const response = await criminalReportsService.getCrimeReport(id);
+        let contentValue = response.content;
+        if (
+          contentValue &&
+          !contentValue.trim().startsWith("<") &&
+          !contentValue.startsWith("http")
+        ) {
+          try {
+            contentValue = await criminalReportsService.getFileUrl(
+              "criminal-reports",
+              contentValue,
+            );
+          } catch (error) {
+            console.error("Failed to resolve report content URL:", error);
+          }
+        }
+        const resolvedPhotos = await Promise.all(
+          (response.photos ?? []).map(async (photo) => {
+            if (!photo || photo.startsWith("http")) return photo;
+            try {
+              return await criminalReportsService.getFileUrl(
+                "criminal-reports",
+                photo,
+              );
+            } catch (error) {
+              console.error("Failed to resolve photo URL:", error);
+              return photo;
+            }
+          }),
+        );
         setReport({
           id: response.id,
           title: response.title,
-          content: response.content,
+          content: contentValue,
           severity: response.severity as CrimeReport["severity"],
           date: response.date,
           longitude: response.longitude,
@@ -35,7 +64,7 @@ export default function CrimeReportDetailPage() {
           numberOfVictims: response.numberOfVictims,
           numberOfOffenders: response.numberOfOffenders,
           arrested: response.arrested,
-          photos: response.photos ?? [],
+          photos: resolvedPhotos,
           createdAt: response.createdAt,
           updatedAt: response.updatedAt,
           reporterId: response.reporterId,

@@ -148,10 +148,23 @@ export function MissingPersonDetail({
 
               <div className="pt-4 border-t border-gray-200">
                 <p className="text-gray-700 mb-2">{t("detailDescription")}</p>
-                <div
-                  className="text-gray-900 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: person.content || "" }}
-                />
+                <div className="text-gray-900 prose prose-sm max-w-none">
+                  {person.content?.startsWith("http") ? (
+                    <iframe
+                      title="Missing person report content"
+                      src={person.content}
+                      className="w-full min-h-[280px] rounded-lg border border-gray-200 bg-white"
+                    />
+                  ) : person.content?.trim().startsWith("<") ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: person.content || "" }}
+                    />
+                  ) : (
+                    <p className="whitespace-pre-line">
+                      {person.content || ""}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {person.photo && (

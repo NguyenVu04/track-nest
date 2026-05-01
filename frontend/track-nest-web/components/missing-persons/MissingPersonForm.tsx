@@ -1,8 +1,19 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Save, X, MapPin, User, Calendar, FileText, Phone, Mail, Upload, Trash2 } from "lucide-react";
+import {
+  Save,
+  X,
+  MapPin,
+  User,
+  Calendar,
+  FileText,
+  Phone,
+  Mail,
+  Upload,
+  Trash2,
+} from "lucide-react";
 import Image from "next/image";
 import type { MissingPerson } from "@/types";
 import {
@@ -66,13 +77,13 @@ export function MissingPersonForm({
       contactPhone: "",
       title: "",
       status: "PENDING",
-    }
+    },
   );
 
   const [coordinates, setCoordinates] = useState<[number, number]>(
     person?.latitude != null && person?.longitude != null
       ? [person.latitude, person.longitude]
-      : [10.8231, 106.6297]
+      : [10.8231, 106.6297],
   );
 
   // In create mode the photo File is held locally and submitted together with
@@ -82,8 +93,42 @@ export function MissingPersonForm({
   // In edit mode the photo field holds the existing stored key/URL.
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string>(
-    mode === "edit" ? (person?.photo ?? "") : ""
+    mode === "edit" ? (person?.photo ?? "") : "",
   );
+
+  useEffect(() => {
+    if (mode !== "edit") return;
+    const photoValue = person?.photo ?? "";
+    if (!photoValue) {
+      setPhotoPreviewUrl("");
+      return;
+    }
+    if (photoValue.startsWith("http")) {
+      setPhotoPreviewUrl(photoValue);
+      return;
+    }
+
+    if (person?.id) {
+      setPhotoPreviewUrl(
+        criminalReportsService.getMissingPersonPhotoUrl(person.id),
+      );
+      return;
+    }
+
+    let isActive = true;
+    criminalReportsService
+      .getFileUrl("criminal-reports", photoValue)
+      .then((url) => {
+        if (isActive) setPhotoPreviewUrl(url);
+      })
+      .catch((error) => {
+        console.error("Failed to resolve photo preview URL:", error);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [mode, person?.photo]);
 
   const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,7 +144,10 @@ export function MissingPersonForm({
 
   const handleEditPhotoUpload = async (file: File) => {
     try {
-      const result = await criminalReportsService.uploadFile(file, "criminal-reports");
+      const result = await criminalReportsService.uploadFile(
+        file,
+        "criminal-reports",
+      );
       setFormData((prev) => ({ ...prev, photo: result.url }));
       setPhotoPreviewUrl(result.url);
     } catch {
@@ -113,7 +161,9 @@ export function MissingPersonForm({
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
-    handlePhotoFileChange({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
+    handlePhotoFileChange({
+      target: { files: e.dataTransfer.files },
+    } as React.ChangeEvent<HTMLInputElement>);
   };
 
   const handleRemovePhoto = () => {
@@ -131,18 +181,21 @@ export function MissingPersonForm({
       if (mode === "create") {
         // Uses the multipart submit endpoint (ROLE_USER or ROLE_ADMIN).
         // Photo upload is handled atomically server-side.
-        const response = await criminalReportsService.submitMissingPersonReport({
-          title: formData.title || formData.fullName || "Missing Person Report",
-          fullName: formData.fullName!,
-          personalId: formData.personalId!,
-          photo: photoFile ?? undefined,
-          date: formData.date!,
-          content: formData.content!,
-          contactEmail: formData.contactEmail || "",
-          contactPhone: formData.contactPhone!,
-          latitue: coordinates[0],
-          longitude: coordinates[1],
-        });
+        const response = await criminalReportsService.submitMissingPersonReport(
+          {
+            title:
+              formData.title || formData.fullName || "Missing Person Report",
+            fullName: formData.fullName!,
+            personalId: formData.personalId!,
+            photo: photoFile ?? undefined,
+            date: formData.date!,
+            content: formData.content!,
+            contactEmail: formData.contactEmail || "",
+            contactPhone: formData.contactPhone!,
+            latitude: coordinates[0],
+            longitude: coordinates[1],
+          },
+        );
         onSave({
           id: response.id,
           title: response.title,
@@ -199,7 +252,9 @@ export function MissingPersonForm({
       }
     } catch (error) {
       console.error("Error saving missing person report:", error);
-      toast.error(mode === "create" ? t("toastCreateError") : t("toastUpdateError"));
+      toast.error(
+        mode === "create" ? t("toastCreateError") : t("toastUpdateError"),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -224,7 +279,8 @@ export function MissingPersonForm({
             <label htmlFor="title" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                {t("formReportTitle")}{tCommon("requiredSuffix")}
+                {t("formReportTitle")}
+                {tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -244,7 +300,8 @@ export function MissingPersonForm({
             <label htmlFor="fullName" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <User className="w-4 h-4" />
-                {t("formFullName")}{tCommon("requiredSuffix")}
+                {t("formFullName")}
+                {tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -262,7 +319,8 @@ export function MissingPersonForm({
 
           <div>
             <label htmlFor="personalId" className="block text-gray-700 mb-2">
-              {t("formPersonalId")}{tCommon("requiredSuffix")}
+              {t("formPersonalId")}
+              {tCommon("requiredSuffix")}
             </label>
             <input
               id="personalId"
@@ -281,7 +339,8 @@ export function MissingPersonForm({
             <label htmlFor="date" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                {t("formDateMissing")}{tCommon("requiredSuffix")}
+                {t("formDateMissing")}
+                {tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -297,7 +356,9 @@ export function MissingPersonForm({
           </div>
 
           <div>
-            <label className="block text-gray-700 mb-2">{t("formPhotoUrl")}</label>
+            <label className="block text-gray-700 mb-2">
+              {t("formPhotoUrl")}
+            </label>
 
             {currentPhotoSrc ? (
               <div className="relative w-full rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
@@ -327,8 +388,12 @@ export function MissingPersonForm({
               >
                 <div className="flex flex-col items-center gap-2 text-gray-500 pointer-events-none">
                   <Upload className="w-7 h-7 text-gray-400" />
-                  <span className="text-sm font-medium">{t("uploadPhotoBtn")}</span>
-                  <span className="text-xs text-gray-400">{t("uploadPhotoHint")}</span>
+                  <span className="text-sm font-medium">
+                    {t("uploadPhotoBtn")}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {t("uploadPhotoHint")}
+                  </span>
                 </div>
                 <input
                   ref={photoInputRef}
@@ -358,14 +423,13 @@ export function MissingPersonForm({
             <label htmlFor="content" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                {t("formContent")}{tCommon("requiredSuffix")}
+                {t("formContent")}
+                {tCommon("requiredSuffix")}
               </span>
             </label>
             <RichTextEditor
               value={formData.content || ""}
-              onChange={(html) =>
-                setFormData({ ...formData, content: html })
-              }
+              onChange={(html) => setFormData({ ...formData, content: html })}
               placeholder={t("placeholderContent")}
             />
           </div>
@@ -393,7 +457,8 @@ export function MissingPersonForm({
             <label htmlFor="contactPhone" className="block text-gray-700 mb-2">
               <span className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                {t("formContactPhone")}{tCommon("requiredSuffix")}
+                {t("formContactPhone")}
+                {tCommon("requiredSuffix")}
               </span>
             </label>
             <input
@@ -417,7 +482,11 @@ export function MissingPersonForm({
             className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            {isSubmitting ? tCommon("saving") : mode === "create" ? t("createButton") : tCommon("save")}
+            {isSubmitting
+              ? tCommon("saving")
+              : mode === "create"
+                ? t("createButton")
+                : tCommon("save")}
           </button>
           <button
             type="button"

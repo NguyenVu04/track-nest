@@ -11,7 +11,11 @@ import { toast } from "sonner";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { useDebouncedCallback } from "use-debounce";
-import { criminalReportsService, MissingPersonReportResponse, PageResponse } from "@/services/criminalReportsService";
+import {
+  criminalReportsService,
+  MissingPersonReportResponse,
+  PageResponse,
+} from "@/services/criminalReportsService";
 import { Loading } from "@/components/loading/Loading";
 import { useTranslations } from "next-intl";
 
@@ -92,11 +96,21 @@ export default function MissingPersonsPage() {
   );
 
   const filteredPersons = useMemo(() => {
+    const getSearchableContent = (value: string) => {
+      if (!value) return "";
+      const trimmed = value.trim();
+      if (trimmed.startsWith("<")) return trimmed;
+      if (trimmed.startsWith("http") || trimmed.endsWith(".html")) return "";
+      return trimmed;
+    };
+
     return missingPersons.filter((person) => {
       const matchesSearch =
         person.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         person.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        person.content.toLowerCase().includes(searchQuery.toLowerCase());
+        getSearchableContent(person.content || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
 
       const matchesStatus =
         statusFilter === "all" || person.status === statusFilter;
@@ -108,11 +122,12 @@ export default function MissingPersonsPage() {
     const fetchMissingPersons = async () => {
       try {
         setIsLoading(true);
-        const response: PageResponse<MissingPersonReportResponse> = await criminalReportsService.listMissingPersonReports({
-          isPublic: false,
-          page: 0,
-          size: 100,
-        });
+        const response: PageResponse<MissingPersonReportResponse> =
+          await criminalReportsService.listMissingPersonReports({
+            isPublic: false,
+            page: 0,
+            size: 100,
+          });
 
         const mappedPersons: MissingPerson[] = response.content.map((item) => ({
           id: item.id,
@@ -156,7 +171,9 @@ export default function MissingPersonsPage() {
       <div>
         <Breadcrumbs items={[{ label: t("pageTitle") }]} />
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="text-gray-900 text-xl font-semibold">{t("pageTitle")}</h2>
+          <h2 className="text-gray-900 text-xl font-semibold">
+            {t("pageTitle")}
+          </h2>
           <button
             onClick={handleCreateNew}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"

@@ -150,10 +150,23 @@ export function CrimeReportDetail({
 
               <div className="pt-4 border-t border-gray-200">
                 <p className="text-gray-700 mb-2">{tCommon("description")}</p>
-                <div
-                  className="text-gray-900 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: report.content || "" }}
-                />
+                <div className="text-gray-900 prose prose-sm max-w-none">
+                  {report.content?.startsWith("http") ? (
+                    <iframe
+                      title="Crime report content"
+                      src={report.content}
+                      className="w-full min-h-[280px] rounded-lg border border-gray-200 bg-white"
+                    />
+                  ) : report.content?.trim().startsWith("<") ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: report.content || "" }}
+                    />
+                  ) : (
+                    <p className="whitespace-pre-line">
+                      {report.content || ""}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="pt-4 border-t border-gray-200">

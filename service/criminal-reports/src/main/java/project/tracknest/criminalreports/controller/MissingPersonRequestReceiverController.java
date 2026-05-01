@@ -12,7 +12,9 @@ import project.tracknest.criminalreports.configuration.security.SecurityUtils;
 import project.tracknest.criminalreports.domain.missingpersonrequestreceiver.MissingPersonRequestReceiverService;
 import project.tracknest.criminalreports.domain.reportmanager.dto.MissingPersonReportResponse;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
@@ -47,6 +49,23 @@ public class MissingPersonRequestReceiverController {
             @RequestParam double latitude,
             @RequestParam double longitude) {
 
+        String contentObjectName = null;
+        try {
+            String htmlBody = content == null ? "" : content;
+            String htmlContent = "<!doctype html><html><head><meta charset=\"utf-8\"/></head><body>"
+                    + htmlBody + "</body></html>";
+            contentObjectName = UUID.randomUUID() + ".html";
+            objectStorage.uploadFile(
+                    bucketName,
+                    contentObjectName,
+                    "text/html; charset=UTF-8",
+                    new ByteArrayInputStream(htmlContent.getBytes(StandardCharsets.UTF_8))
+            );
+        } catch (Exception e) {
+            log.error("Failed to upload content HTML: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
         String photoObjectName = null;
         if (photo != null && !photo.isEmpty()) {
             String contentType = photo.getContentType();
@@ -74,7 +93,7 @@ public class MissingPersonRequestReceiverController {
                 title,
                 fullName,
                 personalId,
-                content,
+            contentObjectName,
                 photoObjectName,
                 contactEmail,
                 contactPhone,

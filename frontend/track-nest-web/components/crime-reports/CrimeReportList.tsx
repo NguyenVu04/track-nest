@@ -16,12 +16,15 @@ interface CrimeReportListProps {
   userRole: UserRole[];
 }
 
-const SEVERITY_STYLE: Record<number, { bg: string; text: string; dot: string }> = {
-  1: { bg: "bg-green-50",  text: "text-green-700",  dot: "bg-green-400"  },
-  2: { bg: "bg-teal-50",   text: "text-teal-700",   dot: "bg-teal-400"   },
-  3: { bg: "bg-amber-50",  text: "text-amber-700",  dot: "bg-amber-400"  },
+const SEVERITY_STYLE: Record<
+  number,
+  { bg: string; text: string; dot: string }
+> = {
+  1: { bg: "bg-green-50", text: "text-green-700", dot: "bg-green-400" },
+  2: { bg: "bg-teal-50", text: "text-teal-700", dot: "bg-teal-400" },
+  3: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-400" },
   4: { bg: "bg-orange-50", text: "text-orange-700", dot: "bg-orange-400" },
-  5: { bg: "bg-red-50",    text: "text-red-700",    dot: "bg-red-500"    },
+  5: { bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" },
 };
 
 const SEVERITY_KEYS: Record<number, string> = {
@@ -34,14 +37,29 @@ const SEVERITY_KEYS: Record<number, string> = {
 
 function SeverityBadge({ severity }: { severity: number }) {
   const t = useTranslations("crimeReports");
-  const style = SEVERITY_STYLE[severity] ?? { bg: "bg-slate-50", text: "text-slate-600", dot: "bg-slate-400" };
+  const style = SEVERITY_STYLE[severity] ?? {
+    bg: "bg-slate-50",
+    text: "text-slate-600",
+    dot: "bg-slate-400",
+  };
   const labelKey = SEVERITY_KEYS[severity] ?? "severityMedium";
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text}`}
+    >
       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
       {t(labelKey as Parameters<typeof t>[0])}
     </span>
   );
+}
+
+function getContentPreview(content: string) {
+  if (!content) return "";
+  const trimmed = content.trim();
+  if (trimmed.startsWith("<")) return trimmed.replace(/<[^>]+>/g, " ").trim();
+  if (trimmed.startsWith("http") || trimmed.endsWith(".html"))
+    return "HTML content";
+  return trimmed;
 }
 
 export const CrimeReportList = memo(function CrimeReportList({
@@ -77,10 +95,20 @@ export const CrimeReportList = memo(function CrimeReportList({
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/60">
                 {[
-                  t("tableReport"), t("tableDate"), t("tableSeverity"),
-                  t("tableVictims"), t("tableOffenders"), t("tableArrested"), tCommon("actions"),
+                  t("tableReport"),
+                  t("tableDate"),
+                  t("tableSeverity"),
+                  t("tableVictims"),
+                  t("tableOffenders"),
+                  t("tableArrested"),
+                  tCommon("actions"),
                 ].map((h) => (
-                  <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
+                  <th
+                    key={h}
+                    className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -89,13 +117,15 @@ export const CrimeReportList = memo(function CrimeReportList({
                 <AnimatedListItem key={report.id} index={index}>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-slate-900 leading-tight">{report.title}</p>
+                      <p className="font-medium text-slate-900 leading-tight">
+                        {report.title}
+                      </p>
                       {report.isPublic && (
                         <Globe className="w-3.5 h-3.5 text-brand-500 shrink-0" />
                       )}
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">
-                      {report.content.substring(0, 60)}…
+                      {getContentPreview(report.content).slice(0, 60)}…
                     </p>
                   </td>
                   <td className="px-5 py-4 text-slate-600 whitespace-nowrap">
@@ -104,15 +134,21 @@ export const CrimeReportList = memo(function CrimeReportList({
                   <td className="px-5 py-4">
                     <SeverityBadge severity={report.severity} />
                   </td>
-                  <td className="px-5 py-4 text-slate-700 font-medium">{report.numberOfVictims}</td>
-                  <td className="px-5 py-4 text-slate-700 font-medium">{report.numberOfOffenders}</td>
+                  <td className="px-5 py-4 text-slate-700 font-medium">
+                    {report.numberOfVictims}
+                  </td>
+                  <td className="px-5 py-4 text-slate-700 font-medium">
+                    {report.numberOfOffenders}
+                  </td>
                   <td className="px-5 py-4">
                     {report.arrested ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
                         <CheckCircle className="w-3.5 h-3.5" /> {tCommon("yes")}
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-400">{tCommon("no")}</span>
+                      <span className="text-xs text-slate-400">
+                        {tCommon("no")}
+                      </span>
                     )}
                   </td>
                   <td className="px-5 py-4">
@@ -124,11 +160,14 @@ export const CrimeReportList = memo(function CrimeReportList({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {(userRole.includes("Reporter") || userRole.includes("User")) && (
+                      {(userRole.includes("Reporter") ||
+                        userRole.includes("User")) && (
                         <>
                           {!report.isPublic && (
                             <button
-                              onClick={() => setConfirmAction({ type: "publish", report })}
+                              onClick={() =>
+                                setConfirmAction({ type: "publish", report })
+                              }
                               className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
                               title={tCommon("publish")}
                             >
@@ -136,7 +175,9 @@ export const CrimeReportList = memo(function CrimeReportList({
                             </button>
                           )}
                           <button
-                            onClick={() => setConfirmAction({ type: "delete", report })}
+                            onClick={() =>
+                              setConfirmAction({ type: "delete", report })
+                            }
                             className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
                             title={tCommon("delete")}
                           >
@@ -157,7 +198,10 @@ export const CrimeReportList = memo(function CrimeReportList({
         <ConfirmModal
           title={t("publishTitle")}
           message={t("publishMessage", { title: confirmAction.report.title })}
-          onConfirm={() => { onPublish(confirmAction.report.id); setConfirmAction(null); }}
+          onConfirm={() => {
+            onPublish(confirmAction.report.id);
+            setConfirmAction(null);
+          }}
           onCancel={() => setConfirmAction(null)}
           confirmText={tCommon("publish")}
           confirmStyle="primary"
@@ -167,7 +211,10 @@ export const CrimeReportList = memo(function CrimeReportList({
         <ConfirmModal
           title={t("deleteTitle")}
           message={t("deleteMessage", { title: confirmAction.report.title })}
-          onConfirm={() => { onDelete(confirmAction.report.id); setConfirmAction(null); }}
+          onConfirm={() => {
+            onDelete(confirmAction.report.id);
+            setConfirmAction(null);
+          }}
           onCancel={() => setConfirmAction(null)}
           confirmText={tCommon("delete")}
           confirmStyle="danger"
