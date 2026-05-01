@@ -91,6 +91,7 @@ class FamilyMessageObserverImpl implements FamilyMessageObserver, FamilyMessenge
         return Message.newBuilder()
                 .setMessageId(event.getMessageId())
                 .setSenderId(event.getSenderId())
+                .setSenderName(event.getSenderName() != null ? event.getSenderName() : "")
                 .setMessageContent(event.getContent())
                 .setSentAtMs(event.getSentAtMs())
                 .build();

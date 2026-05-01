@@ -26,7 +26,9 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -55,6 +57,10 @@ class FamilyMessengerServiceImpl implements FamilyMessengerService {
                     .build();
         }
 
+        String senderName = userRepository.findById(userId)
+                .map(User::getUsername)
+                .orElse("Family member");
+
         long nowMs = System.currentTimeMillis();
         FamilyMessage saved = messageRepository.save(FamilyMessage.builder()
                 .familyCircleId(circleId)
@@ -66,12 +72,13 @@ class FamilyMessengerServiceImpl implements FamilyMessengerService {
                 .messageId(saved.getId().toString())
                 .familyCircleId(circleId.toString())
                 .senderId(userId.toString())
+                .senderName(senderName)
                 .content(saved.getContent())
                 .sentAtMs(nowMs)
                 .build();
 
         publishToCircleMembers(circleId, event);
-        sendChatMessageFcmNotifications(circleId, userId, event);
+        sendChatMessageFcmNotifications(circleId, userId, senderName, event);
 
         return SendMessageResponse.newBuilder()
                 .setMessageId(saved.getId().toString())
@@ -113,10 +120,17 @@ class FamilyMessengerServiceImpl implements FamilyMessengerService {
             slice = messageRepository.findNextPageByFamilyCircleId(circleId, lastCreatedAt, lastId, pageable);
         }
 
+        Set<UUID> senderIds = slice.getContent().stream()
+                .map(FamilyMessage::getSenderId)
+                .collect(Collectors.toSet());
+        Map<UUID, String> senderNames = userRepository.findAllById(senderIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getUsername));
+
         List<project.tracknest.usertracking.proto.lib.Message> messages = slice.getContent().stream()
                 .map(fm -> project.tracknest.usertracking.proto.lib.Message.newBuilder()
                         .setMessageId(fm.getId().toString())
                         .setSenderId(fm.getSenderId().toString())
+                        .setSenderName(senderNames.getOrDefault(fm.getSenderId(), "Family member"))
                         .setMessageContent(fm.getContent())
                         .setSentAtMs(fm.getCreatedAt().toInstant().toEpochMilli())
                         .build())
@@ -163,12 +177,7 @@ class FamilyMessengerServiceImpl implements FamilyMessengerService {
      * The notification title is the sender's username and the body is the message content.
      * The data payload carries the type, deep-link route, and circleId for the mobile client.
      */
-    private void sendChatMessageFcmNotifications(UUID circleId, UUID senderId, FamilyMessageEvent event) {
-        // Resolve sender username for the notification title
-        String senderUsername = userRepository.findById(senderId)
-                .map(User::getUsername)
-                .orElse("Family member");
-
+    private void sendChatMessageFcmNotifications(UUID circleId, UUID senderId, String senderUsername, FamilyMessageEvent event) {
         // Collect IDs of members who should receive the push (everyone except the sender)
         List<UUID> recipientIds = memberRepository.findAllById_FamilyCircleId(circleId)
                 .stream()

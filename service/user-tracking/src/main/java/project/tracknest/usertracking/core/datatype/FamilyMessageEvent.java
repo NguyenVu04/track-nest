@@ -15,6 +15,7 @@ public class FamilyMessageEvent {
     private String messageId;
     private String familyCircleId;
     private String senderId;
+    private String senderName;
     private String content;
     private long sentAtMs;
 }
