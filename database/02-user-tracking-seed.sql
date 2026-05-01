@@ -4,6 +4,12 @@ INSERT INTO "user" (id, username, connected) VALUES
     ('8c52c01e-42a7-45cc-9254-db8a7601c764', 'user2', TRUE),
     ('4405a37d-bc86-403e-b605-bedd7db88d37', 'user3', FALSE),
     ('2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'user4', TRUE),
+    ('0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7', 'user5', FALSE),
+    ('31d0f414-7fa1-4d80-a045-a67779ea749a', 'user6', FALSE),
+    ('b4107e7b-434d-46da-8b56-ece08c3526b2', 'user7', FALSE),
+    ('b0ddbaf5-8316-49fc-8959-e720c0823256', 'user8', FALSE),
+    ('7b95678b-ca47-4859-8718-c05d3563cdf4', 'user9', FALSE),
+    ('149495b8-e73a-4daa-aab8-b3345edf6aa6', 'user10', FALSE),
     ('f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'admin', FALSE)
 ON CONFLICT (id) DO NOTHING;
 
@@ -19,7 +25,13 @@ BEGIN
             ('8c52c01e-42a7-45cc-9254-db8a7601c764'::uuid, 105.854167, 21.028511),  -- Hanoi, Hoan Kiem
             ('4405a37d-bc86-403e-b605-bedd7db88d37'::uuid, 108.220833, 16.047079),  -- Da Nang
             ('2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'::uuid, 107.590866, 16.463713),  -- Hue
-            ('f8f735b4-549c-4d8c-9e10-15f8c198b71b'::uuid, 105.784817, 10.045162)   -- Can Tho
+            ('f8f735b4-549c-4d8c-9e10-15f8c198b71b'::uuid, 105.784817, 10.045162),  -- Can Tho
+            ('0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7'::uuid, 109.195000, 12.238791),  -- Nha Trang   (user5)
+            ('31d0f414-7fa1-4d80-a045-a67779ea749a'::uuid, 107.084580, 10.346170),  -- Vung Tau    (user6)
+            ('b4107e7b-434d-46da-8b56-ece08c3526b2'::uuid, 106.823490, 10.943900),  -- Bien Hoa    (user7)
+            ('b0ddbaf5-8316-49fc-8959-e720c0823256'::uuid, 106.688980, 20.844910),  -- Hai Phong   (user8)
+            ('7b95678b-ca47-4859-8718-c05d3563cdf4'::uuid, 105.838140, 21.593800),  -- Thai Nguyen (user9)
+            ('149495b8-e73a-4daa-aab8-b3345edf6aa6'::uuid, 109.219160, 13.782680)   -- Quy Nhon   (user10)
         ) AS t(user_id, home_lon, home_lat)
     LOOP
         INSERT INTO location (longitude, latitude, "timestamp", accuracy, velocity, user_id)
@@ -61,7 +73,19 @@ INSERT INTO mobile_device (id, language_code, device_token, created_at, user_id)
     ('77777777-7777-4777-8777-777777777777', 'en', 'token-user4-1', NOW(), '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
     ('88888888-8888-4888-8888-888888888888', 'vi', 'token-user4-2', NOW(), '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
     ('99999999-9999-4999-8999-999999999999', 'en', 'token-user5-1', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
-    ('aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', 'vi', 'token-user5-2', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b')
+    ('aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', 'vi', 'token-user5-2', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
+    ('cc000001-0000-4000-8000-000000000001', 'en', 'token-user5-real-1', NOW(), '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7'),
+    ('cc000002-0000-4000-8000-000000000002', 'vi', 'token-user5-real-2', NOW(), '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7'),
+    ('cc000003-0000-4000-8000-000000000003', 'en', 'token-user6-1',      NOW(), '31d0f414-7fa1-4d80-a045-a67779ea749a'),
+    ('cc000004-0000-4000-8000-000000000004', 'vi', 'token-user6-2',      NOW(), '31d0f414-7fa1-4d80-a045-a67779ea749a'),
+    ('cc000005-0000-4000-8000-000000000005', 'en', 'token-user7-1',      NOW(), 'b4107e7b-434d-46da-8b56-ece08c3526b2'),
+    ('cc000006-0000-4000-8000-000000000006', 'vi', 'token-user7-2',      NOW(), 'b4107e7b-434d-46da-8b56-ece08c3526b2'),
+    ('cc000007-0000-4000-8000-000000000007', 'en', 'token-user8-1',      NOW(), 'b0ddbaf5-8316-49fc-8959-e720c0823256'),
+    ('cc000008-0000-4000-8000-000000000008', 'vi', 'token-user8-2',      NOW(), 'b0ddbaf5-8316-49fc-8959-e720c0823256'),
+    ('cc000009-0000-4000-8000-000000000009', 'en', 'token-user9-1',      NOW(), '7b95678b-ca47-4859-8718-c05d3563cdf4'),
+    ('cc00000a-0000-4000-8000-00000000000a', 'vi', 'token-user9-2',      NOW(), '7b95678b-ca47-4859-8718-c05d3563cdf4'),
+    ('cc00000b-0000-4000-8000-00000000000b', 'en', 'token-user10-1',     NOW(), '149495b8-e73a-4daa-aab8-b3345edf6aa6'),
+    ('cc00000c-0000-4000-8000-00000000000c', 'vi', 'token-user10-2',     NOW(), '149495b8-e73a-4daa-aab8-b3345edf6aa6')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO tracking_notification (id, type, title, content, created_at, target_id) VALUES
@@ -74,7 +98,19 @@ INSERT INTO tracking_notification (id, type, title, content, created_at, target_
     ('bbbbbbbb-0006-4000-8000-bbbbbbbbbbbb', 'info', 'Track G', 'Content G', NOW(), '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
     ('bbbbbbbb-0007-4000-8000-bbbbbbbbbbbb', 'alert', 'Track H', 'Content H', NOW(), '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
     ('bbbbbbbb-0008-4000-8000-bbbbbbbbbbbb', 'info', 'Track I', 'Content I', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
-    ('bbbbbbbb-0009-4000-8000-bbbbbbbbbbbb', 'alert', 'Track J', 'Content J', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b')
+    ('bbbbbbbb-0009-4000-8000-bbbbbbbbbbbb', 'alert', 'Track J', 'Content J', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
+    ('bbbbbbbb-000a-4000-8000-bbbbbbbbbbbb', 'info',  'Track K', 'Content K', NOW(), '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7'),
+    ('bbbbbbbb-000b-4000-8000-bbbbbbbbbbbb', 'alert', 'Track L', 'Content L', NOW(), '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7'),
+    ('bbbbbbbb-000c-4000-8000-bbbbbbbbbbbb', 'info',  'Track M', 'Content M', NOW(), '31d0f414-7fa1-4d80-a045-a67779ea749a'),
+    ('bbbbbbbb-000d-4000-8000-bbbbbbbbbbbb', 'alert', 'Track N', 'Content N', NOW(), '31d0f414-7fa1-4d80-a045-a67779ea749a'),
+    ('bbbbbbbb-000e-4000-8000-bbbbbbbbbbbb', 'info',  'Track O', 'Content O', NOW(), 'b4107e7b-434d-46da-8b56-ece08c3526b2'),
+    ('bbbbbbbb-000f-4000-8000-bbbbbbbbbbbb', 'alert', 'Track P', 'Content P', NOW(), 'b4107e7b-434d-46da-8b56-ece08c3526b2'),
+    ('bbbbbbbb-0010-4000-8000-bbbbbbbbbbbb', 'info',  'Track Q', 'Content Q', NOW(), 'b0ddbaf5-8316-49fc-8959-e720c0823256'),
+    ('bbbbbbbb-0011-4000-8000-bbbbbbbbbbbb', 'alert', 'Track R', 'Content R', NOW(), 'b0ddbaf5-8316-49fc-8959-e720c0823256'),
+    ('bbbbbbbb-0012-4000-8000-bbbbbbbbbbbb', 'info',  'Track S', 'Content S', NOW(), '7b95678b-ca47-4859-8718-c05d3563cdf4'),
+    ('bbbbbbbb-0013-4000-8000-bbbbbbbbbbbb', 'alert', 'Track T', 'Content T', NOW(), '7b95678b-ca47-4859-8718-c05d3563cdf4'),
+    ('bbbbbbbb-0014-4000-8000-bbbbbbbbbbbb', 'info',  'Track U', 'Content U', NOW(), '149495b8-e73a-4daa-aab8-b3345edf6aa6'),
+    ('bbbbbbbb-0015-4000-8000-bbbbbbbbbbbb', 'alert', 'Track V', 'Content V', NOW(), '149495b8-e73a-4daa-aab8-b3345edf6aa6')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO risk_notification (id, type, title, content, created_at, user_id) VALUES
@@ -87,7 +123,19 @@ INSERT INTO risk_notification (id, type, title, content, created_at, user_id) VA
     ('cccccccc-1006-4000-8000-cccccccccccc', 'risk', 'Risk G', 'Risk content G', NOW(), '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
     ('cccccccc-1007-4000-8000-cccccccccccc', 'risk', 'Risk H', 'Risk content H', NOW(), '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
     ('cccccccc-1008-4000-8000-cccccccccccc', 'risk', 'Risk I', 'Risk content I', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
-    ('cccccccc-1009-4000-8000-cccccccccccc', 'risk', 'Risk J', 'Risk content J', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b')
+    ('cccccccc-1009-4000-8000-cccccccccccc', 'risk', 'Risk J', 'Risk content J', NOW(), 'f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
+    ('cccccccc-100a-4000-8000-cccccccccccc', 'risk', 'Risk K', 'Risk content K', NOW(), '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7'),
+    ('cccccccc-100b-4000-8000-cccccccccccc', 'risk', 'Risk L', 'Risk content L', NOW(), '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7'),
+    ('cccccccc-100c-4000-8000-cccccccccccc', 'risk', 'Risk M', 'Risk content M', NOW(), '31d0f414-7fa1-4d80-a045-a67779ea749a'),
+    ('cccccccc-100d-4000-8000-cccccccccccc', 'risk', 'Risk N', 'Risk content N', NOW(), '31d0f414-7fa1-4d80-a045-a67779ea749a'),
+    ('cccccccc-100e-4000-8000-cccccccccccc', 'risk', 'Risk O', 'Risk content O', NOW(), 'b4107e7b-434d-46da-8b56-ece08c3526b2'),
+    ('cccccccc-100f-4000-8000-cccccccccccc', 'risk', 'Risk P', 'Risk content P', NOW(), 'b4107e7b-434d-46da-8b56-ece08c3526b2'),
+    ('cccccccc-1010-4000-8000-cccccccccccc', 'risk', 'Risk Q', 'Risk content Q', NOW(), 'b0ddbaf5-8316-49fc-8959-e720c0823256'),
+    ('cccccccc-1011-4000-8000-cccccccccccc', 'risk', 'Risk R', 'Risk content R', NOW(), 'b0ddbaf5-8316-49fc-8959-e720c0823256'),
+    ('cccccccc-1012-4000-8000-cccccccccccc', 'risk', 'Risk S', 'Risk content S', NOW(), '7b95678b-ca47-4859-8718-c05d3563cdf4'),
+    ('cccccccc-1013-4000-8000-cccccccccccc', 'risk', 'Risk T', 'Risk content T', NOW(), '7b95678b-ca47-4859-8718-c05d3563cdf4'),
+    ('cccccccc-1014-4000-8000-cccccccccccc', 'risk', 'Risk U', 'Risk content U', NOW(), '149495b8-e73a-4daa-aab8-b3345edf6aa6'),
+    ('cccccccc-1015-4000-8000-cccccccccccc', 'risk', 'Risk V', 'Risk content V', NOW(), '149495b8-e73a-4daa-aab8-b3345edf6aa6')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO tracking_notification_alerts_user (notification_id, tracker_id) VALUES
@@ -100,7 +148,19 @@ INSERT INTO tracking_notification_alerts_user (notification_id, tracker_id) VALU
     ('bbbbbbbb-0006-4000-8000-bbbbbbbbbbbb','4405a37d-bc86-403e-b605-bedd7db88d37'),
     ('bbbbbbbb-0007-4000-8000-bbbbbbbbbbbb','dd382dcf-3652-499c-acdb-5d9ce99a67b8'),
     ('bbbbbbbb-0008-4000-8000-bbbbbbbbbbbb','2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5'),
-    ('bbbbbbbb-0009-4000-8000-bbbbbbbbbbbb','f8f735b4-549c-4d8c-9e10-15f8c198b71b')
+    ('bbbbbbbb-0009-4000-8000-bbbbbbbbbbbb','f8f735b4-549c-4d8c-9e10-15f8c198b71b'),
+    ('bbbbbbbb-000a-4000-8000-bbbbbbbbbbbb','31d0f414-7fa1-4d80-a045-a67779ea749a'),
+    ('bbbbbbbb-000b-4000-8000-bbbbbbbbbbbb','b4107e7b-434d-46da-8b56-ece08c3526b2'),
+    ('bbbbbbbb-000c-4000-8000-bbbbbbbbbbbb','0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7'),
+    ('bbbbbbbb-000d-4000-8000-bbbbbbbbbbbb','b0ddbaf5-8316-49fc-8959-e720c0823256'),
+    ('bbbbbbbb-000e-4000-8000-bbbbbbbbbbbb','7b95678b-ca47-4859-8718-c05d3563cdf4'),
+    ('bbbbbbbb-000f-4000-8000-bbbbbbbbbbbb','149495b8-e73a-4daa-aab8-b3345edf6aa6'),
+    ('bbbbbbbb-0010-4000-8000-bbbbbbbbbbbb','0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7'),
+    ('bbbbbbbb-0011-4000-8000-bbbbbbbbbbbb','31d0f414-7fa1-4d80-a045-a67779ea749a'),
+    ('bbbbbbbb-0012-4000-8000-bbbbbbbbbbbb','b0ddbaf5-8316-49fc-8959-e720c0823256'),
+    ('bbbbbbbb-0013-4000-8000-bbbbbbbbbbbb','b4107e7b-434d-46da-8b56-ece08c3526b2'),
+    ('bbbbbbbb-0014-4000-8000-bbbbbbbbbbbb','7b95678b-ca47-4859-8718-c05d3563cdf4'),
+    ('bbbbbbbb-0015-4000-8000-bbbbbbbbbbbb','149495b8-e73a-4daa-aab8-b3345edf6aa6')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO family_circle (id, name, created_at) VALUES
@@ -108,7 +168,10 @@ INSERT INTO family_circle (id, name, created_at) VALUES
     ('cccccccc-1001-4000-8000-cccccccccccc', 'Family Circle 2', NOW()),
     ('cccccccc-1002-4000-8000-cccccccccccc', 'Family Circle 3', NOW()),
     ('cccccccc-1003-4000-8000-cccccccccccc', 'Family Circle 4', NOW()),
-    ('cccccccc-1004-4000-8000-cccccccccccc', 'Admin Circle', NOW())
+    ('cccccccc-1004-4000-8000-cccccccccccc', 'Admin Circle',   NOW()),
+    ('cccccccc-2000-4000-8000-cccccccccccc', 'Family Circle 5', NOW()),
+    ('cccccccc-2001-4000-8000-cccccccccccc', 'Family Circle 6', NOW()),
+    ('cccccccc-2002-4000-8000-cccccccccccc', 'Family Circle 7', NOW())
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO user_in_family_circle (family_circle_id, user_id, role, admin) VALUES
@@ -122,7 +185,17 @@ INSERT INTO user_in_family_circle (family_circle_id, user_id, role, admin) VALUE
     ('cccccccc-1003-4000-8000-cccccccccccc', '4405a37d-bc86-403e-b605-bedd7db88d37', 'Child', FALSE),
     ('cccccccc-1003-4000-8000-cccccccccccc', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', 'Mother', TRUE),
     ('cccccccc-1004-4000-8000-cccccccccccc', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'Child', FALSE),
-    ('cccccccc-1004-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'Mother', TRUE)
+    ('cccccccc-1004-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'Mother', TRUE),
+    -- Circle 5: user5, user6, user7 (user6 is admin)
+    ('cccccccc-2000-4000-8000-cccccccccccc', '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7', 'Child',  FALSE),
+    ('cccccccc-2000-4000-8000-cccccccccccc', 'b4107e7b-434d-46da-8b56-ece08c3526b2', 'Child',  FALSE),
+    ('cccccccc-2000-4000-8000-cccccccccccc', '31d0f414-7fa1-4d80-a045-a67779ea749a', 'Father', TRUE),
+    -- Circle 6: user8, user9 (user9 is admin)
+    ('cccccccc-2001-4000-8000-cccccccccccc', 'b0ddbaf5-8316-49fc-8959-e720c0823256', 'Child',  FALSE),
+    ('cccccccc-2001-4000-8000-cccccccccccc', '7b95678b-ca47-4859-8718-c05d3563cdf4', 'Mother', TRUE),
+    -- Circle 7: user10, user5 (user5 is admin)
+    ('cccccccc-2002-4000-8000-cccccccccccc', '149495b8-e73a-4daa-aab8-b3345edf6aa6', 'Child',  FALSE),
+    ('cccccccc-2002-4000-8000-cccccccccccc', '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7', 'Father', TRUE)
 ON CONFLICT DO NOTHING;
 
 -- location_bucket: one row per (user, day_of_week, hour_of_day) derived from location data.
@@ -157,14 +230,23 @@ ON CONFLICT (cell_id, bucket_id) DO NOTHING;
 
 -- anomaly_run: a couple of historical (resolved) and active (unresolved) runs per user.
 INSERT INTO anomaly_run (id, user_id, started_at, resolved, last_seen_at) VALUES
-    ('dddddddd-0000-4000-8000-dddddddddddd', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', NOW() - INTERVAL '3 days',  TRUE,  NOW() - INTERVAL '3 days' + INTERVAL '45 minutes'),
+    ('dddddddd-0000-4000-8000-dddddddddddd', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', NOW() - INTERVAL '3 days',  FALSE,  NOW() - INTERVAL '3 days' + INTERVAL '45 minutes'),
     ('dddddddd-0001-4000-8000-dddddddddddd', 'dd382dcf-3652-499c-acdb-5d9ce99a67b8', NOW() - INTERVAL '2 hours', FALSE, NOW() - INTERVAL '10 minutes'),
-    ('dddddddd-0002-4000-8000-dddddddddddd', '8c52c01e-42a7-45cc-9254-db8a7601c764', NOW() - INTERVAL '5 days',  TRUE,  NOW() - INTERVAL '5 days' + INTERVAL '1 hour'),
+    ('dddddddd-0002-4000-8000-dddddddddddd', '8c52c01e-42a7-45cc-9254-db8a7601c764', NOW() - INTERVAL '5 days',  FALSE,  NOW() - INTERVAL '5 days' + INTERVAL '1 hour'),
     ('dddddddd-0003-4000-8000-dddddddddddd', '8c52c01e-42a7-45cc-9254-db8a7601c764', NOW() - INTERVAL '30 minutes', FALSE, NOW() - INTERVAL '5 minutes'),
-    ('dddddddd-0004-4000-8000-dddddddddddd', '4405a37d-bc86-403e-b605-bedd7db88d37', NOW() - INTERVAL '6 days',  TRUE,  NOW() - INTERVAL '6 days' + INTERVAL '20 minutes'),
-    ('dddddddd-0005-4000-8000-dddddddddddd', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', NOW() - INTERVAL '1 day',   TRUE,  NOW() - INTERVAL '1 day'  + INTERVAL '2 hours'),
+    ('dddddddd-0004-4000-8000-dddddddddddd', '4405a37d-bc86-403e-b605-bedd7db88d37', NOW() - INTERVAL '6 days',  FALSE,  NOW() - INTERVAL '6 days' + INTERVAL '20 minutes'),
+    ('dddddddd-0005-4000-8000-dddddddddddd', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', NOW() - INTERVAL '1 day',   FALSE,  NOW() - INTERVAL '1 day'  + INTERVAL '2 hours'),
     ('dddddddd-0006-4000-8000-dddddddddddd', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', NOW() - INTERVAL '15 minutes', FALSE, NOW() - INTERVAL '2 minutes'),
-    ('dddddddd-0007-4000-8000-dddddddddddd', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', NOW() - INTERVAL '4 days',  TRUE,  NOW() - INTERVAL '4 days' + INTERVAL '15 minutes')
+    ('dddddddd-0007-4000-8000-dddddddddddd', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', NOW() - INTERVAL '4 days',    FALSE,  NOW() - INTERVAL '4 days'    + INTERVAL '15 minutes'),
+    ('dddddddd-0008-4000-8000-dddddddddddd', '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7', NOW() - INTERVAL '2 days',    FALSE,  NOW() - INTERVAL '2 days'    + INTERVAL '30 minutes'),
+    ('dddddddd-0009-4000-8000-dddddddddddd', '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7', NOW() - INTERVAL '20 minutes',FALSE, NOW() - INTERVAL '3 minutes'),
+    ('dddddddd-000a-4000-8000-dddddddddddd', '31d0f414-7fa1-4d80-a045-a67779ea749a', NOW() - INTERVAL '7 days',    FALSE,  NOW() - INTERVAL '7 days'    + INTERVAL '1 hour'),
+    ('dddddddd-000b-4000-8000-dddddddddddd', 'b4107e7b-434d-46da-8b56-ece08c3526b2', NOW() - INTERVAL '3 days',    FALSE,  NOW() - INTERVAL '3 days'    + INTERVAL '50 minutes'),
+    ('dddddddd-000c-4000-8000-dddddddddddd', 'b4107e7b-434d-46da-8b56-ece08c3526b2', NOW() - INTERVAL '45 minutes',FALSE, NOW() - INTERVAL '8 minutes'),
+    ('dddddddd-000d-4000-8000-dddddddddddd', 'b0ddbaf5-8316-49fc-8959-e720c0823256', NOW() - INTERVAL '6 days',    FALSE,  NOW() - INTERVAL '6 days'    + INTERVAL '25 minutes'),
+    ('dddddddd-000e-4000-8000-dddddddddddd', '7b95678b-ca47-4859-8718-c05d3563cdf4', NOW() - INTERVAL '1 day',     FALSE,  NOW() - INTERVAL '1 day'     + INTERVAL '40 minutes'),
+    ('dddddddd-000f-4000-8000-dddddddddddd', '7b95678b-ca47-4859-8718-c05d3563cdf4', NOW() - INTERVAL '10 minutes',FALSE, NOW() - INTERVAL '1 minute'),
+    ('dddddddd-0010-4000-8000-dddddddddddd', '149495b8-e73a-4daa-aab8-b3345edf6aa6', NOW() - INTERVAL '4 days',    FALSE,  NOW() - INTERVAL '4 days'    + INTERVAL '1 hour 10 minutes')
 ON CONFLICT (id) DO NOTHING;
 
 ------------------------------------------------
@@ -186,7 +268,20 @@ VALUES
     ('eeeeeeee-100b-4000-8000-eeeeeeeeeeee', 'cccccccc-1003-4000-8000-cccccccccccc', '4405a37d-bc86-403e-b605-bedd7db88d37', 'Got it, I will be there.', NOW() - INTERVAL '1 day' + INTERVAL '20 minutes'),
     ('eeeeeeee-100c-4000-8000-eeeeeeeeeeee', 'cccccccc-1004-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'SOS drill scheduled for tomorrow morning, please participate.', NOW() - INTERVAL '12 hours'),
     ('eeeeeeee-100d-4000-8000-eeeeeeeeeeee', 'cccccccc-1004-4000-8000-cccccccccccc', 'f8f735b4-549c-4d8c-9e10-15f8c198b71b', 'Understood, I will be ready.', NOW() - INTERVAL '12 hours' + INTERVAL '15 minutes'),
-    ('eeeeeeee-100e-4000-8000-eeeeeeeeeeee', 'cccccccc-1004-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'Great, stay alert everyone.', NOW() - INTERVAL '12 hours' + INTERVAL '18 minutes')
+    ('eeeeeeee-100e-4000-8000-eeeeeeeeeeee', 'cccccccc-1004-4000-8000-cccccccccccc', '2878c6d3-cb3c-493c-9c6c-7a4094a6a7a5', 'Great, stay alert everyone.',                                     NOW() - INTERVAL '12 hours' + INTERVAL '18 minutes'),
+    -- Circle 5 messages
+    ('eeeeeeee-100f-4000-8000-eeeeeeeeeeee', 'cccccccc-2000-4000-8000-cccccccccccc', '31d0f414-7fa1-4d80-a045-a67779ea749a', 'Morning check-in everyone. How is the commute?',                  NOW() - INTERVAL '4 days'),
+    ('eeeeeeee-1010-4000-8000-eeeeeeeeeeee', 'cccccccc-2000-4000-8000-cccccccccccc', '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7', 'All good here, just arrived at work.',                            NOW() - INTERVAL '4 days' + INTERVAL '15 minutes'),
+    ('eeeeeeee-1011-4000-8000-eeeeeeeeeeee', 'cccccccc-2000-4000-8000-cccccccccccc', 'b4107e7b-434d-46da-8b56-ece08c3526b2', 'Running a bit late, heavy traffic.',                              NOW() - INTERVAL '4 days' + INTERVAL '20 minutes'),
+    ('eeeeeeee-1012-4000-8000-eeeeeeeeeeee', 'cccccccc-2000-4000-8000-cccccccccccc', '31d0f414-7fa1-4d80-a045-a67779ea749a', 'Okay, be careful.',                                               NOW() - INTERVAL '4 days' + INTERVAL '22 minutes'),
+    -- Circle 6 messages
+    ('eeeeeeee-1013-4000-8000-eeeeeeeeeeee', 'cccccccc-2001-4000-8000-cccccccccccc', '7b95678b-ca47-4859-8718-c05d3563cdf4', 'I noticed you left the usual area. Everything okay?',            NOW() - INTERVAL '2 days'),
+    ('eeeeeeee-1014-4000-8000-eeeeeeeeeeee', 'cccccccc-2001-4000-8000-cccccccccccc', 'b0ddbaf5-8316-49fc-8959-e720c0823256', 'Yes, had a doctor appointment nearby. Back soon.',               NOW() - INTERVAL '2 days' + INTERVAL '10 minutes'),
+    ('eeeeeeee-1015-4000-8000-eeeeeeeeeeee', 'cccccccc-2001-4000-8000-cccccccccccc', '7b95678b-ca47-4859-8718-c05d3563cdf4', 'Great, let me know when you are home.',                          NOW() - INTERVAL '2 days' + INTERVAL '12 minutes'),
+    -- Circle 7 messages
+    ('eeeeeeee-1016-4000-8000-eeeeeeeeeeee', 'cccccccc-2002-4000-8000-cccccccccccc', '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7', 'Reminder: pick up your sibling from school at 5 PM.',           NOW() - INTERVAL '1 day'),
+    ('eeeeeeee-1017-4000-8000-eeeeeeeeeeee', 'cccccccc-2002-4000-8000-cccccccccccc', '149495b8-e73a-4daa-aab8-b3345edf6aa6', 'Got it, I will be there on time.',                               NOW() - INTERVAL '1 day' + INTERVAL '5 minutes'),
+    ('eeeeeeee-1018-4000-8000-eeeeeeeeeeee', 'cccccccc-2002-4000-8000-cccccccccccc', '0ecce3ae-d6f2-45bb-ae3a-effe4a85aad7', 'Safe travels.',                                                  NOW() - INTERVAL '1 day' + INTERVAL '6 minutes')
 ON CONFLICT (id) DO NOTHING;
 
 COMMIT;
