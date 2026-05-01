@@ -162,7 +162,7 @@ export function runIteration(data) {
 
 export function makeHandleSummary(scriptType) {
   return function handleSummary(data) {
-    const ts       = new Date().toISOString().replace(/[:.]/g, '-');
+    const ts       = new Date().toISOString().replaceAll(/[:.]/g, '-');
     const jsonPath = `results/emergency-ops-${scriptType}-${ts}.json`;
     return {
       [jsonPath]: JSON.stringify(data, null, 2),

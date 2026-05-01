@@ -1,0 +1,641 @@
+{
+  "setup_data": {},
+  "root_group": {
+      "checks": [
+        {
+          "passes": 1354,
+          "fails": 3,
+          "name": "UpdateUserLocation [user1] status OK",
+          "path": "::UpdateUserLocation [user1] status OK",
+          "id": "4ee85a50d4613f51d25f31cb57cb2e5e"
+        },
+        {
+          "name": "UpdateUserLocation [user3] status OK",
+          "path": "::UpdateUserLocation [user3] status OK",
+          "id": "d1bd7745513215dd598ef15d0e24f13b",
+          "passes": 1315,
+          "fails": 2
+        },
+        {
+          "fails": 0,
+          "name": "SendMessage [user1] status OK",
+          "path": "::SendMessage [user1] status OK",
+          "id": "424d14b998d55cdc1c8fe4ed7677e27d",
+          "passes": 1357
+        },
+        {
+          "id": "5ce262f2c808584374a7ee92491a360b",
+          "passes": 1316,
+          "fails": 1,
+          "name": "SendMessage [user3] status OK",
+          "path": "::SendMessage [user3] status OK"
+        },
+        {
+          "passes": 1357,
+          "fails": 0,
+          "name": "ListMessages [user1] status OK",
+          "path": "::ListMessages [user1] status OK",
+          "id": "c2d1aca4564dfeee217f884c492b2906"
+        },
+        {
+          "name": "ListTrackingNotifications [user1] status OK",
+          "path": "::ListTrackingNotifications [user1] status OK",
+          "id": "a53d2e1f7b6accc3b751d8faa20902d2",
+          "passes": 1356,
+          "fails": 1
+        },
+        {
+          "name": "ListMessages [user3] status OK",
+          "path": "::ListMessages [user3] status OK",
+          "id": "0ca471e0d026729d2c304de0efdede95",
+          "passes": 1316,
+          "fails": 1
+        },
+        {
+          "fails": 2,
+          "name": "UpdateUserLocation [user2] status OK",
+          "path": "::UpdateUserLocation [user2] status OK",
+          "id": "bdb445a736f9d3fb628a4da90a789190",
+          "passes": 1352
+        },
+        {
+          "name": "ListRiskNotifications [user1] status OK",
+          "path": "::ListRiskNotifications [user1] status OK",
+          "id": "3b0472f10837f000ebe7cbbccb174a72",
+          "passes": 1357,
+          "fails": 0
+        },
+        {
+          "path": "::ListTrackingNotifications [user3] status OK",
+          "id": "ccb9366be3d91eb1b7a77488d8029f2c",
+          "passes": 1317,
+          "fails": 0,
+          "name": "ListTrackingNotifications [user3] status OK"
+        },
+        {
+          "name": "ListRiskNotifications [user3] status OK",
+          "path": "::ListRiskNotifications [user3] status OK",
+          "id": "2b2c18199dbffdd2d178eed04bbcb804",
+          "passes": 1317,
+          "fails": 0
+        },
+        {
+          "id": "a187afed4740861bed70564b669660f4",
+          "passes": 1354,
+          "fails": 0,
+          "name": "SendMessage [user2] status OK",
+          "path": "::SendMessage [user2] status OK"
+        },
+        {
+          "name": "UpdateUserLocation [user4] status OK",
+          "path": "::UpdateUserLocation [user4] status OK",
+          "id": "6b62d0459ba37223e53ec45b7f83510b",
+          "passes": 1321,
+          "fails": 6
+        },
+        {
+          "name": "ListFamilyMemberLocationHistory [user1] status OK",
+          "path": "::ListFamilyMemberLocationHistory [user1] status OK",
+          "id": "af9aa58f50806717ec398f8614fc5b6b",
+          "passes": 1356,
+          "fails": 1
+        },
+        {
+          "id": "af58767a0a772664dd24e4d56003bf8f",
+          "passes": 1357,
+          "fails": 0,
+          "name": "ListFamilyCircles [user1] status OK",
+          "path": "::ListFamilyCircles [user1] status OK"
+        },
+        {
+          "name": "SendMessage [user4] status OK",
+          "path": "::SendMessage [user4] status OK",
+          "id": "0a6a11856650cbf9a04d8111b6ef58bd",
+          "passes": 1327,
+          "fails": 0
+        },
+        {
+          "id": "9a8ccafef8ec2fcb030a3803f8b42cfd",
+          "passes": 1354,
+          "fails": 0,
+          "name": "ListMessages [user2] status OK",
+          "path": "::ListMessages [user2] status OK"
+        },
+        {
+          "name": "ListFamilyMemberLocationHistory [user3] status OK",
+          "path": "::ListFamilyMemberLocationHistory [user3] status OK",
+          "id": "fa41ca7be626a5c248f7a3564644af57",
+          "passes": 1316,
+          "fails": 1
+        },
+        {
+          "name": "ListTrackingNotifications [user2] status OK",
+          "path": "::ListTrackingNotifications [user2] status OK",
+          "id": "bf05b5c511abae5c85ea05a1dbc37a01",
+          "passes": 1353,
+          "fails": 1
+        },
+        {
+          "id": "12c817f8fe595f7a28d9553cf78a72b2",
+          "passes": 1317,
+          "fails": 0,
+          "name": "ListFamilyCircles [user3] status OK",
+          "path": "::ListFamilyCircles [user3] status OK"
+        },
+        {
+          "name": "ListRiskNotifications [user2] status OK",
+          "path": "::ListRiskNotifications [user2] status OK",
+          "id": "de565291cf75d83db493020c3f5bc20a",
+          "passes": 1354,
+          "fails": 0
+        },
+        {
+          "path": "::ListMessages [user4] status OK",
+          "id": "611dbf6554a1f4af3909e5430969d554",
+          "passes": 1327,
+          "fails": 0,
+          "name": "ListMessages [user4] status OK"
+        },
+        {
+          "path": "::ListTrackingNotifications [user4] status OK",
+          "id": "8a80de0c7dcf928f9a475b6bc4abb141",
+          "passes": 1326,
+          "fails": 1,
+          "name": "ListTrackingNotifications [user4] status OK"
+        },
+        {
+          "name": "ListRiskNotifications [user4] status OK",
+          "path": "::ListRiskNotifications [user4] status OK",
+          "id": "10bdde02ab6936dc832542a39cf91a4a",
+          "passes": 1327,
+          "fails": 0
+        },
+        {
+          "path": "::ListFamilyMemberLocationHistory [user2] status OK",
+          "id": "6df2c730d1679382de10486423ba5d9f",
+          "passes": 1353,
+          "fails": 1,
+          "name": "ListFamilyMemberLocationHistory [user2] status OK"
+        },
+        {
+          "fails": 0,
+          "name": "ListFamilyCircles [user2] status OK",
+          "path": "::ListFamilyCircles [user2] status OK",
+          "id": "8f6ade499fc8740d1e39cfc2c20d4362",
+          "passes": 1354
+        },
+        {
+          "path": "::ListFamilyMemberLocationHistory [user4] status OK",
+          "id": "bc41421e3f8a49d464ed78866de52795",
+          "passes": 1326,
+          "fails": 1,
+          "name": "ListFamilyMemberLocationHistory [user4] status OK"
+        },
+        {
+          "name": "ListFamilyCircles [user4] status OK",
+          "path": "::ListFamilyCircles [user4] status OK",
+          "id": "ff7e6eb6413548e8d5eb83439c1a2b03",
+          "passes": 1327,
+          "fails": 0
+        }
+      ],
+      "name": "",
+      "path": "",
+      "id": "d41d8cd98f00b204e9800998ecf8427e",
+      "groups": []
+    },
+  "options": {
+      "summaryTrendStats": [
+        "avg",
+        "min",
+        "med",
+        "max",
+        "p(90)",
+        "p(95)"
+      ],
+      "summaryTimeUnit": "",
+      "noColor": false
+    },
+  "state": {
+      "isStdOutTTY": true,
+      "isStdErrTTY": true,
+      "testRunDurationMs": 1098373.66
+    },
+  "metrics": {
+      "rpc_list_tracking_notifications_success": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "rate": 0.9994397759103641,
+          "passes": 5352,
+          "fails": 3
+        },
+        "thresholds": {
+          "rate>0.95": {
+            "ok": true
+          }
+        }
+      },
+      "vus": {
+        "values": {
+          "min": 1,
+          "max": 150,
+          "value": 1
+        },
+        "type": "gauge",
+        "contains": "default"
+      },
+      "iteration_duration": {
+        "values": {
+          "p(90)": 25085.82324,
+          "p(95)": 26235.03935,
+          "avg": 21790.153617642678,
+          "min": 315.8558,
+          "med": 21641.4316,
+          "max": 68256.0234
+        },
+        "type": "trend",
+        "contains": "time"
+      },
+      "http_req_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "med": 418.3491,
+          "max": 40212.1106,
+          "p(90)": 807.0101,
+          "p(95)": 1164.3872900000001,
+          "avg": 794.7058628158848,
+          "min": 284.9277
+        }
+      },
+      "vus_max": {
+        "type": "gauge",
+        "contains": "default",
+        "values": {
+          "value": 150,
+          "min": 150,
+          "max": 150
+        }
+      },
+      "rpc_list_risk_notifications_success": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "rate": 1,
+          "passes": 5355,
+          "fails": 0
+        },
+        "thresholds": {
+          "rate>0.95": {
+            "ok": true
+          }
+        }
+      },
+      "rpc_list_family_circles_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "p(95)": 530,
+          "avg": 224.3139122315593,
+          "min": 102,
+          "med": 174,
+          "max": 4390,
+          "p(90)": 350.60000000000036
+        },
+        "thresholds": {
+          "p(95)<1500": {
+            "ok": true
+          }
+        }
+      },
+      "http_reqs": {
+        "type": "counter",
+        "contains": "default",
+        "values": {
+          "count": 554,
+          "rate": 0.5043820879681328
+        }
+      },
+      "rpc_list_messages_success": {
+        "values": {
+          "rate": 0.999813258636788,
+          "passes": 5354,
+          "fails": 1
+        },
+        "thresholds": {
+          "rate>0.95": {
+            "ok": true
+          }
+        },
+        "type": "rate",
+        "contains": "default"
+      },
+      "data_sent": {
+        "type": "counter",
+        "contains": "data",
+        "values": {
+          "count": 27373052,
+          "rate": 24921.438848051035
+        }
+      },
+      "http_req_failed": {
+        "contains": "default",
+        "values": {
+          "passes": 24,
+          "fails": 530,
+          "rate": 0.04332129963898917
+        },
+        "type": "rate"
+      },
+      "rpc_send_message_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 323.2427637721755,
+          "min": 133,
+          "med": 264,
+          "max": 2419,
+          "p(90)": 516.6000000000004,
+          "p(95)": 702.3000000000002
+        },
+        "thresholds": {
+          "p(95)<1800": {
+            "ok": true
+          }
+        }
+      },
+      "http_req_waiting": {
+        "values": {
+          "p(95)": 1163.9542600000002,
+          "avg": 792.4983925992777,
+          "min": 284.9277,
+          "med": 416.04705,
+          "max": 40211.5376,
+          "p(90)": 801.1754699999999
+        },
+        "type": "trend",
+        "contains": "time"
+      },
+      "rpc_list_family_circles_success": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "rate": 1,
+          "passes": 5355,
+          "fails": 0
+        },
+        "thresholds": {
+          "rate>0.95": {
+            "ok": true
+          }
+        }
+      },
+      "checks": {
+        "contains": "default",
+        "values": {
+          "rate": 0.9994130985727624,
+          "passes": 37463,
+          "fails": 22
+        },
+        "thresholds": {
+          "rate>0.90": {
+            "ok": true
+          }
+        },
+        "type": "rate"
+      },
+      "data_received": {
+        "type": "counter",
+        "contains": "data",
+        "values": {
+          "count": 3214170927,
+          "rate": 2926300.078062688
+        }
+      },
+      "rpc_list_messages_duration": {
+        "thresholds": {
+          "p(95)<1800": {
+            "ok": true
+          }
+        },
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 238.59775910364147,
+          "min": 109,
+          "med": 182,
+          "max": 30230,
+          "p(90)": 359,
+          "p(95)": 535
+        }
+      },
+      "iterations": {
+        "type": "counter",
+        "contains": "default",
+        "values": {
+          "count": 5379,
+          "rate": 4.897240525596726
+        }
+      },
+      "rpc_list_location_history_success": {
+        "contains": "default",
+        "values": {
+          "rate": 0.9992530345471522,
+          "passes": 5351,
+          "fails": 4
+        },
+        "thresholds": {
+          "rate>0.95": {
+            "ok": true
+          }
+        },
+        "type": "rate"
+      },
+      "http_req_blocked": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "p(90)": 92.47428,
+          "p(95)": 103.59481000000001,
+          "avg": 28.318334657039692,
+          "min": 0,
+          "med": 0,
+          "max": 1732.9823
+        }
+      },
+      "rpc_update_location_success": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "passes": 5342,
+          "fails": 13,
+          "rate": 0.9975723622782446
+        },
+        "thresholds": {
+          "rate>0.85": {
+            "ok": true
+          }
+        }
+      },
+      "http_req_sending": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "p(90)": 0.67491,
+          "p(95)": 1.011395,
+          "avg": 0.2605828519855596,
+          "min": 0,
+          "med": 0,
+          "max": 4.8262
+        }
+      },
+      "http_req_receiving": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "max": 330.69,
+          "p(90)": 1.5497299999999996,
+          "p(95)": 3.3483900000000064,
+          "avg": 1.9468873646209373,
+          "min": 0,
+          "med": 0
+        }
+      },
+      "grpc_req_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "med": 213.0173,
+          "max": 47996.8908,
+          "p(90)": 675.12164,
+          "p(95)": 977.1372999999994,
+          "avg": 360.6245588448714,
+          "min": 68.8975
+        },
+        "thresholds": {
+          "p(95)<2000": {
+            "ok": true
+          }
+        }
+      },
+      "rpc_list_tracking_notifications_duration": {
+        "contains": "time",
+        "values": {
+          "med": 189,
+          "max": 30510,
+          "p(90)": 371.2000000000007,
+          "p(95)": 547,
+          "avg": 245.77852474323063,
+          "min": 100
+        },
+        "thresholds": {
+          "p(95)<1500": {
+            "ok": true
+          }
+        },
+        "type": "trend"
+      },
+      "http_req_tls_handshaking": {
+        "contains": "time",
+        "values": {
+          "avg": 16.767353610108298,
+          "min": 0,
+          "med": 0,
+          "max": 1495.3302,
+          "p(90)": 52.03839,
+          "p(95)": 57.758695
+        },
+        "type": "trend"
+      },
+      "rpc_list_risk_notifications_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 224.66517273576096,
+          "min": 104,
+          "med": 178,
+          "max": 4462,
+          "p(90)": 349,
+          "p(95)": 513.3000000000002
+        },
+        "thresholds": {
+          "p(95)<1500": {
+            "ok": true
+          }
+        }
+      },
+      "rpc_send_message_success": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "rate": 0.999813258636788,
+          "passes": 5354,
+          "fails": 1
+        },
+        "thresholds": {
+          "rate>0.85": {
+            "ok": true
+          }
+        }
+      },
+      "rpc_update_location_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "max": 30336,
+          "p(90)": 394,
+          "p(95)": 586.3000000000002,
+          "avg": 269.51185807656395,
+          "min": 116,
+          "med": 206
+        },
+        "thresholds": {
+          "p(95)<2000": {
+            "ok": true
+          }
+        }
+      },
+      "http_req_connecting": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 11.298505776173284,
+          "min": 0,
+          "med": 0,
+          "max": 237.6521,
+          "p(90)": 38.53209,
+          "p(95)": 45.07135500000001
+        }
+      },
+      "rpc_list_location_history_duration": {
+        "thresholds": {
+          "p(95)<2000": {
+            "ok": false
+          }
+        },
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 1061.8154995331465,
+          "min": 69,
+          "med": 731,
+          "max": 48068,
+          "p(90)": 1680.2000000000007,
+          "p(95)": 2327.1000000000013
+        }
+      },
+      "http_req_duration{expected_response:true}": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 503.15997320754764,
+          "min": 284.9277,
+          "med": 414.87815,
+          "max": 2583.8397,
+          "p(90)": 781.7674200000001,
+          "p(95)": 1084.213065
+        }
+      }
+    }
+}
