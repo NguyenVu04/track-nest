@@ -140,6 +140,8 @@ export function MissingPersonForm({
           content: formData.content!,
           contactEmail: formData.contactEmail || "",
           contactPhone: formData.contactPhone!,
+          latitue: coordinates[0],
+          longitude: coordinates[1],
         });
         onSave({
           id: response.id,

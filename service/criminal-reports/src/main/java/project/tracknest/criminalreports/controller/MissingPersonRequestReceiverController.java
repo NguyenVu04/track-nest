@@ -43,7 +43,9 @@ public class MissingPersonRequestReceiverController {
             @RequestParam(required = false) MultipartFile photo,
             @RequestParam String contactEmail,
             @RequestParam String contactPhone,
-            @RequestParam LocalDate date) {
+            @RequestParam LocalDate date,
+            @RequestParam double latitude,
+            @RequestParam double longitude) {
 
         String photoObjectName = null;
         if (photo != null && !photo.isEmpty()) {
@@ -76,7 +78,9 @@ public class MissingPersonRequestReceiverController {
                 photoObjectName,
                 contactEmail,
                 contactPhone,
-                date);
+                date,
+                latitude,
+                longitude);
         return ResponseEntity.ok(response);
     }
 }
