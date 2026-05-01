@@ -24,22 +24,23 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: dorny/paths-filter@v3
+      - name: Detect changed paths
         id: filter
-        with:
-          filters: |
-            criminal-reports:
-              - 'service/criminal-reports/**'
-            emergency-ops:
-              - 'service/emergency-ops/**'
-            user-tracking:
-              - 'service/user-tracking/**'
-            track-nest-web:
-              - 'frontend/track-nest-web/**'
-            helm:
-              - 'helm/**'
-            keycloak:
-              - 'keycloak/**'
+        env:
+          BEFORE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          AFTER: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            CHANGED=$(git ls-files)
+          else
+            CHANGED=$(git diff --name-only "$BEFORE" "$AFTER")
+          fi
+          echo "criminal-reports=$(echo "$CHANGED" | grep -qE '^service/criminal-reports/' && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "emergency-ops=$(echo "$CHANGED"    | grep -qE '^service/emergency-ops/'    && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "user-tracking=$(echo "$CHANGED"    | grep -qE '^service/user-tracking/'    && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "track-nest-web=$(echo "$CHANGED"   | grep -qE '^frontend/track-nest-web/'  && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "helm=$(echo "$CHANGED"             | grep -qE '^helm/'                      && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "keycloak=$(echo "$CHANGED"         | grep -qE '^keycloak/'                  && echo true || echo false)" >> $GITHUB_OUTPUT
 
   # ──────────────────────────────────────────────────────────────────────────
   # Docker image builds
