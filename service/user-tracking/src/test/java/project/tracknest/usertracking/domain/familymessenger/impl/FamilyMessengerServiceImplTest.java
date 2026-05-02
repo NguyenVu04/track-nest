@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.PageRequest;
+import project.tracknest.usertracking.configuration.firebase.FcmService;
 import project.tracknest.usertracking.configuration.redis.ServerRedisMessagePublisher;
 import project.tracknest.usertracking.core.datatype.PageToken;
 import project.tracknest.usertracking.core.entity.FamilyCircleMember;
@@ -30,7 +31,10 @@ class FamilyMessengerServiceImplTest {
 
     @Mock FamilyMessengerFamilyMessageRepository messageRepository;
     @Mock FamilyMessengerFamilyCircleMemberRepository memberRepository;
+    @Mock FamilyMessengerUserRepository userRepository;
+    @Mock FamilyMessengerMobileDeviceRepository mobileDeviceRepository;
     @Mock ServerRedisMessagePublisher redisPublisher;
+    @Mock FcmService fcmService;
 
     @InjectMocks FamilyMessengerServiceImpl service;
 
