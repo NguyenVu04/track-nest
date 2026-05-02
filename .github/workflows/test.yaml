@@ -177,21 +177,14 @@ jobs:
 
       - name: Run Jest
         working-directory: frontend/track-nest-web
-        run: |
-          output=$(npm test -- --coverage 2>&1) || true
-          echo "$output"
-          if echo "$output" | grep -q "No tests found"; then
-            echo "No test files found yet — passing as placeholder."
-            exit 0
-          fi
-          echo "$output" | grep -q "Tests:.*failed" && exit 1 || exit 0
+        run: npm test -- --passWithNoTests
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: track-nest-web-coverage
           path: frontend/track-nest-web/coverage/lcov.info
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 1
 
   # ── 6. TrackNest mobile ───────────────────────────────────────────
@@ -216,20 +209,14 @@ jobs:
 
       - name: Run Jest
         working-directory: frontend/TrackNest
-        run: |
-          output=$(npm test 2>&1) || true
-          echo "$output"
-          if echo "$output" | grep -q "No tests found"; then
-            echo "No test files found yet — passing as placeholder."
-            exit 0
-          fi
-          echo "$output" | grep -q "Tests:.*failed" && exit 1 || exit 0
+        run: npm test -- --passWithNoTests
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: tracknest-coverage
           path: frontend/TrackNest/coverage/lcov.info
+          if-no-files-found: error
           retention-days: 1
 
   # ── 7. Aggregate SonarCloud scan (single project) ─────────────────
