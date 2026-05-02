@@ -205,7 +205,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend/TrackNest
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Run Jest
         working-directory: frontend/TrackNest
