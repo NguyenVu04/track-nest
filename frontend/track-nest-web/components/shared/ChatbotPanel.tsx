@@ -7,7 +7,7 @@ import {
 } from "@/services/criminalReportsService";
 
 interface ChatbotPanelProps {
-  documentId: string;
+  documentId: string | undefined;
   title?: string;
   emptyState?: string;
 }
