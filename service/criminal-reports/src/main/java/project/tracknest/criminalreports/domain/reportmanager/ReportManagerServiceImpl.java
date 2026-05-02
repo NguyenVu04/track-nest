@@ -100,7 +100,11 @@ class ReportManagerServiceImpl implements ReportManagerService {
         report.setFullName(request.getFullName());
         report.setPersonalId(request.getPersonalId());
         if (request.getPhoto() != null) report.setPhoto(request.getPhoto());
-        if (request.getContent() != null) report.setContent(request.getContent());
+        if (request.getContent() != null) {
+            String oldContent = report.getContent();
+            report.setContent(uploadHtmlContent(request.getContent()));
+            if (oldContent != null && !oldContent.isBlank()) objectStorage.deleteFile(bucketName, oldContent);
+        }
         report.setDate(request.getDate());
         if (request.getLatitude() != null) report.setLatitude(request.getLatitude());
         if (request.getLongitude() != null) report.setLongitude(request.getLongitude());
@@ -220,7 +224,9 @@ class ReportManagerServiceImpl implements ReportManagerService {
         }
         report.setTitle(request.getTitle());
         if (request.getContent() != null) {
+            String oldContent = report.getContent();
             report.setContent(uploadHtmlContent(request.getContent()));
+            if (oldContent != null && !oldContent.isBlank()) objectStorage.deleteFile(bucketName, oldContent);
         }
         report.setSeverity(request.getSeverity());
         report.setDate(request.getDate());
@@ -324,7 +330,9 @@ class ReportManagerServiceImpl implements ReportManagerService {
         document.setTitle(request.getTitle());
         document.setAbstractText(request.getAbstractText());
         if (request.getContent() != null) {
+            String oldContent = document.getContent();
             document.setContent(uploadHtmlContent(request.getContent()));
+            if (oldContent != null && !oldContent.isBlank()) objectStorage.deleteFile(bucketName, oldContent);
         }
         return mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
     }
