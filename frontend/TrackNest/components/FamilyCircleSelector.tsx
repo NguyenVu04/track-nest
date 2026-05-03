@@ -1,4 +1,6 @@
+import { map as mapLang } from "@/constant/languages";
 import { FamilyCircle } from "@/constant/types";
+import { useTranslation } from "@/hooks/useTranslation";
 import { colors } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
@@ -13,11 +15,12 @@ export const FamilyCircleSelector: React.FC<FamilyCircleSelectorProps> = ({
   selectedCircle,
   onPress,
 }) => {
+  const t = useTranslation(mapLang);
   return (
     <Pressable style={styles.pill} onPress={onPress}>
       <Ionicons name="home" size={16} color="#0c6874" />
       <Text style={styles.text} numberOfLines={1}>
-        {selectedCircle?.name ?? "Family Circle"}
+        {selectedCircle?.name ?? t.familyCircleDefault}
       </Text>
       <Ionicons name="chevron-down" size={16} color="#0c6874" />
     </Pressable>

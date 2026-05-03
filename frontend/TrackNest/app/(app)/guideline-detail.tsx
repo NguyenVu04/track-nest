@@ -25,7 +25,7 @@ export default function GuidelineDetailScreen() {
     const loadGuideline = async () => {
       if (!id) return;
       try {
-        const data = await criminalReportsService.getPublicGuidelinesById(id);
+        const data = await criminalReportsService.getUserGuidelinesById(id);
         setGuideline(data);
       } catch (err) {
         console.error("Failed to load guideline:", err);
@@ -40,6 +40,8 @@ export default function GuidelineDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.bgBlob} />
+        <View style={styles.bgBlob2} />
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -50,12 +52,14 @@ export default function GuidelineDetailScreen() {
   if (!guideline) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.bgBlob} />
+        <View style={styles.bgBlob2} />
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </Pressable>
           <Text style={styles.headerTitle}>Guideline</Text>
-          <View style={{ width: 40 }} />
+          <View style={{ width: 44 }} />
         </View>
         <View style={styles.center}>
           <Text style={styles.notFoundText}>Guideline not found</Text>
@@ -66,12 +70,14 @@ export default function GuidelineDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.bgBlob} />
+      <View style={styles.bgBlob2} />
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle}>Guideline Detail</Text>
-        <View style={{ width: 40 }} />
+        <View style={{ width: 44 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -114,7 +120,25 @@ export default function GuidelineDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: "#f5fafa",
+  },
+  bgBlob: {
+    position: "absolute",
+    top: -50,
+    right: -50,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: "rgba(52, 152, 219, 0.08)",
+  },
+  bgBlob2: {
+    position: "absolute",
+    bottom: -80,
+    left: -80,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: "rgba(46, 204, 113, 0.06)",
   },
   center: {
     flex: 1,
@@ -122,17 +146,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   header: {
-    height: 56,
+    height: 60,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.surface,
+    paddingHorizontal: 20,
   },
   backButton: {
-    padding: spacing.xs,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
   },
   headerTitle: {
     fontSize: 18,

@@ -1,5 +1,7 @@
 import Fab from "@/components/Fab";
 import SosFab from "@/components/SosFab";
+import { MapControls as MapControlsLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
 import {
   BottomSheetBackdrop,
@@ -43,6 +45,7 @@ export default function MapControls({
   showSafeZones = true,
 }: Props) {
   const tabBarHeight = useBottomTabBarHeight();
+  const t = useTranslation(MapControlsLang);
 
   const sheetRef = useRef<BottomSheetModal>(null);
 
@@ -67,10 +70,10 @@ export default function MapControls({
   const label = labelByType[mapType] ?? "S";
 
   const mapTypeNameByType: Partial<Record<MapType, string>> = {
-    standard: "Standard",
-    hybrid: "Hybrid",
+    standard: t.mapTypeStandard,
+    hybrid: t.mapTypeHybrid,
   };
-  const mapTypeName = mapTypeNameByType[mapType] ?? "Standard";
+  const mapTypeName = mapTypeNameByType[mapType] ?? t.mapTypeStandard;
 
   const hasGroupedOptions =
     onMapTypePress || onToggleHeatmap || onTogglePOIs || onToggleSafeZones || onZoomIn || onZoomOut;
@@ -102,7 +105,7 @@ export default function MapControls({
         containerStyle={{ bottom: tabBarHeight }}
       >
         <BottomSheetView style={styles.sheetContent}>
-          <Text style={styles.sheetTitle}>Map Options</Text>
+          <Text style={styles.sheetTitle}>{t.sheetTitle}</Text>
 
           {onMapTypePress && (
             <Pressable style={styles.optionRow} onPress={onMapTypePress}>
@@ -112,10 +115,10 @@ export default function MapControls({
                 <Ionicons name="layers-outline" size={22} color="#74becb" />
               </View>
               <View style={styles.optionMeta}>
-                <Text style={styles.optionLabel}>Map Type</Text>
-                <Text
-                  style={styles.optionDesc}
-                >{`Current: ${mapTypeName}`}</Text>
+                <Text style={styles.optionLabel}>{t.mapTypeLabel}</Text>
+                <Text style={styles.optionDesc}>
+                  {t.mapTypeCurrent.replace("{{type}}", mapTypeName)}
+                </Text>
               </View>
               <View style={styles.mapTypeBadge}>
                 <Text style={styles.mapTypeBadgeText}>{label}</Text>
@@ -138,10 +141,8 @@ export default function MapControls({
                 />
               </View>
               <View style={styles.optionMeta}>
-                <Text style={styles.optionLabel}>Safe Zones</Text>
-                <Text style={styles.optionDesc}>
-                  Show safety boundaries on the map
-                </Text>
+                <Text style={styles.optionLabel}>{t.safeZonesLabel}</Text>
+                <Text style={styles.optionDesc}>{t.safeZonesDesc}</Text>
               </View>
               <View
                 style={[
@@ -155,7 +156,7 @@ export default function MapControls({
                     showSafeZones && styles.toggleTextActive,
                   ]}
                 >
-                  {showSafeZones ? "ON" : "OFF"}
+                  {showSafeZones ? t.on : t.off}
                 </Text>
               </View>
             </Pressable>
@@ -176,10 +177,8 @@ export default function MapControls({
                 />
               </View>
               <View style={styles.optionMeta}>
-                <Text style={styles.optionLabel}>Crime Heatmap</Text>
-                <Text style={styles.optionDesc}>
-                  Highlight crime hotspot areas on the map
-                </Text>
+                <Text style={styles.optionLabel}>{t.crimeHeatmapLabel}</Text>
+                <Text style={styles.optionDesc}>{t.crimeHeatmapDesc}</Text>
               </View>
               <View
                 style={[
@@ -193,7 +192,7 @@ export default function MapControls({
                     showHeatmap && styles.toggleTextActive,
                   ]}
                 >
-                  {showHeatmap ? "ON" : "OFF"}
+                  {showHeatmap ? t.on : t.off}
                 </Text>
               </View>
             </Pressable>
@@ -214,10 +213,8 @@ export default function MapControls({
                 />
               </View>
               <View style={styles.optionMeta}>
-                <Text style={styles.optionLabel}>Points of Interest</Text>
-                <Text style={styles.optionDesc}>
-                  Show landmarks and notable locations
-                </Text>
+                <Text style={styles.optionLabel}>{t.poisLabel}</Text>
+                <Text style={styles.optionDesc}>{t.poisDesc}</Text>
               </View>
               <View
                 style={[styles.togglePill, showPOIs && styles.togglePillActive]}
@@ -228,7 +225,7 @@ export default function MapControls({
                     showPOIs && styles.toggleTextActive,
                   ]}
                 >
-                  {showPOIs ? "ON" : "OFF"}
+                  {showPOIs ? t.on : t.off}
                 </Text>
               </View>
             </Pressable>
@@ -242,8 +239,8 @@ export default function MapControls({
                 <Ionicons name="search" size={22} color="#757575" />
               </View>
               <View style={styles.optionMeta}>
-                <Text style={styles.optionLabel}>Zoom</Text>
-                <Text style={styles.optionDesc}>Adjust the map zoom level</Text>
+                <Text style={styles.optionLabel}>{t.zoomLabel}</Text>
+                <Text style={styles.optionDesc}>{t.zoomDesc}</Text>
               </View>
               <View style={styles.zoomGroup}>
                 {onZoomOut && (

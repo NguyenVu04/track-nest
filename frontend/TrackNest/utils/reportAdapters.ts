@@ -1,6 +1,7 @@
 import { criminalReportsService } from "@/services/criminalReports";
 import type { CrimeReport, MissingPersonReport, GuidelinesDocument } from "@/types/criminalReports";
 import { getSeverityLabel } from "@/utils/crimeHelpers";
+import { getUserRoles } from "./auth";
 
 export type Report = {
   id: string;
@@ -81,24 +82,28 @@ function adaptGuidelinesToGuide(guidelines: GuidelinesDocument): Guide {
 
 export async function fetchReports({ page = 1, perPage = 10 } = {}) {
   try {
-    const response = await criminalReportsService.getCrimeReports({
-      page: page - 1,
-      size: perPage,
-    });
+    const userRoles = await getUserRoles();
+
+    console.log("User roles:", userRoles);
+
+    const response = await criminalReportsService.getUserCrimeReports(
+      page - 1,
+      perPage,
+    );
     return {
       data: response.content.map(adaptCrimeReportToReport),
       total: response.totalElements,
       page,
     };
   } catch (error) {
-    console.error("Failed to fetch reports:", error);
+    console.error("Failed to fetch reports111:", error);
     return { data: [] as Report[], total: 0, page };
   }
 }
 
 export async function getReportById(id: string) {
   try {
-    const report = await criminalReportsService.getCrimeReportById(id);
+    const report = await criminalReportsService.getUserCrimeReportById(id);
     return adaptCrimeReportToReport(report);
   } catch (error) {
     console.error(`Failed to get report by ID: ${id}\n`, error);
@@ -108,7 +113,7 @@ export async function getReportById(id: string) {
 
 export async function fetchMissingPersons({ page = 1, perPage = 10 } = {}) {
   try {
-    const response = await criminalReportsService.getMissingPersonReports(
+    const response = await criminalReportsService.getUserMissingPersonReports(
       page - 1,
       perPage,
     );
@@ -125,7 +130,7 @@ export async function fetchMissingPersons({ page = 1, perPage = 10 } = {}) {
 
 export async function fetchGuides({ page = 1, perPage = 10 } = {}) {
   try {
-    const response = await criminalReportsService.getGuidelines(
+    const response = await criminalReportsService.getUserGuidelines(
       page - 1,
       perPage,
     );

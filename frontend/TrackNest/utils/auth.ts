@@ -77,3 +77,35 @@ export const getUserId = async (): Promise<string> => {
 
   return payload.sub as string;
 };
+
+/**
+ * Decodes the JWT access token and returns the Keycloak realm roles array.
+ * Returns an empty array if no valid token is found or roles are missing.
+ */
+export const getUserRoles = async (): Promise<string[]> => {
+  const tokensJson = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
+  if (!tokensJson) return [];
+
+  const tokens: StoredTokens = JSON.parse(tokensJson);
+  if (isTokenExpired(tokens)) return [];
+
+  const parts = tokens.accessToken.split(".");
+  if (parts.length !== 3) return [];
+
+  try {
+    const payload = JSON.parse(
+      atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    return (payload?.realm_access?.roles as string[]) ?? [];
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Returns true if the current user has the given Keycloak realm role.
+ */
+export const hasRole = async (role: string): Promise<boolean> => {
+  const roles = await getUserRoles();
+  return roles.includes(role);
+};

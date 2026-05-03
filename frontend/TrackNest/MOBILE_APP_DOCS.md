@@ -48,6 +48,8 @@ app/
     │   ├── create-report
     │   ├── missing-detail
     │   ├── create-missing
+    │   ├── guideline-detail
+    │   ├── notifications
     │   └── sos                  ← Gesture-disabled, animation-disabled
     └── (tabs)/
         ├── _layout.tsx          ← Tab bar (height 70px + safe area)
@@ -173,27 +175,39 @@ Scrollable settings page grouped into sections.
 
 #### Report Detail (`/report-detail`)
 - Full crime report: title, severity, address, date/time, description
+- Standardized embedded map view for location context
 - Horizontal photo gallery
+- Integrated AI Chatbot (`ChatbotPanel`) for contextual assistance
 - "Call Police" button
 - "Share" button
 
 #### Create Report (`/create-report`)
 - Title, description, severity picker (Low / Medium / High)
-- Map coordinate picker (tap to place pin)
+- Interactive map-based location picker (replacing manual input)
 - Number of victims / offenders
 - Arrested toggle
 - Photo upload (up to 5 images, uploaded to MinIO)
 
 #### Missing Detail (`/missing-detail`)
 - Missing person: name, personal ID, description, last seen date
+- Standardized embedded map view
 - Photo
-- Coordinates
+- Integrated AI Chatbot (`ChatbotPanel`) for contextual assistance
 
 #### Create Missing (`/create-missing`)
 - Full name, personal ID, description
 - Date/time picker
-- Location picker on map
+- Interactive map-based location picker
 - Photo upload
+
+#### Guideline Detail (`/guideline-detail`)
+- Displays safety guidelines and tips
+- Integrated AI Chatbot (`ChatbotPanel`) for contextual questions
+
+#### Notifications (`/notifications`)
+- Dedicated, swipeable list of past notifications
+- Replaces the previous modal interface
+- Displays tracking, risk, and messaging alerts
 
 #### SOS (`/sos`)
 - Activates immediately on navigate
@@ -211,6 +225,7 @@ Scrollable settings page grouped into sections.
 - Location uploaded to server via `updateUserLocation` (gRPC unary) when moved >11m or every 5s heartbeat
 - Other members' locations received via `streamFamilyMemberLocations` (gRPC server-streaming)
 - Markers animate smoothly (800ms) between position updates using `MarkerAnimated` + `AnimatedRegion`
+- Unified, motion-aware bottom sheet (`FollowerInfoSheet`) centralizes follower tracking data, displaying real-time movement states (Stationary, Walking, Driving) and speed.
 
 ### Family Circles
 - Create circles with a name and personal role
@@ -238,11 +253,12 @@ Scrollable settings page grouped into sections.
 - Nearest safe zones returned in emergency context
 - Can filter by distance from current position
 
-### Crime Intelligence
+### Crime Intelligence & AI Assistant
 - Crime reports submitted with: title, description, severity, location, victims, offenders, photos
 - Missing person reports with personal ID, description, photo, date
 - Heatmap visualization powered by the POIAnalytics context
 - Backend criminal analyzer provides dashboard summaries and trend analysis
+- **AI Chatbot Assistant**: Integrated `ChatbotPanel` on Report and Guideline detail screens to provide contextual assistance and answer queries.
 
 ### Driving Mode & Distraction Detection
 - `useDrivingMode`: detects driving via accelerometer/GPS speed patterns
@@ -255,6 +271,8 @@ Scrollable settings page grouped into sections.
 - Categories:
   - **Tracking notifications** — family member location events
   - **Risk notifications** — SOS, battery low, speeding alerts
+  - **Messaging notifications** — push alerts for new chat messages
+- Dedicated, swipeable Notifications screen for viewing and managing past alerts
 - Tap on notification navigates to relevant screen
 - In-app notifications also shown as banners
 

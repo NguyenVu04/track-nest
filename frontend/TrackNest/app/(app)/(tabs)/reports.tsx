@@ -166,6 +166,7 @@ function TabPage<T extends { id: string }>({
   onRefresh,
   onEndReached,
   emptyTitle,
+  emptySubtitle,
 }: {
   data: T[];
   renderItem: ({ item }: { item: T }) => React.ReactElement | null;
@@ -174,6 +175,7 @@ function TabPage<T extends { id: string }>({
   onRefresh: () => void;
   onEndReached: () => void;
   emptyTitle: string;
+  emptySubtitle: string;
 }) {
   if (loading) {
     return (
@@ -197,8 +199,14 @@ function TabPage<T extends { id: string }>({
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
+            <View style={styles.emptyIllustrationContainer}>
+              <View style={styles.emptyBlob1} />
+              <View style={styles.emptyBlob2} />
+              <Ionicons name="map" size={80} color="#b4dede" style={styles.emptyIconMap} />
+              <Ionicons name="search" size={50} color={colors.primary} style={styles.emptyIconSearch} />
+            </View>
             <Text style={styles.emptyTitle}>{emptyTitle}</Text>
+            <Text style={styles.emptySubtitle}>{emptySubtitle}</Text>
           </View>
         }
       />
@@ -361,7 +369,8 @@ export default function ReportsScreen() {
             loadReports(1);
           }}
           onEndReached={() => loadReports(pages.reports + 1)}
-          emptyTitle={t.noDataAvailable || "No data available"}
+          emptyTitle={t.emptyTitleReports || "No reports found yet"}
+          emptySubtitle={t.emptySubtitleReports || "Tap the button to create a new report."}
         />
 
         {/* Page 1 — Missing Persons */}
@@ -382,7 +391,8 @@ export default function ReportsScreen() {
             loadMissing(1);
           }}
           onEndReached={() => loadMissing(pages.missing + 1)}
-          emptyTitle={t.noDataAvailable || "No data available"}
+          emptyTitle={t.emptyTitleReports || "No reports found yet"}
+          emptySubtitle={t.emptySubtitleReports || "Tap the button to create a new report."}
         />
 
         {/* Page 2 — Guidelines */}
@@ -398,7 +408,8 @@ export default function ReportsScreen() {
             loadGuides(1);
           }}
           onEndReached={() => loadGuides(pages.guides + 1)}
-          emptyTitle={t.noDataAvailable || "No data available"}
+          emptyTitle={t.emptyTitleGuides || "No guides found yet"}
+          emptySubtitle={t.emptySubtitleGuides || "Check back later for new guides."}
         />
       </Animated.ScrollView>
 
@@ -564,12 +575,56 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 60,
-    gap: 12,
+    paddingTop: 80,
+    gap: 16,
+    paddingHorizontal: 20,
+  },
+  emptyIllustrationContainer: {
+    width: 160,
+    height: 160,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  emptyBlob1: {
+    position: "absolute",
+    width: 140,
+    height: 120,
+    backgroundColor: "#d8ecef",
+    borderRadius: 60,
+    transform: [{ rotate: "-15deg" }],
+  },
+  emptyBlob2: {
+    position: "absolute",
+    width: 100,
+    height: 130,
+    backgroundColor: "#e8f4f6",
+    borderRadius: 50,
+    transform: [{ rotate: "30deg" }],
+    left: 10,
+  },
+  emptyIconMap: {
+    position: "absolute",
+    opacity: 0.9,
+  },
+  emptyIconSearch: {
+    position: "absolute",
+    bottom: 30,
+    left: 30,
+    textShadowColor: "rgba(0,0,0,0.1)",
+    textShadowOffset: { width: 1, height: 2 },
+    textShadowRadius: 3,
   },
   emptyTitle: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    fontWeight: "500",
+    fontSize: 22,
+    color: "#2d3748",
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    color: "#718096",
+    textAlign: "center",
+    marginTop: -4,
   },
 });

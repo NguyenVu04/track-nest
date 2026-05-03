@@ -51,6 +51,8 @@ class EmergencyOperationsService {
       this.baseUrl = await getEmergencyUrl();
     }
 
+    console.log("Using emergency service URL:", this.baseUrl);
+
     const authMetadata = await getAuthMetadata();
     return axios.create({
       baseURL: this.baseUrl,

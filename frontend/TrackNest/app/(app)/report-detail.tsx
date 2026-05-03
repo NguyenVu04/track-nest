@@ -20,6 +20,7 @@ import {
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
+import { showToast } from "@/utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -67,7 +68,7 @@ export default function ReportDetailScreen() {
   useEffect(() => {
     if (!id) return;
     criminalReportsService
-      .getPublicCrimeReportById(id)
+      .getUserCrimeReportById(id)
       .then((data) => setReport(data))
       .catch((err) => console.error("Failed to load report:", err))
       .finally(() => setLoading(false));
@@ -98,6 +99,8 @@ export default function ReportDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.bgBlob} />
+        <View style={styles.bgBlob2} />
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -110,12 +113,14 @@ export default function ReportDetailScreen() {
   if (!report) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.bgBlob} />
+        <View style={styles.bgBlob2} />
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.headerBtn}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </Pressable>
           <Text style={styles.headerTitle}>{t.pageTitle}</Text>
-          <View style={{ width: 40 }} />
+          <View style={{ width: 44 }} />
         </View>
         <View style={styles.center}>
           <Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
@@ -157,6 +162,9 @@ export default function ReportDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.bgBlob} />
+      <View style={styles.bgBlob2} />
+
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.headerBtn}>
@@ -293,23 +301,50 @@ export default function ReportDetailScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
+  container: { flex: 1, backgroundColor: "#f5fafa" },
+  bgBlob: {
+    position: "absolute",
+    top: -50,
+    right: -50,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: "rgba(52, 152, 219, 0.08)",
+  },
+  bgBlob2: {
+    position: "absolute",
+    bottom: -80,
+    left: -80,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: "rgba(46, 204, 113, 0.06)",
+  },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   emptyText: { fontSize: 16, color: colors.textSecondary },
 
   // Header
   header: {
-    height: 56,
-    paddingHorizontal: spacing.md,
+    height: 60,
+    paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.bg,
   },
   headerTitle: { fontSize: 17, fontWeight: "700", color: colors.textPrimary },
-  headerBtn: { padding: 6, borderRadius: radii.sm },
+  headerBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
 
   scroll: { flex: 1 },
 
