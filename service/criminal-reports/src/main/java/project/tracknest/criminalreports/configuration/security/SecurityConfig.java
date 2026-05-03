@@ -49,6 +49,8 @@ public class SecurityConfig {
                         .hasRole("ADMIN")
                         .requestMatchers("/report-viewer/**")
                         .permitAll()
+                        .requestMatchers("/report-user/**")
+                        .hasAnyRole("USER", "REPORTER", "ADMIN")
                         .requestMatchers("/chatbot/**")
                         .authenticated()
                         .anyRequest()
