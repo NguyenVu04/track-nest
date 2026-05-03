@@ -80,8 +80,10 @@ logging:
   level:
     root: INFO
     org.springframework: INFO
+    org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
+    project.tracknest.criminalreports.configuration.security: DEBUG
 
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [${spring.application.name}] [trace=%X{traceId} span=%X{spanId}] %-5level %logger - %msg%n"

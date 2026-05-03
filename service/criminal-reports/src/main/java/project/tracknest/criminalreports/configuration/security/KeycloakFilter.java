@@ -42,19 +42,28 @@ public class KeycloakFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
         String authorizationHeader = request.getHeader(AUTHORIZATION_KEY);
+
+        log.debug("[KeycloakFilter] {} {} — Authorization header present: {}",
+                request.getMethod(), request.getRequestURI(), authorizationHeader != null);
+
         KeycloakAuthorizationHeader decoded = decodeKeycloakauthorizationHeader(authorizationHeader);
 
         if (decoded != null) {
             try {
-                // build principal and user details (same mapping as KeycloakFilter)
                 KeycloakPrincipal principal = new KeycloakPrincipal(decoded.getUserId());
 
-                List<SimpleGrantedAuthority> roles = decoded
-                        .getRealmAccess()
-                        .getRoles()
-                        .stream()
+                List<String> rawRoles = Optional.ofNullable(decoded.getRealmAccess())
+                        .map(KeycloakAuthorizationHeaderRealmAccess::getRoles)
+                        .orElse(Collections.emptyList());
+
+                log.debug("[KeycloakFilter] realm_access present: {}, raw roles: {}",
+                        decoded.getRealmAccess() != null, rawRoles);
+
+                List<SimpleGrantedAuthority> roles = rawRoles.stream()
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                         .toList();
+
+                log.debug("[KeycloakFilter] Mapped authorities: {}", roles);
 
                 KeycloakUserDetails userDetails = KeycloakUserDetails
                         .builder()
@@ -68,10 +77,7 @@ public class KeycloakFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(principal, authorizationHeader, roles);
                 authentication.setDetails(userDetails);
 
-                boolean isReporter = Optional.ofNullable(decoded.getRealmAccess())
-                        .map(KeycloakAuthorizationHeaderRealmAccess::getRoles)
-                        .orElse(Collections.emptyList())
-                        .contains("REPORTER");
+                boolean isReporter = rawRoles.contains("REPORTER");
 
                 if (isReporter) {
                     Optional<Reporter> reporterOpt = reporterRepository
@@ -96,11 +102,15 @@ public class KeycloakFilter extends OncePerRequestFilter {
                     }
                 }
 
-                log.info("Setting security context with user: {}", principal.getName());
+                log.info("[KeycloakFilter] Security context set — user: {}, roles: {}",
+                        principal.getName(), roles);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception ex) {
-                log.warn("Failed to set security context from authorization header: {}", ex.getMessage());
+                log.warn("[KeycloakFilter] Failed to set security context: {}", ex.getMessage(), ex);
             }
+        } else {
+            log.debug("[KeycloakFilter] No valid token decoded — proceeding as anonymous for {} {}",
+                    request.getMethod(), request.getRequestURI());
         }
 
         filterChain.doFilter(request, response);
@@ -108,46 +118,61 @@ public class KeycloakFilter extends OncePerRequestFilter {
 
     private KeycloakAuthorizationHeader decodeKeycloakauthorizationHeader(String authorizationHeader) {
         if (authorizationHeader == null || authorizationHeader.trim().isEmpty()) {
+            log.debug("[KeycloakFilter] Authorization header is absent or blank");
             return null;
         }
 
+        log.debug("[KeycloakFilter] Token length: {}", authorizationHeader.length());
+
         if (authorizationHeader.length() > MAX_HEADER_LENGTH) {
-            log.warn("Authorization header exceeds maximum length");
+            log.warn("[KeycloakFilter] Authorization header length {} exceeds limit {}",
+                    authorizationHeader.length(), MAX_HEADER_LENGTH);
             return null;
         }
 
         if (!BEARER_TOKEN_PATTERN.matcher(authorizationHeader).matches()) {
-            log.warn("Authorization header does not match Bearer token pattern");
+            log.warn("[KeycloakFilter] Authorization header does not match Bearer token pattern. " +
+                    "First 20 chars: {}", authorizationHeader.substring(0, Math.min(20, authorizationHeader.length())));
             return null;
         }
 
         try {
-            String jwt = authorizationHeader.substring(7); // Remove "Bearer " prefix
+            String jwt = authorizationHeader.substring(7);
+            String[] parts = jwt.split("\\.");
 
-            String[] parts = jwt.split("\\."); // JWT has three parts: header, payload, signature
+            if (parts.length != 3) {
+                log.warn("[KeycloakFilter] JWT does not have exactly 3 parts, got {}", parts.length);
+                return null;
+            }
 
             String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+            log.debug("[KeycloakFilter] Decoded JWT payload: {}", payload);
 
             JsonNode node = MAPPER.readTree(payload);
 
             if (node.get("exp") == null) {
-                log.warn("Authorization header token is missing expiration");
+                log.warn("[KeycloakFilter] Token missing 'exp' claim");
                 return null;
             }
 
             if (node.get("sub") == null) {
-                log.warn("Authorization header token is missing subject");
+                log.warn("[KeycloakFilter] Token missing 'sub' claim");
                 return null;
             }
 
+            log.debug("[KeycloakFilter] realm_access node: {}",
+                    node.has("realm_access") ? node.get("realm_access").toString() : "MISSING");
+
             KeycloakAuthorizationHeader header = MAPPER.treeToValue(node, KeycloakAuthorizationHeader.class);
+
             if (header.getExpiration() * 1000 < System.currentTimeMillis()) {
-                log.warn("Authorization header token is expired");
+                log.warn("[KeycloakFilter] Token is expired (exp={})", header.getExpiration());
                 return null;
             }
+
             return header;
         } catch (IllegalArgumentException | IOException ex) {
-            log.warn("Failed to decode Authorization header: {}", ex.getMessage());
+            log.warn("[KeycloakFilter] Failed to decode token: {}", ex.getMessage(), ex);
             return null;
         }
     }
