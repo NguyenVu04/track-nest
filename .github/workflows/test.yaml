@@ -12,38 +12,30 @@ concurrency:
 
 jobs:
 
-  # ── 1. Path-based change detection ────────────────────────────────
+  # ── 1. Change detection ───────────────────────────────────────────
   detect-changes:
     name: Detect changed components
     runs-on: ubuntu-24.04
     outputs:
-      criminal-reports: ${{ steps.filter.outputs.criminal-reports }}
-      emergency-ops:    ${{ steps.filter.outputs.emergency-ops }}
-      user-tracking:    ${{ steps.filter.outputs.user-tracking }}
-      track-nest-web:   ${{ steps.filter.outputs.track-nest-web }}
-      tracknest-mobile: ${{ steps.filter.outputs.tracknest-mobile }}
+      any: ${{ steps.filter.outputs.any }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
-            criminal-reports:
+            any:
               - 'service/criminal-reports/**'
-            emergency-ops:
               - 'service/emergency-ops/**'
-            user-tracking:
               - 'service/user-tracking/**'
-            track-nest-web:
               - 'frontend/track-nest-web/**'
-            tracknest-mobile:
               - 'frontend/TrackNest/**'
 
   # ── 2. criminal-reports ───────────────────────────────────────────
   test-criminal-reports:
     name: Test – criminal-reports
     needs: detect-changes
-    if: needs.detect-changes.outputs.criminal-reports == 'true'
+    if: needs.detect-changes.outputs.any == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -81,7 +73,7 @@ jobs:
   test-emergency-ops:
     name: Test – emergency-ops
     needs: detect-changes
-    if: needs.detect-changes.outputs.emergency-ops == 'true'
+    if: needs.detect-changes.outputs.any == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -118,7 +110,7 @@ jobs:
   test-user-tracking:
     name: Test – user-tracking
     needs: detect-changes
-    if: needs.detect-changes.outputs.user-tracking == 'true'
+    if: needs.detect-changes.outputs.any == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -160,7 +152,7 @@ jobs:
   test-track-nest-web:
     name: Test – track-nest-web (Jest)
     needs: detect-changes
-    if: needs.detect-changes.outputs.track-nest-web == 'true'
+    if: needs.detect-changes.outputs.any == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -177,21 +169,14 @@ jobs:
 
       - name: Run Jest
         working-directory: frontend/track-nest-web
-        run: |
-          output=$(npm test -- --coverage 2>&1) || true
-          echo "$output"
-          if echo "$output" | grep -q "No tests found"; then
-            echo "No test files found yet — passing as placeholder."
-            exit 0
-          fi
-          echo "$output" | grep -q "Tests:.*failed" && exit 1 || exit 0
+        run: npm test -- --passWithNoTests
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: track-nest-web-coverage
           path: frontend/track-nest-web/coverage/lcov.info
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 1
 
   # ── 6. TrackNest mobile ───────────────────────────────────────────
@@ -199,7 +184,7 @@ jobs:
   test-tracknest-mobile:
     name: Test – TrackNest mobile (Jest)
     needs: detect-changes
-    if: needs.detect-changes.outputs.tracknest-mobile == 'true'
+    if: needs.detect-changes.outputs.any == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -216,26 +201,19 @@ jobs:
 
       - name: Run Jest
         working-directory: frontend/TrackNest
-        run: |
-          output=$(npm test 2>&1) || true
-          echo "$output"
-          if echo "$output" | grep -q "No tests found"; then
-            echo "No test files found yet — passing as placeholder."
-            exit 0
-          fi
-          echo "$output" | grep -q "Tests:.*failed" && exit 1 || exit 0
+        run: npm test -- --passWithNoTests
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: tracknest-coverage
           path: frontend/TrackNest/coverage/lcov.info
+          if-no-files-found: error
           retention-days: 1
 
   # ── 7. Aggregate SonarCloud scan (single project) ─────────────────
-  # Always runs after test jobs (unless workflow is cancelled).
-  # Runs all Java tests inline (guarantees fresh JaCoCo on every scan).
-  # Frontend lcov artifacts are downloaded only when the test job ran.
+  # Runs all Java tests inline (guarantees fresh JaCoCo + compiled classes).
+  # Frontend lcov artifacts are downloaded from the parallel test jobs.
   sonar-scan:
     name: SonarCloud Scan
     needs:
@@ -278,13 +256,13 @@ jobs:
         run: ./gradlew generateProto test jacocoTestReport --no-daemon
 
       - uses: actions/download-artifact@v4
-        if: needs.test-track-nest-web.result == 'success'
+        if: needs.detect-changes.outputs.any == 'true'
         with:
           name: track-nest-web-coverage
           path: frontend/track-nest-web/coverage/
 
       - uses: actions/download-artifact@v4
-        if: needs.test-tracknest-mobile.result == 'success'
+        if: needs.detect-changes.outputs.any == 'true'
         with:
           name: tracknest-coverage
           path: frontend/TrackNest/coverage/
@@ -300,7 +278,7 @@ jobs:
   # ── 8. Merge gate ─────────────────────────────────────────────────
   # Single required status check — add "CI Gate" to branch protection rules.
   # Uses `if: always()` so it runs even when component jobs are skipped.
-  # Skipped jobs (unchanged components) count as passing.
+  # Skipped jobs (no changes detected) count as passing.
   ci-gate:
     name: CI Gate
     needs:

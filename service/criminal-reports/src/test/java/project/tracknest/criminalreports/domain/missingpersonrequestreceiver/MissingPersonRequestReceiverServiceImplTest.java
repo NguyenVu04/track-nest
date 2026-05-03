@@ -53,7 +53,8 @@ class MissingPersonRequestReceiverServiceImplTest {
                 "Missing Title", "John Doe", "ID123",
                 "additional details",
                 null,
-                "email@test.com", "+1234567890", LocalDate.now());
+                "email@test.com", "+1234567890", LocalDate.now(),
+                0.0, 0.0);
 
         assertThat(resp.getTitle()).isEqualTo("Missing Title");
         assertThat(resp.getUserId()).isEqualTo(USER_ID);
@@ -77,7 +78,8 @@ class MissingPersonRequestReceiverServiceImplTest {
         service.submitMissingPersonReport(
                 USER_ID,
                 "Title", "Name", "ID", null,
-                null, null, "+1234567890", LocalDate.now());
+                null, null, "+1234567890", LocalDate.now(),
+                0.0, 0.0);
 
         verify(statusRepository).save(any());
     }
@@ -97,6 +99,7 @@ class MissingPersonRequestReceiverServiceImplTest {
         doNothing().when(entityManager).refresh(any());
 
         service.submitMissingPersonReport(USER_ID,
-                "T", "N", "I", null, null, null, "+1234567890", LocalDate.now());
+                "T", "N", "I", null, null, null, "+1234567890", LocalDate.now(),
+                0.0, 0.0);
     }
 }

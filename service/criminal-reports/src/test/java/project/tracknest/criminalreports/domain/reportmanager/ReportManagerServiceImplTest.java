@@ -32,6 +32,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ReportManagerServiceImplTest {
 
+    private static final String HTML_EXT = ".html";
+
     @Mock private MissingPersonReportRepository missingPersonReportRepository;
     @Mock private CrimeReportRepository crimeReportRepository;
     @Mock private GuidelinesDocumentRepository guidelinesDocumentRepository;
@@ -134,7 +136,7 @@ class ReportManagerServiceImplTest {
 
         @Test
         void should_returnReport_whenOwned() {
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(pendingReport()));
 
             MissingPersonReportResponse resp = service.getMissingPersonReport(REPORTER_ID, REPORT_ID);
@@ -143,7 +145,7 @@ class ReportManagerServiceImplTest {
 
         @Test
         void should_throw404_whenNotFound() {
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.getMissingPersonReport(REPORTER_ID, REPORT_ID))
@@ -158,7 +160,7 @@ class ReportManagerServiceImplTest {
 
         @Test
         void should_updateReport_whenPending() {
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(pendingReport()));
             when(missingPersonReportRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -175,7 +177,7 @@ class ReportManagerServiceImplTest {
         void should_throw409_whenAlreadyPublished() {
             MissingPersonReport published = pendingReport();
             published.setStatus(publishedStatus);
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(published));
 
             var req = UpdateMissingPersonReportRequest.builder()
@@ -192,7 +194,7 @@ class ReportManagerServiceImplTest {
         void should_throw409_whenAlreadyRejected() {
             MissingPersonReport rejected = pendingReport();
             rejected.setStatus(rejectedStatus);
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(rejected));
 
             var req = UpdateMissingPersonReportRequest.builder()
@@ -211,7 +213,7 @@ class ReportManagerServiceImplTest {
 
         @Test
         void should_publish_whenPending() {
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(pendingReport()));
             when(statusRepository.findByName(ReportStatusConstants.PUBLISHED)).thenReturn(Optional.of(publishedStatus));
             when(missingPersonReportRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -224,7 +226,7 @@ class ReportManagerServiceImplTest {
         void should_throw409_whenAlreadyPublished() {
             MissingPersonReport published = pendingReport();
             published.setStatus(publishedStatus);
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(published));
 
             assertThatThrownBy(() -> service.publishMissingPersonReport(REPORTER_ID, REPORT_ID))
@@ -239,7 +241,7 @@ class ReportManagerServiceImplTest {
 
         @Test
         void should_reject_whenPending() {
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(pendingReport()));
             when(statusRepository.findByName(ReportStatusConstants.REJECTED)).thenReturn(Optional.of(rejectedStatus));
             when(missingPersonReportRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -252,7 +254,7 @@ class ReportManagerServiceImplTest {
         void should_throw409_whenAlreadyRejected() {
             MissingPersonReport rejected = pendingReport();
             rejected.setStatus(rejectedStatus);
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(rejected));
 
             assertThatThrownBy(() -> service.rejectMissingPersonReport(REPORTER_ID, REPORT_ID))
@@ -268,7 +270,7 @@ class ReportManagerServiceImplTest {
         @Test
         void should_delete_whenOwned_andNoPhoto() {
             MissingPersonReport report = pendingReport();
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(report));
 
             service.deleteMissingPersonReport(REPORTER_ID, REPORT_ID);
@@ -280,7 +282,7 @@ class ReportManagerServiceImplTest {
         @Test
         void should_deletePhotoFromStorage_whenPhotoPresent() {
             MissingPersonReport report = pendingReportWithPhoto("photo.png");
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(report));
 
             service.deleteMissingPersonReport(REPORTER_ID, REPORT_ID);
@@ -291,9 +293,6 @@ class ReportManagerServiceImplTest {
 
         @Test
         void should_throw404_whenNotFound() {
-            when(missingPersonReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
-                    .thenReturn(Optional.empty());
-
             assertThatThrownBy(() -> service.deleteMissingPersonReport(REPORTER_ID, REPORT_ID))
                     .isInstanceOf(ResponseStatusException.class)
                     .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode())
@@ -369,7 +368,7 @@ class ReportManagerServiceImplTest {
             CrimeReportResponse resp = service.createCrimeReport(REPORTER_ID, req);
 
             assertThat(resp.getTitle()).isEqualTo("Robbery");
-            assertThat(resp.getContent()).isEqualTo("robbery description");
+            assertThat(resp.getContent()).endsWith(HTML_EXT);
             assertThat(resp.isPublicFlag()).isFalse();
         }
     }
@@ -524,7 +523,7 @@ class ReportManagerServiceImplTest {
             GuidelinesDocumentResponse resp = service.createGuidelinesDocument(REPORTER_ID, req);
 
             assertThat(resp.getTitle()).isEqualTo("Guide");
-            assertThat(resp.getContent()).isEqualTo("guide content");
+            assertThat(resp.getContent()).endsWith(HTML_EXT);
         }
     }
 

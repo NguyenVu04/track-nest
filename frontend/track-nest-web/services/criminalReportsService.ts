@@ -43,8 +43,8 @@ export interface SubmitMissingPersonReportRequest {
   contactPhone: string;
   date: string;
   content: string;
-  latitude?: number;
-  longitude?: number;
+  latitude: number;
+  longitude: number;
 }
 
 export interface CreateMissingPersonReportRequest {

@@ -63,7 +63,8 @@ class MissingPersonRequestReceiverControllerTest {
         when(service.submitMissingPersonReport(
                 eq(USER_ID),
                 eq("Missing"), eq("John"), eq("ID1"),
-                eq("some description"), isNull(), eq("unknown@gmail.com"), eq("+1234567890"), any(LocalDate.class)))
+                any(), isNull(), eq("unknown@gmail.com"), eq("+1234567890"), any(LocalDate.class),
+                anyDouble(), anyDouble()))
                 .thenReturn(sampleResponse());
 
         mockMvc.perform(post("/missing-person-request-receiver/submit")
@@ -73,7 +74,9 @@ class MissingPersonRequestReceiverControllerTest {
                         .param("contactPhone", "+1234567890")
                         .param("content", "some description")
                         .param("contactEmail", "unknown@gmail.com")
-                        .param("date", LocalDate.now().toString()))
+                        .param("date", LocalDate.now().toString())
+                        .param("latitude", "10.0")
+                        .param("longitude", "106.0"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(REPORT_ID.toString()))
                 .andExpect(jsonPath("$.status").value("PENDING"));
