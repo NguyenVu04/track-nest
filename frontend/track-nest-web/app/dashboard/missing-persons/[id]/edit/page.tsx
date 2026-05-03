@@ -56,6 +56,7 @@ export default function EditMissingPersonPage() {
             : "",
           date: response.date,
           content: contentValue,
+          contentDocId: response.contentDocId,
           latitude: response.latitude,
           longitude: response.longitude,
           contactEmail: response.contactEmail,

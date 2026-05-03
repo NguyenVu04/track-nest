@@ -36,6 +36,7 @@ export default function GuidelinesPage() {
             title: item.title,
             abstractText: item.abstractText,
             content: item.content,
+            contentDocId: item.contentDocId,
             createdAt: item.createdAt,
             reporterId: item.reporterId,
             isPublic: item.isPublic,

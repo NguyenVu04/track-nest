@@ -52,6 +52,7 @@ export default function EditCrimeReportPage() {
           id: response.id,
           title: response.title,
           content: contentValue,
+          contentDocId: response.contentDocId,
           severity: response.severity as CrimeReport["severity"],
           date: response.date,
           longitude: response.longitude,

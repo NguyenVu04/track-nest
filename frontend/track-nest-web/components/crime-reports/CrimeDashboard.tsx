@@ -32,6 +32,7 @@ function mapResponse(r: CrimeReportResponse): CrimeReport {
     id: r.id,
     title: r.title,
     content: r.content,
+    contentDocId: r.contentDocId,
     severity: r.severity as CrimeReport["severity"],
     date: r.date,
     longitude: r.longitude,

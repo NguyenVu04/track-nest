@@ -74,6 +74,7 @@ export function CrimeReportForm({
     id: report?.id || Date.now().toString(),
     title: formData.title!,
     content: formData.content!,
+    contentDocId: report?.contentDocId ?? "",
     severity: formData.severity!,
     date: formData.date!,
     longitude: formData.longitude!,

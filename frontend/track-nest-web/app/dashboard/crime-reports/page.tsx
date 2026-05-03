@@ -59,6 +59,7 @@ export default function CrimeReportsPage() {
           id: item.id,
           title: item.title,
           content: item.content,
+          contentDocId: item.contentDocId,
           severity: item.severity as CrimeReport["severity"],
           date: item.date,
           longitude: item.longitude,

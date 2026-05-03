@@ -137,6 +137,7 @@ export default function MissingPersonsPage() {
           photo: item.photo,
           date: item.date,
           content: item.content,
+          contentDocId: item.contentDocId,
           contactEmail: item.contactEmail,
           contactPhone: item.contactPhone,
           createdAt: item.createdAt,

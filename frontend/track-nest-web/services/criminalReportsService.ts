@@ -81,6 +81,7 @@ export interface MissingPersonReportResponse {
   photo: string;
   date: string;
   content: string;
+  contentDocId: string;
   latitude?: number;
   longitude?: number;
   contactEmail?: string;
@@ -120,6 +121,7 @@ export interface CrimeReportResponse {
   id: string;
   title: string;
   content: string;
+  contentDocId: string;
   severity: number;
   date: string;
   longitude: number;
@@ -160,6 +162,7 @@ export interface GuidelinesDocumentResponse {
   title: string;
   abstractText: string;
   content: string;
+  contentDocId: string;
   createdAt: string;
   reporterId: string;
   isPublic: boolean;
