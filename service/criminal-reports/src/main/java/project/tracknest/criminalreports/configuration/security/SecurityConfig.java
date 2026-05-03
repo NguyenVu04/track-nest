@@ -37,6 +37,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/actuator/**")
                         .permitAll()
+                        .requestMatchers("/error")
+                        .permitAll()
                         .requestMatchers("/crime-locator/**")
                         .authenticated()
                         .requestMatchers("/criminal-analyzer/**")

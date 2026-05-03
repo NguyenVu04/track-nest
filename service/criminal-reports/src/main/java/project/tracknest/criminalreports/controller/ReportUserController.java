@@ -53,6 +53,11 @@ public class ReportUserController {
         return ResponseEntity.ok(reportViewerService.listCrimeReports(true, page, Math.min(size, 100)));
     }
 
+    @GetMapping("/crime-reports/{reportId}")
+    public ResponseEntity<CrimeReportResponse> getCrimeReport(@PathVariable UUID reportId) {
+        return ResponseEntity.ok(reportViewerService.viewCrimeReport(reportId));
+    }
+
     @GetMapping("/missing-person-reports")
     public ResponseEntity<PageResponse<MissingPersonReportResponse>> listMissingPersonReports(
             @RequestParam(defaultValue = "0") int page,
@@ -60,11 +65,21 @@ public class ReportUserController {
         return ResponseEntity.ok(reportViewerService.listMissingPersonReports(true, page, Math.min(size, 100)));
     }
 
+    @GetMapping("/missing-person-reports/{reportId}")
+    public ResponseEntity<MissingPersonReportResponse> getMissingPersonReport(@PathVariable UUID reportId) {
+        return ResponseEntity.ok(reportViewerService.viewMissingPersonReport(reportId));
+    }
+
     @GetMapping("/guidelines")
     public ResponseEntity<PageResponse<GuidelinesDocumentResponse>> listGuidelinesDocuments(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(reportViewerService.listGuidelinesDocuments(true, page, Math.min(size, 100)));
+    }
+
+    @GetMapping("/guidelines/{documentId}")
+    public ResponseEntity<GuidelinesDocumentResponse> getGuidelinesDocument(@PathVariable UUID documentId) {
+        return ResponseEntity.ok(reportViewerService.viewGuidelinesDocument(documentId));
     }
 
     // ── POST submit endpoints ─────────────────────────────────────────────────
