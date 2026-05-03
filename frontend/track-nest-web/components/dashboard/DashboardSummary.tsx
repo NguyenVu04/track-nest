@@ -5,9 +5,9 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
-import { AlertCircle, Users, Shield, BookOpen, TrendingUp, TrendingDown, Calendar } from "lucide-react";
+import { AlertCircle, Users, Shield, BookOpen, TrendingUp, TrendingDown, Calendar, Download, FileBarChart } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { criminalReportsService, DashboardSummaryResponse } from "@/services/criminalReportsService";
+import { criminalReportsService, DashboardSummaryResponse, CrimeAnalysisReportResponse } from "@/services/criminalReportsService";
 
 /* ─── Palette ─────────────────────────────────────────────────────────────── */
 const TEAL    = "#74becb";
@@ -78,6 +78,226 @@ function BreakdownRow({ label, value, color }: { label: string; value: number; c
 
 function SkeletonBlock({ className }: { className?: string }) {
   return <div className={`animate-pulse bg-slate-100 rounded-xl ${className}`} />;
+}
+
+/* ─── Crime Analysis Report sub-component ───────────────────────────────── */
+function CrimeAnalysisSection() {
+  const t = useTranslations("dashboard");
+
+  const today = new Date().toISOString().slice(0, 10);
+  const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    .toISOString()
+    .slice(0, 10);
+
+  const [startDate, setStartDate] = useState(firstOfMonth);
+  const [endDate, setEndDate] = useState(today);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [report, setReport] = useState<CrimeAnalysisReportResponse | null>(null);
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await criminalReportsService.generateCrimeAnalysisReport(startDate, endDate);
+      setReport(data);
+    } catch {
+      setError(t("analysisError"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!report) return;
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `crime-analysis-${startDate}-to-${endDate}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const severityData = report
+    ? Object.entries(report.crimesBySeverity).map(([k, v]) => ({ name: `L${k}`, value: v }))
+    : [];
+
+  const typeData = report
+    ? Object.entries(report.crimesByType).map(([name, value]) => ({ name, value }))
+    : [];
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <FileBarChart className="w-4 h-4 text-teal-600" />
+          <h3 className="text-sm font-semibold text-slate-700">{t("analysisTitle")}</h3>
+        </div>
+        {report && (
+          <button
+            onClick={handleDownload}
+            className="flex items-center gap-1.5 text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-lg px-3 py-1.5 transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {t("analysisDownload")}
+          </button>
+        )}
+      </div>
+      <p className="text-xs text-slate-400 mb-4">{t("analysisDescription")}</p>
+
+      {/* Date range + generate */}
+      <div className="flex flex-wrap items-end gap-3 mb-5">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-slate-500">{t("analysisStartDate")}</label>
+          <input
+            type="date"
+            value={startDate}
+            max={endDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-300"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-slate-500">{t("analysisEndDate")}</label>
+          <input
+            type="date"
+            value={endDate}
+            min={startDate}
+            max={today}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-300"
+          />
+        </div>
+        <button
+          onClick={handleGenerate}
+          disabled={loading}
+          className="flex items-center gap-2 text-sm font-medium bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white rounded-lg px-4 py-1.5 transition-colors"
+        >
+          <FileBarChart className="w-4 h-4" />
+          {loading ? t("analysisGenerating") : t("analysisGenerate")}
+        </button>
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3 mb-4">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          {error}
+        </div>
+      )}
+
+      {report && (
+        <div className="space-y-5">
+          {/* Report date */}
+          <p className="text-xs text-slate-400">
+            {t("analysisReportDate")}:{" "}
+            <span className="font-medium text-slate-600">
+              {new Date(report.reportDate).toLocaleString()}
+            </span>
+          </p>
+
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {[
+              { label: t("analysisTotalCrimes"),    value: report.totalCrimeReports,        color: RED    },
+              { label: t("analysisTotalMissing"),   value: report.totalMissingPersonReports, color: TEAL   },
+              { label: t("analysisTotalArrests"),   value: report.totalArrests,             color: PURPLE },
+              { label: t("analysisTotalVictims"),   value: report.totalVictims,             color: AMBER  },
+              { label: t("analysisTotalOffenders"), value: report.totalOffenders,           color: GREEN  },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="rounded-xl p-4 border border-slate-100 bg-slate-50">
+                <p className="text-xs text-slate-500 mb-1 leading-tight">{label}</p>
+                <p className="text-2xl font-bold" style={{ color }}>{value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Charts row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {severityData.length > 0 && (
+              <ChartCard title={t("analysisBySeverity")}>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={severityData} barSize={32}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} />
+                    <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                    <Bar dataKey="value" fill={AMBER} radius={[6, 6, 0, 0]} name={t("analysisBySeverity")} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            )}
+
+            {typeData.length > 0 && (
+              <ChartCard title={t("analysisByType")}>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={typeData}
+                      cx="50%" cy="50%"
+                      innerRadius={50} outerRadius={80}
+                      paddingAngle={3} dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {typeData.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            )}
+
+            {report.crimeTrend.length > 0 && (
+              <ChartCard title={t("analysisTrend")}>
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={report.crimeTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="date" stroke="#94a3b8" tick={{ fontSize: 11 }} />
+                    <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                    <Line type="monotone" dataKey="count" stroke={RED} strokeWidth={2} dot={{ fill: RED, r: 3 }} name={t("analysisTotalCrimes")} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            )}
+
+            {/* Hotspots table */}
+            {report.hotspots.length > 0 && (
+              <div className="bg-slate-50 rounded-xl border border-slate-100 p-4">
+                <h4 className="text-sm font-semibold text-slate-700 mb-3">{t("analysisHotspots")}</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-slate-600">
+                    <thead>
+                      <tr className="border-b border-slate-200">
+                        <th className="text-left py-2 pr-4 font-medium text-slate-500">{t("analysisHotspotLat")}</th>
+                        <th className="text-left py-2 pr-4 font-medium text-slate-500">{t("analysisHotspotLng")}</th>
+                        <th className="text-right py-2 pr-4 font-medium text-slate-500">{t("analysisHotspotCount")}</th>
+                        <th className="text-right py-2 font-medium text-slate-500">{t("analysisHotspotSeverity")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {report.hotspots.map((h, i) => (
+                        <tr key={i} className="border-b border-slate-100 last:border-0">
+                          <td className="py-2 pr-4">{h.latitude.toFixed(5)}</td>
+                          <td className="py-2 pr-4">{h.longitude.toFixed(5)}</td>
+                          <td className="py-2 pr-4 text-right font-semibold text-slate-800">{h.incidentCount}</td>
+                          <td className="py-2 text-right font-semibold" style={{ color: AMBER }}>{h.averageSeverity.toFixed(1)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ─── Main component ─────────────────────────────────────────────────────── */
@@ -280,6 +500,9 @@ export function DashboardSummary() {
           ))}
         </div>
       </div>
+
+      {/* ── Crime Analysis Report ── */}
+      <CrimeAnalysisSection />
     </div>
   );
 }

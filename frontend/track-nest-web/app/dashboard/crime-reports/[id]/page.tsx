@@ -104,6 +104,17 @@ export default function CrimeReportDetailPage() {
     router.push(`/dashboard/crime-reports/${r.id}/edit`);
   };
 
+  const handlePublish = async (reportId: string) => {
+    try {
+      await criminalReportsService.publishCrimeReport(reportId);
+      setReport((prev) => (prev ? { ...prev, isPublic: true } : prev));
+      toast.success("Report published successfully");
+    } catch (error) {
+      toast.error("Error publishing report");
+      console.error(error);
+    }
+  };
+
   const handleDelete = async (reportId: string) => {
     try {
       await criminalReportsService.deleteCrimeReport(reportId);
@@ -124,6 +135,7 @@ export default function CrimeReportDetailPage() {
       report={report}
       onBack={handleBack}
       onEdit={handleEdit}
+      onPublish={handlePublish}
       onDelete={handleDelete}
       userRole={user.role}
     />
