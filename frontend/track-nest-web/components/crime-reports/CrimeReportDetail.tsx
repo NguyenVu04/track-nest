@@ -3,10 +3,10 @@
 import {
   ArrowLeft,
   Edit,
+  CheckCircle,
   Trash2,
   MapPin,
   Calendar,
-  AlertCircle,
 } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
@@ -20,6 +20,7 @@ interface CrimeReportDetailProps {
   report: CrimeReport;
   onBack: () => void;
   onEdit: (report: CrimeReport) => void;
+  onPublish: (id: string) => void;
   onDelete: (id: string) => void;
   userRole: UserRole[];
 }
@@ -28,17 +29,23 @@ export function CrimeReportDetail({
   report,
   onBack,
   onEdit,
+  onPublish,
   onDelete,
   userRole,
 }: CrimeReportDetailProps) {
   const t = useTranslations("crimeReports");
   const tCommon = useTranslations("common");
 
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"publish" | "delete" | null>(null);
+
+  const handleConfirmPublish = () => {
+    onPublish(report.id);
+    setConfirmAction(null);
+  };
 
   const handleConfirmDelete = () => {
     onDelete(report.id);
-    setConfirmDelete(false);
+    setConfirmAction(null);
   };
 
   const getSeverityColor = (severity: number) => {
@@ -116,8 +123,17 @@ export function CrimeReportDetail({
                   >
                     <Edit className="w-4 h-4" />
                   </button>
+                  {!report.isPublic && (
+                    <button
+                      onClick={() => setConfirmAction("publish")}
+                      className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                      title={tCommon("publish")}
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
-                    onClick={() => setConfirmDelete(true)}
+                    onClick={() => setConfirmAction("delete")}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title={tCommon("delete")}
                   >
@@ -230,12 +246,23 @@ export function CrimeReportDetail({
         emptyState="Ask a question about this report."
       />
 
-      {confirmDelete && (
+      {confirmAction === "publish" && (
+        <ConfirmModal
+          title={t("publishTitle")}
+          message={t("publishMessage", { title: report.title })}
+          onConfirm={handleConfirmPublish}
+          onCancel={() => setConfirmAction(null)}
+          confirmText={tCommon("publish")}
+          confirmStyle="primary"
+        />
+      )}
+
+      {confirmAction === "delete" && (
         <ConfirmModal
           title={t("deleteTitle")}
           message={t("deleteMessage", { title: report.title })}
           onConfirm={handleConfirmDelete}
-          onCancel={() => setConfirmDelete(false)}
+          onCancel={() => setConfirmAction(null)}
           confirmText={tCommon("delete")}
           confirmStyle="danger"
         />
