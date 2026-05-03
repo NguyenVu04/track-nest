@@ -1,7 +1,6 @@
-import { getCriminalUrl } from "@/utils";
-import { getAuthMetadata, getUserId } from "@/utils/auth";
-import axios from "axios";
 import type {
+  ChatbotMessageResponse,
+  ChatbotSessionResponse,
   CreateCrimeReportInput,
   CreateMissingPersonReportInput,
   CrimeAnalysisReportResponse,
@@ -12,15 +11,20 @@ import type {
   MissingPersonReport,
   NearbyCrimeReportsQuery,
   PageResponse,
+  SubmitCrimeReportUserParams,
   SubmitMissingPersonReportParams,
+  SubmitMissingPersonReportUserParams,
   UpdateCrimeReportInput,
   UpdateGuidelinesDocumentInput,
   UpdateMissingPersonReportInput,
+} from "@/types/criminalReports";
+import { getCriminalUrl } from "@/utils";
+import { getAuthMetadata, getUserId } from "@/utils/auth";
+import axios from "axios";
+export type {
+  ChatbotMessageResponse,
   ChatbotSessionMessage,
   ChatbotSessionResponse,
-  ChatbotMessageResponse,
-} from "@/types/criminalReports";
-export type {
   CreateCrimeReportInput,
   CreateMissingPersonReportInput,
   CrimeAnalysisReportResponse,
@@ -34,13 +38,12 @@ export type {
   MissingPersonReport,
   NearbyCrimeReportsQuery,
   PageResponse,
+  SubmitCrimeReportUserParams,
   SubmitMissingPersonReportParams,
+  SubmitMissingPersonReportUserParams,
   UpdateCrimeReportInput,
   UpdateGuidelinesDocumentInput,
   UpdateMissingPersonReportInput,
-  ChatbotSessionMessage,
-  ChatbotSessionResponse,
-  ChatbotMessageResponse,
 } from "@/types/criminalReports";
 
 class CriminalReportsService {
@@ -50,6 +53,8 @@ class CriminalReportsService {
     if (!this.baseUrl) {
       this.baseUrl = await getCriminalUrl();
     }
+
+    console.log("Using criminal reports service URL:", this.baseUrl);
 
     const authMetadata = await getAuthMetadata();
     return axios.create({
@@ -434,17 +439,136 @@ class CriminalReportsService {
     await client.delete(`/report-admin/guidelines/${documentId}`);
   }
 
+  // ==================== Report User ====================
+
+  async getUserCrimeReports(
+    page: number = 0,
+    size: number = 10,
+  ): Promise<PageResponse<CrimeReport>> {
+    const client = await this.getApiClient();
+    const response = await client.get("/report-user/crime-reports", {
+      params: { page, size },
+    });
+    return response.data;
+  }
+
+  async getUserMissingPersonReports(
+    page: number = 0,
+    size: number = 10,
+  ): Promise<PageResponse<MissingPersonReport>> {
+    const client = await this.getApiClient();
+    const response = await client.get("/report-user/missing-person-reports", {
+      params: { page, size },
+    });
+    return response.data;
+  }
+
+  async getUserGuidelines(
+    page: number = 0,
+    size: number = 10,
+  ): Promise<PageResponse<GuidelinesDocument>> {
+    const client = await this.getApiClient();
+    const response = await client.get("/report-user/guidelines", {
+      params: { page, size },
+    });
+    return response.data;
+  }
+
+  async getUserCrimeReportById(reportId: string): Promise<CrimeReport> {
+    const client = await this.getApiClient();
+    const response = await client.get(`/report-user/crime-reports/${reportId}`);
+    return response.data;
+  }
+
+  async getUserMissingPersonReportById(reportId: string): Promise<MissingPersonReport> {
+    const client = await this.getApiClient();
+    const response = await client.get(`/report-user/missing-person-reports/${reportId}`);
+    return response.data;
+  }
+
+  async getUserGuidelinesById(documentId: string): Promise<GuidelinesDocument> {
+    const client = await this.getApiClient();
+    const response = await client.get(`/report-user/guidelines/${documentId}`);
+    return response.data;
+  }
+
+  async submitUserCrimeReport(
+    params: SubmitCrimeReportUserParams,
+  ): Promise<CrimeReport> {
+    const client = await this.getMutationClient();
+    const formData = new FormData();
+    formData.append("title", params.title);
+    if (params.content) formData.append("content", params.content);
+    formData.append("severity", String(params.severity));
+    formData.append("date", params.date);
+    formData.append("longitude", String(params.longitude));
+    formData.append("latitude", String(params.latitude));
+    formData.append("numberOfVictims", String(params.numberOfVictims ?? 0));
+    formData.append("numberOfOffenders", String(params.numberOfOffenders ?? 0));
+    formData.append("arrested", String(params.arrested ?? false));
+    if (params.photos) {
+      for (const photo of params.photos) {
+        formData.append("photos", {
+          uri: photo.uri,
+          name: photo.filename ?? "photo.jpg",
+          type: photo.type ?? "image/jpeg",
+        } as any);
+      }
+    }
+    const response = await client.post("/report-user/crime-reports", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  }
+
+  async submitUserMissingPersonReport(
+    params: SubmitMissingPersonReportUserParams,
+  ): Promise<MissingPersonReport> {
+    const client = await this.getMutationClient();
+    const formData = new FormData();
+    formData.append("title", params.title);
+    formData.append("fullName", params.fullName);
+    formData.append("personalId", params.personalId);
+    formData.append("content", params.content);
+    formData.append("contactEmail", params.contactEmail);
+    formData.append("contactPhone", params.contactPhone);
+    formData.append("date", params.date);
+    formData.append("latitude", String(params.latitude));
+    formData.append("longitude", String(params.longitude));
+    if (params.photo) {
+      formData.append("photo", {
+        uri: params.photo.uri,
+        name: params.photo.filename ?? "photo.jpg",
+        type: params.photo.type ?? "image/jpeg",
+      } as any);
+    }
+    const response = await client.post(
+      "/report-user/missing-person-reports",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return response.data;
+  }
+
   // ==================== Chatbot ====================
 
-  async startChatbotSession(params: { documentId: string }): Promise<{ sessionId: string }> {
+  async startChatbotSession(params: {
+    documentId: string;
+  }): Promise<{ sessionId: string }> {
     const client = await this.getMutationClient();
     const response = await client.post("/chatbot/sessions", params);
     return response.data;
   }
 
-  async sendChatbotMessage(params: { sessionId: string; message: string }): Promise<ChatbotMessageResponse> {
+  async sendChatbotMessage(params: {
+    sessionId: string;
+    message: string;
+  }): Promise<ChatbotMessageResponse> {
     const client = await this.getMutationClient();
-    const response = await client.post(`/chatbot/sessions/${params.sessionId}/messages`, { message: params.message });
+    const response = await client.post(
+      `/chatbot/sessions/${params.sessionId}/messages`,
+      { message: params.message },
+    );
     return response.data;
   }
 

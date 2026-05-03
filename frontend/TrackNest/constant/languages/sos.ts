@@ -17,6 +17,7 @@ export const Vietnamese = {
   sosNotificationChannel: "Thông báo SOS",
   holdToActivate: "Giữ nút trong 5 giây để kích hoạt SOS",
   sosButtonTitle: "Nút SOS",
+  loginRequired: "Vui lòng đăng nhập để sử dụng tính năng SOS.",
 };
 
 export const English = {
@@ -38,4 +39,5 @@ export const English = {
   sosNotificationChannel: "SOS Notifications",
   holdToActivate: "Hold the button for 5 seconds to activate SOS",
   sosButtonTitle: "SOS Button",
+  loginRequired: "Please log in to use the SOS feature.",
 };

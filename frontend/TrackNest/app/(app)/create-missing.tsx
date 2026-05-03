@@ -4,7 +4,7 @@ import { useReports } from "@/contexts/ReportsContext";
 import { useAppModal } from "@/components/Modals/AppModal";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
+
 import { Image } from "expo-image";
 import React, { useState } from "react";
 import {
@@ -19,13 +19,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, radii, spacing } from "@/styles/styles";
+import { colors } from "@/styles/styles";
+import { usePhotoPickerModal } from "@/components/Modals/PhotoPickerModal";
 import { LocationPickerModal } from "@/components/Modals/LocationPickerModal";
 
 export default function CreateMissingScreen() {
   const router = useRouter();
   const t = useTranslation(createMissingLang);
   const { modal, showAlert } = useAppModal();
+  const { showPhotoPicker, photoPickerModal } = usePhotoPickerModal();
   const { createMissingPersonReport } = useReports();
 
   const { initialName, initialLat, initialLng, initialAvatar } = useLocalSearchParams<{
@@ -35,8 +37,12 @@ export default function CreateMissingScreen() {
     initialAvatar?: string;
   }>();
 
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 4;
+
   const [title, setTitle] = useState("");
   const [fullName, setFullName] = useState(initialName || "");
+  const [nickname, setNickname] = useState("");
   const [personalId, setPersonalId] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -49,45 +55,54 @@ export default function CreateMissingScreen() {
   const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   const handlePickPhoto = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") return;
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    showPhotoPicker((uri) => setPhotoUri(uri), {
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [3, 4],
       quality: 0.8,
     });
+  };
 
-    if (!result.canceled && result.assets.length > 0) {
-      setPhotoUri(result.assets[0].uri);
+  const handleNextStep = () => {
+    if (currentStep === 1) {
+      if (!fullName.trim()) {
+        showAlert(t.errorTitle, t.fullNameRequired, "warning");
+        return;
+      }
+    } else if (currentStep === 2) {
+      if (!title.trim()) {
+        showAlert(t.errorTitle, t.titleRequired, "warning");
+        return;
+      }
+      if (!personalId.trim()) {
+        showAlert(t.errorTitle, t.personalIdRequired, "warning");
+        return;
+      }
+      if (!description.trim()) {
+        showAlert(t.errorTitle, t.descriptionRequired, "warning");
+        return;
+      }
+    } else if (currentStep === 3) {
+      if (!contactPhone.trim()) {
+        showAlert(t.errorTitle, t.contactPhoneRequired, "warning");
+        return;
+      }
+    }
+    if (currentStep < 4) setCurrentStep(currentStep + 1);
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    } else {
+      router.back();
     }
   };
 
   const handleSubmit = async () => {
-    if (!title.trim()) {
-      showAlert(t.errorTitle, t.titleRequired, "warning");
-      return;
-    }
-    if (!fullName.trim()) {
-      showAlert(t.errorTitle, t.fullNameRequired, "warning");
-      return;
-    }
-    if (!description.trim()) {
-      showAlert(t.errorTitle, t.descriptionRequired, "warning");
-      return;
-    }
-    if (!personalId.trim()) {
-      showAlert(t.errorTitle, t.personalIdRequired, "warning");
-      return;
-    }
-    if (!contactPhone.trim()) {
-      showAlert(t.errorTitle, t.contactPhoneRequired, "warning");
-      return;
-    }
-
     setLoading(true);
     try {
+      const finalContent = nickname ? `Known as: ${nickname}\n\n${description}` : description;
       await createMissingPersonReport(
         {
           title: title.trim(),
@@ -96,7 +111,7 @@ export default function CreateMissingScreen() {
           contactPhone: contactPhone.trim(),
           contactEmail: contactEmail.trim() || undefined,
           date,
-          content: description.trim(),
+          content: finalContent.trim(),
           latitude,
           longitude,
         },
@@ -113,159 +128,220 @@ export default function CreateMissingScreen() {
     }
   };
 
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <View style={styles.stepContent}>
+            <Pressable style={styles.photoPickerWrapper} onPress={handlePickPhoto}>
+              {photoUri ? (
+                <Image source={{ uri: photoUri }} style={styles.photoPreview} contentFit="cover" />
+              ) : (
+                <>
+                  <Ionicons name="person" size={48} color="#85c0c8" />
+                  <Text style={styles.photoPlaceholderText}>{t.photoLabel || "Add Photo"}</Text>
+                </>
+              )}
+            </Pressable>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.fullNameLabel}</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={fullName}
+                onChangeText={setFullName}
+                placeholder={t.fullNamePlaceholder}
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.nicknameLabel}</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={nickname}
+                onChangeText={setNickname}
+                placeholder={t.nicknamePlaceholder}
+                placeholderTextColor="#999"
+              />
+            </View>
+          </View>
+        );
+      case 2:
+        return (
+          <View style={styles.stepContent}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.titleLabel} *</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={title}
+                onChangeText={setTitle}
+                placeholder={t.titlePlaceholder}
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.personalIdLabel}</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={personalId}
+                onChangeText={setPersonalId}
+                placeholder={t.personalIdPlaceholder}
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.dateLabel} *</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={date}
+                onChangeText={setDate}
+                placeholder={t.datePlaceholder}
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.descriptionLabel} *</Text>
+              <TextInput
+                style={[styles.inputPill, styles.textArea]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder={t.descriptionPlaceholder}
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+        );
+      case 3:
+        return (
+          <View style={styles.stepContent}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.contactPhoneLabel}</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={contactPhone}
+                onChangeText={setContactPhone}
+                placeholder={t.contactPhonePlaceholder}
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.contactEmailLabel}</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={contactEmail}
+                onChangeText={setContactEmail}
+                placeholder={t.contactEmailPlaceholder}
+                placeholderTextColor="#999"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.locationLabel}</Text>
+              <Pressable
+                style={styles.locationButton}
+                onPress={() => setShowLocationPicker(true)}
+              >
+                <Ionicons name="map-outline" size={20} color={colors.primary} />
+                <Text style={styles.locationButtonText}>
+                  {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color="#999" />
+              </Pressable>
+            </View>
+          </View>
+        );
+      case 4:
+        return (
+          <View style={styles.stepContent}>
+            <Text style={styles.reviewTitle}>{t.reviewTitle}</Text>
+            <View style={styles.reviewCard}>
+              <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.fullNameLabel}:</Text> {fullName}</Text>
+              {nickname ? <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.nicknameLabel}:</Text> {nickname}</Text> : null}
+              <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.titleLabel}:</Text> {title}</Text>
+              <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.personalIdLabel}:</Text> {personalId}</Text>
+              <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.dateLabel}:</Text> {date}</Text>
+              <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.contactPhoneLabel}:</Text> {contactPhone}</Text>
+              {contactEmail ? <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.contactEmailLabel}:</Text> {contactEmail}</Text> : null}
+            </View>
+          </View>
+        );
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {modal}
+      {photoPickerModal}
+      <View style={styles.bgBlob} />
+      <View style={styles.bgBlob2} />
+
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()}>
-            <Ionicons name="close" size={24} color="#333" />
+          <Pressable onPress={handleBack} style={styles.headerIcon}>
+            <Ionicons name={currentStep > 1 ? "arrow-back" : "close"} size={26} color="#333" />
           </Pressable>
-          <Text style={styles.headerTitle}>{t.pageTitle}</Text>
-          <Pressable onPress={handleSubmit} disabled={loading}>
-            <Text style={[styles.submitText, loading && styles.disabledText]}>
-              {loading ? "..." : t.submit}
-            </Text>
-          </Pressable>
+          <Text style={styles.stepText}>
+            {t.stepOf.replace("{current}", currentStep.toString()).replace("{total}", totalSteps.toString())}
+          </Text>
         </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Photo picker */}
-          <View style={styles.section}>
-            <Text style={styles.label}>{t.photoLabel}</Text>
-            <Pressable style={styles.photoPicker} onPress={handlePickPhoto}>
-              {photoUri ? (
-                <>
-                  <Image
-                    source={{ uri: photoUri }}
-                    style={styles.photoPreview}
-                    contentFit="cover"
-                  />
-                  <View style={styles.photoOverlay}>
-                    <Ionicons name="camera" size={20} color="#fff" />
-                    <Text style={styles.photoOverlayText}>
-                      {t.photoChangeButton}
-                    </Text>
-                  </View>
-                </>
-              ) : (
-                <View style={styles.photoPlaceholder}>
-                  <Ionicons
-                    name="person-add-outline"
-                    size={36}
-                    color={colors.textSecondary}
-                  />
-                  <Text style={styles.photoPlaceholderText}>
-                    {t.photoPlaceholder}
-                  </Text>
+        <Text style={styles.pageTitle}>{t.stepByStepTitle}</Text>
+
+        <View style={styles.stepperContainer}>
+          {[1, 2, 3, 4].map((step) => {
+            const isActive = step === currentStep;
+            const isCompleted = step < currentStep;
+            return (
+              <View key={step} style={styles.stepWrapper}>
+                <View style={[styles.stepBar, (isActive || isCompleted) && styles.stepBarActive]}>
+                  {(isActive || isCompleted) && <Ionicons name="checkmark" size={14} color="#fff" />}
                 </View>
-              )}
-            </Pressable>
-          </View>
+                <Text style={[styles.stepLabel, (isActive || isCompleted) && styles.stepLabelActive]} numberOfLines={1}>
+                  {step === 1 ? t.stepBasicInfo : step === 2 ? t.stepDetails : step === 3 ? t.stepContact : t.stepReview}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
 
-          <View style={styles.section}>
-            <Text style={styles.label}>{t.titleLabel} *</Text>
-            <TextInput
-              style={styles.input}
-              value={title}
-              onChangeText={setTitle}
-              placeholder={t.titlePlaceholder}
-              placeholderTextColor="#999"
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>{t.fullNameLabel} *</Text>
-            <TextInput
-              style={styles.input}
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder={t.fullNamePlaceholder}
-              placeholderTextColor="#999"
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>{t.personalIdLabel}</Text>
-            <TextInput
-              style={styles.input}
-              value={personalId}
-              onChangeText={setPersonalId}
-              placeholder={t.personalIdPlaceholder}
-              placeholderTextColor="#999"
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>{t.dateLabel} *</Text>
-            <TextInput
-              style={styles.input}
-              value={date}
-              onChangeText={setDate}
-              placeholder={t.datePlaceholder}
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>{t.descriptionLabel} *</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder={t.descriptionPlaceholder}
-              placeholderTextColor="#999"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>{t.contactPhoneLabel}</Text>
-            <TextInput
-              style={styles.input}
-              value={contactPhone}
-              onChangeText={setContactPhone}
-              placeholder={t.contactPhonePlaceholder}
-              placeholderTextColor="#999"
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>{t.contactEmailLabel}</Text>
-            <TextInput
-              style={styles.input}
-              value={contactEmail}
-              onChangeText={setContactEmail}
-              placeholder={t.contactEmailPlaceholder}
-              placeholderTextColor="#999"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>Location *</Text>
-            <Pressable
-              style={styles.locationButton}
-              onPress={() => setShowLocationPicker(true)}
-            >
-              <Ionicons name="map-outline" size={20} color={colors.primary} />
-              <Text style={styles.locationButtonText}>
-                {latitude.toFixed(6)}, {longitude.toFixed(6)}
-              </Text>
-              <Ionicons name="chevron-forward" size={20} color="#999" />
-            </Pressable>
-          </View>
-
-          <View style={{ height: 40 }} />
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          {renderStepContent()}
         </ScrollView>
+
+        <View style={styles.footer}>
+          <Pressable 
+            style={styles.cancelButton} 
+            onPress={() => router.back()}
+            disabled={loading}
+          >
+            <Text style={styles.cancelButtonText}>
+              {t.cancelButton || "Cancel"}
+            </Text>
+          </Pressable>
+          <Pressable 
+            style={styles.nextButton} 
+            onPress={currentStep < 4 ? handleNextStep : handleSubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.nextButtonText}>
+                {currentStep < 4 ? t.nextStep : t.submit}
+              </Text>
+            )}
+          </Pressable>
+        </View>
 
         <LocationPickerModal
           visible={showLocationPicker}
@@ -289,92 +365,252 @@ export default function CreateMissingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
+  container: { flex: 1, backgroundColor: '#f5fafa' },
+  bgBlob: {
+    position: 'absolute',
+    top: -50,
+    right: -50,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: '#d8ecef',
+    opacity: 0.6,
+  },
+  bgBlob2: {
+    position: 'absolute',
+    bottom: 100,
+    left: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: '#e6f4f5',
+    opacity: 0.5,
+  },
   keyboardView: { flex: 1 },
   header: {
-    height: 56,
-    paddingHorizontal: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 16,
   },
-  headerTitle: { fontSize: 18, fontWeight: "600", color: colors.textPrimary },
-  submitText: { fontSize: 16, fontWeight: "600", color: colors.primary },
-  disabledText: { opacity: 0.5 },
-  content: { flex: 1, padding: spacing.md },
-  section: { marginBottom: spacing.lg },
-  label: {
+  headerIcon: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+  stepText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    color: '#666',
+    fontWeight: '500',
   },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: 16,
-    color: colors.textPrimary,
-    borderWidth: 1,
-    borderColor: colors.border,
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    textAlign: 'center',
+    marginBottom: 20,
   },
-  textArea: { minHeight: 100 },
-  photoPicker: {
-    width: 120,
-    height: 160,
-    borderRadius: radii.md,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: colors.border,
+  stepperContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    marginBottom: 24,
   },
-  photoPreview: { width: "100%", height: "100%" },
-  photoOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    paddingVertical: 6,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 4,
-  },
-  photoOverlayText: { color: "#fff", fontSize: 12, fontWeight: "600" },
-  photoPlaceholder: {
+  stepWrapper: {
     flex: 1,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+    alignItems: 'center',
+    gap: 6,
+  },
+  stepBar: {
+    height: 16,
+    width: '95%',
+    backgroundColor: '#e0e0e0',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepBarActive: {
+    backgroundColor: colors.primaryLight,
+  },
+  stepLabel: {
+    fontSize: 11,
+    color: '#999',
+    fontWeight: '500',
+  },
+  stepLabelActive: {
+    color: colors.primaryDark,
+    fontWeight: '700',
+  },
+  content: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+  },
+  stepContent: {
+    flex: 1,
+  },
+  photoPickerWrapper: {
+    alignSelf: 'center',
+    width: 140,
+    height: 160,
+    borderRadius: 24,
+    backgroundColor: '#e8f4f6',
+    borderWidth: 2,
+    borderColor: '#b4dede',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#3e8d98',
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
+    marginBottom: 30,
+    overflow: 'hidden',
+  },
+  photoPreview: {
+    width: '100%',
+    height: '100%',
   },
   photoPlaceholderText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    textAlign: "center",
+    marginTop: 8,
+    color: colors.primary,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  inputPill: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#333',
+    borderWidth: 1,
+    borderColor: '#cce6e5',
+    shadowColor: '#3e8d98',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  textArea: {
+    minHeight: 120,
+    borderRadius: 16,
+    paddingTop: 16,
   },
   locationButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: radii.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.sm,
+    borderColor: '#cce6e5',
+    shadowColor: '#3e8d98',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   locationButtonText: {
     flex: 1,
     fontSize: 16,
-    color: colors.textPrimary,
+    color: '#333',
+    marginLeft: 8,
+  },
+  footer: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    paddingTop: 10,
+    gap: 16,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#cce6e5',
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  nextButton: {
+    flex: 1,
+    backgroundColor: colors.primaryLight,
+    borderRadius: 30,
+    paddingVertical: 16,
+    alignItems: 'center',
+    shadowColor: colors.primaryLight,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  nextButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  reviewTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  reviewCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#cce6e5',
+    shadowColor: '#3e8d98',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+    gap: 12,
+  },
+  reviewRow: {
+    fontSize: 15,
+    color: '#444',
+  },
+  reviewLabel: {
+    fontWeight: '600',
+    color: '#333',
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.6)",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
+

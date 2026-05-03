@@ -286,9 +286,9 @@ export const FollowerBottomSheet = ({
               unit="%"
             />
           ) : null}
-          <Pressable style={styles.sosBtn} onPress={onSosPress}>
+          {/* <Pressable style={styles.sosBtn} onPress={onSosPress}>
             <Text style={styles.sosBtnText}>{t.sos}</Text>
-          </Pressable>
+          </Pressable> */}
         </View>
 
         <View style={styles.detailCard}>

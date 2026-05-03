@@ -10,6 +10,10 @@ export const Vietnamese = {
   noDataAvailable: "Không có dữ liệu",
   title: "Báo cáo",
   createReport: "Tạo báo cáo",
+  emptyTitleReports: "Chưa có báo cáo nào",
+  emptySubtitleReports: "Nhấn nút để tạo báo cáo mới.",
+  emptyTitleGuides: "Chưa có hướng dẫn nào",
+  emptySubtitleGuides: "Vui lòng quay lại sau.",
 };
 
 export const English = {
@@ -24,4 +28,8 @@ export const English = {
   noDataAvailable: "No data available",
   title: "Reports",
   createReport: "Create Report",
+  emptyTitleReports: "No reports found yet",
+  emptySubtitleReports: "Tap the button to create a new report.",
+  emptyTitleGuides: "No guides found yet",
+  emptySubtitleGuides: "Check back later for new guides.",
 };

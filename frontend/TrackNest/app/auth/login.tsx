@@ -63,6 +63,7 @@ export default function LoginScreen() {
 
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<any>(null);
+  const handledResponseRef = useRef<typeof response>(null);
 
   useEffect(() => {
     Promise.all([getServiceUrl(), getEmergencyUrl(), getCriminalUrl()]).then(
@@ -147,19 +148,22 @@ export default function LoginScreen() {
         setIsLoading(false);
       }
     },
-    [redirectUri, request?.codeVerifier, router, t, saveTokens],
+    [redirectUri, request?.codeVerifier, saveTokens, router, showAlert, t.loginFailedTitle, t.loginFailedMessage, t.okButton],
   );
 
   // Handle OAuth response
   useEffect(() => {
-    if (response?.type === "success") {
+    if (!response || response === handledResponseRef.current) return;
+    handledResponseRef.current = response;
+
+    if (response.type === "success") {
       const { code } = response.params;
       exchangeToken(code);
-    } else if (response?.type === "error") {
+    } else if (response.type === "error") {
       console.error("OAuth error:", response.error);
       showAlert(t.loginFailedTitle, t.loginFailedMessage, "error", t.okButton);
     }
-  }, [response, exchangeToken, t]);
+  }, [response, exchangeToken, t, showAlert]);
 
   const handleLogin = async () => {
     if (!request) {

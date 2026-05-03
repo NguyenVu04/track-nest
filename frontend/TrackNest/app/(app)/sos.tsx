@@ -46,7 +46,7 @@ export default function SosScreen() {
   useEffect(() => {
     if (isAuthLoading) return;
     if (!user) {
-      showToast("Please log in to use the SOS feature.");
+      showToast(t.loginRequired);
       router.replace("/map");
     }
   }, [isAuthLoading, user, router]);

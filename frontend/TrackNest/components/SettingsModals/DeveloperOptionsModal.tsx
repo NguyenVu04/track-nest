@@ -96,16 +96,16 @@ export function DeveloperOptionsModal({
               />
 
               <UrlField
-                label={t.emergencyUrlLabel ?? "Emergency URL"}
-                description={t.emergencyUrlDescription ?? t.serverUrlDescription}
+                label={t.emergencyUrlLabel}
+                description={t.emergencyUrlDescription}
                 value={emergencyUrlInput}
                 onChange={onChangeEmergencyUrlInput}
                 placeholder={t.serverUrlPlaceholder}
               />
 
               <UrlField
-                label={t.criminalUrlLabel ?? "Criminal URL"}
-                description={t.criminalUrlDescription ?? t.serverUrlDescription}
+                label={t.criminalUrlLabel}
+                description={t.criminalUrlDescription}
                 value={criminalUrlInput}
                 onChange={onChangeCriminalUrlInput}
                 placeholder={t.serverUrlPlaceholder}
@@ -113,14 +113,11 @@ export function DeveloperOptionsModal({
 
               {grpcUrlInput !== undefined && onChangeGrpcUrlInput && (
                 <UrlField
-                  label={t.grpcUrlLabel ?? "gRPC URL"}
-                  description={
-                    t.grpcUrlDescription ??
-                    "Full gRPC endpoint. Leave blank to derive from the base URL."
-                  }
+                  label={t.grpcUrlLabel}
+                  description={t.grpcUrlDescription}
                   value={grpcUrlInput}
                   onChange={onChangeGrpcUrlInput}
-                  placeholder="e.g. https://api.example.com:443"
+                  placeholder={t.grpcUrlPlaceholder}
                 />
               )}
 

@@ -136,6 +136,10 @@ export const Vietnamese = {
   criminalUrlDescription:
     "Ghi đè URL cho dịch vụ criminal-reports. Để trống để dùng giá trị mặc định từ môi trường.",
   serverUrlPlaceholder: "https://your-service-url",
+  grpcUrlLabel: "URL gRPC",
+  grpcUrlDescription:
+    "Địa chỉ gRPC đầy đủ. Để trống để lấy từ URL cơ sở.",
+  grpcUrlPlaceholder: "VD: https://api.example.com:443",
   devModeLabel: "Chế độ dev",
   enabled: "Đã bật",
   disabled: "Đã tắt",
@@ -281,6 +285,10 @@ export const English = {
   criminalUrlDescription:
     "Override the criminal-reports service URL. Leave blank to use the default from the environment.",
   serverUrlPlaceholder: "https://your-service-url",
+  grpcUrlLabel: "gRPC URL",
+  grpcUrlDescription:
+    "Full gRPC endpoint. Leave blank to derive from the base URL.",
+  grpcUrlPlaceholder: "e.g. https://api.example.com:443",
   devModeLabel: "Dev Mode",
   enabled: "Enabled",
   disabled: "Disabled",

@@ -102,10 +102,10 @@ export const ReportsProvider: React.FC<ReportsProviderProps> = ({
       setIsLoadingCrimeReports(true);
       setCrimeReportsError(null);
       try {
-        const response = await criminalReportsService.getCrimeReports({
+        const response = await criminalReportsService.getUserCrimeReports(
           page,
           size,
-        });
+        );
         setCrimeReports(response.content);
       } catch (error: any) {
         console.error("Failed to fetch crime reports:", error);
@@ -171,7 +171,7 @@ export const ReportsProvider: React.FC<ReportsProviderProps> = ({
       setIsLoadingMissingPersons(true);
       setMissingPersonsError(null);
       try {
-        const response = await criminalReportsService.getMissingPersonReports(
+        const response = await criminalReportsService.getUserMissingPersonReports(
           page,
           size,
         );
@@ -240,7 +240,7 @@ export const ReportsProvider: React.FC<ReportsProviderProps> = ({
     async (page: number = 0, size: number = 20) => {
       setIsLoadingGuidelines(true);
       try {
-        const response = await criminalReportsService.getGuidelines(page, size);
+        const response = await criminalReportsService.getUserGuidelines(page, size);
         setGuidelines(response.content);
       } catch (error) {
         console.error("Failed to fetch guidelines:", error);

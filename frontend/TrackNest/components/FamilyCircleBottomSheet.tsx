@@ -122,8 +122,8 @@ export const FamilyCircleBottomSheet: React.FC<
       }
     } catch (e: any) {
       showToast(
-        e?.message ?? "Failed to load circle members",
-        t.errorTitle ?? "Error",
+        e?.message ?? t.loadMembersFailed,
+        t.errorTitle,
       );
     } finally {
       setLoadingMembers(false);
@@ -140,7 +140,7 @@ export const FamilyCircleBottomSheet: React.FC<
       );
       await onRefresh?.();
     } catch (e: any) {
-      showToast(e?.message ?? t.saveError ?? "Failed to rename circle.", t.errorTitle ?? "Error");
+      showToast(e?.message ?? t.saveError, t.errorTitle);
     } finally {
       setIsSavingName(false);
     }
@@ -156,7 +156,7 @@ export const FamilyCircleBottomSheet: React.FC<
         await updateFamilyRole(managingCircle.familyCircleId, role);
         await onRefresh?.();
       } catch (e: any) {
-        showToast(e?.message ?? t.updateRoleFailed ?? "Failed to update role.", t.errorTitle ?? "Error");
+        showToast(e?.message ?? t.updateRoleFailed, t.errorTitle);
         setMyRole(prevRole);
       } finally {
         setIsSavingRole(false);
@@ -175,7 +175,7 @@ export const FamilyCircleBottomSheet: React.FC<
       t.leaveCircleTitle,
       t.leaveCircleMessage.replace("{{circle}}", managingCircle.name),
       [
-        { text: t.cancel ?? "Cancel", style: "cancel" },
+        { text: t.cancel, style: "cancel" },
         {
           text: t.leave,
           style: "destructive",
@@ -193,7 +193,7 @@ export const FamilyCircleBottomSheet: React.FC<
               setManagingCircle(null);
               await onRefresh?.();
             } catch (e: any) {
-              showToast(e?.message ?? t.leaveFailed, t.errorTitle ?? "Error");
+              showToast(e?.message ?? t.leaveFailed, t.errorTitle);
             }
           },
         },
@@ -219,7 +219,7 @@ export const FamilyCircleBottomSheet: React.FC<
       t.deleteCircleTitle,
       t.deleteCircleMessage.replace("{{circle}}", managingCircle.name),
       [
-        { text: t.cancel ?? "Cancel", style: "cancel" },
+        { text: t.cancel, style: "cancel" },
         {
           text: t.delete,
           style: "destructive",
@@ -234,7 +234,7 @@ export const FamilyCircleBottomSheet: React.FC<
 
               await onRefresh?.();
             } catch (e: any) {
-              showToast(e?.message ?? t.deleteFailed, t.errorTitle ?? "Error");
+              showToast(e?.message ?? t.deleteFailed, t.errorTitle);
             }
           },
         },
@@ -273,7 +273,7 @@ export const FamilyCircleBottomSheet: React.FC<
         setInviteExpiry(result.expiredAtMs);
         setShowInviteModal(true);
       } catch (error: any) {
-        showToast(error?.message ?? t.inviteFailed, t.errorTitle ?? "Error");
+        showToast(error?.message ?? t.inviteFailed, t.errorTitle);
       }
     },
     [t.errorTitle, t.inviteFailed],
@@ -288,7 +288,7 @@ export const FamilyCircleBottomSheet: React.FC<
       await onRefresh?.();
       showToast(t.joinSuccessMessage, t.successTitle);
     } catch (error: any) {
-      showToast(error?.message ?? t.joinFailed, t.errorTitle ?? "Error");
+      showToast(error?.message ?? t.joinFailed, t.errorTitle);
     }
   }, [
     joinOtp,
@@ -663,7 +663,7 @@ export const FamilyCircleBottomSheet: React.FC<
                     setJoinOtp("");
                   }}
                 >
-                  <Text style={{ color: "#666" }}>{t.cancel ?? "Cancel"}</Text>
+                  <Text style={{ color: "#666" }}>{t.cancel}</Text>
                 </Pressable>
                 <Pressable
                   style={styles.modalSaveBtn}

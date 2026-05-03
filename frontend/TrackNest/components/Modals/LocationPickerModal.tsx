@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   Pressable,
@@ -7,7 +7,9 @@ import {
   Text,
   View,
 } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE, Region } from "react-native-maps";
+import * as Location from "expo-location";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radii, spacing } from "@/styles/styles";
 
 interface LocationPickerModalProps {
@@ -32,6 +34,31 @@ export function LocationPickerModal({
     longitudeDelta: 0.05,
   });
 
+  const mapRef = useRef<MapView>(null);
+
+  useEffect(() => {
+    if (visible) {
+      (async () => {
+        try {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status === "granted") {
+            const loc = await Location.getCurrentPositionAsync({});
+            const newRegion = {
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            };
+            setRegion(newRegion);
+            mapRef.current?.animateToRegion(newRegion, 1000);
+          }
+        } catch (err) {
+          console.warn("Could not fetch location", err);
+        }
+      })();
+    }
+  }, [visible]);
+
   const handleConfirm = () => {
     onSelectLocation(region.latitude, region.longitude);
     onClose();
@@ -43,7 +70,7 @@ export function LocationPickerModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Pressable onPress={onClose} style={styles.closeButton}>
             <Ionicons name="close" size={24} color={colors.textPrimary} />
@@ -54,6 +81,7 @@ export function LocationPickerModal({
 
         <View style={styles.mapContainer}>
           <MapView
+            ref={mapRef}
             provider={PROVIDER_GOOGLE}
             style={styles.map}
             initialRegion={region}
@@ -74,13 +102,13 @@ export function LocationPickerModal({
             <Text style={styles.confirmText}>Confirm Location</Text>
           </Pressable>
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
+  container: { flex: 1, backgroundColor: colors.surface },
   header: {
     height: 56,
     flexDirection: "row",

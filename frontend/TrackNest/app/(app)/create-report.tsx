@@ -3,10 +3,10 @@ import { LocationPickerModal } from "@/components/Modals/LocationPickerModal";
 import { createReport as createReportLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
 import { createCrimeReport } from "@/utils/crimeHelpers";
-import { colors, radii, spacing } from "@/styles/styles";
+import { colors } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
+
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -21,6 +21,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { usePhotoPickerModal } from "@/components/Modals/PhotoPickerModal";
 
 const MAX_IMAGES = 5;
 
@@ -28,6 +29,7 @@ export default function CreateReportScreen() {
   const router = useRouter();
   const t = useTranslation(createReportLang);
   const { modal, showAlert } = useAppModal();
+  const { showPhotoPicker, photoPickerModal } = usePhotoPickerModal();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState<"Low" | "Medium" | "High">("Medium");
@@ -40,18 +42,13 @@ export default function CreateReportScreen() {
   const handleAddPhoto = async () => {
     if (photoUris.length >= MAX_IMAGES) return;
 
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") return;
-
-    const result = await ImagePicker.launchImageLibraryAsync({
+    showPhotoPicker((uri) => {
+      setPhotoUris((prev) => [...prev, uri]);
+    }, {
       mediaTypes: ["images"],
       allowsEditing: false,
       quality: 0.8,
     });
-
-    if (!result.canceled && result.assets.length > 0) {
-      setPhotoUris((prev) => [...prev, result.assets[0].uri]);
-    }
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -70,15 +67,6 @@ export default function CreateReportScreen() {
 
     setLoading(true);
     try {
-      console.log("Create report with: ", {
-        title: title.trim(),
-        description: description.trim(),
-        severity,
-        latitude,
-        longitude,
-        images: photoUris,
-      });
-
       await createCrimeReport({
         title: title.trim(),
         description: description.trim(),
@@ -101,27 +89,27 @@ export default function CreateReportScreen() {
   return (
     <SafeAreaView style={styles.container}>
       {modal}
+      {photoPickerModal}
+      <View style={styles.bgBlob} />
+      <View style={styles.bgBlob2} />
+
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()}>
-            <Ionicons name="close" size={24} color="#333" />
-          </Pressable>
-          <Text style={styles.headerTitle}>{t.pageTitle}</Text>
-          <Pressable onPress={handleSubmit} disabled={loading}>
-            <Text style={[styles.submitText, loading && styles.disabledText]}>
-              {loading ? "..." : t.submit}
-            </Text>
+          <Pressable onPress={() => router.back()} style={styles.headerIcon}>
+            <Ionicons name="close" size={26} color="#333" />
           </Pressable>
         </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.section}>
+        <Text style={styles.pageTitle}>{t.pageTitle}</Text>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>{t.titleLabel}</Text>
             <TextInput
-              style={styles.input}
+              style={styles.inputPill}
               value={title}
               onChangeText={setTitle}
               placeholder={t.titlePlaceholder}
@@ -129,10 +117,10 @@ export default function CreateReportScreen() {
             />
           </View>
 
-          <View style={styles.section}>
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>{t.descriptionLabel}</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.inputPill, styles.textArea]}
               value={description}
               onChangeText={setDescription}
               placeholder={t.descriptionPlaceholder}
@@ -143,95 +131,110 @@ export default function CreateReportScreen() {
             />
           </View>
 
-          <View style={styles.section}>
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>{t.severityLabel}</Text>
-            <View style={styles.severityRow}>
-              {(["Low", "Medium", "High"] as const).map((sev) => (
-                <Pressable
-                  key={sev}
-                  style={[
-                    styles.severityBtn,
-                    severity === sev && styles.severityBtnActive,
-                    severity === sev &&
-                      (sev === "High"
-                        ? styles.sevHighActive
-                        : sev === "Medium"
-                          ? styles.sevMedActive
-                          : styles.sevLowActive),
-                  ]}
-                  onPress={() => setSeverity(sev)}
-                >
-                  <Text
+            <View style={styles.severityContainer}>
+              {(["Low", "Medium", "High"] as const).map((sev, idx) => {
+                const isActive = severity === sev;
+                return (
+                  <Pressable
+                    key={sev}
                     style={[
-                      styles.severityText,
-                      severity === sev && styles.severityTextActive,
+                      styles.severityBtn,
+                      idx === 0 && styles.severityBtnLeft,
+                      idx === 2 && styles.severityBtnRight,
+                      isActive && styles.severityBtnActive,
+                      isActive &&
+                        (sev === "High"
+                          ? styles.sevHighActive
+                          : sev === "Medium"
+                            ? styles.sevMedActive
+                            : styles.sevLowActive),
+                      !isActive &&
+                        (sev === "High"
+                          ? styles.sevHighInactive
+                          : sev === "Medium"
+                            ? styles.sevMedInactive
+                            : styles.sevLowInactive),
                     ]}
+                    onPress={() => setSeverity(sev)}
                   >
-                    {sev}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      style={[
+                        styles.severityText,
+                        isActive && styles.severityTextActive,
+                      ]}
+                    >
+                      {sev}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 
-          {/* Image picker */}
-          <View style={styles.section}>
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>
-              {t.imagesLabel}{" "}
-              <Text style={styles.labelHint}>
-                ({photoUris.length}/{MAX_IMAGES})
-              </Text>
+              {t.imagesLabel} ({photoUris.length}/{MAX_IMAGES})
             </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.imageRow}
             >
-              {photoUris.map((uri, index) => (
-                <View key={uri} style={styles.thumbWrapper}>
-                  <Image
-                    source={{ uri }}
-                    style={styles.thumb}
-                    contentFit="cover"
-                  />
-                  <Pressable
-                    style={styles.thumbRemove}
-                    onPress={() => handleRemovePhoto(index)}
-                    hitSlop={6}
-                  >
-                    <Ionicons name="close-circle" size={20} color="#fff" />
-                  </Pressable>
-                </View>
-              ))}
               {photoUris.length < MAX_IMAGES && (
                 <Pressable style={styles.addImageBtn} onPress={handleAddPhoto}>
-                  <Ionicons
-                    name="camera-outline"
-                    size={24}
-                    color={colors.textSecondary}
-                  />
+                  <Ionicons name="camera" size={28} color="#60869a" />
                   <Text style={styles.addImageText}>{t.addImage}</Text>
                 </Pressable>
               )}
+              {photoUris.map((uri, index) => (
+                <View key={uri} style={styles.thumbWrapper}>
+                  <Image source={{ uri }} style={styles.thumb} contentFit="cover" />
+                  <Pressable
+                    style={styles.thumbRemove}
+                    onPress={() => handleRemovePhoto(index)}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="close-circle" size={24} color="#fff" />
+                  </Pressable>
+                </View>
+              ))}
             </ScrollView>
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.label}>{t.locationLabel}</Text>
+          <View style={styles.inputGroup}>
             <Pressable
               style={styles.locationButton}
               onPress={() => setShowLocationPicker(true)}
             >
-              <Ionicons name="map-outline" size={20} color={colors.primary} />
-              <Text style={styles.locationButtonText}>
-                {latitude.toFixed(6)}, {longitude.toFixed(6)}
-              </Text>
+              <View style={styles.locationIconBox}>
+                <Ionicons name="location" size={20} color="#5e8293" />
+              </View>
+              <View style={styles.locationTextContainer}>
+                <Text style={styles.locationTitle}>{t.locationLabel || "Location"}</Text>
+                <Text style={styles.locationCoords}>
+                  {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                </Text>
+              </View>
               <Ionicons name="chevron-forward" size={20} color="#999" />
             </Pressable>
           </View>
-
-          <View style={{ height: 40 }} />
+          <View style={{ height: 20 }} />
         </ScrollView>
+
+        <View style={styles.footer}>
+          <Pressable style={styles.cancelButton} onPress={() => router.back()} disabled={loading}>
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </Pressable>
+          <Pressable style={styles.nextButton} onPress={handleSubmit} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.nextButtonText}>{t.submit}</Text>
+            )}
+          </Pressable>
+        </View>
 
         <LocationPickerModal
           visible={showLocationPicker}
@@ -254,107 +257,228 @@ export default function CreateReportScreen() {
   );
 }
 
-const THUMB_SIZE = 88;
+const THUMB_SIZE = 100;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
+  container: { flex: 1, backgroundColor: "#f5fafa" },
+  bgBlob: {
+    position: "absolute",
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: "#e0f2f1",
+    top: -100,
+    right: -100,
+    opacity: 0.6,
+  },
+  bgBlob2: {
+    position: "absolute",
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: "#e0f2f1",
+    bottom: 100,
+    left: -50,
+    opacity: 0.4,
+  },
   keyboardView: { flex: 1 },
   header: {
-    height: 56,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
-  headerTitle: { fontSize: 18, fontWeight: "600", color: colors.textPrimary },
-  submitText: { fontSize: 16, fontWeight: "600", color: colors.primary },
-  disabledText: { opacity: 0.5 },
-  content: { flex: 1, padding: spacing.md },
-  section: { marginBottom: spacing.lg },
+  headerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  pageTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#2d3748",
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  content: { flex: 1 },
+  scrollContent: { padding: 20, paddingBottom: 40 },
+  inputGroup: {
+    marginBottom: 24,
+  },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: 10,
   },
-  labelHint: { fontWeight: "400", color: colors.textSecondary },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: 16,
-    color: colors.textPrimary,
+  inputPill: {
+    backgroundColor: "#f2f6f9",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: "#333",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "#dce4e8",
   },
-  textArea: { minHeight: 100 },
-  severityRow: { flexDirection: "row", gap: spacing.sm },
+  textArea: {
+    minHeight: 120,
+    paddingTop: 16,
+  },
+  severityContainer: {
+    flexDirection: "row",
+    height: 48,
+  },
   severityBtn: {
     flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.md,
-    backgroundColor: colors.surface,
+    justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "#dce4e8",
+    backgroundColor: "#f2f6f9",
   },
-  severityBtnActive: { borderWidth: 2 },
-  sevHighActive: { backgroundColor: "#ffd6d6", borderColor: "#ff4d4f" },
-  sevMedActive: { backgroundColor: "#fff0d6", borderColor: "#f39c12" },
-  sevLowActive: { backgroundColor: "#f2fff0", borderColor: "#27ae60" },
-  severityText: { fontWeight: "600", color: colors.textSecondary },
-  severityTextActive: { color: colors.textPrimary },
-  imageRow: { flexDirection: "row", gap: spacing.sm, paddingVertical: 4 },
+  severityBtnLeft: {
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+    borderRightWidth: 0,
+  },
+  severityBtnRight: {
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    borderLeftWidth: 0,
+  },
+  severityBtnActive: {
+    borderWidth: 2,
+    zIndex: 1,
+    elevation: 3,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  sevHighActive: { backgroundColor: "#ffe5e5", borderColor: "#ff4d4f", shadowColor: "#ff4d4f" },
+  sevMedActive: { backgroundColor: "#fff5d6", borderColor: "#f39c12", shadowColor: "#f39c12" },
+  sevLowActive: { backgroundColor: "#eefcf1", borderColor: "#27ae60", shadowColor: "#27ae60" },
+  sevHighInactive: { backgroundColor: "#fff0f0" },
+  sevMedInactive: { backgroundColor: "#f2f6f9" }, // Match default for medium when inactive
+  sevLowInactive: { backgroundColor: "#f4fbf5" },
+  severityText: { fontSize: 15, fontWeight: "500", color: "#555" },
+  severityTextActive: { fontWeight: "700", color: "#222" },
+  imageRow: { flexDirection: "row", gap: 12 },
+  addImageBtn: {
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: 16,
+    backgroundColor: "#f2f6f9",
+    borderWidth: 2,
+    borderColor: "#b4dede",
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  addImageText: { fontSize: 13, color: "#60869a", fontWeight: "500" },
   thumbWrapper: {
     width: THUMB_SIZE,
     height: THUMB_SIZE,
-    borderRadius: radii.md,
+    borderRadius: 16,
     overflow: "hidden",
     position: "relative",
   },
   thumb: { width: "100%", height: "100%" },
   thumbRemove: {
     position: "absolute",
-    top: 2,
-    right: 2,
+    top: 4,
+    right: 4,
     backgroundColor: "rgba(0,0,0,0.5)",
-    borderRadius: 10,
+    borderRadius: 12,
   },
-  addImageBtn: {
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    borderRadius: radii.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderStyle: "dashed",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-  },
-  addImageText: { fontSize: 11, color: colors.textSecondary },
   locationButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: radii.md,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 12,
     borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.sm,
+    borderColor: "#dce4e8",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  locationButtonText: {
+  locationIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#e6eef2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  locationTextContainer: {
     flex: 1,
+  },
+  locationTitle: {
     fontSize: 16,
-    color: colors.textPrimary,
+    fontWeight: "700",
+    color: "#1a1a1a",
+  },
+  locationCoords: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 2,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.6)",
+    backgroundColor: "rgba(255,255,255,0.7)",
     alignItems: "center",
     justifyContent: "center",
+  },
+  footer: {
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#e2e8f0",
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 16,
+    backgroundColor: "#f2f6f9",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#4a5568",
+  },
+  nextButton: {
+    flex: 2,
+    paddingVertical: 16,
+    borderRadius: 16,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    shadowColor: colors.primary,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  nextButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#fff",
   },
 });

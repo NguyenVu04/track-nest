@@ -16,6 +16,8 @@ export function ChatbotPanel({
   title = "Document Chat",
   emptyState = "Ask a question about this document.",
 }: ChatbotPanelProps) {
+  console.log("Initializing ChatbotPanel with documentId:", rawDocumentId);
+
   const documentId = rawDocumentId?.replace(/<[^>]*>?/gm, "")?.replace(/\.html$/i, "");
   const [isOpen, setIsOpen] = useState(false);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
