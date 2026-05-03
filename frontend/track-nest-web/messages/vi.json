@@ -252,6 +252,7 @@
     "severityOpt5": "Nguy hiểm (5)",
     "createButton": "Tạo báo cáo",
     "formPhotos": "Ảnh đính kèm",
+    "addPhoto": "Thêm ảnh",
     "uploadPhotoBtn": "Nhấn để tải lên hoặc kéo thả",
     "uploadPhotoHint": "PNG, JPG, GIF tối đa 10MB",
     "uploadingPhoto": "Đang tải lên...",

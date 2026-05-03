@@ -12,7 +12,6 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
   emergencyOpsService,
   EmergencyRequestResponse,
-  PageResponse,
 } from "@/services/emergencyOpsService";
 import { Loading } from "@/components/loading/Loading";
 import { useTranslations } from "next-intl";
@@ -38,19 +37,13 @@ export default function EmergencyRequestsPage() {
 
   useEffect(() => {
     const fetchRequests = async () => {
-      if (!user || !user.role.includes("Emergency Service")) {
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const response: PageResponse<EmergencyRequestResponse> = await emergencyOpsService.getEmergencyRequests(
+        const response = await emergencyOpsService.getAllEmergencyRequests(
           statusFilter || undefined,
           0,
           50
         );
-
-        setRequests(response.items);
+        setRequests(response.items || response.content || []);
       } catch (error) {
         console.error("Error fetching emergency requests:", error);
         toast.error(t("toastLoadError"));
@@ -262,7 +255,7 @@ export default function EmergencyRequestsPage() {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {request.status === "PENDING" && (
+                      {request.status === "PENDING" && user.role.includes("Emergency Service") && (
                         <>
                           <button
                             onClick={() => handleAccept(request)}
@@ -280,7 +273,7 @@ export default function EmergencyRequestsPage() {
                           </button>
                         </>
                       )}
-                      {request.status === "ACCEPTED" && (
+                      {request.status === "ACCEPTED" && user.role.includes("Emergency Service") && (
                         <button
                           onClick={() => setCompleting(request)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

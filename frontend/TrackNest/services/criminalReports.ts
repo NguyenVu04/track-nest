@@ -577,6 +577,15 @@ class CriminalReportsService {
     const response = await client.get(`/chatbot/sessions/${sessionId}`);
     return response.data;
   }
+
+  // ==================== Photo URLs ====================
+
+  async getMissingPersonPhotoUrl(reportId: string): Promise<string> {
+    if (!this.baseUrl) {
+      this.baseUrl = await getCriminalUrl();
+    }
+    return `${this.baseUrl}/report-viewer/missing-person-reports/${reportId}/photo`;
+  }
 }
 
 export const criminalReportsService = new CriminalReportsService();

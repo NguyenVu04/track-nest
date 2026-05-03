@@ -2,7 +2,7 @@ import { useAppModal } from "@/components/Modals/AppModal";
 import { LocationPickerModal } from "@/components/Modals/LocationPickerModal";
 import { createReport as createReportLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
-import { createCrimeReport } from "@/utils/crimeHelpers";
+import { criminalReportsService } from "@/services/criminalReports";
 import { colors } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -65,15 +65,22 @@ export default function CreateReportScreen() {
       return;
     }
 
+    const severityMap: Record<"Low" | "Medium" | "High", number> = {
+      Low: 1,
+      Medium: 3,
+      High: 5,
+    };
+
     setLoading(true);
     try {
-      await createCrimeReport({
+      await criminalReportsService.submitUserCrimeReport({
         title: title.trim(),
-        description: description.trim(),
-        severity,
+        content: description.trim(),
+        severity: severityMap[severity],
+        date: new Date().toISOString(),
         latitude,
         longitude,
-        images: photoUris,
+        photos: photoUris.map((uri) => ({ uri })),
       });
       showAlert(t.successTitle, t.submitSuccess, "success", t.okButton, () =>
         router.back(),

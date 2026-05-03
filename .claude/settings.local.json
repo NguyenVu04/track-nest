@@ -4,7 +4,8 @@
       "Bash(npm install:*)",
       "Bash(./gradlew build:*)",
       "Bash(xargs grep:*)",
-      "Bash(grep -E \"\\\\.\\(ts|tsx|ts|yaml\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|tsx|ts|yaml\\)$\")",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
     ]
   }
 }

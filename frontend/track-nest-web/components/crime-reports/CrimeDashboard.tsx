@@ -159,6 +159,7 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
         report={selectedReport}
         onBack={handleBackToList}
         onEdit={handleEdit}
+        onPublish={handlePublish}
         onDelete={handleDelete}
         userRole={user.role}
       />

@@ -18,74 +18,10 @@ import type { User, UserRole } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { toast } from "sonner";
 
-// Mock data for users
-const mockUsers: User[] = [
-  {
-    id: "1",
-    username: "admin",
-    password: "",
-    email: "admin@tracknest.com",
-    role: ["Admin"],
-    fullName: "System Administrator",
-    status: "Active",
-    createdAt: "2025-01-01T00:00:00Z",
-  },
-  {
-    id: "2",
-    username: "reporter1",
-    password: "",
-    email: "reporter1@tracknest.com",
-    role: ["Reporter"],
-    fullName: "John Smith",
-    status: "Active",
-    createdAt: "2025-06-15T10:30:00Z",
-  },
-  {
-    id: "3",
-    username: "reporter2",
-    password: "",
-    email: "reporter2@tracknest.com",
-    role: ["Reporter"],
-    fullName: "Jane Doe",
-    status: "Active",
-    createdAt: "2025-07-20T14:45:00Z",
-  },
-  {
-    id: "4",
-    username: "emergency1",
-    password: "",
-    email: "emergency1@tracknest.com",
-    role: ["Emergency Service"],
-    fullName: "Officer Mike Johnson",
-    status: "Active",
-    createdAt: "2025-08-10T08:00:00Z",
-  },
-  {
-    id: "5",
-    username: "reporter3",
-    password: "",
-    email: "reporter3@tracknest.com",
-    role: ["Reporter"],
-    fullName: "Sarah Williams",
-    status: "Banned",
-    createdAt: "2025-09-05T16:20:00Z",
-  },
-  {
-    id: "6",
-    username: "emergency2",
-    password: "",
-    email: "emergency2@tracknest.com",
-    role: ["Emergency Service"],
-    fullName: "Detective Lisa Chen",
-    status: "Active",
-    createdAt: "2025-10-01T09:15:00Z",
-  },
-];
-
 export default function AccountsPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -119,13 +55,6 @@ export default function AccountsPage() {
     );
   }
 
-  const mockRequest = async (shouldFail = false) => {
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    if (shouldFail) {
-      throw new Error("Mock server error");
-    }
-  };
-
   const handleViewDetails = (account: User) => {
     router.push(`/dashboard/accounts/${account.id}`);
   };
@@ -133,7 +62,6 @@ export default function AccountsPage() {
   const handleBan = async () => {
     if (confirmAction?.type !== "ban") return;
     try {
-      await mockRequest(false);
       setUsers(
         users.map((u) =>
           u.id === confirmAction.user.id
@@ -152,7 +80,6 @@ export default function AccountsPage() {
   const handleUnban = async () => {
     if (confirmAction?.type !== "unban") return;
     try {
-      await mockRequest(false);
       setUsers(
         users.map((u) =>
           u.id === confirmAction.user.id
@@ -173,7 +100,6 @@ export default function AccountsPage() {
   const handleDelete = async () => {
     if (confirmAction?.type !== "delete") return;
     try {
-      await mockRequest(false);
       setUsers(users.filter((u) => u.id !== confirmAction.user.id));
       toast.success(
         `Account "${confirmAction.user.username}" has been deleted`,

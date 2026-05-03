@@ -252,6 +252,7 @@
     "severityOpt5": "Critical (5)",
     "createButton": "Create Report",
     "formPhotos": "Photos",
+    "addPhoto": "Add Photos",
     "uploadPhotoBtn": "Click to upload or drag & drop",
     "uploadPhotoHint": "PNG, JPG, GIF up to 10MB",
     "uploadingPhoto": "Uploading...",

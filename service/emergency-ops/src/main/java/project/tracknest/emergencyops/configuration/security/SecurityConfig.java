@@ -33,6 +33,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**")
                         .permitAll()
+                        .requestMatchers("/emergency-admin/**")
+                        .hasAnyRole("ADMIN", "USER")
                         .requestMatchers("/emergency-request-manager/**")
                         .hasRole("EMERGENCY-SERVICE")
                         .requestMatchers("/emergency-request-receiver/**")

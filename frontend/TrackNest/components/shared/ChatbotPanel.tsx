@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, TouchableOpacity, Modal, TextInput, FlatList, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, SafeAreaView } from "react-native";
+import { View, Text, TouchableOpacity, Modal, TextInput, FlatList, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radii, spacing } from "@/styles/styles";
 import { criminalReportsService } from "@/services/criminalReports";
@@ -114,7 +115,7 @@ export function ChatbotPanel({
       </TouchableOpacity>
 
       <Modal visible={isOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setIsOpen(false)}>
-        <SafeAreaView style={styles.modalContainer}>
+        <SafeAreaView style={styles.modalContainer} edges={["left", "right", "bottom"]} mode="margin">
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
               <View style={styles.iconBox}>

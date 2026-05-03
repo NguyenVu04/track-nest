@@ -10,6 +10,7 @@ import {
 } from "@/utils/reportAdapters";
 import { colors, radii, spacing } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -52,15 +53,25 @@ function SeverityBadge({ severity }: { severity: string }) {
 
 function ReportCard({ item }: { item: Report }) {
   const router = useRouter();
+  const [photoError, setPhotoError] = useState(false);
   return (
     <Pressable
       style={styles.card}
       onPress={() => router.push(`/report-detail?id=${item.id}`)}
     >
       <View style={styles.cardImageArea}>
-        <View style={styles.cardImagePlaceholder}>
-          <Ionicons name="warning-outline" size={40} color={colors.danger + "60"} />
-        </View>
+        {item.photos && item.photos.length > 0 && !photoError ? (
+          <Image
+            source={{ uri: item.photos[0] }}
+            style={styles.cardPhoto}
+            contentFit="cover"
+            onError={() => setPhotoError(true)}
+          />
+        ) : (
+          <View style={styles.cardImagePlaceholder}>
+            <Ionicons name="warning-outline" size={40} color={colors.danger + "60"} />
+          </View>
+        )}
         <View style={styles.cardBadgeOverlay}>
           <SeverityBadge severity={item.severity} />
         </View>
@@ -94,15 +105,25 @@ function MissingPersonCard({
   lastSeenLabel: string;
 }) {
   const router = useRouter();
+  const [photoError, setPhotoError] = useState(false);
   return (
     <Pressable
       style={styles.card}
       onPress={() => router.push(`/missing-detail?id=${item.id}`)}
     >
       <View style={styles.cardImageArea}>
-        <View style={[styles.cardImagePlaceholder, { backgroundColor: "#fef2f2" }]}>
-          <Ionicons name="person-outline" size={40} color={colors.danger + "60"} />
-        </View>
+        {item.photo && !photoError ? (
+          <Image
+            source={{ uri: item.photo }}
+            style={styles.cardPhoto}
+            contentFit="cover"
+            onError={() => setPhotoError(true)}
+          />
+        ) : (
+          <View style={[styles.cardImagePlaceholder, { backgroundColor: "#fef2f2" }]}>
+            <Ionicons name="person-outline" size={40} color={colors.danger + "60"} />
+          </View>
+        )}
         <View style={styles.cardBadgeOverlay}>
           <SeverityBadge severity={item.severity} />
         </View>
@@ -135,8 +156,13 @@ function GuideCard({
   item: Guide;
   categoryLabel: string;
 }) {
+  const router = useRouter();
   return (
-    <View style={styles.card}>
+    <Pressable
+      style={styles.card}
+      onPress={() => router.push(`/guideline-detail?id=${item.id}` as any)}
+      android_ripple={{ color: "#e5e7eb" }}
+    >
       <View style={styles.cardImageArea}>
         <View style={[styles.cardImagePlaceholder, { backgroundColor: "#eff6ff" }]}>
           <Ionicons name="book-outline" size={40} color={colors.primary + "80"} />
@@ -152,7 +178,7 @@ function GuideCard({
         </View>
         <Text style={styles.cardDesc} numberOfLines={2}>{item.content}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -184,6 +210,8 @@ function TabPage<T extends { id: string }>({
       </View>
     );
   }
+
+  console.log("Rendering TabPage with data length:", data);
 
   return (
     <View style={styles.tabPage}>
@@ -493,6 +521,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f0f0",
     alignItems: "center",
     justifyContent: "center",
+  },
+  cardPhoto: {
+    width: "100%",
+    height: "100%",
   },
   cardBadgeOverlay: {
     position: "absolute",

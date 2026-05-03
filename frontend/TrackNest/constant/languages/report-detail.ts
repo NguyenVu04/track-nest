@@ -39,6 +39,7 @@ export const Vietnamese = {
   public: "Công khai",
   private: "Riêng tư",
   visibility: "Phạm vi hiển thị",
+  viewDocument: "Xem tài liệu",
 };
 
 export const English = {
@@ -82,4 +83,5 @@ export const English = {
   public: "Public",
   private: "Private",
   visibility: "Visibility",
+  viewDocument: "View Document",
 };
