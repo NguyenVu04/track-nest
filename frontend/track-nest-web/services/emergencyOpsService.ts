@@ -129,14 +129,11 @@ export interface DeleteSafeZoneResponse {
 }
 
 export interface PageResponse<T> {
-  content: T[];
-  items: T[]; // Alias for content
-  page: number;
-  size: number;
-  totalElements: number;
+  items: T[];
+  totalItems: number;
   totalPages: number;
-  first: boolean;
-  last: boolean;
+  currentPage: number;
+  pageSize: number;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
