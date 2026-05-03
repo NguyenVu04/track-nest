@@ -1,10 +1,14 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
 import { Plus, Search } from "lucide-react";
 import type { MissingPerson, UserRole } from "@/types";
 import { MissingPersonList } from "./MissingPersonList";
 import { MissingPersonDetail } from "./MissingPersonDetail";
 import { MissingPersonForm } from "./MissingPersonForm";
 import { useTranslations } from "next-intl";
+import { criminalReportsService } from "@/services/criminalReportsService";
+import { toast } from "sonner";
 
 interface MissingPersonDashboardProps {
   user: {
@@ -17,61 +21,31 @@ interface MissingPersonDashboardProps {
 
 type ViewMode = "list" | "detail" | "create" | "edit";
 
-// Mock data
-const mockMissingPersons: MissingPerson[] = [
-  {
-    id: "1",
-    title: "Missing Person - Sarah Johnson",
-    fullName: "Sarah Johnson",
-    personalId: "DL-123456",
-    date: "2026-01-02T14:30:00Z",
-    content: "Brown hair, blue eyes, 5'6\" tall, wearing a red jacket. Last seen at Central Park.",
-    contentDocId: "",
-    createdAt: "2026-01-02T16:00:00Z",
-    userId: "user-1",
-    reporterId: "user-1",
-    status: "PENDING",
-    isPublic: true,
-  },
-  {
-    id: "2",
-    title: "Missing Person - David Martinez",
-    fullName: "David Martinez",
-    personalId: "DL-789012",
-    date: "2026-01-03T08:15:00Z",
-    content: "Black hair, brown eyes, 5'8\" tall, wearing school uniform. Last seen at Downtown Metro Station.",
-    contentDocId: "",
-    createdAt: "2026-01-03T10:00:00Z",
-    userId: "user-2",
-    reporterId: "user-2",
-    status: "PUBLISHED",
-    isPublic: true,
-  },
-  {
-    id: "3",
-    title: "Missing Person - Emily Chen",
-    fullName: "Emily Chen",
-    personalId: "DL-345678",
-    date: "2026-01-01T18:45:00Z",
-    content: "Long black hair, brown eyes, 5'4\" tall. Last seen in business attire at Financial District.",
-    contentDocId: "",
-    createdAt: "2026-01-02T09:00:00Z",
-    userId: "user-3",
-    reporterId: "user-3",
-    status: "PUBLISHED",
-    isPublic: true,
-  },
-];
-
 export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
   const t = useTranslations("missingPersons");
   const tCommon = useTranslations("common");
 
-  const [missingPersons, setMissingPersons] =
-    useState<MissingPerson[]>(mockMissingPersons);
+  const [missingPersons, setMissingPersons] = useState<MissingPerson[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedPerson, setSelectedPerson] = useState<MissingPerson | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const fetchReports = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await criminalReportsService.listMissingPersonReports({ page: 0, size: 100 });
+      setMissingPersons(response.content);
+    } catch {
+      toast.error("Failed to load missing person reports");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
 
   const handleViewDetail = (person: MissingPerson) => {
     setSelectedPerson(person);
@@ -99,18 +73,22 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
     setViewMode("list");
   };
 
-  const handlePublish = (id: string) => {
-    setMissingPersons(
-      missingPersons.map((p) =>
-        p.id === id ? { ...p, status: "PUBLISHED" } : p,
-      ),
-    );
+  const handlePublish = async (id: string) => {
+    try {
+      const updated = await criminalReportsService.publishMissingPersonReport(id);
+      setMissingPersons((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    } catch {
+      toast.error("Failed to publish report");
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setMissingPersons(missingPersons.filter((p) => p.id !== id));
-    if (selectedPerson?.id === id) {
-      setViewMode("list");
+  const handleDelete = async (id: string) => {
+    try {
+      await criminalReportsService.deleteMissingPersonReport(id);
+      setMissingPersons((prev) => prev.filter((p) => p.id !== id));
+      if (selectedPerson?.id === id) setViewMode("list");
+    } catch {
+      toast.error("Failed to delete report");
     }
   };
 
@@ -180,13 +158,17 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
         </div>
       </div>
 
-      <MissingPersonList
-        persons={filteredPersons}
-        onViewDetail={handleViewDetail}
-        onPublish={handlePublish}
-        onDelete={handleDelete}
-        userRole={user.role}
-      />
+      {isLoading ? (
+        <div className="flex justify-center py-12 text-gray-400">Loading...</div>
+      ) : (
+        <MissingPersonList
+          persons={filteredPersons}
+          onViewDetail={handleViewDetail}
+          onPublish={handlePublish}
+          onDelete={handleDelete}
+          userRole={user.role}
+        />
+      )}
     </div>
   );
 }

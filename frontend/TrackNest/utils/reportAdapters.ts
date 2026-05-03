@@ -50,10 +50,13 @@ function adaptCrimeReportToReport(crimeReport: CrimeReport): Report {
   };
 }
 
-function adaptMissingPersonToUI(missingPerson: MissingPersonReport): MissingPerson {
+async function adaptMissingPersonToUI(missingPerson: MissingPersonReport): Promise<MissingPerson> {
   const date = missingPerson.date
     ? new Date(missingPerson.date)
     : new Date(missingPerson.createdAt);
+  const photo = missingPerson.photo
+    ? await criminalReportsService.getMissingPersonPhotoUrl(missingPerson.id)
+    : undefined;
   return {
     id: missingPerson.id,
     name: missingPerson.fullName,
@@ -66,7 +69,7 @@ function adaptMissingPersonToUI(missingPerson: MissingPersonReport): MissingPers
       hour: "numeric",
       minute: "2-digit",
     }),
-    photo: missingPerson.photo,
+    photo,
     severity: "High" as const,
   };
 }
@@ -118,7 +121,7 @@ export async function fetchMissingPersons({ page = 1, perPage = 10 } = {}) {
       perPage,
     );
     return {
-      data: response.content.map(adaptMissingPersonToUI),
+      data: await Promise.all(response.content.map(adaptMissingPersonToUI)),
       total: response.totalElements,
       page,
     };

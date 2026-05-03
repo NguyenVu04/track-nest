@@ -2,6 +2,7 @@ export interface CrimeReport {
   id: string;
   title: string;
   content: string;
+  contentDocId?: string;
   severity: number;
   date: string;
   latitude: number;
@@ -28,6 +29,7 @@ export interface MissingPersonReport {
   contactPhone: string;
   date: string;
   content: string;
+  contentDocId?: string;
   status: "PENDING" | "REJECTED" | "PUBLISHED";
   isPublic: boolean;
   createdAt: string;

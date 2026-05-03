@@ -182,6 +182,22 @@ export const emergencyOpsService = {
     return response.data;
   },
 
+  /**
+   * List ALL emergency requests regardless of which service is assigned
+   * or who submitted them. Requires ADMIN role.
+   */
+  getAllEmergencyRequests: async (
+    status?: string,
+    page = 0,
+    size = 10,
+  ): Promise<PageResponse<EmergencyRequestResponse>> => {
+    const response = await api.get<PageResponse<EmergencyRequestResponse>>(
+      "/emergency-admin/requests",
+      { params: { status, page, size } },
+    );
+    return response.data;
+  },
+
   /** Get request count for the authenticated emergency service. */
   getEmergencyRequestCount: async (
     status?: string,

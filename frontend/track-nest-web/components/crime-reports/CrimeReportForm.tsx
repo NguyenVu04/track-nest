@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Save, X, MapPin } from "lucide-react";
+import { Save, X, MapPin, Camera, Trash2 } from "lucide-react";
+import Image from "next/image";
 import type { CrimeReport, CrimeSeverity } from "@/types";
 import { useTranslations } from "next-intl";
+import { criminalReportsService } from "@/services/criminalReportsService";
+import { toast } from "sonner";
 
 const LocationPicker = dynamic(
   () => import("../shared/LocationPicker").then((mod) => mod.LocationPicker),
@@ -29,6 +32,8 @@ const RichTextEditor = dynamic(
     ),
   },
 );
+
+const MAX_PHOTOS = 5;
 
 interface CrimeReportFormProps {
   report: CrimeReport | null;
@@ -64,13 +69,51 @@ export function CrimeReportForm({
     },
   );
 
+  const [existingPhotos, setExistingPhotos] = useState<string[]>(report?.photos ?? []);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [showReview, setShowReview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Revoke object URLs when component unmounts to avoid memory leaks.
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const totalPhotos = existingPhotos.length + selectedFiles.length;
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remaining = MAX_PHOTOS - totalPhotos;
+    const toAdd = files.slice(0, remaining);
+    if (toAdd.length < files.length) {
+      toast.warning(`Maximum ${MAX_PHOTOS} photos allowed. Only ${toAdd.length} photo(s) were added.`);
+    }
+    setSelectedFiles((prev) => [...prev, ...toAdd]);
+    setPreviewUrls((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))]);
+    e.target.value = "";
+  };
+
+  const handleRemoveExisting = (idx: number) => {
+    setExistingPhotos((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleRemoveSelected = (idx: number) => {
+    URL.revokeObjectURL(previewUrls[idx]);
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   // CreateCrimeReportRequest requires title, severity, date, longitude, latitude.
   // UpdateCrimeReportRequest requires title, severity, date but has no lat/lon —
   // the backend does not allow changing a crime report's location after creation.
-  const buildReport = (): CrimeReport => ({
+  const buildReport = (uploadedPhotoUrls: string[]): CrimeReport => ({
     id: report?.id || Date.now().toString(),
     title: formData.title!,
     content: formData.content!,
@@ -82,7 +125,7 @@ export function CrimeReportForm({
     numberOfVictims: formData.numberOfVictims!,
     numberOfOffenders: formData.numberOfOffenders!,
     arrested: formData.arrested!,
-    photos: report?.photos ?? [],
+    photos: [...existingPhotos, ...uploadedPhotoUrls],
     createdAt: formData.createdAt!,
     updatedAt: formData.updatedAt!,
     reporterId: formData.reporterId!,
@@ -95,11 +138,23 @@ export function CrimeReportForm({
   };
 
   const handleConfirmSubmit = async () => {
-    const newReport = buildReport();
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
+      const uploadedUrls: string[] = [];
+      if (selectedFiles.length > 0) {
+        setIsUploading(true);
+        for (const file of selectedFiles) {
+          const res = await criminalReportsService.uploadFile(file);
+          uploadedUrls.push(res.url);
+        }
+        setIsUploading(false);
+      }
+      const newReport = buildReport(uploadedUrls);
       await onSave(newReport);
       setShowReview(false);
+    } catch {
+      setIsUploading(false);
+      toast.error("Failed to upload photos or submit the report. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -251,6 +306,89 @@ export function CrimeReportForm({
               <span className="text-gray-700">{t("formArrested")}</span>
             </label>
           </div>
+
+          {/* ── Photo Upload ── */}
+          <div className="md:col-span-2">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-gray-700">
+                {t("formPhotos")}
+                <span className="ml-1 text-gray-400 text-sm font-normal">
+                  ({totalPhotos}/{MAX_PHOTOS})
+                </span>
+              </label>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={totalPhotos >= MAX_PHOTOS}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Camera className="w-4 h-4" />
+                {t("addPhoto")}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+            </div>
+
+            {totalPhotos > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                {/* Existing photos (edit mode) */}
+                {existingPhotos.map((url, idx) => (
+                  <div key={`existing-${idx}`} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group">
+                    <Image
+                      src={url}
+                      alt={`Photo ${idx + 1}`}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExisting(idx)}
+                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {/* New photos (local preview) */}
+                {previewUrls.map((url, idx) => (
+                  <div key={`new-${idx}`} className="relative aspect-square rounded-lg overflow-hidden border-2 border-indigo-300 group">
+                    <Image
+                      src={url}
+                      alt={`New photo ${idx + 1}`}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-indigo-600/70 py-0.5 text-center">
+                      <span className="text-white text-xs font-medium">New</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSelected(idx)}
+                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="flex flex-col items-center justify-center gap-2 h-32 border-2 border-dashed border-gray-300 rounded-lg text-gray-400 hover:border-indigo-400 hover:text-indigo-400 cursor-pointer transition-colors"
+              >
+                <Camera className="w-8 h-8" />
+                <span className="text-sm">{t("addPhoto")}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-4 mt-6 pt-6 border-t border-gray-200">
@@ -335,6 +473,28 @@ export function CrimeReportForm({
                   {formData.arrested ? tCommon("yes") : tCommon("no")}
                 </p>
               </div>
+              {totalPhotos > 0 && (
+                <div>
+                  <p className="text-gray-600 text-sm mb-2">{t("formPhotos")} ({totalPhotos})</p>
+                  <div className="flex flex-wrap gap-2">
+                    {existingPhotos.map((url, idx) => (
+                      <div key={`rev-existing-${idx}`} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                        <Image src={url} alt="" fill className="object-cover" unoptimized />
+                      </div>
+                    ))}
+                    {previewUrls.map((url, idx) => (
+                      <div key={`rev-new-${idx}`} className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-indigo-300">
+                        <Image src={url} alt="" fill className="object-cover" unoptimized />
+                      </div>
+                    ))}
+                  </div>
+                  {selectedFiles.length > 0 && (
+                    <p className="text-xs text-indigo-600 mt-1">
+                      {selectedFiles.length} new photo(s) will be uploaded on submit.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
               <button
@@ -346,10 +506,19 @@ export function CrimeReportForm({
               </button>
               <button
                 onClick={handleConfirmSubmit}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? tCommon("submitting") : t("confirmSubmit")}
+                {isUploading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Uploading photos…
+                  </>
+                ) : isSubmitting ? (
+                  tCommon("submitting")
+                ) : (
+                  t("confirmSubmit")
+                )}
               </button>
             </div>
           </div>

@@ -54,7 +54,11 @@ export default function MissingDetailScreen() {
       if (!id) return;
       try {
         const data = await criminalReportsService.getUserMissingPersonReportById(id);
-        setPerson(data);
+        const resolvedPhoto = data.photo
+          ? await criminalReportsService.getMissingPersonPhotoUrl(data.id)
+          : undefined;
+        // Preserve the raw content value as the chatbot document ID before any URL resolution.
+        setPerson({ ...data, photo: resolvedPhoto, contentDocId: data.content });
       } catch (err) {
         console.error("Failed to load missing person:", err);
       } finally {
@@ -326,10 +330,10 @@ export default function MissingDetailScreen() {
       </ScrollView>
 
       {/* Floating Chatbot Panel */}
-      <ChatbotPanel 
-        documentId={person.content} 
-        title={person.fullName} 
-        emptyState="Ask a question about this missing person report." 
+      <ChatbotPanel
+        documentId={person.contentDocId ?? ""}
+        title={person.fullName}
+        emptyState="Ask a question about this missing person report."
       />
     </SafeAreaView>
   );
