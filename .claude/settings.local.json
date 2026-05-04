@@ -10,7 +10,16 @@
       "PowerShell(Get-ChildItem -Path \"D:\\\\track-nest\\\\frontend\\\\track-nest-web\" -Recurse -Directory | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\('D:\\\\track-nest\\\\frontend\\\\track-nest-web\\\\', ''\\) } | Sort-Object)",
       "Bash(npm test *)",
       "Bash(npx jest *)",
-      "Bash(node_modules/.bin/jest --version)"
+      "Bash(node_modules/.bin/jest --version)",
+      "Bash(Get-ChildItem -Path \"D:\\\\track-nest\\\\frontend\\\\TrackNest\" -Directory)",
+      "Bash(Select-Object Name)",
+      "WebSearch",
+      "WebFetch(domain:docs.expo.dev)",
+      "PowerShell(ls \"D:\\\\track-nest\\\\frontend\\\\TrackNest\" -File | Where-Object {$_.Name -match \"jest|babel|test\"})",
+      "PowerShell(ls -Path \"D:\\\\track-nest\\\\frontend\\\\TrackNest\\\\app\" -Recurse | ForEach-Object { $_.FullName })",
+      "PowerShell(ls *)",
+      "PowerShell(ls \"D:\\\\track-nest\\\\frontend\\\\TrackNest\\\\components\" | Where-Object {$_.PSIsContainer})",
+      "PowerShell(ls \"D:\\\\track-nest\\\\frontend\\\\TrackNest\\\\proto\" | Where-Object {$_.Extension -eq \".proto\"})"
     ]
   }
 }
