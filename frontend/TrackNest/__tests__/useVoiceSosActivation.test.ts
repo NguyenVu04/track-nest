@@ -29,16 +29,9 @@ jest.mock("expo-speech-recognition", () => ({
   useSpeechRecognitionEvent: jest.fn(),
 }));
 
-// jest-expo already mocks react-native core modules; override only what the hook
-// needs so we avoid loading TurboModuleRegistry (which is not available in jsdom).
-jest.mock("react-native/Libraries/AppState/AppState", () => ({
-  currentState: "active",
-  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
-}));
-
-jest.mock("react-native/Libraries/Interaction/Keyboard", () => ({
-  addListener: jest.fn(() => ({ remove: jest.fn() })),
-}));
+// Spy on AppState and Keyboard from react-native so the hook's event
+// subscriptions don't fail in the jsdom environment.
+import { AppState, Keyboard } from "react-native";
 
 import { renderHook, act } from "@testing-library/react-native";
 import { useSpeechRecognitionEvent } from "expo-speech-recognition";
@@ -58,6 +51,8 @@ function getCapturedHandler(event: string): ((e: any) => void) | undefined {
 beforeEach(() => {
   jest.clearAllMocks();
   mockPathname.mockReturnValue("/map");
+  jest.spyOn(AppState, "addEventListener").mockReturnValue({ remove: jest.fn() } as any);
+  jest.spyOn(Keyboard, "addListener").mockReturnValue({ remove: jest.fn() } as any);
 });
 
 describe("useVoiceSosActivation — EMERGENCY-UC-01", () => {

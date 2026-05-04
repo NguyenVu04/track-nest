@@ -114,8 +114,8 @@ export function ChatbotPanel({
         <Ionicons name="chatbubbles" size={24} color="#fff" />
       </TouchableOpacity>
 
-      <Modal visible={isOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setIsOpen(false)}>
-        <SafeAreaView style={styles.modalContainer} edges={["left", "right", "bottom"]} mode="margin">
+      <Modal visible={isOpen} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setIsOpen(false)}>
+        <SafeAreaView style={styles.modalContainer} edges={["left", "right", "bottom", "top"]}>
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
               <View style={styles.iconBox}>
@@ -133,7 +133,7 @@ export function ChatbotPanel({
 
           <KeyboardAvoidingView 
             style={styles.keyboardView} 
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
           >
             <View style={styles.chatContainer}>
               <FlatList
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.surface,
   },
   header: {
     flexDirection: "row",

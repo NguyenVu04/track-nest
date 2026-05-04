@@ -36,12 +36,15 @@ jest.mock("@/utils", () => ({
 }));
 
 jest.mock("@expo/vector-icons", () => ({
-  Ionicons: "Ionicons",
+  Ionicons: ({ name, ...props }: any) => {
+    const { View } = require("react-native");
+    return <View testID={`icon-${name}`} {...props} />;
+  },
 }));
 
 import React from "react";
 import { Alert } from "react-native";
-import { render, waitFor, act } from "@testing-library/react-native";
+import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 import ManageTrackersScreen from "@/app/(app)/manage-trackers";
 import {
   listFamilyCircles,
@@ -81,16 +84,10 @@ describe("ManageTrackersScreen — TRACK-UC-06", () => {
   });
 
   it("shows an Alert with the member name when the trash icon is pressed", async () => {
-    const { getAllByText, getByText } = render(<ManageTrackersScreen />);
+    const { getAllByTestId, getByText } = render(<ManageTrackersScreen />);
     await waitFor(() => expect(getByText("alice")).toBeTruthy());
 
-    // The trash Pressable wraps an Ionicons; press it via the parent container.
-    // We find the row by username, then look for the Ionicons "trash" sibling.
-    const { fireEvent } = require("@testing-library/react-native");
-    // Re-render once to stabilise, then press the trash icon.
-    const trashButtons = getAllByText("Ionicons");
-    // The trash Ionicons is the last one in the member row.
-    const trashBtn = trashButtons[trashButtons.length - 1];
+    const trashBtn = getAllByTestId("icon-trash")[0];
     await act(async () => { fireEvent.press(trashBtn); });
 
     expect(Alert.alert).toHaveBeenCalledTimes(1);
@@ -101,12 +98,11 @@ describe("ManageTrackersScreen — TRACK-UC-06", () => {
   });
 
   it("calls removeMemberFromFamilyCircle and removes the row when confirmed", async () => {
-    const { getAllByText, getByText, queryByText } = render(<ManageTrackersScreen />);
+    const { getAllByTestId, getByText, queryByText } = render(<ManageTrackersScreen />);
     await waitFor(() => expect(getByText("alice")).toBeTruthy());
 
-    const { fireEvent } = require("@testing-library/react-native");
-    const trashButtons = getAllByText("Ionicons");
-    await act(async () => { fireEvent.press(trashButtons[trashButtons.length - 1]); });
+    const trashBtn = getAllByTestId("icon-trash")[0];
+    await act(async () => { fireEvent.press(trashBtn); });
 
     // Get the destructive ("Remove") button from the Alert call.
     const alertButtons = (Alert.alert as jest.Mock).mock.calls[0][2] as any[];
@@ -120,17 +116,15 @@ describe("ManageTrackersScreen — TRACK-UC-06", () => {
   });
 
   it("does NOT call removeMemberFromFamilyCircle when the user cancels", async () => {
-    const { getAllByText, getByText } = render(<ManageTrackersScreen />);
+    const { getAllByTestId, getByText } = render(<ManageTrackersScreen />);
     await waitFor(() => expect(getByText("alice")).toBeTruthy());
 
-    const { fireEvent } = require("@testing-library/react-native");
-    const trashButtons = getAllByText("Ionicons");
-    await act(async () => { fireEvent.press(trashButtons[trashButtons.length - 1]); });
+    const trashBtn = getAllByTestId("icon-trash")[0];
+    await act(async () => { fireEvent.press(trashBtn); });
 
     const alertButtons = (Alert.alert as jest.Mock).mock.calls[0][2] as any[];
     const cancelBtn = alertButtons.find((b: any) => b.style === "cancel");
     expect(cancelBtn).toBeDefined();
-    // Cancel button has no onPress in the component — just verify service not called.
     await act(async () => { cancelBtn.onPress?.(); });
 
     expect(mockRemoveMember).not.toHaveBeenCalled();

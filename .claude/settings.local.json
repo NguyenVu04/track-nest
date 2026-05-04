@@ -19,7 +19,13 @@
       "PowerShell(ls -Path \"D:\\\\track-nest\\\\frontend\\\\TrackNest\\\\app\" -Recurse | ForEach-Object { $_.FullName })",
       "PowerShell(ls *)",
       "PowerShell(ls \"D:\\\\track-nest\\\\frontend\\\\TrackNest\\\\components\" | Where-Object {$_.PSIsContainer})",
-      "PowerShell(ls \"D:\\\\track-nest\\\\frontend\\\\TrackNest\\\\proto\" | Where-Object {$_.Extension -eq \".proto\"})"
+      "PowerShell(ls \"D:\\\\track-nest\\\\frontend\\\\TrackNest\\\\proto\" | Where-Object {$_.Extension -eq \".proto\"})",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(sed -n '248,256p' D:/track-nest/frontend/TrackNest/node_modules/jest-runtime/build/index.js)",
+      "Bash(sed -n '1100,1115p' D:/track-nest/frontend/TrackNest/node_modules/jest-runtime/build/index.js)",
+      "Bash(sed -n '565,580p' D:/track-nest/frontend/TrackNest/node_modules/jest-runtime/build/index.js)",
+      "Bash(sed -n '665,680p' D:/track-nest/frontend/TrackNest/node_modules/jest-runtime/build/index.js)"
     ]
   }
 }

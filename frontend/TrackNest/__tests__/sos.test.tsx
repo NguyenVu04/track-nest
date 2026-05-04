@@ -7,7 +7,6 @@
  */
 
 const mockReplace = jest.fn();
-const mockShowToast = jest.fn();
 const mockCreateEmergency = jest.fn();
 
 jest.mock("expo-router", () => ({
@@ -46,7 +45,7 @@ jest.mock("@/hooks/useTranslation", () => ({
 }));
 
 jest.mock("@/utils", () => ({
-  showToast: mockShowToast,
+  showToast: jest.fn(),
 }));
 
 jest.mock("axios", () => ({
@@ -71,7 +70,9 @@ import { useEmergency } from "@/contexts/EmergencyContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalSearchParams } from "expo-router";
 import { isAxiosError } from "axios";
+import { showToast } from "@/utils";
 
+const mockShowToast = showToast as jest.Mock;
 const mockUseEmergency = useEmergency as jest.Mock;
 const mockUseAuth = useAuth as jest.Mock;
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock;

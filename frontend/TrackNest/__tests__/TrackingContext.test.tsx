@@ -67,6 +67,12 @@ describe("TrackingContext — TRACK-UC-02", () => {
       mockGetItem.mockResolvedValue("true");
       const { getByTestId } = renderWithProvider();
 
+      // Wait for the async loadPreferences() effect to complete before interacting,
+      // otherwise it can race and overwrite the state back to "true" after the press.
+      await waitFor(() =>
+        expect(getByTestId("value").props.children).toBe("true"),
+      );
+
       await act(async () => {
         fireEvent.press(getByTestId("disable"));
       });

@@ -1,8 +1,9 @@
 module.exports = {
   preset: 'jest-expo',
-  // setupFiles runs before the test framework and before test file imports, so
-  // jest.mock() here is applied before any Expo module loads the winter runtime.
+  // setupFiles runs before the test framework (no jest.mock available here).
   setupFiles: ['<rootDir>/jest.testenv-setup.js'],
+  // setupFilesAfterEnv runs after jest is initialised — jest.mock() works here.
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)',
   ],
