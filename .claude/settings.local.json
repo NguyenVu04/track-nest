@@ -5,7 +5,12 @@
       "Bash(./gradlew build:*)",
       "Bash(xargs grep:*)",
       "Bash(grep -E \"\\\\.\\(ts|tsx|ts|yaml\\)$\")",
-      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(node *)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\track-nest\\\\frontend\\\\track-nest-web\" -Recurse -Directory | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\('D:\\\\track-nest\\\\frontend\\\\track-nest-web\\\\', ''\\) } | Sort-Object)",
+      "Bash(npm test *)",
+      "Bash(npx jest *)",
+      "Bash(node_modules/.bin/jest --version)"
     ]
   }
 }
