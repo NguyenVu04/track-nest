@@ -155,6 +155,8 @@ export interface FileUploadResponse {
   url: string;
   contentType: string;
   size: number;
+  publicUrl: string;
+  objectName: string;
 }
 
 export interface GuidelinesDocumentResponse {
