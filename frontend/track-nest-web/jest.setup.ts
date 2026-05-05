@@ -66,7 +66,7 @@ jest.mock("framer-motion", () => {
       function Motion({ children, ...rest }, ref) {
         const cleaned = { ...rest } as Record<string, unknown>;
         FRAMER_ONLY_PROPS.forEach((k) => delete cleaned[k]);
-        return React.createElement(tag, { ...cleaned, ref }, children);
+        return React.createElement(tag, { ...cleaned, ref }, children as React.ReactNode);
       },
     );
     Component.displayName = `motion.${tag}`;
