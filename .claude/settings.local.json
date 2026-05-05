@@ -25,7 +25,31 @@
       "Bash(sed -n '248,256p' D:/track-nest/frontend/TrackNest/node_modules/jest-runtime/build/index.js)",
       "Bash(sed -n '1100,1115p' D:/track-nest/frontend/TrackNest/node_modules/jest-runtime/build/index.js)",
       "Bash(sed -n '565,580p' D:/track-nest/frontend/TrackNest/node_modules/jest-runtime/build/index.js)",
-      "Bash(sed -n '665,680p' D:/track-nest/frontend/TrackNest/node_modules/jest-runtime/build/index.js)"
+      "Bash(sed -n '665,680p' D:/track-nest/frontend/TrackNest/node_modules/jest-runtime/build/index.js)",
+      "Bash(Get-ChildItem *)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\track-nest\\\\keycloak\" -Recurse | ForEach-Object { $_.FullName })",
+      "Bash(npx tsc *)",
+      "Bash(yarn tsc *)",
+      "Bash(yarn build *)",
+      "Bash(.\\\\node_modules\\\\.bin\\\\tsc --noEmit)",
+      "Bash(rtk gain *)",
+      "PowerShell(rtk gain *)",
+      "Bash(rtk grep *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
     ]
   }
 }

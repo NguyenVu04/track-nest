@@ -13,7 +13,7 @@ const ROLE_ROUTES: Record<string, UserRole[]> = {
   "/dashboard/missing-persons":    ["Reporter"],
   "/dashboard/crime-reports":      ["Reporter"],
   "/dashboard/guidelines":         ["Reporter"],
-  "/dashboard/emergency-requests": ["Emergency Service"],
+  "/dashboard/emergency-requests": ["Emergency Service", "Admin"],
   "/dashboard/safe-zones":         ["Emergency Service"],
   "/dashboard/accounts":           ["Admin"],
 };
