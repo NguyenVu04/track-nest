@@ -159,6 +159,18 @@ describe("Scroll behavior", () => {
     expect(nav.className).toContain("bg-transparent");
   });
 
+  it("applies scrolled styles when window.scrollY exceeds 20", async () => {
+    Object.defineProperty(window, "scrollY", { value: 30, writable: true, configurable: true });
+    render(<LandingPage />);
+    await act(async () => {
+      window.dispatchEvent(new Event("scroll"));
+    });
+    const nav = document.querySelector("nav")!;
+    expect(nav.className).toContain("bg-white/95");
+    // Reset scrollY for subsequent tests
+    Object.defineProperty(window, "scrollY", { value: 0, writable: true, configurable: true });
+  });
+
   it("cleans up scroll listener on unmount", () => {
     const removeSpy = jest.spyOn(window, "removeEventListener");
     const { unmount } = render(<LandingPage />);

@@ -31,9 +31,9 @@ import { useAuth } from "@/contexts/AuthContext";
 
 /* ── Animation variants ─────────────────────────────────────────────────── */
 
-const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+export const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-const fadeUp: Variants = {
+export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: (delay = 0) => ({
     opacity: 1,
@@ -42,7 +42,7 @@ const fadeUp: Variants = {
   }),
 };
 
-const fadeIn: Variants = {
+export const fadeIn: Variants = {
   hidden: { opacity: 0 },
   visible: (delay = 0) => ({
     opacity: 1,
@@ -50,7 +50,7 @@ const fadeIn: Variants = {
   }),
 };
 
-const slideLeft: Variants = {
+export const slideLeft: Variants = {
   hidden: { opacity: 0, x: -60 },
   visible: (delay = 0) => ({
     opacity: 1,
@@ -59,7 +59,7 @@ const slideLeft: Variants = {
   }),
 };
 
-const slideRight: Variants = {
+export const slideRight: Variants = {
   hidden: { opacity: 0, x: 60 },
   visible: (delay = 0) => ({
     opacity: 1,
@@ -68,7 +68,7 @@ const slideRight: Variants = {
   }),
 };
 
-const scaleIn: Variants = {
+export const scaleIn: Variants = {
   hidden: { opacity: 0, scale: 0.88 },
   visible: (delay = 0) => ({
     opacity: 1,

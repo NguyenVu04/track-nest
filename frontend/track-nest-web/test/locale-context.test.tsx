@@ -118,4 +118,17 @@ describe("useLocale", () => {
     expect(capturedLocale).toBe("en");
     expect(typeof capturedSetLocale).toBe("function");
   });
+
+  it("default context setLocale is a no-op (used outside provider)", () => {
+    // Calling setLocale from the raw context default must not throw
+    function OutsideProvider() {
+      const { locale, setLocale } = useLocale();
+      setLocale("vi"); // invokes the default no-op
+      return <span data-testid="locale">{locale}</span>;
+    }
+
+    // The default context value is { locale: "en", setLocale: () => {} }
+    render(<OutsideProvider />);
+    expect(screen.getByTestId("locale")).toHaveTextContent("en");
+  });
 });

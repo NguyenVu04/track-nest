@@ -41,14 +41,14 @@ const STATUS_STYLE: Record<string, { bg: string; text: string; dot: string }> =
     DELETED: { bg: "bg-slate-50", text: "text-slate-500", dot: "bg-slate-400" },
   };
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status }: Readonly<{ status: string }>) {
   const t = useTranslations("status");
   const style = STATUS_STYLE[status] ?? {
     bg: "bg-slate-50",
     text: "text-slate-600",
     dot: "bg-slate-400",
   };
-  const label = t(status.toLowerCase() as Parameters<typeof t>[0]);
+  const label = t(status.toLowerCase());
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text}`}
@@ -62,7 +62,16 @@ function StatusBadge({ status }: { status: string }) {
 function getContentPreview(content: string) {
   if (!content) return "";
   const trimmed = content.trim();
-  if (trimmed.startsWith("<")) return trimmed.replace(/<[^>]+>/g, " ").trim();
+  if (trimmed.startsWith("<")) {
+    let result = "";
+    let inTag = false;
+    for (const ch of trimmed) {
+      if (ch === "<") inTag = true;
+      else if (ch === ">") inTag = false;
+      else if (!inTag) result += ch;
+    }
+    return result.trim();
+  }
   if (trimmed.startsWith("http") || trimmed.endsWith(".html"))
     return "HTML content";
   return trimmed;

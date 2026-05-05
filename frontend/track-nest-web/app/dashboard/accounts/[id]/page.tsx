@@ -31,7 +31,7 @@ const mockUsers: User[] = [
   {
     id: "1",
     username: "admin",
-    password: "admin123",
+    password: "",
     email: "admin@tracknest.com",
     role: ["Admin"],
     fullName: "System Administrator",
@@ -41,7 +41,7 @@ const mockUsers: User[] = [
   {
     id: "2",
     username: "reporter1",
-    password: "password123",
+    password: "",
     email: "reporter1@tracknest.com",
     role: ["Reporter"],
     fullName: "John Smith",
@@ -51,7 +51,7 @@ const mockUsers: User[] = [
   {
     id: "3",
     username: "reporter2",
-    password: "password123",
+    password: "",
     email: "reporter2@tracknest.com",
     role: ["Reporter"],
     fullName: "Jane Doe",
@@ -61,7 +61,7 @@ const mockUsers: User[] = [
   {
     id: "4",
     username: "emergency1",
-    password: "password123",
+    password: "",
     email: "emergency1@tracknest.com",
     role: ["Emergency Service"],
     fullName: "Officer Mike Johnson",
@@ -71,7 +71,7 @@ const mockUsers: User[] = [
   {
     id: "5",
     username: "reporter3",
-    password: "password123",
+    password: "",
     email: "reporter3@tracknest.com",
     role: ["Reporter"],
     fullName: "Sarah Williams",
@@ -81,7 +81,7 @@ const mockUsers: User[] = [
   {
     id: "6",
     username: "emergency2",
-    password: "password123",
+    password: "",
     email: "emergency2@tracknest.com",
     role: ["Emergency Service"],
     fullName: "Detective Lisa Chen",

@@ -56,7 +56,16 @@ function SeverityBadge({ severity }: { severity: number }) {
 function getContentPreview(content: string) {
   if (!content) return "";
   const trimmed = content.trim();
-  if (trimmed.startsWith("<")) return trimmed.replace(/<[^>]+>/g, " ").trim();
+  if (trimmed.startsWith("<")) {
+    let result = "";
+    let inTag = false;
+    for (const ch of trimmed) {
+      if (ch === "<") inTag = true;
+      else if (ch === ">") inTag = false;
+      else if (!inTag) result += ch;
+    }
+    return result.trim();
+  }
   if (trimmed.startsWith("http") || trimmed.endsWith(".html"))
     return "HTML content";
   return trimmed;
