@@ -80,6 +80,8 @@ static_resources:
                         - match:
                             prefix: "/emergency-ops/api-docs"
                         - match:
+                            prefix: "/emergency-ops/emergency-admin"
+                        - match:
                             prefix: "/emergency-ops/"
                           requires:
                             requires_any:

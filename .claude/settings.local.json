@@ -36,7 +36,10 @@
       "Bash(.\\\\node_modules\\\\.bin\\\\tsc --noEmit)",
       "Bash(rtk gain *)",
       "PowerShell(rtk gain *)",
-      "Bash(rtk grep *)"
+      "Bash(rtk grep *)",
+      "Bash(python *)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(powershell *)"
     ]
   },
   "hooks": {
