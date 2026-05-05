@@ -350,7 +350,7 @@ export default function LandingPage() {
           </div>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* <div className="hidden md:flex items-center gap-3">
             <Link
               href="/login"
               className="text-gray-700 text-sm font-medium hover:text-[#1a3a3a] transition-colors"
@@ -365,7 +365,7 @@ export default function LandingPage() {
                 Get Started
               </Link>
             </motion.div>
-          </div>
+          </div> */}
 
           {/* Mobile menu button */}
           <button
@@ -401,12 +401,12 @@ export default function LandingPage() {
                     {link}
                   </a>
                 ))}
-                <Link
+                {/* <Link
                   href="/login"
                   className="block w-full text-center bg-[#1a3a3a] text-white py-3 rounded-full font-semibold"
                 >
                   Get Started
-                </Link>
+                </Link> */}
               </div>
             </motion.div>
           )}
