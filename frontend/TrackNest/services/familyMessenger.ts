@@ -20,6 +20,9 @@ let _client: FamilyMessengerControllerClient | null = null;
 async function getClient(): Promise<FamilyMessengerControllerClient> {
   if (!_client) {
     const url = await getGrpcUrl();
+
+    console.log("Family Messenger gRPC URL:", url);
+
     _client = new FamilyMessengerControllerClient(url, null, { format: "text" });
   }
   return _client;

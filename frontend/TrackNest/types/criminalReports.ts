@@ -2,6 +2,7 @@ export interface CrimeReport {
   id: string;
   title: string;
   content: string;
+  contentDocId?: string;
   severity: number;
   date: string;
   latitude: number;
@@ -28,6 +29,7 @@ export interface MissingPersonReport {
   contactPhone: string;
   date: string;
   content: string;
+  contentDocId?: string;
   status: "PENDING" | "REJECTED" | "PUBLISHED";
   isPublic: boolean;
   createdAt: string;
@@ -110,6 +112,32 @@ export interface SubmitMissingPersonReportParams {
   contactPhone: string;
   date: string;
   content: string;
+}
+
+export interface SubmitCrimeReportUserParams {
+  title: string;
+  content?: string;
+  severity: number;
+  date: string;
+  longitude: number;
+  latitude: number;
+  numberOfVictims?: number;
+  numberOfOffenders?: number;
+  arrested?: boolean;
+  photos?: Array<{ uri: string; filename?: string; type?: string }>;
+}
+
+export interface SubmitMissingPersonReportUserParams {
+  title: string;
+  fullName: string;
+  personalId: string;
+  content: string;
+  photo?: { uri: string; filename?: string; type?: string };
+  contactEmail: string;
+  contactPhone: string;
+  date: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface CrimeTrendPoint {

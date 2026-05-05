@@ -47,5 +47,4 @@ app-example
 
 
 /.github
-
-/coverage
+coverage/

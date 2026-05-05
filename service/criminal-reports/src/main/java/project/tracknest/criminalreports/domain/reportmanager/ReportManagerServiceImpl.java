@@ -58,10 +58,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
         MissingPersonReportStatus status = statusRepository.findByName(DEFAULT_STATUS)
                 .orElseGet(() -> statusRepository.save(MissingPersonReportStatus.builder().name(DEFAULT_STATUS).build()));
 
-        UUID reportId = UUID.randomUUID();
-
         MissingPersonReport report = MissingPersonReport.builder()
-                .id(reportId)
                 .title(request.getTitle())
                 .fullName(request.getFullName())
                 .personalId(request.getPersonalId())
@@ -185,11 +182,9 @@ class ReportManagerServiceImpl implements ReportManagerService {
         Reporter reporter = reporterRepository.findById(reporterId)
                 .orElseGet(() -> reporterRepository.save(Reporter.builder().id(reporterId).build()));
 
-        UUID reportId = UUID.randomUUID();
         String contentObjectName = uploadHtmlContent(request.getContent());
 
         CrimeReport report = CrimeReport.builder()
-                .id(reportId)
                 .title(request.getTitle())
             .content(contentObjectName)
                 .severity(request.getSeverity())
@@ -298,11 +293,9 @@ class ReportManagerServiceImpl implements ReportManagerService {
         Reporter reporter = reporterRepository.findById(reporterId)
                 .orElseGet(() -> reporterRepository.save(Reporter.builder().id(reporterId).build()));
 
-        UUID documentId = UUID.randomUUID();
         String contentObjectName = uploadHtmlContent(request.getContent());
 
         GuidelinesDocument document = GuidelinesDocument.builder()
-                .id(documentId)
                 .title(request.getTitle())
                 .abstractText(request.getAbstractText())
             .content(contentObjectName)

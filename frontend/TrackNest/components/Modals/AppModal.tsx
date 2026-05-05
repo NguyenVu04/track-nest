@@ -49,7 +49,7 @@ export function AppModal({
       <Pressable style={styles.overlay} onPress={onRequestClose ?? buttons[0]?.onPress}>
         <Pressable style={styles.card} onPress={() => {}}>
           {/* Accent bar */}
-          <View style={[styles.accentBar, { backgroundColor: cfg.accent }]} />
+          {/* <View style={[styles.accentBar, { backgroundColor: cfg.accent }]} /> */}
 
           <View style={styles.body}>
             <Ionicons name={cfg.iconName} size={36} color={cfg.iconColor} style={styles.icon} />

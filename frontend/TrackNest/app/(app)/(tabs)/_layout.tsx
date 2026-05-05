@@ -12,8 +12,8 @@ import { colors, spacing } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Tabs, useRouter, useSegments } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { DeviceEventEmitter } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { DeviceEventEmitter, InteractionManager } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TAB_BAR_HEIGHT = 70;
@@ -45,7 +45,15 @@ export default function RootLayout() {
     return () => sub.remove();
   }, []);
 
+  const familyPressLockRef = useRef(false);
+
   const handleFamilyPress = useCallback(() => {
+    if (familyPressLockRef.current) return;
+    familyPressLockRef.current = true;
+    setTimeout(() => {
+      familyPressLockRef.current = false;
+    }, 600);
+
     const emitOpenSheet = () => {
       DeviceEventEmitter.emit(OPEN_GENERAL_INFO_SHEET_EVENT);
     };
@@ -57,7 +65,7 @@ export default function RootLayout() {
     }
 
     router.push("/(app)/(tabs)/map");
-    setTimeout(emitOpenSheet, 300);
+    InteractionManager.runAfterInteractions(emitOpenSheet);
   }, [router, segments]);
 
   if (!isAuthenticated && !isGuestMode && !__DEV__) return null;
@@ -143,7 +151,7 @@ export default function RootLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: "Dashboard",
+          title: t.dashboard,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "grid" : "grid-outline"}
@@ -230,7 +238,7 @@ export default function RootLayout() {
       <Tabs.Screen
         name="voice-test"
         options={{
-          title: "Voice Test",
+          title: t.voiceTest,
           href: showDevTabs ? undefined : null,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons

@@ -5,6 +5,7 @@ const createJestConfig = nextJest({ dir: './' })
 
 const config: Config = {
   testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   collectCoverage: true,
   coverageProvider: 'v8',
   coverageDirectory: 'coverage',
@@ -12,7 +13,13 @@ const config: Config = {
   collectCoverageFrom: [
     // ── Files with meaningful unit tests ────────────────────────────────
     'app/page.tsx',
+    'app/dashboard/safe-zones/page.tsx',
+    'app/dashboard/emergency-requests/page.tsx',
     'components/ui/utils.ts',
+    'components/shared/ConfirmModal.tsx',
+    'components/shared/GuidelineDashboard.tsx',
+    'components/missing-persons/MissingPersonList.tsx',
+    'components/crime-reports/CrimeReportList.tsx',
     'contexts/LocaleContext.tsx',
     'contexts/NotificationContext.tsx',
     'services/stompService.ts',

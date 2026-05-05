@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -26,193 +26,20 @@ import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 
-// Mock data for users
-const mockUsers: User[] = [
-  {
-    id: "1",
-    username: "admin",
-    password: "",
-    email: "admin@tracknest.com",
-    role: ["Admin"],
-    fullName: "System Administrator",
-    status: "Active",
-    createdAt: "2025-01-01T00:00:00Z",
-  },
-  {
-    id: "2",
-    username: "reporter1",
-    password: "",
-    email: "reporter1@tracknest.com",
-    role: ["Reporter"],
-    fullName: "John Smith",
-    status: "Active",
-    createdAt: "2025-06-15T10:30:00Z",
-  },
-  {
-    id: "3",
-    username: "reporter2",
-    password: "",
-    email: "reporter2@tracknest.com",
-    role: ["Reporter"],
-    fullName: "Jane Doe",
-    status: "Active",
-    createdAt: "2025-07-20T14:45:00Z",
-  },
-  {
-    id: "4",
-    username: "emergency1",
-    password: "",
-    email: "emergency1@tracknest.com",
-    role: ["Emergency Service"],
-    fullName: "Officer Mike Johnson",
-    status: "Active",
-    createdAt: "2025-08-10T08:00:00Z",
-  },
-  {
-    id: "5",
-    username: "reporter3",
-    password: "",
-    email: "reporter3@tracknest.com",
-    role: ["Reporter"],
-    fullName: "Sarah Williams",
-    status: "Banned",
-    createdAt: "2025-09-05T16:20:00Z",
-  },
-  {
-    id: "6",
-    username: "emergency2",
-    password: "",
-    email: "emergency2@tracknest.com",
-    role: ["Emergency Service"],
-    fullName: "Detective Lisa Chen",
-    status: "Active",
-    createdAt: "2025-10-01T09:15:00Z",
-  },
-];
-
-// Mock activity data
-const mockActivities: UserActivity[] = [
-  {
-    id: "act-1",
-    userId: "2",
-    action: "create",
-    targetType: "missing-person",
-    targetId: "mp-1",
-    targetName: "Sarah Johnson",
-    timestamp: "2026-01-02T16:00:00Z",
-    details: "Created missing person report",
-  },
-  {
-    id: "act-2",
-    userId: "2",
-    action: "publish",
-    targetType: "missing-person",
-    targetId: "mp-1",
-    targetName: "Sarah Johnson",
-    timestamp: "2026-01-02T16:30:00Z",
-    details: "Published missing person report",
-  },
-  {
-    id: "act-3",
-    userId: "2",
-    action: "create",
-    targetType: "crime-report",
-    targetId: "cr-1",
-    targetName: "Theft - Vehicle Break-in",
-    timestamp: "2026-01-03T09:00:00Z",
-    details: "Created crime report",
-  },
-  {
-    id: "act-4",
-    userId: "2",
-    action: "edit",
-    targetType: "crime-report",
-    targetId: "cr-1",
-    targetName: "Theft - Vehicle Break-in",
-    timestamp: "2026-01-03T10:15:00Z",
-    details: "Updated crime report details",
-  },
-  {
-    id: "act-5",
-    userId: "3",
-    action: "create",
-    targetType: "guideline",
-    targetId: "gl-1",
-    targetName: "Missing Person Report Guidelines",
-    timestamp: "2025-12-15T10:00:00Z",
-    details: "Published new guideline",
-  },
-  {
-    id: "act-6",
-    userId: "4",
-    action: "create",
-    targetType: "emergency-request",
-    targetId: "er-1",
-    targetName: "Emergency Response Request",
-    timestamp: "2026-01-04T14:30:00Z",
-    details: "Created emergency request",
-  },
-  {
-    id: "act-7",
-    userId: "5",
-    action: "create",
-    targetType: "missing-person",
-    targetId: "mp-2",
-    targetName: "David Martinez",
-    timestamp: "2026-01-03T10:00:00Z",
-    details: "Created missing person report",
-  },
-  {
-    id: "act-8",
-    userId: "5",
-    action: "delete",
-    targetType: "crime-report",
-    targetId: "cr-2",
-    targetName: "Vandalism Report",
-    timestamp: "2026-01-04T11:00:00Z",
-    details: "Deleted crime report",
-  },
-  {
-    id: "act-9",
-    userId: "1",
-    action: "ban",
-    targetType: "account",
-    targetId: "5",
-    targetName: "reporter3",
-    timestamp: "2026-01-05T09:00:00Z",
-    details: "Banned user account for policy violation",
-  },
-  {
-    id: "act-10",
-    userId: "6",
-    action: "create",
-    targetType: "safe-zone",
-    targetId: "sz-1",
-    targetName: "Central Police Station",
-    timestamp: "2026-01-01T09:00:00Z",
-    details: "Added new safe zone",
-  },
-];
 
 export default function AccountDetailPage() {
   const router = useRouter();
   const { id } = useParams();
   const { user } = useAuth();
-  const [users, setUsers] = useState<User[]>(mockUsers);
-  const [isLoading, setIsLoading] = useState(true);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     type: "ban" | "unban" | "delete";
   } | null>(null);
   const [activityFilter, setActivityFilter] = useState<string>("all");
 
-  useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-  }, []);
-
   const selectedAccount = users.find((u) => u.id === id);
-  const userActivities = mockActivities.filter((a) => a.userId === id);
+  const userActivities: UserActivity[] = [];
 
   // Only Admin can access this page
   if (
@@ -256,16 +83,8 @@ export default function AccountDetailPage() {
     );
   }
 
-  const mockRequest = async (shouldFail = false) => {
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    if (shouldFail) {
-      throw new Error("Mock server error");
-    }
-  };
-
   const handleBan = async () => {
     try {
-      await mockRequest(false);
       setUsers(
         users.map((u) =>
           u.id === selectedAccount.id ? { ...u, status: "Banned" as const } : u,
@@ -281,7 +100,6 @@ export default function AccountDetailPage() {
 
   const handleUnban = async () => {
     try {
-      await mockRequest(false);
       setUsers(
         users.map((u) =>
           u.id === selectedAccount.id ? { ...u, status: "Active" as const } : u,
@@ -297,7 +115,6 @@ export default function AccountDetailPage() {
 
   const handleDelete = async () => {
     try {
-      await mockRequest(false);
       toast.success(`Account "${selectedAccount.username}" has been deleted`);
       setConfirmAction(null);
       router.push("/dashboard/accounts");

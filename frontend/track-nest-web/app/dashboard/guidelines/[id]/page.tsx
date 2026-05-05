@@ -155,7 +155,7 @@ export default function GuidelineDetailPage() {
             <iframe
               title="Guideline content"
               src={guideline.content}
-              className="w-full min-h-[320px] rounded-lg border border-gray-200 bg-white"
+              className="w-full min-h-80 rounded-lg border border-gray-200 bg-white"
             />
           ) : guideline.content?.trim().startsWith("<") ? (
             <div

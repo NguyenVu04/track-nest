@@ -12,11 +12,17 @@ export const Vietnamese = {
   emergencyActivatedBody: "Dịch vụ khẩn cấp đã được thông báo.",
   emergencyFailedTitle: "Yêu cầu khẩn cấp thất bại",
   emergencyFailedBody: "Vui lòng thử lại hoặc gọi trực tiếp dịch vụ khẩn cấp",
+  creatingEmergency: "Đang tạo yêu cầu khẩn cấp...",
+  emergencyTimeoutTitle: "Hết thời gian chờ",
+  emergencyTimeoutBody: "Không thể tạo yêu cầu khẩn cấp. Vui lòng kiểm tra kết nối và thử lại.",
+  emergencyAlreadyActiveTitle: "Yêu cầu khẩn cấp đang hoạt động",
+  emergencyAlreadyActiveBody: "Bạn đã có một yêu cầu khẩn cấp đang được xử lý. Vui lòng chờ yêu cầu hiện tại được giải quyết.",
   emergencyCancelledTitle: "Đã hủy khẩn cấp",
   emergencyCancelledBody: "Cuộc gọi khẩn cấp đã được hủy.",
   sosNotificationChannel: "Thông báo SOS",
   holdToActivate: "Giữ nút trong 5 giây để kích hoạt SOS",
   sosButtonTitle: "Nút SOS",
+  loginRequired: "Vui lòng đăng nhập để sử dụng tính năng SOS.",
 };
 
 export const English = {
@@ -33,9 +39,15 @@ export const English = {
   emergencyActivatedBody: "Emergency services have been notified.",
   emergencyFailedTitle: "Emergency Request Failed",
   emergencyFailedBody: "Please try again or call emergency services directly",
+  creatingEmergency: "Creating emergency request...",
+  emergencyTimeoutTitle: "Request Timed Out",
+  emergencyTimeoutBody: "Could not create the emergency request. Please check your connection and try again.",
+  emergencyAlreadyActiveTitle: "Emergency Already Active",
+  emergencyAlreadyActiveBody: "You already have an active emergency request being processed. Please wait for the current request to be resolved.",
   emergencyCancelledTitle: "Emergency Cancelled",
   emergencyCancelledBody: "The emergency call has been cancelled.",
   sosNotificationChannel: "SOS Notifications",
   holdToActivate: "Hold the button for 5 seconds to activate SOS",
   sosButtonTitle: "SOS Button",
+  loginRequired: "Please log in to use the SOS feature.",
 };

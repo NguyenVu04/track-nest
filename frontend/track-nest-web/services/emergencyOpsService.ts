@@ -129,14 +129,11 @@ export interface DeleteSafeZoneResponse {
 }
 
 export interface PageResponse<T> {
-  content: T[];
-  items: T[]; // Alias for content
-  page: number;
-  size: number;
-  totalElements: number;
+  items: T[];
+  totalItems: number;
   totalPages: number;
-  first: boolean;
-  last: boolean;
+  currentPage: number;
+  pageSize: number;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -177,6 +174,22 @@ export const emergencyOpsService = {
   ): Promise<PageResponse<EmergencyRequestResponse>> => {
     const response = await api.get<PageResponse<EmergencyRequestResponse>>(
       "/emergency-request-manager/requests",
+      { params: { status, page, size } },
+    );
+    return response.data;
+  },
+
+  /**
+   * List ALL emergency requests regardless of which service is assigned
+   * or who submitted them. Requires ADMIN role.
+   */
+  getAllEmergencyRequests: async (
+    status?: string,
+    page = 0,
+    size = 10,
+  ): Promise<PageResponse<EmergencyRequestResponse>> => {
+    const response = await api.get<PageResponse<EmergencyRequestResponse>>(
+      "/emergency-admin/requests",
       { params: { status, page, size } },
     );
     return response.data;

@@ -1,5 +1,9 @@
-import { BottomSheetFlatList, BottomSheetModal } from "@gorhom/bottom-sheet";
-import React from "react";
+import {
+  BottomSheetBackdrop,
+  BottomSheetFlatList,
+  BottomSheetModal,
+} from "@gorhom/bottom-sheet";
+import React, { useCallback } from "react";
 import { StyleSheet, useWindowDimensions } from "react-native";
 
 type GeneralFollowerInfoSheetProps = {
@@ -17,6 +21,20 @@ const GeneralFollowerInfoSheet = ({
 }: GeneralFollowerInfoSheetProps) => {
   const { height: screenHeight } = useWindowDimensions();
 
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        opacity={0.2}
+        pressBehavior="close"
+        style={[props.style, { bottom: tabBarHeight }]}
+      />
+    ),
+    [tabBarHeight],
+  );
+
   return (
     <BottomSheetModal
       ref={generalInfoSheetRef}
@@ -24,7 +42,8 @@ const GeneralFollowerInfoSheet = ({
       enableDynamicSizing={true}
       maxDynamicContentSize={Math.floor(screenHeight * 0.45)}
       index={0}
-      enableContentPanningGesture={false}
+      enablePanDownToClose
+      backdropComponent={renderBackdrop}
       bottomInset={tabBarHeight}
       containerStyle={{ bottom: tabBarHeight }}
     >

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, TouchableOpacity, Modal, TextInput, FlatList, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, SafeAreaView } from "react-native";
+import { View, Text, TouchableOpacity, Modal, TextInput, FlatList, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radii, spacing } from "@/styles/styles";
 import { criminalReportsService } from "@/services/criminalReports";
@@ -16,6 +17,8 @@ export function ChatbotPanel({
   title = "Document Chat",
   emptyState = "Ask a question about this document.",
 }: ChatbotPanelProps) {
+  console.log("Initializing ChatbotPanel with documentId:", rawDocumentId);
+
   const documentId = rawDocumentId?.replace(/<[^>]*>?/gm, "")?.replace(/\.html$/i, "");
   const [isOpen, setIsOpen] = useState(false);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
@@ -111,8 +114,8 @@ export function ChatbotPanel({
         <Ionicons name="chatbubbles" size={24} color="#fff" />
       </TouchableOpacity>
 
-      <Modal visible={isOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setIsOpen(false)}>
-        <SafeAreaView style={styles.modalContainer}>
+      <Modal visible={isOpen} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setIsOpen(false)}>
+        <SafeAreaView style={styles.modalContainer} edges={["left", "right", "bottom", "top"]}>
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
               <View style={styles.iconBox}>
@@ -130,7 +133,7 @@ export function ChatbotPanel({
 
           <KeyboardAvoidingView 
             style={styles.keyboardView} 
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
           >
             <View style={styles.chatContainer}>
               <FlatList
@@ -201,7 +204,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.surface,
   },
   header: {
     flexDirection: "row",

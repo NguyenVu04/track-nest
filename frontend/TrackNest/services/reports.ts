@@ -1,4 +1,5 @@
-import { criminalReportsService, CrimeReport, MissingPersonReport, GuidelinesDocument, getSeverityLabel } from "./criminalReports";
+import { getSeverityLabel } from "@/utils/crimeHelpers";
+import { criminalReportsService, CrimeReport, MissingPersonReport, GuidelinesDocument } from "./criminalReports";
 
 // Legacy Types (for backward compatibility with UI components)
 export type Report = {
@@ -76,7 +77,7 @@ function adaptGuidelinesToGuide(guidelines: GuidelinesDocument): Guide {
   return {
     id: guidelines.id,
     title: guidelines.title,
-    category: guidelines.published ? "Published" : "Draft",
+    category: guidelines.isPublic ? "Published" : "Draft",
     content: guidelines.content,
   };
 }
@@ -88,10 +89,10 @@ export async function fetchReports({
   perPage = 10,
 } = {}) {
   try {
-    const response = await criminalReportsService.getCrimeReports({
-      page: page - 1, // Backend uses 0-indexed pages
-      size: perPage,
-    });
+    const response = await criminalReportsService.getUserCrimeReports(
+      page - 1,
+      perPage,
+    );
     
     const adaptedReports = response.content.map(adaptCrimeReportToReport);
     return { 
@@ -108,7 +109,7 @@ export async function fetchReports({
 
 export async function getReportById(id: string) {
   try {
-    const report = await criminalReportsService.getCrimeReportById(id);
+    const report = await criminalReportsService.getUserCrimeReportById(id);
     return adaptCrimeReportToReport(report);
   } catch (error) {
     console.error("Failed to get report by ID:", error);
@@ -121,9 +122,9 @@ export async function fetchMissingPersons({
   perPage = 10,
 } = {}) {
   try {
-    const response = await criminalReportsService.getMissingPersonReports(
-      page - 1, // Backend uses 0-indexed pages
-      perPage
+    const response = await criminalReportsService.getUserMissingPersonReports(
+      page - 1,
+      perPage,
     );
     
     const adaptedMissing = response.content.map(adaptMissingPersonToUI);
@@ -143,9 +144,9 @@ export async function fetchGuides({
   perPage = 10,
 } = {}) {
   try {
-    const response = await criminalReportsService.getGuidelines(
-      page - 1, // Backend uses 0-indexed pages
-      perPage
+    const response = await criminalReportsService.getUserGuidelines(
+      page - 1,
+      perPage,
     );
     
     const adaptedGuides = response.content.map(adaptGuidelinesToGuide);

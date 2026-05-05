@@ -3,11 +3,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEmergency } from "@/contexts/EmergencyContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { showToast } from "@/utils";
+import { isAxiosError } from "axios";
 import { colors } from "@/styles/styles";
 import * as Notifications from "expo-notifications";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   BackHandler,
   Dimensions,
@@ -20,6 +22,8 @@ import {
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.6;
+const EMERGENCY_TIMEOUT_MS = 30_000;
+const TIMEOUT_ERROR = "EMERGENCY_TIMEOUT";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -38,6 +42,7 @@ export default function SosScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const [countdown, setCountdown] = useState(10);
   const [isCancelled, setIsCancelled] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const emergencyTriggeredRef = useRef(false);
@@ -46,10 +51,10 @@ export default function SosScreen() {
   useEffect(() => {
     if (isAuthLoading) return;
     if (!user) {
-      showToast("Please log in to use the SOS feature.");
+      showToast(t.loginRequired);
       router.replace("/map");
     }
-  }, [isAuthLoading, user, router]);
+  }, [isAuthLoading, user, router, t.loginRequired]);
 
   useEffect(() => {
     const setupNotifications = async () => {
@@ -76,27 +81,42 @@ export default function SosScreen() {
     if (emergencyTriggeredRef.current) return;
     if (!user) return;
     emergencyTriggeredRef.current = true;
+    setIsSubmitting(true);
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error(TIMEOUT_ERROR)), EMERGENCY_TIMEOUT_MS);
+    });
+
     try {
-      await createEmergencyRequest(getTargetId());
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: t.emergencyActivatedTitle,
-          body: t.emergencyActivatedBody,
-        },
-        trigger: null,
-      });
+      await Promise.race([createEmergencyRequest(getTargetId()), timeoutPromise]);
+      clearTimeout(timeoutId!);
+      showToast(t.emergencyActivatedBody, t.emergencyActivatedTitle);
       router.replace("/map");
-    } catch {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: t.emergencyFailedTitle,
-          body: t.emergencyFailedBody,
-        },
-        trigger: null,
-      });
+    } catch (err) {
+      clearTimeout(timeoutId!);
+      const isTimeout = err instanceof Error && err.message === TIMEOUT_ERROR;
+      const isAlreadyActive = !isTimeout && isAxiosError(err) && err.response?.status === 409;
+      showToast(
+        isTimeout ? t.emergencyTimeoutBody : isAlreadyActive ? t.emergencyAlreadyActiveBody : t.emergencyFailedBody,
+        isTimeout ? t.emergencyTimeoutTitle : isAlreadyActive ? t.emergencyAlreadyActiveTitle : t.emergencyFailedTitle,
+      );
       router.replace("/map");
     }
-  }, [router, t, createEmergencyRequest, getTargetId]);
+  }, [
+    user,
+    createEmergencyRequest,
+    getTargetId,
+    t.emergencyActivatedTitle,
+    t.emergencyActivatedBody,
+    t.emergencyTimeoutTitle,
+    t.emergencyTimeoutBody,
+    t.emergencyAlreadyActiveTitle,
+    t.emergencyFailedTitle,
+    t.emergencyAlreadyActiveBody,
+    t.emergencyFailedBody,
+    router,
+  ]);
 
   useEffect(() => {
     const shouldAutoActivate = autoActivate === "1" || autoActivate === "true";
@@ -129,14 +149,8 @@ export default function SosScreen() {
   const cancelEmergency = useCallback(() => {
     setIsCancelled(true);
     if (countdownRef.current) clearInterval(countdownRef.current);
+    showToast(t.emergencyCancelledBody, t.emergencyCancelledTitle);
     router.replace("/map");
-    Notifications.scheduleNotificationAsync({
-      content: {
-        title: t.emergencyCancelledTitle,
-        body: t.emergencyCancelledBody,
-      },
-      trigger: null,
-    });
   }, [router, t]);
 
   const panResponder = useRef(
@@ -192,23 +206,35 @@ export default function SosScreen() {
 
       {/* Frosted countdown circle */}
       <View style={styles.countdownCircle}>
-        <Text style={styles.countdownNumber}>{countdown}</Text>
+        {isSubmitting ? (
+          <ActivityIndicator size="large" color="#fff" />
+        ) : (
+          <Text style={styles.countdownNumber}>{countdown}</Text>
+        )}
       </View>
 
-      {/* Swipe to cancel */}
-      <Text style={styles.actionLabel}>{t.actionRequired}</Text>
+      {isSubmitting ? (
+        <Text style={styles.loadingLabel}>{t.creatingEmergency}</Text>
+      ) : (
+        <>
+          {/* Swipe to cancel */}
+          <Text style={styles.actionLabel}>{t.actionRequired}</Text>
 
-      <View style={styles.swipeContainer}>
-        <Animated.View style={[styles.swipeTrack, { backgroundColor: trackBg }]}>
-          <Text style={styles.swipeTrackText}>{t.swipeToCancel}</Text>
-        </Animated.View>
-        <Animated.View
-          style={[styles.swipeThumb, { transform: [{ translateX }] }]}
-          {...panResponder.panHandlers}
-        >
-          <Text style={styles.swipeChevrons}>{">>"}</Text>
-        </Animated.View>
-      </View>
+          <View style={styles.swipeContainer}>
+            <Animated.View
+              style={[styles.swipeTrack, { backgroundColor: trackBg }]}
+            >
+              <Text style={styles.swipeTrackText}>{t.swipeToCancel}</Text>
+            </Animated.View>
+            <Animated.View
+              style={[styles.swipeThumb, { transform: [{ translateX }] }]}
+              {...panResponder.panHandlers}
+            >
+              <Text style={styles.swipeChevrons}>{">>"}</Text>
+            </Animated.View>
+          </View>
+        </>
+      )}
     </View>
   );
 }
@@ -269,6 +295,13 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textTransform: "uppercase",
     marginBottom: 4,
+  },
+  loadingLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.9)",
+    textAlign: "center",
+    letterSpacing: 0.3,
   },
   swipeContainer: {
     width: SCREEN_WIDTH - 64,

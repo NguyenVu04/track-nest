@@ -72,6 +72,9 @@ export const listFamilyCircles = async (
 
   const metadata = await getAuthMetadata();
 
+  const url = await getGrpcUrl();
+  console.log("Tracking Manager gRPC URL:", url);
+
   try {
     const response = await (
       await getClient()

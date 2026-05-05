@@ -2,8 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: envoy-config
-  labels:
-    {{- include "gateway.envoyLabels" . | nindent 4 }}
+  labels: { { - include "gateway.envoyLabels" . | nindent 4 } }
 data:
   envoy.yaml: |
     overload_manager:
@@ -266,6 +265,9 @@ data:
 
                             - match:
                                 prefix: "/emergency-ops/api-docs"
+
+                            - match:
+                                prefix: "/emergency-ops/emergency-admin"
 
                             - match:
                                 prefix: "/emergency-ops/"

@@ -92,6 +92,8 @@ export const Vietnamese = {
   infoCoordinatesLabel: "Tọa độ",
   infoLastUpdatedLabel: "Cập nhật lần cuối",
   notAvailable: "N/A",
+  familyCircleDefault: "Nhóm gia đình",
+  loadMembersFailed: "Không thể tải danh sách thành viên",
 };
 
 export const English = {
@@ -187,4 +189,6 @@ export const English = {
   infoCoordinatesLabel: "Coordinates",
   infoLastUpdatedLabel: "Last updated",
   notAvailable: "N/A",
+  familyCircleDefault: "Family Circle",
+  loadMembersFailed: "Failed to load circle members",
 };
