@@ -30,35 +30,20 @@ class EmergencyAdminServiceImpl implements EmergencyAdminService {
     private final KeycloakService keycloakService;
 
     private GetAllEmergencyRequestsResponse mapToResponse(
-            EmergencyRequest request,
-            Map<UUID, KeycloakUserProfile> profiles
+            EmergencyRequest request
     ) {
-        KeycloakUserProfile senderProfile = profiles.get(request.getSenderId());
-        KeycloakUserProfile targetProfile = profiles.get(request.getTargetId());
-
         return new GetAllEmergencyRequestsResponse(
                 request.getId(),
-                request.getSenderId(),
-                senderProfile.username(),
-                senderProfile.firstName(),
-                senderProfile.lastName(),
-                senderProfile.phoneNumber(),
-                senderProfile.email(),
-                senderProfile.avatarUrl(),
-                targetProfile.id(),
-                targetProfile.username(),
-                targetProfile.firstName(),
-                targetProfile.lastName(),
-                targetProfile.phoneNumber(),
-                targetProfile.email(),
-                targetProfile.avatarUrl(),
                 request.getOpenAt().toInstant().toEpochMilli(),
                 request.getCloseAt() != null
                         ? request.getCloseAt().toInstant().toEpochMilli()
                         : null,
+                request.getSenderId(),
+                request.getTargetId(),
+                request.getEmergencyService().getId(),
                 request.getStatus().getName(),
-                request.getLatitude(),
-                request.getLongitude()
+                request.getLongitude(),
+                                request.getLatitude()
         );
     }
 
@@ -73,17 +58,10 @@ class EmergencyAdminServiceImpl implements EmergencyAdminService {
         Page<EmergencyRequest> page = emergencyRequestRepository
                 .findAllEmergencyRequests(statusValue, pageable);
 
-        List<EmergencyRequest> requests = page.getContent();
+        System.out.println("Fetched " + page.getNumberOfElements() + " emergency requests from the database");
 
-        Set<UUID> userIds = requests.stream()
-                .flatMap(r -> Stream.of(r.getSenderId(), r.getTargetId()))
-                .collect(Collectors.toSet());
-
-        Map<UUID, KeycloakUserProfile> profiles = userIds.parallelStream()
-                .collect(Collectors.toMap(id -> id, keycloakService::getUserProfile));
-
-        List<GetAllEmergencyRequestsResponse> content = requests.stream()
-                .map(r -> mapToResponse(r, profiles))
+        List<GetAllEmergencyRequestsResponse> content = page.getContent().stream()
+                .map(this::mapToResponse)
                 .toList();
 
         return new PageResponse<>(

@@ -40,7 +40,7 @@ export async function createCrimeReport(data: {
   if (data.images && data.images.length > 0) {
     for (const imageUri of data.images) {
       try {
-        const filename = `crime_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+        const filename = `crime_${Date.now()}_${crypto.randomUUID()}.jpg`;
         const result = await minioService.uploadFile({
           uri: imageUri,
           filename,

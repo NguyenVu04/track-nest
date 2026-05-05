@@ -31,9 +31,9 @@ import { useAuth } from "@/contexts/AuthContext";
 
 /* ── Animation variants ─────────────────────────────────────────────────── */
 
-const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+export const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-const fadeUp: Variants = {
+export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: (delay = 0) => ({
     opacity: 1,
@@ -42,7 +42,7 @@ const fadeUp: Variants = {
   }),
 };
 
-const fadeIn: Variants = {
+export const fadeIn: Variants = {
   hidden: { opacity: 0 },
   visible: (delay = 0) => ({
     opacity: 1,
@@ -50,7 +50,7 @@ const fadeIn: Variants = {
   }),
 };
 
-const slideLeft: Variants = {
+export const slideLeft: Variants = {
   hidden: { opacity: 0, x: -60 },
   visible: (delay = 0) => ({
     opacity: 1,
@@ -59,7 +59,7 @@ const slideLeft: Variants = {
   }),
 };
 
-const slideRight: Variants = {
+export const slideRight: Variants = {
   hidden: { opacity: 0, x: 60 },
   visible: (delay = 0) => ({
     opacity: 1,
@@ -68,7 +68,7 @@ const slideRight: Variants = {
   }),
 };
 
-const scaleIn: Variants = {
+export const scaleIn: Variants = {
   hidden: { opacity: 0, scale: 0.88 },
   visible: (delay = 0) => ({
     opacity: 1,
@@ -121,7 +121,7 @@ function AnimatedSection({
 
 function PhoneMockup() {
   return (
-    <div className="relative w-[260px] h-[520px] mx-auto">
+    <div className="relative w-65 h-130 mx-auto">
       {/* Phone shell */}
       <div className="absolute inset-0 rounded-[42px] bg-[#1a2e2e] shadow-2xl border-4 border-[#2a4444] overflow-hidden">
         {/* Notch */}
@@ -131,7 +131,7 @@ function PhoneMockup() {
           {/* App header */}
           <div className="flex items-center justify-between px-5 py-3">
             <span className="text-white text-sm font-semibold">TrackNest</span>
-            <Bell className="w-4 h-4 text-[#74becb]" />
+            <Bell className="w-4 h-4 text-brand-400" />
           </div>
           {/* Map area */}
           <div className="relative mx-3 rounded-2xl bg-[#162828] h-48 overflow-hidden">
@@ -187,25 +187,25 @@ function PhoneMockup() {
               transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full"
             >
-              <div className="w-8 h-8 rounded-full bg-[#74becb] flex items-center justify-center shadow-lg shadow-[#74becb]/40">
+              <div className="w-8 h-8 rounded-full bg-brand-400 flex items-center justify-center shadow-lg shadow-brand-400/40">
                 <MapPin className="w-4 h-4 text-white" />
               </div>
-              <div className="w-2 h-2 bg-[#74becb] rounded-full mx-auto -mt-1 opacity-60" />
+              <div className="w-2 h-2 bg-brand-400 rounded-full mx-auto -mt-1 opacity-60" />
             </motion.div>
             {/* Pulse ring */}
             <motion.div
               animate={{ scale: [1, 2.2], opacity: [0.4, 0] }}
               transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 border-[#74becb]"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 border-brand-400"
             />
             {/* Active badge */}
-            <div className="absolute top-3 right-3 bg-[#74becb]/20 border border-[#74becb]/40 rounded-full px-2 py-0.5 flex items-center gap-1">
+            <div className="absolute top-3 right-3 bg-brand-400/20 border border-brand-400/40 rounded-full px-2 py-0.5 flex items-center gap-1">
               <motion.div
                 animate={{ opacity: [1, 0.3, 1] }}
                 transition={{ repeat: Infinity, duration: 1.5 }}
-                className="w-1.5 h-1.5 rounded-full bg-[#74becb]"
+                className="w-1.5 h-1.5 rounded-full bg-brand-400"
               />
-              <span className="text-[#74becb] text-[10px] font-medium">
+              <span className="text-brand-400 text-[10px] font-medium">
                 Live
               </span>
             </div>
@@ -222,7 +222,7 @@ function PhoneMockup() {
                 className="flex items-center gap-3 bg-[#1a3030] rounded-xl px-3 py-2"
               >
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
                   style={{ background: m.color }}
                 >
                   {m.name[0]}
@@ -231,7 +231,7 @@ function PhoneMockup() {
                   <p className="text-white text-xs font-medium">{m.name}</p>
                   <p className="text-gray-400 text-[10px]">{m.dist} away</p>
                 </div>
-                <CheckCircle className="w-4 h-4 text-[#74becb]" />
+                <CheckCircle className="w-4 h-4 text-brand-400" />
               </motion.div>
             ))}
           </div>
@@ -309,7 +309,7 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const navLinks = ["Features", "Safety", "Platform", "About"];
+  const navLinks = ["Platform", "Features", "Safety", "About"];
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
@@ -326,9 +326,9 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="#home" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#1a3a3a] flex items-center justify-center">
-              <MapPin className="w-4 h-4 text-[#74becb]" />
+              <MapPin className="w-4 h-4 text-brand-400" />
             </div>
             <span className="text-[#1a3a3a] font-bold text-lg tracking-tight">
               TrackNest
@@ -350,7 +350,7 @@ export default function LandingPage() {
           </div>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* <div className="hidden md:flex items-center gap-3">
             <Link
               href="/login"
               className="text-gray-700 text-sm font-medium hover:text-[#1a3a3a] transition-colors"
@@ -365,7 +365,7 @@ export default function LandingPage() {
                 Get Started
               </Link>
             </motion.div>
-          </div>
+          </div> */}
 
           {/* Mobile menu button */}
           <button
@@ -401,12 +401,12 @@ export default function LandingPage() {
                     {link}
                   </a>
                 ))}
-                <Link
+                {/* <Link
                   href="/login"
                   className="block w-full text-center bg-[#1a3a3a] text-white py-3 rounded-full font-semibold"
                 >
                   Get Started
-                </Link>
+                </Link> */}
               </div>
             </motion.div>
           )}
@@ -417,14 +417,15 @@ export default function LandingPage() {
       <section
         ref={heroRef}
         className="relative min-h-screen flex items-center pt-16 overflow-hidden"
+        id="home"
       >
         {/* Background decoration */}
         <div className="absolute inset-0 pointer-events-none">
           <motion.div
             style={{ y: heroY }}
-            className="absolute top-20 right-0 w-[600px] h-[600px] rounded-full bg-gradient-to-bl from-[#e0f2f5]/60 via-[#a8d8e0]/30 to-transparent"
+            className="absolute top-20 right-0 w-150 h-150 rounded-full bg-linear-to-bl from-brand-100/60 via-brand-200/30 to-transparent"
           />
-          <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-gradient-to-tr from-[#f0f8f9]/80 to-transparent" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-linear-to-tr from-brand-50/80 to-transparent" />
         </div>
 
         <div className="max-w-7xl mx-auto px-6 py-20 grid lg:grid-cols-2 gap-16 items-center w-full">
@@ -436,10 +437,10 @@ export default function LandingPage() {
               initial="hidden"
               animate="visible"
               custom={0.1}
-              className="inline-flex items-center gap-2 bg-[#e0f2f5] border border-[#93cdd9]/40 rounded-full px-4 py-1.5 mb-8"
+              className="inline-flex items-center gap-2 bg-brand-100 border border-brand-300/40 rounded-full px-4 py-1.5 mb-8"
             >
-              <Lock className="w-3.5 h-3.5 text-[#4a8a96]" />
-              <span className="text-[#3a6b76] text-xs font-semibold tracking-widest uppercase">
+              <Lock className="w-3.5 h-3.5 text-brand-700" />
+              <span className="text-brand-800 text-xs font-semibold tracking-widest uppercase">
                 Real-time safety platform
               </span>
             </motion.div>
@@ -497,7 +498,7 @@ export default function LandingPage() {
               <motion.button
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
-                className="inline-flex cursor-pointer items-center gap-2 border border-gray-300 text-gray-700 font-semibold px-7 py-3.5 rounded-full hover:border-[#74becb] hover:text-[#3a6b76] transition-colors"
+                className="inline-flex cursor-pointer items-center gap-2 border border-gray-300 text-gray-700 font-semibold px-7 py-3.5 rounded-full hover:border-brand-400 hover:text-brand-800 transition-colors"
               >
                 <Play className="w-4 h-4" />
                 See How It Works
@@ -561,7 +562,7 @@ export default function LandingPage() {
             <div>
               <motion.p
                 variants={cardItem}
-                className="text-[#4a8a96] text-sm font-semibold tracking-widest uppercase mb-4"
+                className="text-brand-700 text-sm font-semibold tracking-widest uppercase mb-4"
               >
                 Web and Mobile
               </motion.p>
@@ -590,7 +591,7 @@ export default function LandingPage() {
                     variants={cardItem}
                     className="flex items-start gap-3"
                   >
-                    <CheckCircle className="w-5 h-5 text-[#74becb] mt-0.5" />
+                    <CheckCircle className="w-5 h-5 text-brand-400 mt-0.5" />
                     <p className="text-gray-600 text-sm leading-relaxed">
                       {text}
                     </p>
@@ -604,7 +605,7 @@ export default function LandingPage() {
             >
               <div className="flex items-center justify-between mb-6">
                 <p className="text-[#1a2e2e] font-bold">TrackNest Web</p>
-                <span className="text-xs font-semibold text-[#4a8a96] bg-[#e0f2f5] px-2 py-1 rounded-full">
+                <span className="text-xs font-semibold text-brand-700 bg-brand-100 px-2 py-1 rounded-full">
                   Dashboard
                 </span>
               </div>
@@ -637,7 +638,7 @@ export default function LandingPage() {
           <AnimatedSection className="text-center mb-16">
             <motion.p
               variants={cardItem}
-              className="text-[#74becb] text-sm font-semibold tracking-widest uppercase mb-3"
+              className="text-brand-400 text-sm font-semibold tracking-widest uppercase mb-3"
             >
               Built for real-world response
             </motion.p>
@@ -719,7 +720,7 @@ export default function LandingPage() {
             >
               <motion.p
                 variants={cardItem}
-                className="text-[#74becb] text-sm font-semibold tracking-widest uppercase mb-4"
+                className="text-brand-400 text-sm font-semibold tracking-widest uppercase mb-4"
               >
                 Community powered
               </motion.p>
@@ -733,7 +734,7 @@ export default function LandingPage() {
               </motion.h2>
               <motion.p
                 variants={cardItem}
-                className="text-[#93cdd9] text-lg leading-relaxed mb-10"
+                className="text-brand-300 text-lg leading-relaxed mb-10"
               >
                 TrackNest combines crime reports, missing-person workflows, and
                 neighborhood alerts to help you act with context, not guesswork.
@@ -756,14 +757,14 @@ export default function LandingPage() {
                     variants={cardItem}
                     className="flex items-start gap-4"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-[#74becb]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <item.icon className="w-5 h-5 text-[#74becb]" />
+                    <div className="w-10 h-10 rounded-xl bg-brand-400/15 flex items-center justify-center shrink-0 mt-0.5">
+                      <item.icon className="w-5 h-5 text-brand-400" />
                     </div>
                     <div>
                       <p className="text-white font-semibold mb-1">
                         {item.title}
                       </p>
-                      <p className="text-[#93cdd9] text-sm leading-relaxed">
+                      <p className="text-brand-300 text-sm leading-relaxed">
                         {item.desc}
                       </p>
                     </div>
@@ -811,14 +812,14 @@ export default function LandingPage() {
                           alert
                             ? "bg-red-400/70"
                             : highlighted
-                              ? "bg-[#74becb]/60"
+                              ? "bg-brand-400/60"
                               : "bg-white/10"
                         }`}
                       />
                     );
                   })}
                 </div>
-                <p className="text-[#93cdd9] text-xs">
+                <p className="text-brand-300 text-xs">
                   Surface reports and alerts around your current location.
                 </p>
               </motion.div>
@@ -827,7 +828,7 @@ export default function LandingPage() {
               <motion.div
                 variants={cardItem}
                 whileHover={{ scale: 1.02 }}
-                className="cursor-pointer bg-[#74becb] rounded-2xl p-5"
+                className="cursor-pointer bg-brand-400 rounded-2xl p-5"
               >
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
@@ -850,14 +851,14 @@ export default function LandingPage() {
                 whileHover={{ scale: 1.02 }}
                 className="cursor-pointer bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-5 flex items-center gap-4"
               >
-                <div className="w-12 h-12 rounded-full bg-[#74becb]/20 border-2 border-[#74becb]/40 flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-6 h-6 text-[#74becb]" />
+                <div className="w-12 h-12 rounded-full bg-brand-400/20 border-2 border-brand-400/40 flex items-center justify-center shrink-0">
+                  <Shield className="w-6 h-6 text-brand-400" />
                 </div>
                 <div>
                   <p className="text-white font-bold mb-0.5">
                     Safety Guidelines Library
                   </p>
-                  <p className="text-[#93cdd9] text-xs">
+                  <p className="text-brand-300 text-xs">
                     Publish and browse verified guidance for prevention and
                     response.
                   </p>
@@ -869,7 +870,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Stats Bar ────────────────────────────────────────────────────── */}
-      <section className="py-16 bg-[#f0f8f9]">
+      <section className="py-16 bg-brand-50">
         <div className="max-w-7xl mx-auto px-6">
           <AnimatedSection className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
@@ -900,7 +901,7 @@ export default function LandingPage() {
           >
             <motion.p
               variants={cardItem}
-              className="text-[#74becb] text-sm font-semibold tracking-widest uppercase mb-6"
+              className="text-brand-400 text-sm font-semibold tracking-widest uppercase mb-6"
             >
               Start today
             </motion.p>
@@ -914,7 +915,7 @@ export default function LandingPage() {
             </motion.h2>
             <motion.p
               variants={cardItem}
-              className="text-[#93cdd9] text-lg mb-10 leading-relaxed"
+              className="text-brand-300 text-lg mb-10 leading-relaxed"
             >
               Launch the web dashboard or the mobile app and stay connected with
               the people who matter most.
@@ -930,7 +931,7 @@ export default function LandingPage() {
               >
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-2 border-2 border-[#74becb] text-[#74becb] hover:bg-[#74becb] hover:text-[#122828] font-bold px-10 py-4 rounded-full transition-colors text-lg"
+                  className="inline-flex items-center gap-2 border-2 border-brand-400 text-brand-400 hover:bg-brand-400 hover:text-[#122828] font-bold px-10 py-4 rounded-full transition-colors text-lg"
                 >
                   Go to Login
                   <ArrowRight className="w-5 h-5" />
@@ -949,7 +950,7 @@ export default function LandingPage() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-[#1a3a3a] flex items-center justify-center">
-                  <MapPin className="w-4 h-4 text-[#74becb]" />
+                  <MapPin className="w-4 h-4 text-brand-400" />
                 </div>
                 <span className="text-white font-bold text-lg">TrackNest</span>
               </div>
@@ -985,7 +986,7 @@ export default function LandingPage() {
                     <li key={link}>
                       <a
                         href="#"
-                        className="cursor-pointer text-[#5a7a7a] text-sm hover:text-[#74becb] transition-colors"
+                        className="cursor-pointer text-[#5a7a7a] text-sm hover:text-brand-400 transition-colors"
                       >
                         {link}
                       </a>

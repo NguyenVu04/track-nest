@@ -9,23 +9,12 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record GetAllEmergencyRequestsResponse(
         UUID id,
+        Long openAt,
+        Long closeAt,
         UUID senderId,
-        String senderUsername,
-        String senderFirstName,
-        String senderLastName,
-        String senderPhoneNumber,
-        String senderEmail,
-        String senderAvatarUrl,
         UUID targetId,
-        String targetUsername,
-        String targetFirstName,
-        String targetLastName,
-        String targetPhoneNumber,
-        String targetEmail,
-        String targetAvatarUrl,
-        Long openedAt,
-        Long closedAt,
-        String status,
-        double targetLastLatitude,
-        double targetLastLongitude
+        UUID emergencyServiceId,
+        String statusName,
+        double longitude,
+        double latitude
 ) {}

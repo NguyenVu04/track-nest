@@ -60,7 +60,7 @@ export default function AccountsPage() {
   };
 
   const handleBan = async () => {
-    if (!confirmAction || confirmAction.type !== "ban") return;
+    if (confirmAction?.type !== "ban") return;
     try {
       setUsers(
         users.map((u) =>
@@ -78,7 +78,7 @@ export default function AccountsPage() {
   };
 
   const handleUnban = async () => {
-    if (!confirmAction || confirmAction.type !== "unban") return;
+    if (confirmAction?.type !== "unban") return;
     try {
       setUsers(
         users.map((u) =>
@@ -98,7 +98,7 @@ export default function AccountsPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirmAction || confirmAction.type !== "delete") return;
+    if (confirmAction?.type !== "delete") return;
     try {
       setUsers(users.filter((u) => u.id !== confirmAction.user.id));
       toast.success(

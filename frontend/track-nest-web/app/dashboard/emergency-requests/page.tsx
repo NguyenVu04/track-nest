@@ -41,9 +41,9 @@ export default function EmergencyRequestsPage() {
         const response = await emergencyOpsService.getAllEmergencyRequests(
           statusFilter || undefined,
           0,
-          50
+          50,
         );
-        setRequests(response.items || response.content || []);
+        setRequests(response.items);
       } catch (error) {
         console.error("Error fetching emergency requests:", error);
         toast.error(t("toastLoadError"));
