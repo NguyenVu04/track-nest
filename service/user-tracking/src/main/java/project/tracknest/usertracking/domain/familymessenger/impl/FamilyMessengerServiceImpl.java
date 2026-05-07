@@ -172,6 +172,42 @@ class FamilyMessengerServiceImpl implements FamilyMessengerService {
         }
     }
 
+    @Override
+    public int sendTestFamilyMessageNotification(UUID circleId, UUID senderId,
+                                                  String senderName, String content) {
+        List<UUID> recipientIds = memberRepository.findAllById_FamilyCircleId(circleId)
+                .stream()
+                .map(m -> m.getId().getMemberId())
+                .filter(id -> !id.equals(senderId))
+                .toList();
+
+        if (recipientIds.isEmpty()) {
+            log.info("[TEST] No FCM recipients in circle {} (sender excluded)", circleId);
+            return 0;
+        }
+
+        List<String> tokens = mobileDeviceRepository.findAllByUserIdIn(recipientIds)
+                .stream()
+                .map(MobileDevice::getDeviceToken)
+                .toList();
+
+        if (tokens.isEmpty()) {
+            log.info("[TEST] No registered FCM tokens for circle {} recipients", circleId);
+            return 0;
+        }
+
+        Map<String, String> data = Map.of(
+                "type", "chat_message",
+                "route", "/(app)/(tabs)/family-chat",
+                "circleId", circleId.toString()
+        );
+
+        int sent = fcmService.sendToTokensWithData(tokens, senderName, content, data);
+        log.info("[TEST] FCM family-message notification: sent={} tokens={} circleId={}",
+                sent, tokens.size(), circleId);
+        return sent;
+    }
+
     /**
      * Sends an FCM push notification to all circle members except the sender.
      * The notification title is the sender's username and the body is the message content.
