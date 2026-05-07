@@ -10,4 +10,7 @@ public class KeycloakProperties {
     private String publicRealm;
     private String clientId;
     private String clientSecret;
+    private String restrictedRealm;
+    private String restrictedClientId;
+    private String restrictedClientSecret;
 }

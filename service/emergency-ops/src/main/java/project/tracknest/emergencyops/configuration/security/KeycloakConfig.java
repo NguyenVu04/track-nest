@@ -25,4 +25,16 @@ public class KeycloakConfig {
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
                 .build();
     }
+
+    @Bean
+    public Keycloak restrictedKeycloak() {
+        return KeycloakBuilder
+                .builder()
+                .serverUrl(properties.getServerUrl())
+                .realm(properties.getRestrictedRealm())
+                .clientId(properties.getRestrictedClientId())
+                .clientSecret(properties.getRestrictedClientSecret())
+                .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                .build();
+    }
 }

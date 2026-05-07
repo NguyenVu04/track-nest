@@ -84,9 +84,12 @@ app:
     replication-factor: 1
   keycloak:
     server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost/auth}
-    client-id: ${KEYCLOAK_CLIENT_ID:emergency-operations}
-    client-secret: ${KEYCLOAK_CLIENT_SECRET:2Bu3haFOwsOW7ONprnSGnmVoU8SvHLmy}
+    client-id: ${KEYCLOAK_CLIENT_ID}
+    client-secret: ${KEYCLOAK_CLIENT_SECRET}
     public-realm: ${KEYCLOAK_PUBLIC_REALM:public-dev}
+    restricted-client-id: ${KEYCLOAK_RESTRICTED_CLIENT_ID}
+    restricted-client-secret: ${KEYCLOAK_RESTRICTED_CLIENT_SECRET}
+    restricted-realm: ${KEYCLOAK_RESTRICTED_REALM:restricted-dev}
   security:
     allowed-origins: ${ALLOWED_ORIGINS:http://localhost,http://localhost:3000}
     allowed-methods:

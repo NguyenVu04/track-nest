@@ -76,8 +76,17 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-secrets
                   key: KEYCLOAK_CLIENT_SECRET
+            - name: KEYCLOAK_RESTRICTED_CLIENT_ID
+              value: {{ .Values.emergencyOps.keycloak.restrictedClientId | quote }}
+            - name: KEYCLOAK_RESTRICTED_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: KEYCLOAK_RESTRICTED_CLIENT_SECRET
             - name: KEYCLOAK_PUBLIC_REALM
               value: {{ .Values.keycloak.publicRealm | quote }}
+            - name: KEYCLOAK_RESTRICTED_REALM
+              value: {{ .Values.keycloak.restrictedRealm | quote }}
 
           volumeMounts:
             - name: truststore

@@ -21,6 +21,10 @@ import java.util.List;
 @EnableConfigurationProperties(SecurityProperties.class)
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private static final String ROLE_EMERGENCY_SERVICE = "EMERGENCY-SERVICE";
+    private static final String ROLE_ADMIN = "ADMIN";
+    private static final String ROLE_USER = "USER";
+
     private final SecurityProperties securityProperties;
     private final SecurityEmergencyServiceRepository serviceRepository;
 
@@ -35,18 +39,20 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/emergency-admin/**")
                         .authenticated()
+                        .requestMatchers("/emergency-request-admin/**")
+                        .hasRole(ROLE_ADMIN)
                         .requestMatchers("/emergency-request-manager/**")
-                        .hasRole("EMERGENCY-SERVICE")
+                        .hasRole(ROLE_EMERGENCY_SERVICE)
                         .requestMatchers("/emergency-request-receiver/**")
-                        .hasRole("USER")
+                        .hasRole(ROLE_USER)
                         .requestMatchers("/emergency-responder/**")
-                        .hasRole("EMERGENCY-SERVICE")
+                        .hasRole(ROLE_EMERGENCY_SERVICE)
                         .requestMatchers("/safe-zone-manager/**")
-                        .hasRole("EMERGENCY-SERVICE")
+                        .hasRole(ROLE_EMERGENCY_SERVICE)
                         .requestMatchers("/safe-zone-locator/**")
-                        .hasRole("USER")
+                        .hasRole(ROLE_USER)
                         .requestMatchers("/ws/**")
-                        .hasRole("EMERGENCY-SERVICE")
+                        .hasRole(ROLE_EMERGENCY_SERVICE)
                         .requestMatchers("/actuator/**")
                         .permitAll()
                         .anyRequest()
