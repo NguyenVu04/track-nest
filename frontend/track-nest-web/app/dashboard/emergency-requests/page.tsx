@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
   emergencyOpsService,
-  EmergencyRequestResponse,
+  AdminEmergencyRequestResponse,
 } from "@/services/emergencyOpsService";
 import { Loading } from "@/components/loading/Loading";
 import { useTranslations } from "next-intl";
@@ -25,13 +25,13 @@ export default function EmergencyRequestsPage() {
   const tCommon = useTranslations("common");
   const tStatus = useTranslations("status");
 
-  const [requests, setRequests] = useState<EmergencyRequestResponse[]>([]);
+  const [requests, setRequests] = useState<AdminEmergencyRequestResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
-  const [rejecting, setRejecting] = useState<EmergencyRequestResponse | null>(null);
-  const [completing, setCompleting] = useState<EmergencyRequestResponse | null>(null);
-  const [trackingRequest, setTrackingRequest] = useState<EmergencyRequestResponse | null>(null);
+  const [rejecting, setRejecting] = useState<AdminEmergencyRequestResponse | null>(null);
+  const [completing, setCompleting] = useState<AdminEmergencyRequestResponse | null>(null);
+  const [trackingRequest, setTrackingRequest] = useState<AdminEmergencyRequestResponse | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [completionNote, setCompletionNote] = useState("");
 
@@ -91,7 +91,7 @@ export default function EmergencyRequestsPage() {
     return tStatus(key);
   };
 
-  const navigateToRequestDetail = (request: EmergencyRequestResponse) => {
+  const navigateToRequestDetail = (request: AdminEmergencyRequestResponse) => {
     sessionStorage.setItem(
       `emergency-request-detail:${request.id}`,
       JSON.stringify(request),
@@ -99,7 +99,7 @@ export default function EmergencyRequestsPage() {
     router.push(`/dashboard/emergency-requests/${request.id}`);
   };
 
-  const handleAccept = async (request: EmergencyRequestResponse) => {
+  const handleAccept = async (request: AdminEmergencyRequestResponse) => {
     try {
       await emergencyOpsService.acceptEmergencyRequest(request.id);
       setRequests((prev) =>
@@ -205,6 +205,7 @@ export default function EmergencyRequestsPage() {
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableId")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableSender")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableTarget")}</th>
+                <th className="px-6 py-3 text-left text-gray-700">{t("tableService")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableLocation")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableStatus")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableCreated")}</th>
@@ -234,6 +235,10 @@ export default function EmergencyRequestsPage() {
                       {request.targetFirstName} {request.targetLastName}
                     </div>
                     <div className="text-sm text-gray-500">@{request.targetUsername}</div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-900">
+                    <div className="text-sm font-medium">@{request.serviceUsername}</div>
+                    <div className="text-xs text-gray-500">{request.serviceEmail}</div>
                   </td>
                   <td className="px-6 py-4 text-gray-900">
                     {request.targetLastLatitude.toFixed(4)}, {request.targetLastLongitude.toFixed(4)}

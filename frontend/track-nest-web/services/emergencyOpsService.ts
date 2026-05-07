@@ -59,6 +59,13 @@ export interface EmergencyRequestResponse {
   targetLastLongitude: number;
 }
 
+export interface AdminEmergencyRequestResponse extends EmergencyRequestResponse {
+  serviceId: string;
+  serviceUsername: string;
+  servicePhoneNumber: string;
+  serviceEmail: string;
+}
+
 export interface EmergencyRequestActionResponse {
   id: string;
   acceptedAtMs?: number;
@@ -187,9 +194,9 @@ export const emergencyOpsService = {
     status?: string,
     page = 0,
     size = 10,
-  ): Promise<PageResponse<EmergencyRequestResponse>> => {
-    const response = await api.get<PageResponse<EmergencyRequestResponse>>(
-      "/emergency-admin/requests",
+  ): Promise<PageResponse<AdminEmergencyRequestResponse>> => {
+    const response = await api.get<PageResponse<AdminEmergencyRequestResponse>>(
+      "/emergency-request-admin/requests",
       { params: { status, page, size } },
     );
     return response.data;

@@ -183,17 +183,55 @@ export function CrimeReportForm({
   const handleConfirmSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const uploadedUrls: string[] = [];
-      if (selectedFiles.length > 0) {
-        setIsUploading(true);
-        for (const file of selectedFiles) {
-          const res = await criminalReportsService.uploadFile(file);
-          uploadedUrls.push(res.objectName);
+      if (mode === "create") {
+        const combinedDate = new Date(formData.date!);
+        const [hours, minutes] = time.split(":").map(Number);
+        combinedDate.setHours(hours, minutes);
+
+        const response = await criminalReportsService.submitCrimeReport({
+          title: formData.title!,
+          content: formData.content || "",
+          severity: formData.severity!,
+          date: combinedDate.toISOString().slice(0, 10),
+          longitude: formData.longitude!,
+          latitude: formData.latitude!,
+          numberOfVictims: formData.numberOfVictims!,
+          numberOfOffenders: formData.numberOfOffenders!,
+          arrested: formData.arrested!,
+          photos: selectedFiles.length > 0 ? selectedFiles : undefined,
+        });
+
+        await onSave({
+          id: response.id,
+          title: response.title,
+          content: response.content,
+          contentDocId: "",
+          severity: response.severity,
+          date: response.date ? String(response.date) : combinedDate.toISOString(),
+          longitude: response.longitude,
+          latitude: response.latitude,
+          numberOfVictims: response.numberOfVictims,
+          numberOfOffenders: response.numberOfOffenders,
+          arrested: response.arrested,
+          photos: response.photos ?? [],
+          createdAt: response.createdAt ? String(response.createdAt) : new Date().toISOString(),
+          updatedAt: response.updatedAt ? String(response.updatedAt) : new Date().toISOString(),
+          reporterId: response.reporterId ?? "",
+          isPublic: response.isPublic,
+        });
+      } else {
+        const uploadedUrls: string[] = [];
+        if (selectedFiles.length > 0) {
+          setIsUploading(true);
+          for (const file of selectedFiles) {
+            const res = await criminalReportsService.uploadFile(file);
+            uploadedUrls.push(res.objectName);
+          }
+          setIsUploading(false);
         }
-        setIsUploading(false);
+        const newReport = buildReport(uploadedUrls);
+        await onSave(newReport);
       }
-      const newReport = buildReport(uploadedUrls);
-      await onSave(newReport);
       setShowReview(false);
     } catch {
       setIsUploading(false);

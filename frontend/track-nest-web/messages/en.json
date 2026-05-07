@@ -322,6 +322,7 @@
     "tableLocation": "Location",
     "tableSender": "Sender",
     "tableTarget": "Target",
+    "tableService": "Assigned Service",
     "tableStatus": "Status",
     "tableCreated": "Created",
     "tableActions": "Actions",

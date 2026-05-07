@@ -15,6 +15,7 @@ import { MapView } from "../shared/MapView";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { ChatbotPanel } from "../shared/ChatbotPanel";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 
 interface MissingPersonDetailProps {
   person: MissingPerson;
@@ -170,7 +171,7 @@ export function MissingPersonDetail({
               {person.photo && (
                 <div className="pt-4 border-t border-gray-200">
                   <p className="text-gray-700 mb-2">{t("detailPhoto")}</p>
-                  <img
+                  <Image
                     src={person.photo}
                     alt={person.fullName}
                     className="w-full max-w-xs rounded-lg"

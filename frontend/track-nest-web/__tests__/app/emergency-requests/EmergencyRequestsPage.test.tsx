@@ -81,6 +81,10 @@ const pendingRequest = {
   status: "PENDING" as const,
   targetLastLatitude: 10.78,
   targetLastLongitude: 106.69,
+  serviceId: "svc-1",
+  serviceUsername: "service_unit_1",
+  servicePhoneNumber: "+84900000001",
+  serviceEmail: "svc1@example.com",
 };
 
 const acceptedRequest = {

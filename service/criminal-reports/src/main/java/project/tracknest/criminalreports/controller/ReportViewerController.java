@@ -13,6 +13,7 @@ import project.tracknest.criminalreports.domain.reportmanager.dto.MissingPersonR
 import project.tracknest.criminalreports.domain.reportviewer.ReportViewerService;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -66,6 +67,27 @@ public class ReportViewerController {
             @PathVariable UUID reportId) {
         CrimeReportResponse response = service.viewCrimeReport(reportId);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/crime-reports/{reportId}/photos/{objectName}")
+    public ResponseEntity<byte[]> viewCrimeReportPhoto(
+            @PathVariable UUID reportId,
+            @PathVariable String objectName) {
+        CrimeReportResponse report = service.viewCrimeReport(reportId);
+        List<String> photos = report.getPhotos();
+        if (photos == null || !photos.contains(objectName)) {
+            return ResponseEntity.notFound().build();
+        }
+        try (InputStream stream = objectStorage.downloadFile(bucketName, objectName)) {
+            byte[] bytes = stream.readAllBytes();
+            return ResponseEntity.ok()
+                    .header("Content-Type", resolveContentType(objectName))
+                    .header("Cache-Control", "public, max-age=86400")
+                    .body(bytes);
+        } catch (Exception e) {
+            log.error("Failed to serve photo {} for report {}: {}", objectName, reportId, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/crime-reports")

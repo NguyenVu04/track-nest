@@ -5,10 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { CrimeReport } from "@/types";
 import { CrimeReportForm } from "@/components/crime-reports/CrimeReportForm";
 import { toast } from "sonner";
-import {
-  criminalReportsService,
-  CreateCrimeReportRequest,
-} from "@/services/criminalReportsService";
 
 export default function CreateCrimeReportPage() {
   const router = useRouter();
@@ -31,20 +27,7 @@ export default function CreateCrimeReportPage() {
     );
   }
 
-  const handleSave = async (report: CrimeReport) => {
-    const request: CreateCrimeReportRequest = {
-      title: report.title,
-      content: report.content,
-      severity: report.severity,
-      date: report.date,
-      longitude: report.longitude,
-      latitude: report.latitude,
-      numberOfVictims: report.numberOfVictims,
-      numberOfOffenders: report.numberOfOffenders,
-      arrested: report.arrested,
-      photos: report.photos,
-    };
-    await criminalReportsService.createCrimeReport(request);
+  const handleSave = (_report: CrimeReport) => {
     toast.success("Report created successfully");
     router.push("/dashboard/crime-reports");
   };

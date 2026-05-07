@@ -1,5 +1,6 @@
 import axios from "axios";
 import { authService } from "./authService";
+import type { CrimeSeverity } from "@/types";
 
 const API_URL =
   process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL ||
@@ -93,10 +94,23 @@ export interface MissingPersonReportResponse {
   isPublic: boolean;
 }
 
+export interface SubmitCrimeReportRequest {
+  title: string;
+  content: string;
+  severity: CrimeSeverity;
+  date: string;
+  longitude: number;
+  latitude: number;
+  numberOfVictims: number;
+  numberOfOffenders: number;
+  arrested: boolean;
+  photos?: File[];
+}
+
 export interface CreateCrimeReportRequest {
   title: string;
   content: string;
-  severity: number;
+  severity: CrimeSeverity;
   date: string;
   longitude: number;
   latitude: number;
@@ -122,7 +136,7 @@ export interface CrimeReportResponse {
   title: string;
   content: string;
   contentDocId: string;
-  severity: number;
+  severity: CrimeSeverity;
   date: string;
   longitude: number;
   latitude: number;
@@ -329,6 +343,30 @@ export const criminalReportsService = {
     const response = await api.get<PageResponse<MissingPersonReportResponse>>(
       "/report-manager/missing-person-reports",
       { params },
+    );
+    return response.data;
+  },
+
+  submitCrimeReport: async (
+    data: SubmitCrimeReportRequest,
+  ): Promise<CrimeReportResponse> => {
+    const formData = new FormData();
+    formData.append("title", data.title);
+    if (data.content) formData.append("content", data.content);
+    formData.append("severity", data.severity.toString());
+    formData.append("date", data.date);
+    formData.append("longitude", data.longitude.toString());
+    formData.append("latitude", data.latitude.toString());
+    formData.append("numberOfVictims", data.numberOfVictims.toString());
+    formData.append("numberOfOffenders", data.numberOfOffenders.toString());
+    formData.append("arrested", data.arrested.toString());
+    if (data.photos) {
+      data.photos.forEach((photo) => formData.append("photos", photo));
+    }
+    const response = await api.post<CrimeReportResponse>(
+      "/report-manager/crime-reports",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
     );
     return response.data;
   },
@@ -688,4 +726,7 @@ export const criminalReportsService = {
 
   getMissingPersonPhotoUrl: (reportId: string): string =>
     `${API_URL}/report-viewer/missing-person-reports/${reportId}/photo`,
+
+  getCrimeReportPhotoUrl: (reportId: string, objectName: string): string =>
+    `${API_URL}/report-viewer/crime-reports/${reportId}/photos/${encodeURIComponent(objectName)}`,
 };

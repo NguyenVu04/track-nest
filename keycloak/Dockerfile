@@ -5,6 +5,9 @@ FROM node:alpine3.23 AS theme-builder
 
 WORKDIR /app
 
+# Install yarn classic (not bundled in node:alpine3.23)
+RUN npm install -g yarn
+
 # Install Maven + Java (required by keycloakify)
 RUN apk add --no-cache openjdk17 maven
 

@@ -27,6 +27,7 @@ import {
 import { useState } from "react";
 import Image from "next/image";
 import type { CrimeReport, UserRole } from "@/types";
+import { criminalReportsService } from "@/services/criminalReportsService";
 import { MapView } from "../shared/MapView";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { ChatbotPanel } from "../shared/ChatbotPanel";
@@ -337,13 +338,13 @@ export function CrimeReportDetail({
 
               {report.photos && report.photos.length > 0 ? (
                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                    {report.photos.map((url, idx) => (
+                    {report.photos.map((photoUrl, idx) => (
                        <div
                          key={idx}
                          className="group relative aspect-square rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm"
                        >
                          <Image
-                           src={url}
+                           src={photoUrl}
                            alt="Crime scene photo"
                            fill
                            className="object-cover group-hover:scale-110 transition-transform duration-700"
