@@ -8,11 +8,14 @@ import "@testing-library/jest-dom";
 // array will re-run the effect on every render, overwriting optimistic state
 // updates with fresh mock data and causing post-action DOM assertions to fail.
 jest.mock("next-intl", () => {
+  const React = jest.requireActual("react") as typeof import("react");
   const stableT = (key: string, vars?: Record<string, unknown>): string =>
     vars ? `${key}:${JSON.stringify(vars)}` : key;
   return {
     useTranslations: () => stableT,
     useLocale: () => "en",
+    NextIntlClientProvider: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
   };
 });
 
@@ -30,6 +33,7 @@ jest.mock("next/navigation", () => ({
   }),
   usePathname: () => "/dashboard",
   useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({}),
 }));
 
 // ── sonner toast ───────────────────────────────────────────────────────────

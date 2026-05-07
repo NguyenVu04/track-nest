@@ -72,54 +72,40 @@ describe("Navbar", () => {
     expect(screen.getAllByText("About").length).toBeGreaterThan(0);
   });
 
-  it("shows Login when not authenticated", () => {
+  it("does not show Login or Dashboard CTA in navbar (desktop CTA removed)", () => {
+    // The desktop CTA (Login/Dashboard + Get Started) is commented out in page.tsx.
     render(<LandingPage />);
-    expect(screen.getByText("Login")).toBeInTheDocument();
-  });
-
-  it("shows Dashboard when authenticated", () => {
-    mockIsAuthenticated = true;
-    render(<LandingPage />);
-    // Nav link text changes to "Dashboard"; "Login" disappears from nav
-    expect(screen.getAllByText("Dashboard").length).toBeGreaterThan(0);
     expect(screen.queryByText("Login")).not.toBeInTheDocument();
-  });
-
-  it("renders Get Started link in desktop nav", () => {
-    render(<LandingPage />);
-    expect(screen.getAllByText(/Get Started/i).length).toBeGreaterThan(0);
-  });
-
-  it("Get Started links point to /login", () => {
-    render(<LandingPage />);
-    const links = screen.getAllByRole("link", { name: /Get Started/i });
-    links.forEach((link) => expect(link).toHaveAttribute("href", "/login"));
+    expect(screen.queryByRole("link", { name: /Get Started/i })).toBeNull();
   });
 });
 
 // ── Mobile menu ───────────────────────────────────────────────────────────────
 
 describe("Mobile menu", () => {
-  it("mobile menu content is hidden initially", () => {
+  it("mobile menu nav links are hidden initially", () => {
     render(<LandingPage />);
-    expect(screen.getAllByText(/Get Started/i)).toHaveLength(1);
+    // Mobile nav items only appear once (in desktop hidden nav); they're not
+    // visible in the mobile dropdown until the menu is opened.
+    expect(screen.getAllByText("Features")).toHaveLength(1);
   });
 
-  it("opens mobile menu on hamburger button click", () => {
+  it("opens mobile menu on hamburger button click and shows nav links", () => {
     render(<LandingPage />);
-    // Hamburger is the first button in DOM order (nav); hero has "See How It Works" button
+    // Hamburger button is the first button in DOM (nav area)
     fireEvent.click(screen.getAllByRole("button")[0]);
-    expect(screen.getAllByText(/Get Started/i)).toHaveLength(2);
+    // After opening, nav links appear twice (desktop hidden + mobile menu)
+    expect(screen.getAllByText("Features").length).toBeGreaterThanOrEqual(2);
   });
 
   it("closes mobile menu on second click", () => {
     render(<LandingPage />);
     // Open
     fireEvent.click(screen.getAllByRole("button")[0]);
-    expect(screen.getAllByText(/Get Started/i)).toHaveLength(2);
-    // Close — re-query the button so we get the current DOM reference
+    expect(screen.getAllByText("Features").length).toBeGreaterThanOrEqual(2);
+    // Close
     fireEvent.click(screen.getAllByRole("button")[0]);
-    expect(screen.getAllByText(/Get Started/i)).toHaveLength(1);
+    expect(screen.getAllByText("Features")).toHaveLength(1);
   });
 
   it("shows all nav links in mobile menu when open", () => {

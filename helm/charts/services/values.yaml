@@ -62,6 +62,7 @@ kafka:
 keycloak:
   authServerUrl: http://keycloak:8080/auth
   publicRealm: public-dev
+  restrictedRealm: restricted-dev
 
 # Comma-separated CORS origins applied to every service.
 origins: "http://localhost:3000,http://localhost,https://tracknestapp.org,https://api.tracknestapp.org"
@@ -127,6 +128,7 @@ emergencyOps:
 
   keycloak:
     clientId: internal
+    restrictedClientId: internal
 
   hpa:
     enabled: false

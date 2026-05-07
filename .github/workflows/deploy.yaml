@@ -284,6 +284,7 @@ jobs:
             GOOGLE_API_KEY: "${{ secrets.GOOGLE_API_KEY }}"
 
             KEYCLOAK_CLIENT_SECRET: "${{ secrets.KEYCLOAK_CLIENT_SECRET }}"
+            KEYCLOAK_RESTRICTED_CLIENT_SECRET: "${{ secrets.KEYCLOAK_RESTRICTED_CLIENT_SECRET }}"
             KEYCLOAK_ADMIN_PASSWORD: "${{ secrets.KEYCLOAK_ADMIN_PASSWORD }}"
 
             bot-token: "${{ secrets.TELEGRAM_BOT_TOKEN }}"
