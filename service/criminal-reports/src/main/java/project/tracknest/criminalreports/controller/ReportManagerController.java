@@ -206,10 +206,12 @@ public class ReportManagerController {
     public ResponseEntity<PageResponse<CrimeReportResponse>> listCrimeReports(
             @RequestParam(required = false) UUID reporterId,
             @RequestParam(required = false) Integer minSeverity,
+            @RequestParam(required = false) Integer maxSeverity,
+            @RequestParam(required = false) String title,
             @RequestParam(defaultValue = "false") boolean isPublic,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(service.listCrimeReports(reporterId, minSeverity, isPublic, page, Math.min(size, 100)));
+        return ResponseEntity.ok(service.listCrimeReports(reporterId, minSeverity, maxSeverity, title, isPublic, page, Math.min(size, 100)));
     }
 
     @GetMapping("/crime-reports/nearby")

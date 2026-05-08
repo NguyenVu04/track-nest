@@ -252,28 +252,11 @@ class ReportManagerServiceImpl implements ReportManagerService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<CrimeReportResponse> listCrimeReports(UUID reporterId, Integer minSeverity, boolean isPublic, int page, int size) {
+    public PageResponse<CrimeReportResponse> listCrimeReports(UUID reporterId, Integer minSeverity, Integer maxSeverity, String title, boolean isPublic, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<CrimeReport> reports;
-
-        if (reporterId != null) {
-            if (minSeverity != null) {
-                reports = crimeReportRepository.findByReporterIdAndMinSeverity(reporterId, minSeverity, pageRequest);
-            } else if (isPublic) {
-                reports = crimeReportRepository.findByReporterIdAndIsPublic(reporterId, true, pageRequest);
-            } else {
-                reports = crimeReportRepository.findByReporterId(reporterId, pageRequest);
-            }
-        } else if (isPublic) {
-            reports = minSeverity != null
-                    ? crimeReportRepository.findAllPublicByMinSeverity(minSeverity, pageRequest)
-                    : crimeReportRepository.findAllPublic(pageRequest);
-        } else if (minSeverity != null) {
-            reports = crimeReportRepository.findAllByMinSeverity(minSeverity, pageRequest);
-        } else {
-            reports = crimeReportRepository.findAll(pageRequest);
-        }
-
+        String titleParam = (title != null && !title.isBlank()) ? "%" + title.trim().toLowerCase() + "%" : null;
+        Page<CrimeReport> reports = crimeReportRepository.findByFilters(
+                reporterId, isPublic, minSeverity, maxSeverity, titleParam, pageRequest);
         return mapToPageResponse(reports.map(this::mapToCrimeReportResponse));
     }
 

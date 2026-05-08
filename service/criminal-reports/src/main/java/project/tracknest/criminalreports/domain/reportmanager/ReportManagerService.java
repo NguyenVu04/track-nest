@@ -22,7 +22,7 @@ public interface ReportManagerService {
     CrimeReportResponse updateCrimeReport(UUID reporterId, UUID reportId, UpdateCrimeReportRequest request);
     CrimeReportResponse publishCrimeReport(UUID reporterId, UUID reportId);
     void deleteCrimeReport(UUID reporterId, UUID reportId);
-    PageResponse<CrimeReportResponse> listCrimeReports(UUID reporterId, Integer minSeverity, boolean isPublic, int page, int size);
+    PageResponse<CrimeReportResponse> listCrimeReports(UUID reporterId, Integer minSeverity, Integer maxSeverity, String title, boolean isPublic, int page, int size);
     PageResponse<CrimeReportResponse> listCrimeReportsWithinRadius(double longitude, double latitude, double radius, int page, int size);
 
     GuidelinesDocumentResponse createGuidelinesDocument(UUID reporterId, CreateGuidelinesDocumentRequest request);
