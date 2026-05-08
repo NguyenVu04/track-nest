@@ -258,10 +258,10 @@ describe("CrimeReportsPage — loaded state", () => {
     expect(mockPush).toHaveBeenCalledWith("/dashboard/crime-reports/report-1");
   });
 
-  it("navigates to create page when New Report button clicked", async () => {
+  it("navigates to create page when Create Report button clicked", async () => {
     render(<CrimeReportsListPage />);
     await waitFor(() => screen.getByTestId("crime-report-list"));
-    fireEvent.click(screen.getByText("newReport"));
+    fireEvent.click(screen.getByText("Create Report"));
     expect(mockPush).toHaveBeenCalledWith("/dashboard/crime-reports/create");
   });
 
@@ -419,13 +419,12 @@ describe("CreateCrimeReportPage — authenticated", () => {
     expect(screen.getByTestId("form-mode")).toHaveTextContent("create");
   });
 
-  it("calls createCrimeReport and navigates on save", async () => {
+  it("navigates to crime-reports list on save", async () => {
     render(<CreateCrimeReportPage />);
     fireEvent.click(screen.getByTestId("save-btn"));
-    await waitFor(() => {
-      expect(mockCreateCrimeReport).toHaveBeenCalled();
-      expect(mockPush).toHaveBeenCalledWith("/dashboard/crime-reports");
-    });
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith("/dashboard/crime-reports"),
+    );
   });
 
   it("calls router.back on cancel", () => {

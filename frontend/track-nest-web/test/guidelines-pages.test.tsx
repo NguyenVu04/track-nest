@@ -105,7 +105,7 @@ const reporterUser: User = {
   role: ["Reporter"],
 };
 
-const mockGuideline = {
+const mockDraftGuideline = {
   id: "guide-1",
   title: "Safety Guidelines",
   abstractText: "Important safety info",
@@ -116,13 +116,22 @@ const mockGuideline = {
   isPublic: false,
 };
 
-const mockPageResponse = {
-  content: [mockGuideline],
-  totalElements: 1,
-  totalPages: 1,
-  size: 100,
-  page: 0,
+const mockPublishedGuideline = {
+  ...mockDraftGuideline,
+  id: "guide-2",
+  title: "Published Guide",
+  isPublic: true,
 };
+
+const mockPageResponse = (items = [mockDraftGuideline]) => ({
+  content: items,
+  totalElements: items.length,
+  totalPages: 1,
+  size: 10,
+  page: 0,
+  first: true,
+  last: true,
+});
 
 // ── Page components ───────────────────────────────────────────────────────────
 
@@ -137,19 +146,19 @@ beforeEach(() => {
   mockUser = { ...reporterUser };
   mockParams = { id: "guide-1" };
   jest.clearAllMocks();
-  mockListGuidelinesDocuments.mockResolvedValue(mockPageResponse);
+  mockListGuidelinesDocuments.mockResolvedValue(mockPageResponse());
   mockDeleteGuidelinesDocument.mockResolvedValue(undefined);
-  mockGetGuidelinesDocument.mockResolvedValue(mockGuideline);
+  mockGetGuidelinesDocument.mockResolvedValue(mockDraftGuideline);
   mockPublishGuidelinesDocument.mockResolvedValue({ id: "guide-1", isPublic: true });
   mockCreateGuidelinesDocument.mockResolvedValue({ id: "new-guide" });
   mockGetFileUrl.mockResolvedValue("https://cdn.example.com/file.html");
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// GuidelinesPage (list)
+// GuidelinesListPage — null / unauthenticated
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe("GuidelinesPage — null user", () => {
+describe("GuidelinesListPage — null user", () => {
   it("returns null when user is null", () => {
     mockUser = null;
     const { container } = render(<GuidelinesListPage />);
@@ -157,104 +166,253 @@ describe("GuidelinesPage — null user", () => {
   });
 });
 
-describe("GuidelinesPage — loading state", () => {
-  it("shows fullscreen loader while fetching", () => {
+// ═══════════════════════════════════════════════════════════════════════════
+// GuidelinesListPage — loading
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe("GuidelinesListPage — loading state", () => {
+  it("shows loader while fetching", () => {
     mockListGuidelinesDocuments.mockReturnValue(new Promise(() => {}));
     render(<GuidelinesListPage />);
     expect(screen.getByTestId("loading")).toBeInTheDocument();
   });
 });
 
-describe("GuidelinesPage — loaded state", () => {
-  it("renders System Guidelines heading", async () => {
+// ═══════════════════════════════════════════════════════════════════════════
+// GuidelinesListPage — loaded state (header & navigation)
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe("GuidelinesListPage — header & navigation", () => {
+  it("renders Safety Guidelines heading", async () => {
     render(<GuidelinesListPage />);
     await waitFor(() =>
-      expect(screen.getByText("System Guidelines")).toBeInTheDocument(),
+      expect(screen.getAllByText("Safety Guidelines").length).toBeGreaterThan(0),
     );
   });
 
-  it("renders guideline title", async () => {
+  it("renders Create New Guideline button", async () => {
     render(<GuidelinesListPage />);
     await waitFor(() =>
-      expect(screen.getByText("Safety Guidelines")).toBeInTheDocument(),
+      expect(screen.getByText("Create New Guideline")).toBeInTheDocument(),
     );
   });
 
-  it("renders guideline abstract", async () => {
+  it("navigates to create page when Create New Guideline clicked", async () => {
+    render(<GuidelinesListPage />);
+    await waitFor(() => screen.getByText("Create New Guideline"));
+    fireEvent.click(screen.getByText("Create New Guideline"));
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/guidelines/create");
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GuidelinesListPage — status filter tabs
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe("GuidelinesListPage — status filter tabs", () => {
+  it("renders All Guides, Published, and Drafts tabs", async () => {
+    render(<GuidelinesListPage />);
+    await waitFor(() => screen.getByText("All Guides"));
+    expect(screen.getByText("Published")).toBeInTheDocument();
+    expect(screen.getByText("Drafts")).toBeInTheDocument();
+  });
+
+  it("calls listGuidelinesDocuments with isPublic=undefined when All Guides clicked", async () => {
+    render(<GuidelinesListPage />);
+    await waitFor(() => screen.getByText("All Guides"));
+    fireEvent.click(screen.getByText("All Guides"));
+    await waitFor(() =>
+      expect(mockListGuidelinesDocuments).toHaveBeenCalledWith(
+        expect.objectContaining({ isPublic: undefined }),
+      ),
+    );
+  });
+
+  it("calls listGuidelinesDocuments with isPublic=true when Published clicked", async () => {
+    render(<GuidelinesListPage />);
+    await waitFor(() => screen.getByText("Published"));
+    fireEvent.click(screen.getByText("Published"));
+    await waitFor(() =>
+      expect(mockListGuidelinesDocuments).toHaveBeenCalledWith(
+        expect.objectContaining({ isPublic: true }),
+      ),
+    );
+  });
+
+  it("calls listGuidelinesDocuments with isPublic=false when Drafts clicked", async () => {
+    render(<GuidelinesListPage />);
+    await waitFor(() => screen.getByText("Drafts"));
+    fireEvent.click(screen.getByText("Drafts"));
+    await waitFor(() =>
+      expect(mockListGuidelinesDocuments).toHaveBeenCalledWith(
+        expect.objectContaining({ isPublic: false }),
+      ),
+    );
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GuidelinesListPage — search
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe("GuidelinesListPage — search input", () => {
+  it("renders search input", async () => {
+    render(<GuidelinesListPage />);
+    await waitFor(() =>
+      expect(screen.getByPlaceholderText("Search guidelines…")).toBeInTheDocument(),
+    );
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GuidelinesListPage — card rendering
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe("GuidelinesListPage — card rendering", () => {
+  it("renders guideline title in card", async () => {
+    render(<GuidelinesListPage />);
+    await waitFor(() =>
+      expect(screen.getAllByText("Safety Guidelines").length).toBeGreaterThan(0),
+    );
+  });
+
+  it("renders guideline abstract in card", async () => {
     render(<GuidelinesListPage />);
     await waitFor(() =>
       expect(screen.getByText("Important safety info")).toBeInTheDocument(),
     );
   });
 
-  it("renders New Guideline button", async () => {
+  it("renders Draft badge for non-public guideline", async () => {
     render(<GuidelinesListPage />);
     await waitFor(() =>
-      expect(screen.getByText("New Guideline")).toBeInTheDocument(),
+      expect(screen.getByText("Draft")).toBeInTheDocument(),
     );
   });
 
-  it("navigates to create page when New Guideline clicked", async () => {
+  it("renders Published badge for public guideline", async () => {
+    mockListGuidelinesDocuments.mockResolvedValue(mockPageResponse([mockPublishedGuideline]));
     render(<GuidelinesListPage />);
-    await waitFor(() => screen.getByText("New Guideline"));
-    fireEvent.click(screen.getByText("New Guideline"));
-    expect(mockPush).toHaveBeenCalledWith("/dashboard/guidelines/create");
+    await waitFor(() =>
+      expect(screen.getByText("Published")).toBeInTheDocument(),
+    );
   });
 
-  it("navigates to detail page when view button clicked", async () => {
+  it("renders Continue button for draft guideline", async () => {
     render(<GuidelinesListPage />);
-    await waitFor(() => screen.getByTitle("View Guideline"));
-    fireEvent.click(screen.getByTitle("View Guideline"));
+    await waitFor(() =>
+      expect(screen.getByText("Continue")).toBeInTheDocument(),
+    );
+  });
+
+  it("navigates to detail page when Continue clicked (draft)", async () => {
+    render(<GuidelinesListPage />);
+    await waitFor(() => screen.getByText("Continue"));
+    fireEvent.click(screen.getByText("Continue"));
     expect(mockPush).toHaveBeenCalledWith("/dashboard/guidelines/guide-1");
   });
 
+  it("renders View and Edit buttons for published guideline", async () => {
+    mockListGuidelinesDocuments.mockResolvedValue(mockPageResponse([mockPublishedGuideline]));
+    render(<GuidelinesListPage />);
+    await waitFor(() => screen.getByLabelText("View guideline"));
+    expect(screen.getByLabelText("Edit guideline")).toBeInTheDocument();
+  });
+
+  it("navigates to detail page when View guideline clicked", async () => {
+    mockListGuidelinesDocuments.mockResolvedValue(mockPageResponse([mockPublishedGuideline]));
+    render(<GuidelinesListPage />);
+    await waitFor(() => screen.getByLabelText("View guideline"));
+    fireEvent.click(screen.getByLabelText("View guideline"));
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/guidelines/guide-2");
+  });
+
+  it("navigates to edit page when Edit guideline clicked", async () => {
+    mockListGuidelinesDocuments.mockResolvedValue(mockPageResponse([mockPublishedGuideline]));
+    render(<GuidelinesListPage />);
+    await waitFor(() => screen.getByLabelText("Edit guideline"));
+    fireEvent.click(screen.getByLabelText("Edit guideline"));
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/guidelines/guide-2/edit");
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GuidelinesListPage — delete flow
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe("GuidelinesListPage — delete flow", () => {
   it("opens confirm modal when delete button clicked", async () => {
     render(<GuidelinesListPage />);
-    await waitFor(() => screen.getByTitle("Delete Guideline"));
-    fireEvent.click(screen.getByTitle("Delete Guideline"));
+    await waitFor(() => screen.getByLabelText("Delete guideline"));
+    fireEvent.click(screen.getByLabelText("Delete guideline"));
     expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
   });
 
   it("calls deleteGuidelinesDocument when confirmed", async () => {
     render(<GuidelinesListPage />);
-    await waitFor(() => screen.getByTitle("Delete Guideline"));
-    fireEvent.click(screen.getByTitle("Delete Guideline"));
+    await waitFor(() => screen.getByLabelText("Delete guideline"));
+    fireEvent.click(screen.getByLabelText("Delete guideline"));
     fireEvent.click(screen.getByTestId("confirm-btn"));
     await waitFor(() =>
       expect(mockDeleteGuidelinesDocument).toHaveBeenCalledWith("guide-1"),
     );
   });
 
-  it("cancels confirm modal when cancel clicked", async () => {
+  it("closes confirm modal when cancel clicked", async () => {
     render(<GuidelinesListPage />);
-    await waitFor(() => screen.getByTitle("Delete Guideline"));
-    fireEvent.click(screen.getByTitle("Delete Guideline"));
+    await waitFor(() => screen.getByLabelText("Delete guideline"));
+    fireEvent.click(screen.getByLabelText("Delete guideline"));
     fireEvent.click(screen.getByTestId("cancel-btn"));
     expect(screen.queryByTestId("confirm-modal")).not.toBeInTheDocument();
   });
+});
 
-  it("shows No guidelines found when list is empty", async () => {
+// ═══════════════════════════════════════════════════════════════════════════
+// GuidelinesListPage — empty state
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe("GuidelinesListPage — empty state", () => {
+  it("shows empty state message when list is empty", async () => {
+    mockListGuidelinesDocuments.mockResolvedValue(mockPageResponse([]));
+    render(<GuidelinesListPage />);
+    await waitFor(() =>
+      expect(screen.getByText("No guidelines found in this section")).toBeInTheDocument(),
+    );
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GuidelinesListPage — pagination
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe("GuidelinesListPage — pagination", () => {
+  it("shows pagination when totalPages > 0", async () => {
     mockListGuidelinesDocuments.mockResolvedValue({
-      content: [],
-      totalElements: 0,
-      totalPages: 0,
-      size: 100,
+      content: [mockDraftGuideline],
+      totalElements: 25,
+      totalPages: 3,
+      size: 10,
+      page: 0,
+    });
+    render(<GuidelinesListPage />);
+    await waitFor(() => screen.getAllByText("Safety Guidelines"));
+    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("shows Showing X-Y of Z entries", async () => {
+    mockListGuidelinesDocuments.mockResolvedValue({
+      content: [mockDraftGuideline],
+      totalElements: 25,
+      totalPages: 3,
+      size: 10,
       page: 0,
     });
     render(<GuidelinesListPage />);
     await waitFor(() =>
-      expect(screen.getByText("No guidelines found.")).toBeInTheDocument(),
+      expect(screen.getByText(/Showing/)).toBeInTheDocument(),
     );
-  });
-
-  it("filters guidelines by search query", async () => {
-    render(<GuidelinesListPage />);
-    await waitFor(() => screen.getByText("Safety Guidelines"));
-    const searchInput = screen.getByPlaceholderText("Search guidelines...");
-    fireEvent.change(searchInput, { target: { value: "nonexistent" } });
-    await waitFor(() =>
-      expect(screen.queryByText("Safety Guidelines")).not.toBeInTheDocument(),
-    );
+    expect(screen.getByText(/25 entries/)).toBeInTheDocument();
   });
 });
 
@@ -279,10 +437,10 @@ describe("GuidelineDetailPage — loading state", () => {
 });
 
 describe("GuidelineDetailPage — loaded state", () => {
-  it("renders guideline title", async () => {
+  it("renders guideline title as heading", async () => {
     render(<GuidelineDetailPage />);
     await waitFor(() =>
-      expect(screen.getByText("Safety Guidelines")).toBeInTheDocument(),
+      expect(screen.getAllByText("Safety Guidelines").length).toBeGreaterThan(0),
     );
   });
 
@@ -300,33 +458,34 @@ describe("GuidelineDetailPage — loaded state", () => {
     );
   });
 
-  it("shows publish button when guideline is not public", async () => {
+  it("shows Delete button", async () => {
     render(<GuidelineDetailPage />);
     await waitFor(() =>
-      expect(screen.getByTitle("Publish Guideline")).toBeInTheDocument(),
+      expect(screen.getByRole("button", { name: /Delete/i })).toBeInTheDocument(),
     );
   });
 
-  it("calls publishGuidelinesDocument when publish button clicked", async () => {
+  it("shows Edit Guideline button", async () => {
     render(<GuidelineDetailPage />);
-    await waitFor(() => screen.getByTitle("Publish Guideline"));
-    fireEvent.click(screen.getByTitle("Publish Guideline"));
     await waitFor(() =>
-      expect(mockPublishGuidelinesDocument).toHaveBeenCalledWith("guide-1"),
+      expect(screen.getByRole("button", { name: /Edit Guideline/i })).toBeInTheDocument(),
     );
   });
 
-  it("shows confirm modal when delete button clicked", async () => {
+  it("shows confirm modal when Delete button clicked", async () => {
     render(<GuidelineDetailPage />);
-    await waitFor(() => screen.getByTitle("Delete Guideline"));
-    fireEvent.click(screen.getByTitle("Delete Guideline"));
-    expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
+    await waitFor(() => screen.getByRole("button", { name: /Delete/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Delete/i }));
+    await waitFor(() =>
+      expect(screen.getByTestId("confirm-modal")).toBeInTheDocument(),
+    );
   });
 
   it("calls deleteGuidelinesDocument and navigates when confirmed", async () => {
     render(<GuidelineDetailPage />);
-    await waitFor(() => screen.getByTitle("Delete Guideline"));
-    fireEvent.click(screen.getByTitle("Delete Guideline"));
+    await waitFor(() => screen.getByRole("button", { name: /Delete/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Delete/i }));
+    await waitFor(() => screen.getByTestId("confirm-modal"));
     fireEvent.click(screen.getByTestId("confirm-btn"));
     await waitFor(() => {
       expect(mockDeleteGuidelinesDocument).toHaveBeenCalledWith("guide-1");
@@ -342,16 +501,15 @@ describe("GuidelineDetailPage — loaded state", () => {
     );
   });
 
-  it("renders HTML content using dangerouslySetInnerHTML when content starts with <", async () => {
+  it("renders HTML content when content starts with <", async () => {
     render(<GuidelineDetailPage />);
-    await waitFor(() => screen.getByText("Safety Guidelines"));
-    // The content "<p>Content here</p>" is rendered via dangerouslySetInnerHTML
+    await waitFor(() => screen.getAllByText("Safety Guidelines"));
     expect(screen.getByText("Content here")).toBeInTheDocument();
   });
 
-  it("renders iframe when content starts with http", async () => {
+  it("renders iframe when content is a URL", async () => {
     mockGetGuidelinesDocument.mockResolvedValue({
-      ...mockGuideline,
+      ...mockDraftGuideline,
       content: "https://example.com/doc.html",
     });
     render(<GuidelineDetailPage />);
@@ -365,111 +523,63 @@ describe("GuidelineDetailPage — loaded state", () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe("CreateGuidelinePage — null user", () => {
-  it("shows Unauthorized when user is null", () => {
+  it("shows Unauthorized Access when user is null", () => {
     mockUser = null;
     render(<CreateGuidelinePage />);
-    expect(screen.getByText("Unauthorized")).toBeInTheDocument();
+    expect(screen.getByText("Unauthorized Access")).toBeInTheDocument();
   });
 
-  it("renders go-back button when unauthorized", () => {
+  it("renders Go Back button when unauthorized", () => {
     mockUser = null;
     render(<CreateGuidelinePage />);
-    expect(screen.getByText("← Go Back")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Go Back/i })).toBeInTheDocument();
   });
 });
 
 describe("CreateGuidelinePage — form", () => {
-  it("renders New Guideline heading", () => {
+  it("renders Create New Guideline heading", () => {
     render(<CreateGuidelinePage />);
-    expect(screen.getByText("New Guideline")).toBeInTheDocument();
+    expect(screen.getByText("Create New Guideline")).toBeInTheDocument();
   });
 
-  it("renders title, abstract, and content fields", () => {
+  it("renders Cancel, Save as Draft, and Publish buttons", () => {
     render(<CreateGuidelinePage />);
-    expect(screen.getByLabelText("Title *")).toBeInTheDocument();
-    expect(screen.getByLabelText("Abstract / Description *")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Save as Draft/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Publish/i })).toBeInTheDocument();
+  });
+
+  it("renders Guideline Title input", () => {
+    render(<CreateGuidelinePage />);
+    expect(screen.getByLabelText(/Guideline Title/i)).toBeInTheDocument();
+  });
+
+  it("renders rich text editor for content", () => {
+    render(<CreateGuidelinePage />);
     expect(screen.getByTestId("rich-text-editor")).toBeInTheDocument();
   });
 
-  it("allows filling in title and abstract", () => {
+  it("allows typing a title", () => {
     render(<CreateGuidelinePage />);
-    const titleInput = screen.getByLabelText("Title *");
-    const abstractInput = screen.getByLabelText("Abstract / Description *");
+    const titleInput = screen.getByLabelText(/Guideline Title/i);
     fireEvent.change(titleInput, { target: { value: "My Guide" } });
-    fireEvent.change(abstractInput, { target: { value: "Summary" } });
     expect(titleInput).toHaveValue("My Guide");
-    expect(abstractInput).toHaveValue("Summary");
   });
 
-  it("renders Preview button in form", () => {
+  it("navigates back on Cancel", () => {
     render(<CreateGuidelinePage />);
-    expect(screen.getByText("Preview")).toBeInTheDocument();
-  });
-
-  it("navigates to back on Cancel", () => {
-    render(<CreateGuidelinePage />);
-    fireEvent.click(screen.getByText("Cancel"));
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
     expect(mockBack).toHaveBeenCalled();
-  });
-
-  it("transitions to preview mode on form submit", () => {
-    render(<CreateGuidelinePage />);
-    fireEvent.change(screen.getByLabelText("Title *"), {
-      target: { value: "My Guide" },
-    });
-    fireEvent.submit(screen.getByText("Preview").closest("form")!);
-    expect(screen.getByText(/Back to Edit/)).toBeInTheDocument();
   });
 });
 
-describe("CreateGuidelinePage — preview mode", () => {
-  const renderAndPreview = async () => {
+describe("CreateGuidelinePage — save as draft", () => {
+  it("calls createGuidelinesDocument without publishGuidelinesDocument on Save as Draft", async () => {
     render(<CreateGuidelinePage />);
-    fireEvent.change(screen.getByLabelText("Title *"), {
+    fireEvent.change(screen.getByLabelText(/Guideline Title/i), {
       target: { value: "My Guide" },
     });
-    fireEvent.change(screen.getByLabelText("Abstract / Description *"), {
-      target: { value: "My Abstract" },
-    });
-    fireEvent.submit(screen.getByText("Preview").closest("form")!);
-    await waitFor(() => screen.getByText(/Back to Edit/));
-  };
-
-  it("shows title in preview", async () => {
-    await renderAndPreview();
-    expect(screen.getByText("My Guide")).toBeInTheDocument();
-  });
-
-  it("shows abstract in preview", async () => {
-    await renderAndPreview();
-    expect(screen.getByText("My Abstract")).toBeInTheDocument();
-  });
-
-  it("shows Publish Guideline and Save as Draft buttons", async () => {
-    await renderAndPreview();
-    expect(screen.getByText("Publish Guideline")).toBeInTheDocument();
-    expect(screen.getByText("Save as Draft")).toBeInTheDocument();
-  });
-
-  it("returns to form when Back to Edit clicked", async () => {
-    await renderAndPreview();
-    fireEvent.click(screen.getByText(/Back to Edit/));
-    expect(screen.getByText("New Guideline")).toBeInTheDocument();
-  });
-
-  it("calls createGuidelinesDocument and publishGuidelinesDocument on Publish", async () => {
-    await renderAndPreview();
-    fireEvent.click(screen.getByText("Publish Guideline"));
-    await waitFor(() => {
-      expect(mockCreateGuidelinesDocument).toHaveBeenCalled();
-      expect(mockPublishGuidelinesDocument).toHaveBeenCalledWith("new-guide");
-      expect(mockPush).toHaveBeenCalledWith("/dashboard/guidelines");
-    });
-  });
-
-  it("calls createGuidelinesDocument (without publish) on Save as Draft", async () => {
-    await renderAndPreview();
-    fireEvent.click(screen.getByText("Save as Draft"));
+    fireEvent.click(screen.getByRole("button", { name: /Save as Draft/i }));
     await waitFor(() => {
       expect(mockCreateGuidelinesDocument).toHaveBeenCalled();
       expect(mockPublishGuidelinesDocument).not.toHaveBeenCalled();

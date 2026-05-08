@@ -254,62 +254,39 @@ export const MissingPersonList = memo(function MissingPersonList({
                       </Badge>
                     </td>
                     <td className="px-6 py-5 text-right rounded-r-3xl">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            className="h-10 w-10 p-0 rounded-xl hover:bg-gray-50"
-                          >
-                            <MoreVertical className="w-5 h-5 text-gray-400" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="rounded-2xl border-gray-100 shadow-xl p-2 min-w-[160px]"
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => onViewDetail(person)}
+                          title="viewDetails"
+                          className="p-2 rounded-xl text-gray-400 hover:text-brand-500 hover:bg-brand-50 transition-all"
                         >
-                          <DropdownMenuItem
-                            onClick={() => onViewDetail(person)}
-                            className="rounded-xl py-3 px-4 font-bold text-gray-600 cursor-pointer"
-                          >
-                            <Eye className="w-4 h-4 mr-3" />
-                            View Details
-                          </DropdownMenuItem>
-                          {(userRole.includes("Reporter") ||
-                            userRole.includes("User")) && (
-                            <>
-                              {person.status === "PENDING" && (
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    setConfirmAction({
-                                      type: "publish",
-                                      id: person.id,
-                                      title: person.fullName,
-                                    })
-                                  }
-                                  className="rounded-xl py-3 px-4 font-bold text-green-600 cursor-pointer"
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-3" />
-                                  Publish Report
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuSeparator className="bg-gray-50 my-1" />
-                              <DropdownMenuItem
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        {(userRole.includes("Reporter") || userRole.includes("User")) && (
+                          <>
+                            {person.status === "PENDING" && (
+                              <button
                                 onClick={() =>
-                                  setConfirmAction({
-                                    type: "delete",
-                                    id: person.id,
-                                    title: person.fullName,
-                                  })
+                                  setConfirmAction({ type: "publish", id: person.id, title: person.title })
                                 }
-                                className="rounded-xl py-3 px-4 font-bold text-red-500 cursor-pointer"
+                                title="publish"
+                                className="p-2 rounded-xl text-gray-400 hover:text-green-500 hover:bg-green-50 transition-all"
                               >
-                                <Trash2 className="w-4 h-4 mr-3" />
-                                Delete Report
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                                <CheckCircle className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() =>
+                                setConfirmAction({ type: "delete", id: person.id, title: person.title })
+                              }
+                              title="delete"
+                              className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                     {/* Spacer row */}
                     <tr className="h-3">
@@ -325,27 +302,27 @@ export const MissingPersonList = memo(function MissingPersonList({
 
       {confirmAction?.type === "publish" && (
         <ConfirmModal
-          title="Publish Report"
-          message={`Are you sure you want to publish the report for ${confirmAction.title}?`}
+          title={t("publishTitle")}
+          message={t("publishMessage", { title: confirmAction.title })}
           onConfirm={() => {
             onPublish(confirmAction.id);
             setConfirmAction(null);
           }}
           onCancel={() => setConfirmAction(null)}
-          confirmText="Publish"
+          confirmText={tCommon("publish")}
           confirmStyle="primary"
         />
       )}
       {confirmAction?.type === "delete" && (
         <ConfirmModal
-          title="Delete Report"
-          message={`Are you sure you want to delete the report for ${confirmAction.title}? This action cannot be undone.`}
+          title={t("deleteTitle")}
+          message={t("deleteMessage", { title: confirmAction.title })}
           onConfirm={() => {
             onDelete(confirmAction.id);
             setConfirmAction(null);
           }}
           onCancel={() => setConfirmAction(null)}
-          confirmText="Delete"
+          confirmText={tCommon("delete")}
           confirmStyle="danger"
         />
       )}

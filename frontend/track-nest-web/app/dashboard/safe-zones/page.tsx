@@ -152,6 +152,7 @@ export default function SafeZonesPage() {
     }
   };
 
+  if (!user) return null;
   if (isLoading) return <Loading fullScreen />;
 
   return (
@@ -253,9 +254,10 @@ export default function SafeZonesPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <h4 className="text-lg font-black text-gray-900 tracking-tight truncate">{zone.name}</h4>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="delete"
                             onClick={(e) => { e.stopPropagation(); setConfirmDelete(zone); }}
                             className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl"
                           >
@@ -302,7 +304,7 @@ export default function SafeZonesPage() {
                 </div>
               </div>
               <div className="lg:w-2/5 p-10 flex flex-col bg-white">
-                <h3 className="text-2xl font-black text-gray-900 mb-8">Configure New Zone</h3>
+                <h3 className="text-2xl font-black text-gray-900 mb-8">{t("modalTitle")}</h3>
                 <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Zone Name</label>
@@ -336,13 +338,13 @@ export default function SafeZonesPage() {
                   </div>
                 </div>
                 <div className="flex gap-4 pt-8 mt-auto border-t border-gray-50">
-                  <Button variant="ghost" onClick={() => setIsCreating(false)} className="flex-1 h-12 rounded-xl font-bold">Cancel</Button>
-                  <Button 
+                  <Button variant="ghost" onClick={() => setIsCreating(false)} className="flex-1 h-12 rounded-xl font-bold">{tCommon("cancel")}</Button>
+                  <Button
                     onClick={handleCreate}
-                    disabled={!formData.name || !selectedLocation}
+                    disabled={!formData.name || !selectedLocation || !formData.radius}
                     className="flex-1 h-12 rounded-xl bg-brand-700 text-white font-black"
                   >
-                    Confirm Zone
+                    {tCommon("confirm")}
                   </Button>
                 </div>
               </div>
@@ -353,11 +355,11 @@ export default function SafeZonesPage() {
 
       {confirmDelete && (
         <ConfirmModal
-          title="Delete Safe Zone"
-          message={`Are you sure you want to remove "${confirmDelete.name}"? This will disable alerts for this area.`}
+          title={t("deleteTitle")}
+          message={t("deleteMessage", { name: confirmDelete.name })}
           onConfirm={handleDelete}
           onCancel={() => setConfirmDelete(null)}
-          confirmText="Delete Zone"
+          confirmText={tCommon("delete")}
           confirmStyle="danger"
         />
       )}

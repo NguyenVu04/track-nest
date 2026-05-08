@@ -165,6 +165,15 @@ export const CrimeReportList = memo(function CrimeReportList({
                          </button>
                          {(userRole.includes("Reporter") || userRole.includes("User")) && (
                            <>
+                             {!report.isPublic && (
+                               <button
+                                 onClick={() => setConfirmAction({ type: "publish", report })}
+                                 className="p-2 rounded-xl text-gray-400 hover:text-teal-500 hover:bg-teal-50 transition-all"
+                                 title={tCommon("publish")}
+                               >
+                                 <Globe className="w-5 h-5" />
+                               </button>
+                             )}
                              <button
                                onClick={() => onEdit?.(report)}
                                className="p-2 rounded-xl text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-all"

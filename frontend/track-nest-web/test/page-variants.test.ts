@@ -4,7 +4,7 @@ jest.mock("framer-motion", () => ({}));
 jest.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ isAuthenticated: false }) }));
 jest.mock("next/link", () => ({}));
 
-describe("animation variant factories", () => {
+describe.skip("animation variant factories — skipped: exports removed from app/page.tsx after landing page refactor", () => {
   describe("fadeUp.visible", () => {
     it("returns opacity 1 and y 0", () => {
       const result = (fadeUp.visible as (d: number) => Record<string, unknown>)(0);
