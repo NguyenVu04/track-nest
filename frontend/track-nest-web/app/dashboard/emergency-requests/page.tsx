@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import {
   emergencyOpsService,
-  AdminEmergencyRequestResponse,
+  EmergencyRequestResponse,
 } from "@/services/emergencyOpsService";
 import { Loading } from "@/components/loading/Loading";
 import { useTranslations } from "next-intl";
@@ -25,20 +25,20 @@ export default function EmergencyRequestsPage() {
   const tCommon = useTranslations("common");
   const tStatus = useTranslations("status");
 
-  const [requests, setRequests] = useState<AdminEmergencyRequestResponse[]>([]);
+  const [requests, setRequests] = useState<EmergencyRequestResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
-  const [rejecting, setRejecting] = useState<AdminEmergencyRequestResponse | null>(null);
-  const [completing, setCompleting] = useState<AdminEmergencyRequestResponse | null>(null);
-  const [trackingRequest, setTrackingRequest] = useState<AdminEmergencyRequestResponse | null>(null);
+  const [rejecting, setRejecting] = useState<EmergencyRequestResponse | null>(null);
+  const [completing, setCompleting] = useState<EmergencyRequestResponse | null>(null);
+  const [trackingRequest, setTrackingRequest] = useState<EmergencyRequestResponse | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [completionNote, setCompletionNote] = useState("");
 
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await emergencyOpsService.getAllEmergencyRequests(
+        const response = await emergencyOpsService.getEmergencyRequests(
           statusFilter || undefined,
           0,
           50,
@@ -56,20 +56,19 @@ export default function EmergencyRequestsPage() {
   }, [user, t, statusFilter, refresh]);
 
   if (!user) return null;
-
-  // if (user.role !== "Emergency Service") {
-  //   return (
-  //     <div className="flex items-center justify-center h-64">
-  //       <div className="text-center">
-  //         <h3 className="text-lg font-semibold text-gray-900">{tCommon("accessDenied")}</h3>
-  //         <p className="text-gray-500">{t("accessDeniedMessage")}</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
   if (isLoading) {
     return <Loading fullScreen />;
+  }
+
+  if (!user.role.includes("Emergency Service")) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-900">{tCommon("accessDenied")}</h3>
+          <p className="text-gray-500">{t("accessDeniedMessage")}</p>
+        </div>
+      </div>
+    );
   }
 
   const filteredRequests = requests.filter((r) =>
@@ -91,7 +90,7 @@ export default function EmergencyRequestsPage() {
     return tStatus(key);
   };
 
-  const navigateToRequestDetail = (request: AdminEmergencyRequestResponse) => {
+  const navigateToRequestDetail = (request: EmergencyRequestResponse) => {
     sessionStorage.setItem(
       `emergency-request-detail:${request.id}`,
       JSON.stringify(request),
@@ -99,7 +98,7 @@ export default function EmergencyRequestsPage() {
     router.push(`/dashboard/emergency-requests/${request.id}`);
   };
 
-  const handleAccept = async (request: AdminEmergencyRequestResponse) => {
+  const handleAccept = async (request: EmergencyRequestResponse) => {
     try {
       await emergencyOpsService.acceptEmergencyRequest(request.id);
       setRequests((prev) =>
@@ -205,7 +204,6 @@ export default function EmergencyRequestsPage() {
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableId")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableSender")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableTarget")}</th>
-                <th className="px-6 py-3 text-left text-gray-700">{t("tableService")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableLocation")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableStatus")}</th>
                 <th className="px-6 py-3 text-left text-gray-700">{t("tableCreated")}</th>
@@ -235,10 +233,6 @@ export default function EmergencyRequestsPage() {
                       {request.targetFirstName} {request.targetLastName}
                     </div>
                     <div className="text-sm text-gray-500">@{request.targetUsername}</div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-900">
-                    <div className="text-sm font-medium">@{request.serviceUsername}</div>
-                    <div className="text-xs text-gray-500">{request.serviceEmail}</div>
                   </td>
                   <td className="px-6 py-4 text-gray-900">
                     {request.targetLastLatitude.toFixed(4)}, {request.targetLastLongitude.toFixed(4)}

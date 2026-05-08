@@ -317,6 +317,7 @@
   },
   "emergencyRequests": {
     "pageTitle": "Emergency Requests",
+    "adminPageTitle": "Emergency Requests (Overview)",
     "searchPlaceholder": "Search by request ID…",
     "tableId": "Request ID",
     "tableLocation": "Location",

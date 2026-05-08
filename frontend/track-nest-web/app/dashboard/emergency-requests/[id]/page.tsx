@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Mail, Phone, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -82,10 +82,14 @@ function ProfileCard({
   );
 }
 
-export default function EmergencyRequestDetailPage() {
+function EmergencyRequestDetailContent() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
+  const backHref = searchParams.get("from") === "admin"
+    ? "/dashboard/emergency-requests/admin"
+    : "/dashboard/emergency-requests";
   const t = useTranslations("emergencyRequests");
   const tCommon = useTranslations("common");
   const tStatus = useTranslations("status");
@@ -129,7 +133,7 @@ export default function EmergencyRequestDetailPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <p className="text-gray-700">Request not found.</p>
           <button
-            onClick={() => router.push("/dashboard/emergency-requests")}
+            onClick={() => router.push(backHref)}
             className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -144,7 +148,7 @@ export default function EmergencyRequestDetailPage() {
     <div>
       <Breadcrumbs
         items={[
-          { label: t("pageTitle"), href: "/dashboard/emergency-requests" },
+          { label: t("pageTitle"), href: backHref },
           { label: request.id.substring(0, 8) },
         ]}
       />
@@ -155,7 +159,7 @@ export default function EmergencyRequestDetailPage() {
           <p className="text-gray-500 text-sm">{request.id}</p>
         </div>
         <button
-          onClick={() => router.push("/dashboard/emergency-requests")}
+          onClick={() => router.push(backHref)}
           className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -236,12 +240,20 @@ export default function EmergencyRequestDetailPage() {
       </div>
 
       <button
-        onClick={() => router.push("/dashboard/emergency-requests")}
+        onClick={() => router.push(backHref)}
         className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
       >
         <ArrowLeft className="w-4 h-4" />
         {tCommon("back")}
       </button>
     </div>
+  );
+}
+
+export default function EmergencyRequestDetailPage() {
+  return (
+    <Suspense>
+      <EmergencyRequestDetailContent />
+    </Suspense>
   );
 }

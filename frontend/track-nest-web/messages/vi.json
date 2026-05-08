@@ -317,6 +317,7 @@
   },
   "emergencyRequests": {
     "pageTitle": "Yêu cầu khẩn cấp",
+    "adminPageTitle": "Yêu cầu khẩn cấp (Tổng quan)",
     "searchPlaceholder": "Tìm theo mã yêu cầu…",
     "tableId": "Mã yêu cầu",
     "tableLocation": "Vị trí",
