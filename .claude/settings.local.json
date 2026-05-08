@@ -42,7 +42,8 @@
       "Bash(powershell *)",
       "Bash(./gradlew compileJava)",
       "Bash(rtk find *)",
-      "Bash(rtk lint *)"
+      "Bash(rtk lint *)",
+      "Bash(rtk ls *)"
     ]
   },
   "hooks": {

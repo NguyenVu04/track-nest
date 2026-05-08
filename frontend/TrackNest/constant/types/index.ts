@@ -29,6 +29,7 @@ export type FamilyCircle = {
   createdAtMs: number;
   memberCount?: number;
   role?: string;
+  isAdmin?: boolean;
 };
 
 export type LocationState = {

@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -91,12 +92,18 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                 .build();
     }
 
-    private FamilyCircleInfo toProto(FamilyCircle fc) {
-        return FamilyCircleInfo.newBuilder()
+    private FamilyCircleInfo toProto(FamilyCircle fc, FamilyCircleMember membership) {
+        FamilyCircleInfo.Builder builder = FamilyCircleInfo.newBuilder()
                 .setFamilyCircleId(fc.getId().toString())
                 .setName(fc.getName())
-                .setCreatedAtMs(fc.getCreatedAt().toInstant().toEpochMilli())
-                .build();
+                .setCreatedAtMs(fc.getCreatedAt().toInstant().toEpochMilli());
+        if (membership != null) {
+            if (membership.getRole() != null) {
+                builder.setFamilyRole(membership.getRole());
+            }
+            builder.setIsAdmin(membership.isAdmin());
+        }
+        return builder.build();
     }
 
     private PageToken buildNextToken(Slice<FamilyCircle> slice) {
@@ -134,8 +141,20 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                 pageable);
 
 
+        List<UUID> circleIds = slice.getContent().stream()
+                .map(FamilyCircle::getId)
+                .toList();
+
+        Map<UUID, FamilyCircleMember> membershipByCircleId = familyCircleMemberRepository
+                .findByCircleIdsAndMemberId(circleIds, userId)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        m -> m.getId().getFamilyCircleId(),
+                        m -> m
+                ));
+
         List<FamilyCircleInfo> infos = slice.getContent().stream()
-                .map(this::toProto)
+                .map(fc -> toProto(fc, membershipByCircleId.get(fc.getId())))
                 .toList();
 
         // 4. Build response

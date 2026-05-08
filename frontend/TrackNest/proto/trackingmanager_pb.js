@@ -1134,7 +1134,9 @@ proto.project.tracknest.usertracking.proto.v1.FamilyCircleInfo.toObject = functi
   var f, obj = {
 familyCircleId: jspb.Message.getFieldWithDefault(msg, 1, ""),
 name: jspb.Message.getFieldWithDefault(msg, 2, ""),
-createdAtMs: jspb.Message.getFieldWithDefault(msg, 3, 0)
+createdAtMs: jspb.Message.getFieldWithDefault(msg, 3, 0),
+familyRole: jspb.Message.getFieldWithDefault(msg, 4, ""),
+isAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
   };
 
   if (includeInstance) {
@@ -1183,6 +1185,14 @@ proto.project.tracknest.usertracking.proto.v1.FamilyCircleInfo.deserializeBinary
       var value = /** @type {number} */ (reader.readUint64());
       msg.setCreatedAtMs(value);
       break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setFamilyRole(value);
+      break;
+    case 5:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setIsAdmin(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1230,6 +1240,20 @@ proto.project.tracknest.usertracking.proto.v1.FamilyCircleInfo.serializeBinaryTo
   if (f !== 0) {
     writer.writeUint64(
       3,
+      f
+    );
+  }
+  f = message.getFamilyRole();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
+    );
+  }
+  f = message.getIsAdmin();
+  if (f) {
+    writer.writeBool(
+      5,
       f
     );
   }
@@ -1287,6 +1311,42 @@ proto.project.tracknest.usertracking.proto.v1.FamilyCircleInfo.prototype.getCrea
  */
 proto.project.tracknest.usertracking.proto.v1.FamilyCircleInfo.prototype.setCreatedAtMs = function(value) {
   return jspb.Message.setProto3IntField(this, 3, value);
+};
+
+
+/**
+ * optional string family_role = 4;
+ * @return {string}
+ */
+proto.project.tracknest.usertracking.proto.v1.FamilyCircleInfo.prototype.getFamilyRole = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.project.tracknest.usertracking.proto.v1.FamilyCircleInfo} returns this
+ */
+proto.project.tracknest.usertracking.proto.v1.FamilyCircleInfo.prototype.setFamilyRole = function(value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional bool is_admin = 5;
+ * @return {boolean}
+ */
+proto.project.tracknest.usertracking.proto.v1.FamilyCircleInfo.prototype.getIsAdmin = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 5, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.project.tracknest.usertracking.proto.v1.FamilyCircleInfo} returns this
+ */
+proto.project.tracknest.usertracking.proto.v1.FamilyCircleInfo.prototype.setIsAdmin = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 5, value);
 };
 
 

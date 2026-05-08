@@ -109,6 +109,8 @@ message FamilyCircleInfo {
   string family_circle_id = 1;
   string name = 2;
   uint64 created_at_ms = 3;
+  string family_role = 4;
+  bool is_admin = 5;
 }
 
 message ListFamilyCircleResponse {
