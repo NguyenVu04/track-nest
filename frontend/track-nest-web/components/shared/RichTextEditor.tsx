@@ -48,9 +48,7 @@ export function RichTextEditor({
           "wordcount",
         ],
         toolbar:
-          "undo redo | blocks | bold italic underline forecolor | " +
-          "alignleft aligncenter alignright alignjustify | " +
-          "bullist numlist outdent indent | link image | removeformat | code",
+          "bold italic underline | bullist numlist | link image",
         content_style:
           "body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:14px; color:#111827; }",
         branding: false,

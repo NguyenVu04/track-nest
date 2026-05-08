@@ -33,6 +33,7 @@ export * as safeZones from "./safe-zones";
 export * as settings from "./settings";
 export * as sos from "./sos";
 export * as tabs from "./tabs";
+export * as testNotifications from "./test-notifications";
 export * as trackerTest from "./tracker-test";
 export * as trackingManagerTest from "./tracking-manager-test";
 export * as voiceTest from "./voice-test";

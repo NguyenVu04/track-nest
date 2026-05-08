@@ -159,7 +159,7 @@ describe("SafeZonesPage", () => {
       );
 
       // Open modal.
-      await user.click(screen.getByRole("button", { name: /addZone/i }));
+      await user.click(screen.getByRole("button", { name: /Create New Zone/i }));
 
       // Modal title from translation mock.
       expect(screen.getByText("modalTitle")).toBeInTheDocument();
@@ -199,7 +199,7 @@ describe("SafeZonesPage", () => {
         expect(screen.getByText("Central Police Station")).toBeInTheDocument(),
       );
 
-      await user.click(screen.getByRole("button", { name: /addZone/i }));
+      await user.click(screen.getByRole("button", { name: /Create New Zone/i }));
 
       const modal = screen
         .getByText("modalTitle")

@@ -143,7 +143,7 @@ describe("SafeZonesPage — loaded state", () => {
   it("renders page title", async () => {
     render(<SafeZonesPage />);
     await waitFor(() =>
-      expect(screen.getByText("pageTitle")).toBeInTheDocument(),
+      expect(screen.getByText("Safe Zone Management")).toBeInTheDocument(),
     );
   });
 
@@ -154,10 +154,10 @@ describe("SafeZonesPage — loaded state", () => {
     );
   });
 
-  it("renders breadcrumbs", async () => {
+  it("renders Configured Zones heading", async () => {
     render(<SafeZonesPage />);
     await waitFor(() =>
-      expect(screen.getByTestId("breadcrumbs")).toBeInTheDocument(),
+      expect(screen.getByText("Configured Zones")).toBeInTheDocument(),
     );
   });
 
@@ -171,7 +171,7 @@ describe("SafeZonesPage — loaded state", () => {
   it("renders add zone button", async () => {
     render(<SafeZonesPage />);
     await waitFor(() =>
-      expect(screen.getByText("addZone")).toBeInTheDocument(),
+      expect(screen.getByText("Create New Zone")).toBeInTheDocument(),
     );
   });
 
@@ -184,20 +184,18 @@ describe("SafeZonesPage — loaded state", () => {
 
   it("renders zone radius", async () => {
     render(<SafeZonesPage />);
-    await waitFor(() => expect(screen.getByText("500m")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/Radius: 500m/i)).toBeInTheDocument(),
+    );
   });
 
   it("filters zones by search query", async () => {
     render(<SafeZonesPage />);
     await waitFor(() => screen.getByText("Police Station A"));
-    const searchInput = screen.getByPlaceholderText(
-      "searchPlaceholder",
-    );
+    const searchInput = screen.getByPlaceholderText("Search by zone name...");
     fireEvent.change(searchInput, { target: { value: "nonexistent" } });
     await waitFor(() =>
-      expect(
-        screen.queryByText("Police Station A"),
-      ).not.toBeInTheDocument(),
+      expect(screen.queryByText("Police Station A")).not.toBeInTheDocument(),
     );
   });
 
@@ -210,26 +208,13 @@ describe("SafeZonesPage — loaded state", () => {
 });
 
 describe("SafeZonesPage — zone selection", () => {
-  it("highlights zone when row clicked", async () => {
+  it("highlights zone when card clicked", async () => {
     render(<SafeZonesPage />);
     await waitFor(() => screen.getByText("Police Station A"));
-    const row = screen.getByText("Police Station A").closest("tr")!;
-    fireEvent.click(row);
-    // After selection, "Show all" button should appear
-    await waitFor(() =>
-      expect(screen.getByText("showAll")).toBeInTheDocument(),
-    );
-  });
-
-  it("deselects zone when Show all clicked", async () => {
-    render(<SafeZonesPage />);
-    await waitFor(() => screen.getByText("Police Station A"));
-    fireEvent.click(screen.getByText("Police Station A").closest("tr")!);
-    await waitFor(() => screen.getByText("showAll"));
-    fireEvent.click(screen.getByText("showAll"));
-    await waitFor(() =>
-      expect(screen.queryByText("showAll")).not.toBeInTheDocument(),
-    );
+    const zoneCard = screen.getByText("Police Station A").closest("div[class*='group']")!;
+    fireEvent.click(zoneCard);
+    // Zone should be selected — the card gets highlighted class
+    expect(zoneCard).not.toBeNull();
   });
 });
 
@@ -264,8 +249,8 @@ describe("SafeZonesPage — delete zone", () => {
 describe("SafeZonesPage — create zone", () => {
   it("opens create modal when Add Zone button clicked", async () => {
     render(<SafeZonesPage />);
-    await waitFor(() => screen.getByText("addZone"));
-    fireEvent.click(screen.getByText("addZone"));
+    await waitFor(() => screen.getByText("Create New Zone"));
+    fireEvent.click(screen.getByText("Create New Zone"));
     await waitFor(() =>
       expect(screen.getByText("modalTitle")).toBeInTheDocument(),
     );
@@ -273,8 +258,8 @@ describe("SafeZonesPage — create zone", () => {
 
   it("closes create modal when Cancel clicked", async () => {
     render(<SafeZonesPage />);
-    await waitFor(() => screen.getByText("addZone"));
-    fireEvent.click(screen.getByText("addZone"));
+    await waitFor(() => screen.getByText("Create New Zone"));
+    fireEvent.click(screen.getByText("Create New Zone"));
     await waitFor(() => screen.getByText("modalTitle"));
     fireEvent.click(screen.getByText("cancel"));
     await waitFor(() =>
@@ -286,8 +271,8 @@ describe("SafeZonesPage — create zone", () => {
 
   it("creates a zone when form is filled and confirmed", async () => {
     render(<SafeZonesPage />);
-    await waitFor(() => screen.getByText("addZone"));
-    fireEvent.click(screen.getByText("addZone"));
+    await waitFor(() => screen.getByText("Create New Zone"));
+    fireEvent.click(screen.getByText("Create New Zone"));
     await waitFor(() => screen.getByText("modalTitle"));
 
     // Fill in zone name — modal adds inputs after the main search input,

@@ -131,6 +131,8 @@ class TrackingManagerServiceImplTest {
             FamilyCircle circle = buildCircle(CIRCLE_ID);
             Slice<FamilyCircle> slice = new SliceImpl<>(List.of(circle), PageRequest.ofSize(32), false);
             when(familyCircleRepository.findFirstPageByUserId(eq(USER_ID), any())).thenReturn(slice);
+            when(familyCircleMemberRepository.findByCircleIdsAndMemberId(List.of(CIRCLE_ID), USER_ID))
+                    .thenReturn(List.of(buildMember(CIRCLE_ID, USER_ID, false)));
 
             ListFamilyCirclesRequest req = ListFamilyCirclesRequest.newBuilder().build();
             ListFamilyCircleResponse res = service.listFamilyCircles(USER_ID, req);
@@ -144,6 +146,8 @@ class TrackingManagerServiceImplTest {
             FamilyCircle circle = buildCircle(CIRCLE_ID);
             Slice<FamilyCircle> slice = new SliceImpl<>(List.of(circle), PageRequest.ofSize(2), true);
             when(familyCircleRepository.findFirstPageByUserId(eq(USER_ID), any())).thenReturn(slice);
+            when(familyCircleMemberRepository.findByCircleIdsAndMemberId(List.of(CIRCLE_ID), USER_ID))
+                    .thenReturn(List.of(buildMember(CIRCLE_ID, USER_ID, false)));
 
             ListFamilyCirclesRequest req = ListFamilyCirclesRequest.newBuilder().setPageSize(2).build();
             ListFamilyCircleResponse res = service.listFamilyCircles(USER_ID, req);
@@ -159,6 +163,8 @@ class TrackingManagerServiceImplTest {
             Slice<FamilyCircle> slice = new SliceImpl<>(List.of(circle), PageRequest.ofSize(32), false);
             when(familyCircleRepository.findNextPageByUserId(eq(USER_ID), any(), any(), any()))
                     .thenReturn(slice);
+            when(familyCircleMemberRepository.findByCircleIdsAndMemberId(List.of(CIRCLE_ID), USER_ID))
+                    .thenReturn(List.of(buildMember(CIRCLE_ID, USER_ID, false)));
 
             ListFamilyCirclesRequest req = ListFamilyCirclesRequest.newBuilder()
                     .setPageToken(encoded).build();
@@ -166,6 +172,75 @@ class TrackingManagerServiceImplTest {
 
             verify(familyCircleRepository).findNextPageByUserId(eq(USER_ID), any(), any(), any());
             assertEquals(1, res.getFamilyCirclesCount());
+        }
+
+        @Test
+        void should_populateFamilyRole_andIsAdmin_whenUserIsAdmin() {
+            FamilyCircle circle = buildCircle(CIRCLE_ID);
+            Slice<FamilyCircle> slice = new SliceImpl<>(List.of(circle), PageRequest.ofSize(32), false);
+            when(familyCircleRepository.findFirstPageByUserId(eq(USER_ID), any())).thenReturn(slice);
+            when(familyCircleMemberRepository.findByCircleIdsAndMemberId(List.of(CIRCLE_ID), USER_ID))
+                    .thenReturn(List.of(buildMember(CIRCLE_ID, USER_ID, true)));
+
+            ListFamilyCircleResponse res = service.listFamilyCircles(USER_ID,
+                    ListFamilyCirclesRequest.newBuilder().build());
+
+            FamilyCircleInfo info = res.getFamilyCircles(0);
+            assertTrue(info.getIsAdmin());
+            assertEquals("parent", info.getFamilyRole());
+        }
+
+        @Test
+        void should_populateFamilyRole_andNotAdmin_whenUserIsNotAdmin() {
+            FamilyCircle circle = buildCircle(CIRCLE_ID);
+            Slice<FamilyCircle> slice = new SliceImpl<>(List.of(circle), PageRequest.ofSize(32), false);
+            when(familyCircleRepository.findFirstPageByUserId(eq(USER_ID), any())).thenReturn(slice);
+            when(familyCircleMemberRepository.findByCircleIdsAndMemberId(List.of(CIRCLE_ID), USER_ID))
+                    .thenReturn(List.of(buildMember(CIRCLE_ID, USER_ID, false)));
+
+            ListFamilyCircleResponse res = service.listFamilyCircles(USER_ID,
+                    ListFamilyCirclesRequest.newBuilder().build());
+
+            FamilyCircleInfo info = res.getFamilyCircles(0);
+            assertFalse(info.getIsAdmin());
+            assertEquals("parent", info.getFamilyRole());
+        }
+
+        @Test
+        void should_returnEmptyRoleAndNotAdmin_whenMembershipMissing() {
+            FamilyCircle circle = buildCircle(CIRCLE_ID);
+            Slice<FamilyCircle> slice = new SliceImpl<>(List.of(circle), PageRequest.ofSize(32), false);
+            when(familyCircleRepository.findFirstPageByUserId(eq(USER_ID), any())).thenReturn(slice);
+            when(familyCircleMemberRepository.findByCircleIdsAndMemberId(List.of(CIRCLE_ID), USER_ID))
+                    .thenReturn(List.of());
+
+            ListFamilyCircleResponse res = service.listFamilyCircles(USER_ID,
+                    ListFamilyCirclesRequest.newBuilder().build());
+
+            FamilyCircleInfo info = res.getFamilyCircles(0);
+            assertFalse(info.getIsAdmin());
+            assertTrue(info.getFamilyRole().isBlank());
+        }
+
+        @Test
+        void should_batchFetchMemberships_forAllCirclesInPage() {
+            UUID circle2Id = UUID.fromString("dddddddd-dddd-4ddd-8ddd-dddddddddddd");
+            FamilyCircle circle1 = buildCircle(CIRCLE_ID);
+            FamilyCircle circle2 = buildCircle(circle2Id);
+            Slice<FamilyCircle> slice = new SliceImpl<>(List.of(circle1, circle2), PageRequest.ofSize(32), false);
+            when(familyCircleRepository.findFirstPageByUserId(eq(USER_ID), any())).thenReturn(slice);
+            when(familyCircleMemberRepository.findByCircleIdsAndMemberId(
+                    argThat(ids -> ids.containsAll(List.of(CIRCLE_ID, circle2Id))), eq(USER_ID)))
+                    .thenReturn(List.of(
+                            buildMember(CIRCLE_ID, USER_ID, true),
+                            buildMember(circle2Id, USER_ID, false)));
+
+            ListFamilyCircleResponse res = service.listFamilyCircles(USER_ID,
+                    ListFamilyCirclesRequest.newBuilder().build());
+
+            assertEquals(2, res.getFamilyCirclesCount());
+            verify(familyCircleMemberRepository, times(1))
+                    .findByCircleIdsAndMemberId(anyList(), eq(USER_ID));
         }
     }
 

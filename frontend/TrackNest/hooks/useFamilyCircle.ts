@@ -28,6 +28,8 @@ export const useFamilyCircle = () => {
         familyCircleId: c.familyCircleId,
         name: c.name,
         createdAtMs: c.createdAtMs,
+        role: c.familyRole || undefined,
+        isAdmin: c.isAdmin,
       }));
 
       await AsyncStorage.setItem(CIRCLES_CACHE_KEY, JSON.stringify(fetched));

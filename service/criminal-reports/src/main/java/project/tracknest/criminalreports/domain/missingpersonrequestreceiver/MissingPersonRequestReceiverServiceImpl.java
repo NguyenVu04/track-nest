@@ -95,6 +95,8 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
                 .content(report.getContent())
                 .contactEmail(report.getContactEmail())
                 .contactPhone(report.getContactPhone())
+                .latitude(report.getLatitude())
+                .longitude(report.getLongitude())
                 .createdAt(report.getCreatedAt())
                 .userId(report.getUserId())
                 .status(report.getStatus() != null ? report.getStatus().getName() : null)

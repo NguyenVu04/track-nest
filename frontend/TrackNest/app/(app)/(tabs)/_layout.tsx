@@ -249,6 +249,20 @@ export default function RootLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="test-notifications"
+        options={{
+          title: t.testNotifications,
+          href: showDevTabs ? undefined : null,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "flask" : "flask-outline"}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

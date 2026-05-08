@@ -33,15 +33,15 @@ jest.mock("@/contexts/EmergencyRequestRealtimeContext", () => ({
 
 // ── Service mock ─────────────────────────────────────────────────────────────
 
-const mockGetAllEmergencyRequests = jest.fn();
+const mockGetEmergencyRequests = jest.fn();
 const mockAcceptEmergencyRequest = jest.fn();
 const mockRejectEmergencyRequest = jest.fn();
 const mockCloseEmergencyRequest = jest.fn();
 
 jest.mock("@/services/emergencyOpsService", () => ({
   emergencyOpsService: {
-    getAllEmergencyRequests: (...args: unknown[]) =>
-      mockGetAllEmergencyRequests(...args),
+    getEmergencyRequests: (...args: unknown[]) =>
+      mockGetEmergencyRequests(...args),
     acceptEmergencyRequest: (...args: unknown[]) =>
       mockAcceptEmergencyRequest(...args),
     rejectEmergencyRequest: (...args: unknown[]) =>
@@ -113,7 +113,7 @@ beforeEach(() => {
   mockUser = { ...emergencyUser };
   mockParams = { id: "req-1" };
   jest.clearAllMocks();
-  mockGetAllEmergencyRequests.mockResolvedValue(mockResponse);
+  mockGetEmergencyRequests.mockResolvedValue(mockResponse);
   mockAcceptEmergencyRequest.mockResolvedValue(undefined);
   mockRejectEmergencyRequest.mockResolvedValue(undefined);
   mockCloseEmergencyRequest.mockResolvedValue({ closedAtMs: Date.now() });
@@ -135,7 +135,7 @@ const { container } = render(<EmergencyRequestsListPage />);
 
 describe("EmergencyRequestsPage — loading state", () => {
   it("shows loader while fetching", () => {
-    mockGetAllEmergencyRequests.mockReturnValue(new Promise(() => {}));
+    mockGetEmergencyRequests.mockReturnValue(new Promise(() => {}));
 render(<EmergencyRequestsListPage />);
     expect(screen.getByTestId("loading")).toBeInTheDocument();
   });
@@ -225,10 +225,26 @@ render(<EmergencyRequestsListPage />);
   });
 
   it("shows toast error when fetch fails", async () => {
-    mockGetAllEmergencyRequests.mockRejectedValue(new Error("Network error"));
+    mockGetEmergencyRequests.mockRejectedValue(new Error("Network error"));
     const { toast } = require("sonner");
 render(<EmergencyRequestsListPage />);
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
+  });
+});
+
+describe("EmergencyRequestsPage — role guard", () => {
+  it("shows access denied for non-Emergency-Service user", async () => {
+    mockUser = {
+      id: "u2",
+      username: "reporter",
+      email: "r@test.com",
+      fullName: "Reporter",
+      role: ["Reporter"],
+    };
+    render(<EmergencyRequestsListPage />);
+    await waitFor(() =>
+      expect(screen.getByText("accessDenied")).toBeInTheDocument(),
+    );
   });
 });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { CrimeReport } from "@/types";
@@ -39,20 +39,11 @@ export default function CrimeReportDetailPage() {
             console.error("Failed to resolve report content URL:", error);
           }
         }
-        const resolvedPhotos = await Promise.all(
-          (response.photos ?? []).map(async (photo) => {
-            if (!photo || photo.startsWith("http")) return photo;
-            try {
-              return await criminalReportsService.getFileUrl(
-                "criminal-reports",
-                photo,
-              );
-            } catch (error) {
-              console.error("Failed to resolve photo URL:", error);
-              return photo;
-            }
-          }),
-        );
+        const resolvedPhotos =
+          response?.photos?.map((photo) =>
+            criminalReportsService.getCrimeReportPhotoUrl(response.id, photo),
+          ) || [];
+
         setReport({
           id: response.id,
           title: response.title,

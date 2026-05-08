@@ -13,6 +13,14 @@ import {
   Mail,
   Upload,
   Trash2,
+  ChevronLeft,
+  Send,
+  UserCircle2,
+  Scale,
+  Palette,
+  Eye,
+  ScanFace,
+  Info
 } from "lucide-react";
 import Image from "next/image";
 import type { MissingPerson } from "@/types";
@@ -22,14 +30,28 @@ import {
 } from "@/services/criminalReportsService";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageTransition } from "@/components/animations/PageTransition";
 
 const LocationPicker = dynamic(
   () => import("../shared/LocationPicker").then((mod) => mod.LocationPicker),
   {
     ssr: false,
     loading: () => (
-      <div className="h-64 rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center">
-        <span className="text-gray-500">Loading map...</span>
+      <div className="h-80 rounded-3xl border border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-2">
+        <MapPin className="w-8 h-8 text-gray-300 animate-pulse" />
+        <span className="text-gray-400 font-medium">Loading map interface...</span>
       </div>
     ),
   },
@@ -40,8 +62,8 @@ const RichTextEditor = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-80 rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center">
-        <span className="text-gray-500">Loading editor...</span>
+      <div className="h-80 rounded-3xl border border-gray-100 bg-gray-50/50 flex items-center justify-center">
+        <span className="text-gray-400 font-medium">Loading editor...</span>
       </div>
     ),
   },
@@ -66,7 +88,8 @@ export function MissingPersonForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<Partial<MissingPerson>>(
+  // Added physical description fields to state
+  const [formData, setFormData] = useState<any>(
     person || {
       fullName: "",
       personalId: "",
@@ -77,6 +100,14 @@ export function MissingPersonForm({
       contactPhone: "",
       title: "",
       status: "PENDING",
+      // New fields for the redesign
+      age: "",
+      gender: "",
+      height: "",
+      weight: "",
+      hairColor: "",
+      eyeColor: "",
+      distinguishingFeatures: "",
     },
   );
 
@@ -86,11 +117,6 @@ export function MissingPersonForm({
       : [10.8231, 106.6297],
   );
 
-  // In create mode the photo File is held locally and submitted together with
-  // the form via submitMissingPersonReport (multipart). The backend's
-  // /missing-person-request-receiver/submit endpoint handles the MinIO upload
-  // atomically — ROLE_USER or ROLE_ADMIN is required for that path.
-  // In edit mode the photo field holds the existing stored key/URL.
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string>(
     mode === "edit" ? (person?.photo ?? "") : "",
@@ -148,7 +174,7 @@ export function MissingPersonForm({
         file,
         "criminal-reports",
       );
-      setFormData((prev) => ({ ...prev, photo: result.url }));
+      setFormData((prev: any) => ({ ...prev, photo: result.url }));
       setPhotoPreviewUrl(result.url);
     } catch {
       toast.error(t("uploadPhotoError"));
@@ -169,7 +195,7 @@ export function MissingPersonForm({
   const handleRemovePhoto = () => {
     setPhotoFile(null);
     setPhotoPreviewUrl("");
-    setFormData((prev) => ({ ...prev, photo: "" }));
+    setFormData((prev: any) => ({ ...prev, photo: "" }));
     if (photoInputRef.current) photoInputRef.current.value = "";
   };
 
@@ -177,19 +203,33 @@ export function MissingPersonForm({
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Constructing a structured content if backend doesn't support specific fields
+    const physicalDetailsHtml = `
+      <div style="background: #f9fafb; padding: 20px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #e5e7eb;">
+        <h3 style="margin-top: 0; color: #111827;">Physical Description</h3>
+        <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <li><strong>Age:</strong> ${formData.age || "N/A"}</li>
+          <li><strong>Gender:</strong> ${formData.gender || "N/A"}</li>
+          <li><strong>Height:</strong> ${formData.height || "N/A"}</li>
+          <li><strong>Weight:</strong> ${formData.weight || "N/A"}</li>
+          <li><strong>Hair Color:</strong> ${formData.hairColor || "N/A"}</li>
+          <li><strong>Eye Color:</strong> ${formData.eyeColor || "N/A"}</li>
+        </ul>
+        ${formData.distinguishingFeatures ? `<p style="margin-top: 16px; margin-bottom: 0;"><strong>Distinguishing Features:</strong> ${formData.distinguishingFeatures}</p>` : ""}
+      </div>
+      ${formData.content}
+    `;
+
     try {
       if (mode === "create") {
-        // Uses the multipart submit endpoint (ROLE_USER or ROLE_ADMIN).
-        // Photo upload is handled atomically server-side.
         const response = await criminalReportsService.submitMissingPersonReport(
           {
-            title:
-              formData.title || formData.fullName || "Missing Person Report",
+            title: formData.title || `Missing Person: ${formData.fullName}`,
             fullName: formData.fullName!,
             personalId: formData.personalId!,
             photo: photoFile ?? undefined,
             date: formData.date!,
-            content: formData.content!,
+            content: physicalDetailsHtml,
             contactEmail: formData.contactEmail || "",
             contactPhone: formData.contactPhone!,
             latitude: coordinates[0],
@@ -222,7 +262,7 @@ export function MissingPersonForm({
           personalId: formData.personalId,
           photo: formData.photo || undefined,
           date: formData.date,
-          content: formData.content,
+          content: physicalDetailsHtml,
           latitude: coordinates[0],
           longitude: coordinates[1],
           contactEmail: formData.contactEmail || undefined,
@@ -265,241 +305,350 @@ export function MissingPersonForm({
   const currentPhotoSrc = photoPreviewUrl || formData.photo || "";
 
   return (
-    <div className="max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-gray-900 text-2xl font-semibold">
-          {mode === "create" ? t("formNewTitle") : t("formEditTitle")}
-        </h2>
-      </div>
+    <PageTransition>
+      <div className="max-w-5xl mx-auto pb-20">
+        <Button 
+          variant="ghost" 
+          onClick={onCancel}
+          className="mb-8 text-gray-500 hover:text-gray-900 transition-colors p-0 h-auto font-bold group"
+        >
+          <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" />
+          Back to Dashboard
+        </Button>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="md:col-span-2">
-            <label htmlFor="title" className="block text-gray-700 mb-2">
-              <span className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                {t("formReportTitle")}
-                {tCommon("requiredSuffix")}
-              </span>
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder={t("placeholderTitle")}
-              required
-            />
-          </div>
+        <div className="mb-10">
+          <h1 className="text-5xl font-black text-gray-900 tracking-tight leading-tight mb-4">
+            {mode === "create" ? "Create Missing Person Report" : "Edit Missing Person Report"}
+          </h1>
+          <p className="text-gray-500 text-lg font-medium max-w-3xl leading-relaxed">
+            Enter accurate details to initiate an immediate alert sequence across the TrackNest network. 
+            This information will be distributed to local authorities and selected Family Circles.
+          </p>
+        </div>
 
-          <div>
-            <label htmlFor="fullName" className="block text-gray-700 mb-2">
-              <span className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                {t("formFullName")}
-                {tCommon("requiredSuffix")}
-              </span>
-            </label>
-            <input
-              id="fullName"
-              type="text"
-              value={formData.fullName}
-              onChange={(e) =>
-                setFormData({ ...formData, fullName: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder={t("placeholderFullName")}
-              required
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          
+          {/* Section 1: Identification */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <Card className="lg:col-span-2 rounded-[2.5rem] border-none shadow-xl shadow-gray-200/50 bg-white/70 backdrop-blur-xl relative overflow-hidden">
+               <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-400" />
+               <CardHeader className="pt-8 px-10 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
+                       <ScanFace className="w-6 h-6" />
+                    </div>
+                    <CardTitle className="text-xl font-black text-gray-900">Identification</CardTitle>
+                  </div>
+               </CardHeader>
+               <CardContent className="px-10 pb-10 space-y-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="fullName" className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1">
+                      Full Legal Name <span className="text-brand-500">*</span>
+                    </Label>
+                    <Input
+                      id="fullName"
+                      placeholder="e.g. Jane Doe"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      required
+                      className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold"
+                    />
+                  </div>
 
-          <div>
-            <label htmlFor="personalId" className="block text-gray-700 mb-2">
-              {t("formPersonalId")}
-              {tCommon("requiredSuffix")}
-            </label>
-            <input
-              id="personalId"
-              type="text"
-              value={formData.personalId}
-              onChange={(e) =>
-                setFormData({ ...formData, personalId: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder={t("placeholderId")}
-              required
-            />
-          </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <Label htmlFor="age" className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1">
+                        Age <span className="text-brand-500">*</span>
+                      </Label>
+                      <Input
+                        id="age"
+                        placeholder="Years"
+                        type="number"
+                        value={formData.age}
+                        onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                        required
+                        className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold"
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <Label htmlFor="gender" className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1">
+                        Gender Identity <span className="text-brand-500">*</span>
+                      </Label>
+                      <Select 
+                        value={formData.gender} 
+                        onValueChange={(val) => setFormData({ ...formData, gender: val })}
+                      >
+                        <SelectTrigger className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold">
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
+                          <SelectItem value="male" className="rounded-xl py-3 font-bold">Male</SelectItem>
+                          <SelectItem value="female" className="rounded-xl py-3 font-bold">Female</SelectItem>
+                          <SelectItem value="non-binary" className="rounded-xl py-3 font-bold">Non-binary</SelectItem>
+                          <SelectItem value="other" className="rounded-xl py-3 font-bold">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-          <div>
-            <label htmlFor="date" className="block text-gray-700 mb-2">
-              <span className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                {t("formDateMissing")}
-                {tCommon("requiredSuffix")}
-              </span>
-            </label>
-            <input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) =>
-                setFormData({ ...formData, date: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              required
-            />
-          </div>
+                  <div className="space-y-3">
+                    <Label htmlFor="personalId" className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1">
+                      Personal ID / Passport <span className="text-brand-500">*</span>
+                    </Label>
+                    <Input
+                      id="personalId"
+                      placeholder="e.g. 123456789"
+                      value={formData.personalId}
+                      onChange={(e) => setFormData({ ...formData, personalId: e.target.value })}
+                      required
+                      className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold"
+                    />
+                  </div>
+               </CardContent>
+            </Card>
 
-          <div>
-            <label className="block text-gray-700 mb-2">
-              {t("formPhotoUrl")}
-            </label>
-
-            {currentPhotoSrc ? (
-              <div className="relative w-full rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
-                <Image
-                  src={currentPhotoSrc}
-                  alt="Uploaded photo"
-                  width={400}
-                  height={200}
-                  className="w-full h-48 object-cover"
-                  unoptimized
-                />
-                <button
-                  type="button"
-                  onClick={handleRemovePhoto}
-                  className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-red-600 text-white text-xs rounded-md hover:bg-red-700 transition-colors"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  {t("removePhoto")}
-                </button>
-              </div>
-            ) : (
-              <div
-                className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
-                onClick={() => photoInputRef.current?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handlePhotoDrop}
-              >
-                <div className="flex flex-col items-center gap-2 text-gray-500 pointer-events-none">
-                  <Upload className="w-7 h-7 text-gray-400" />
-                  <span className="text-sm font-medium">
-                    {t("uploadPhotoBtn")}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {t("uploadPhotoHint")}
-                  </span>
-                </div>
-                <input
+            {/* Photo Upload Area */}
+            <Card className="rounded-[2.5rem] border-2 border-dashed border-gray-200 shadow-none bg-gray-50/50 relative overflow-hidden flex flex-col items-center justify-center p-8 group transition-all hover:bg-gray-100/50 hover:border-brand-200">
+               <input
                   ref={photoInputRef}
                   type="file"
                   accept="image/*"
                   className="hidden"
                   onChange={handlePhotoFileChange}
                 />
-              </div>
-            )}
+                
+                {currentPhotoSrc ? (
+                  <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl">
+                    <Image
+                      src={currentPhotoSrc}
+                      alt="Portrait"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <Button 
+                         type="button" 
+                         variant="destructive" 
+                         onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }}
+                         className="rounded-xl font-bold"
+                       >
+                         <Trash2 className="w-4 h-4 mr-2" />
+                         Remove
+                       </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div 
+                    className="flex flex-col items-center text-center gap-4 cursor-pointer w-full h-full justify-center"
+                    onClick={() => photoInputRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handlePhotoDrop}
+                  >
+                    <div className="w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center text-brand-500 group-hover:scale-110 transition-transform">
+                      <Upload className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-gray-900">Upload Portrait</h3>
+                      <p className="text-xs font-bold text-gray-400 mt-1 max-w-[200px]">
+                        High-resolution, recent photo showing full face. Max 5MB.
+                      </p>
+                    </div>
+                  </div>
+                )}
+            </Card>
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-gray-700 mb-2">
-              <span className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                {t("formLocationCoords")}
-              </span>
-            </label>
-            <LocationPicker
-              position={coordinates}
-              onPositionChange={(position) => setCoordinates(position)}
-            />
-          </div>
+          {/* Section 2: Physical Description */}
+          <Card className="rounded-[2.5rem] border-none shadow-xl shadow-gray-200/50 bg-white/70 backdrop-blur-xl relative overflow-hidden">
+             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-teal-400" />
+             <CardHeader className="pt-8 px-10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+                     <UserCircle2 className="w-6 h-6" />
+                  </div>
+                  <CardTitle className="text-xl font-black text-gray-900">Physical Description</CardTitle>
+                </div>
+             </CardHeader>
+             <CardContent className="px-10 pb-10 space-y-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                   <div className="space-y-3">
+                      <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Height</Label>
+                      <Input
+                        placeholder={"e.g. 5'8\""}
+                        value={formData.height}
+                        onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                        className="h-12 px-5 rounded-xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                      />
+                   </div>
+                   <div className="space-y-3">
+                      <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Weight</Label>
+                      <Input
+                        placeholder="e.g. 150 lbs"
+                        value={formData.weight}
+                        onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                        className="h-12 px-5 rounded-xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                      />
+                   </div>
+                   <div className="space-y-3">
+                      <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Hair Color</Label>
+                      <Input
+                        placeholder="e.g. Brown"
+                        value={formData.hairColor}
+                        onChange={(e) => setFormData({ ...formData, hairColor: e.target.value })}
+                        className="h-12 px-5 rounded-xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                      />
+                   </div>
+                   <div className="space-y-3">
+                      <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Eye Color</Label>
+                      <Input
+                        placeholder="e.g. Hazel"
+                        value={formData.eyeColor}
+                        onChange={(e) => setFormData({ ...formData, eyeColor: e.target.value })}
+                        className="h-12 px-5 rounded-xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                      />
+                   </div>
+                </div>
 
-          <div className="md:col-span-2">
-            <label htmlFor="content" className="block text-gray-700 mb-2">
-              <span className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                {t("formContent")}
-                {tCommon("requiredSuffix")}
-              </span>
-            </label>
-            <RichTextEditor
-              value={formData.content || ""}
-              onChange={(html) => setFormData({ ...formData, content: html })}
-              placeholder={t("placeholderContent")}
-            />
-          </div>
+                <div className="space-y-3">
+                  <Label className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1">
+                    Distinguishing Features (Scars, Tattoos, Glasses)
+                  </Label>
+                  <Textarea
+                    placeholder="Describe any unique physical markers..."
+                    value={formData.distinguishingFeatures}
+                    onChange={(e) => setFormData({ ...formData, distinguishingFeatures: e.target.value })}
+                    className="min-h-[120px] px-6 py-4 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-base font-medium resize-none"
+                  />
+                </div>
+             </CardContent>
+          </Card>
 
-          <div>
-            <label htmlFor="contactEmail" className="block text-gray-700 mb-2">
-              <span className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                {t("formContactEmail")}
-              </span>
-            </label>
-            <input
-              id="contactEmail"
-              type="email"
-              value={formData.contactEmail}
-              onChange={(e) =>
-                setFormData({ ...formData, contactEmail: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder={t("placeholderEmail")}
-            />
-          </div>
+          {/* Section 3: Last Known Sighting */}
+          <Card className="rounded-[2.5rem] border-none shadow-xl shadow-gray-200/50 bg-white/70 backdrop-blur-xl relative overflow-hidden">
+             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-400" />
+             <CardHeader className="pt-8 px-10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                     <MapPin className="w-6 h-6" />
+                  </div>
+                  <CardTitle className="text-xl font-black text-gray-900">Last Known Sighting</CardTitle>
+                </div>
+             </CardHeader>
+             <CardContent className="px-10 pb-10 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-4">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1">
+                      Date Missing <span className="text-brand-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        required
+                        className="h-14 pl-12 pr-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-end">
+                    <div className="flex items-center gap-3 p-4 bg-amber-50/50 rounded-2xl border border-amber-100 text-amber-700 w-full">
+                       <Info className="w-5 h-5 shrink-0" />
+                       <p className="text-xs font-bold leading-tight">
+                         Pinpoint the exact last known location on the map below for more accurate tracking.
+                       </p>
+                    </div>
+                  </div>
+                </div>
 
-          <div>
-            <label htmlFor="contactPhone" className="block text-gray-700 mb-2">
-              <span className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                {t("formContactPhone")}
-                {tCommon("requiredSuffix")}
-              </span>
-            </label>
-            <input
-              id="contactPhone"
-              type="tel"
-              value={formData.contactPhone}
-              onChange={(e) =>
-                setFormData({ ...formData, contactPhone: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
-              placeholder={t("placeholderPhone")}
-              required
-            />
-          </div>
-        </div>
+                <div className="rounded-3xl overflow-hidden border border-gray-100 shadow-inner">
+                  <LocationPicker
+                    position={coordinates}
+                    onPositionChange={(position) => setCoordinates(position)}
+                  />
+                </div>
+             </CardContent>
+          </Card>
 
-        <div className="flex items-center gap-4 mt-6 pt-6 border-t border-gray-200">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-            {isSubmitting
-              ? tCommon("saving")
-              : mode === "create"
-                ? t("createButton")
-                : tCommon("save")}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex items-center gap-2 px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <X className="w-4 h-4" />
-            {tCommon("cancel")}
-          </button>
-        </div>
-      </form>
-    </div>
+          {/* Section 4: Contact & Additional Details */}
+          <Card className="rounded-[2.5rem] border-none shadow-xl shadow-gray-200/50 bg-white/70 backdrop-blur-xl relative overflow-hidden">
+             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-600" />
+             <CardHeader className="pt-8 px-10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
+                     <Phone className="w-6 h-6" />
+                  </div>
+                  <CardTitle className="text-xl font-black text-gray-900">Contact & Additional Details</CardTitle>
+                </div>
+             </CardHeader>
+             <CardContent className="px-10 pb-10 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1">Contact Phone <span className="text-brand-500">*</span></Label>
+                    <Input
+                      placeholder="e.g. +1 (555) 000-0000"
+                      value={formData.contactPhone}
+                      onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                      required
+                      className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1">Contact Email</Label>
+                    <Input
+                      placeholder="e.g. contact@example.com"
+                      type="email"
+                      value={formData.contactEmail}
+                      onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                      className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1">Full Report / Background Information</Label>
+                  <div className="rounded-3xl overflow-hidden border border-gray-100 bg-white ring-offset-background focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-500 transition-all">
+                    <RichTextEditor
+                      value={formData.content || ""}
+                      onChange={(html) => setFormData({ ...formData, content: html })}
+                      placeholder="Enter any additional information, circumstances, or clothing description..."
+                    />
+                  </div>
+                </div>
+             </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-8">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              onClick={onCancel}
+              className="px-10 py-7 rounded-2xl text-gray-500 font-bold hover:bg-gray-100 transition-all w-full sm:w-auto text-lg"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="px-12 py-7 rounded-2xl bg-brand-600 text-white font-black shadow-xl shadow-brand-600/20 hover:bg-brand-700 hover:-translate-y-1 active:translate-y-0 transition-all w-full sm:w-auto text-lg"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Send className="w-6 h-6 mr-3" />
+                  {mode === "create" ? "Create Report" : "Save Changes"}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </PageTransition>
   );
 }

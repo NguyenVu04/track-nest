@@ -14,10 +14,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "TRACK System - Missing Persons & Crime Reports",
-  description: "Track and manage missing person reports and crime incidents",
-};
+import { getMetadataMessages } from "@/utils/metadata";
+
+export async function generateMetadata() {
+  const messages = await getMetadataMessages();
+
+  return {
+    title: messages.auth.appName,
+    description: messages.auth.tagline,
+  };
+}
 
 export default function RootLayout({
   children,

@@ -277,24 +277,24 @@ class ReportManagerControllerTest {
         void should_return200_whenValidRequest() throws Exception {
             when(service.createCrimeReport(eq(REPORTER_ID), any())).thenReturn(sampleCrimeResponse());
 
-            mockMvc.perform(post("/report-manager/crime-reports")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(
-                                    CreateCrimeReportRequest.builder()
-                                            .title("Crime").severity(3).date(LocalDate.now())
-                                            .longitude(106.7).latitude(10.7).build())))
+            mockMvc.perform(multipart("/report-manager/crime-reports")
+                            .param("title", "Crime")
+                            .param("severity", "3")
+                            .param("date", LocalDate.now().toString())
+                            .param("longitude", "106.7")
+                            .param("latitude", "10.7"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(REPORT_ID.toString()));
         }
 
         @Test
-        void should_return400_whenSeverityOutOfRange() throws Exception {
-            mockMvc.perform(post("/report-manager/crime-reports")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(
-                                    CreateCrimeReportRequest.builder()
-                                            .title("Crime").severity(10).date(LocalDate.now())
-                                            .longitude(106.7).latitude(10.7).build())))
+        void should_return400_whenRequiredParamMissing() throws Exception {
+            // 'title' is a required @RequestParam — omitting it triggers MissingServletRequestParameterException → 400
+            mockMvc.perform(multipart("/report-manager/crime-reports")
+                            .param("severity", "3")
+                            .param("date", LocalDate.now().toString())
+                            .param("longitude", "106.7")
+                            .param("latitude", "10.7"))
                     .andExpect(status().isBadRequest());
         }
     }

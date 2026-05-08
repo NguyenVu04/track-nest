@@ -15,6 +15,7 @@ import { MapView } from "../shared/MapView";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { ChatbotPanel } from "../shared/ChatbotPanel";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 
 interface MissingPersonDetailProps {
   person: MissingPerson;

@@ -14,4 +14,10 @@ interface TrackingManagerFamilyCircleMemberRepository extends JpaRepository<Fami
 
     @Query("SELECT fcm FROM FamilyCircleMember fcm JOIN FETCH fcm.member WHERE fcm.id.familyCircleId = :circleId")
     List<FamilyCircleMember> findById_FamilyCircleId(@Param("circleId") UUID circleId);
+
+    @Query("SELECT fcm FROM FamilyCircleMember fcm WHERE fcm.id.familyCircleId IN :circleIds AND fcm.id.memberId = :userId")
+    List<FamilyCircleMember> findByCircleIdsAndMemberId(
+            @Param("circleIds") List<UUID> circleIds,
+            @Param("userId") UUID userId
+    );
 }

@@ -92,6 +92,12 @@ export class FamilyCircleInfo extends jspb.Message {
   getCreatedAtMs(): number;
   setCreatedAtMs(value: number): FamilyCircleInfo;
 
+  getFamilyRole(): string;
+  setFamilyRole(value: string): FamilyCircleInfo;
+
+  getIsAdmin(): boolean;
+  setIsAdmin(value: boolean): FamilyCircleInfo;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FamilyCircleInfo.AsObject;
   static toObject(includeInstance: boolean, msg: FamilyCircleInfo): FamilyCircleInfo.AsObject;
@@ -105,6 +111,8 @@ export namespace FamilyCircleInfo {
     familyCircleId: string;
     name: string;
     createdAtMs: number;
+    familyRole: string;
+    isAdmin: boolean;
   };
 }
 
