@@ -21,7 +21,7 @@
   --border: rgba(0, 0, 0, 0.1);
   --input: transparent;
   --input-background: #f3f3f5;
-  --switch-background: #cbced4;
+  --switch-background: rgba(20, 111, 87, 0.1);
   --font-weight-medium: 500;
   --font-weight-normal: 400;
   --ring: oklch(0.708 0 0);
