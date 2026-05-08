@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Crime Report Detail",
-};
+import { getMetadataMessages } from "@/utils/metadata";
+
+export async function generateMetadata() {
+  const messages = await getMetadataMessages();
+  return {
+    title: `${messages.auth.appName} | ${messages.crimeReports.detailTitle}`,
+  };
+}
 
 export default function CrimeReportDetailLayout({
   children,

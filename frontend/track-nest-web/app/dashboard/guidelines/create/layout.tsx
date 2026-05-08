@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Create Guideline",
-};
+import { getMetadataMessages } from "@/utils/metadata";
+
+export async function generateMetadata() {
+  const messages = await getMetadataMessages();
+  return {
+    title: `${messages.auth.appName} | ${messages.guidelines.createPageTitle}`,
+  };
+}
 
 export default function CreateGuidelineLayout({
   children,

@@ -13,7 +13,7 @@ import {
   Plus,
   Clock,
   User,
-  ExternalLink
+  ExternalLink,
 } from "lucide-react";
 import { useState, memo, useMemo } from "react";
 import type { MissingPerson, UserRole } from "@/types";
@@ -42,12 +42,21 @@ interface MissingPersonListProps {
   onCreateNew?: () => void; // Added to support the Create button in the header
 }
 
-const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  PUBLISHED: { label: "Active Search", color: "text-red-500", bg: "bg-red-50" },
-  PENDING: { label: "Pending", color: "text-brand-600", bg: "bg-brand-50" },
-  RESOLVED: { label: "Found", color: "text-gray-500", bg: "bg-gray-100" },
-  REJECTED: { label: "Rejected", color: "text-slate-500", bg: "bg-slate-100" },
-};
+const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> =
+  {
+    PUBLISHED: {
+      label: "Active Search",
+      color: "text-red-500",
+      bg: "bg-red-50",
+    },
+    PENDING: { label: "Pending", color: "text-brand-600", bg: "bg-brand-50" },
+    RESOLVED: { label: "Found", color: "text-gray-500", bg: "bg-gray-100" },
+    REJECTED: {
+      label: "Rejected",
+      color: "text-slate-500",
+      bg: "bg-slate-100",
+    },
+  };
 
 export const MissingPersonList = memo(function MissingPersonList({
   persons,
@@ -60,7 +69,9 @@ export const MissingPersonList = memo(function MissingPersonList({
   const t = useTranslations("missingPersons");
   const tCommon = useTranslations("common");
 
-  const [activeTab, setActiveTab] = useState<"ALL" | "PUBLISHED" | "PENDING" | "RESOLVED">("ALL");
+  const [activeTab, setActiveTab] = useState<
+    "ALL" | "PUBLISHED" | "PENDING" | "RESOLVED"
+  >("ALL");
   const [confirmAction, setConfirmAction] = useState<{
     type: "publish" | "delete";
     id: string;
@@ -69,7 +80,7 @@ export const MissingPersonList = memo(function MissingPersonList({
 
   const filteredPersons = useMemo(() => {
     if (activeTab === "ALL") return persons;
-    return persons.filter(p => p.status === activeTab);
+    return persons.filter((p) => p.status === activeTab);
   }, [persons, activeTab]);
 
   const tabs = [
@@ -83,14 +94,21 @@ export const MissingPersonList = memo(function MissingPersonList({
     return (
       <div className="space-y-8">
         <div className="flex items-center justify-between">
-           <div>
-             <h1 className="text-4xl font-black text-gray-900 tracking-tight">Missing Person Reports</h1>
-             <p className="text-gray-500 font-medium mt-1">Manage and track active search operations.</p>
-           </div>
-           <Button onClick={onCreateNew} className="rounded-2xl h-12 px-6 bg-brand-700 text-white hover:bg-brand-800 font-black">
-             <Plus className="w-5 h-5 mr-2" />
-             Create New Report
-           </Button>
+          <div>
+            <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+              Missing Person Reports
+            </h1>
+            <p className="text-gray-500 font-medium mt-1">
+              Manage and track active search operations.
+            </p>
+          </div>
+          <Button
+            onClick={onCreateNew}
+            className="rounded-2xl h-12 px-6 bg-brand-700 text-white hover:bg-brand-800 font-black"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Create New Report
+          </Button>
         </div>
         <EmptyState
           icon={Users}
@@ -105,20 +123,30 @@ export const MissingPersonList = memo(function MissingPersonList({
     <div className="space-y-8">
       {/* Redesigned Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-         <div>
-           <h1 className="text-4xl font-black text-gray-900 tracking-tight">Missing Person Reports</h1>
-           <p className="text-gray-500 font-medium mt-1">Manage and track active search operations.</p>
-         </div>
-         <div className="flex items-center gap-3">
-           <Button variant="outline" className="rounded-2xl h-12 px-6 border-gray-100 text-gray-600 font-bold hover:bg-gray-50">
-             <Filter className="w-4 h-4 mr-2" />
-             Filter
-           </Button>
-           <Button onClick={onCreateNew} className="rounded-2xl h-12 px-6 bg-brand-700 text-white hover:bg-brand-800 font-black shadow-lg shadow-brand-700/20 transition-all hover:-translate-y-0.5">
-             <Plus className="w-5 h-5 mr-2" />
-             Create New Report
-           </Button>
-         </div>
+        <div>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+            Missing Person Reports
+          </h1>
+          <p className="text-gray-500 font-medium mt-1">
+            Manage and track active search operations.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            className="rounded-2xl h-12 px-6 border-gray-100 text-gray-600 font-bold hover:bg-gray-50"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filter
+          </Button>
+          <Button
+            onClick={onCreateNew}
+            className="rounded-2xl h-12 px-6 bg-brand-700 text-white hover:bg-brand-800 font-black shadow-lg shadow-brand-700/20 transition-all hover:-translate-y-0.5"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Create New Report
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -129,9 +157,9 @@ export const MissingPersonList = memo(function MissingPersonList({
             onClick={() => setActiveTab(tab.id as any)}
             className={cn(
               "px-6 py-2.5 rounded-xl text-sm font-black transition-all",
-              activeTab === tab.id 
-                ? "bg-brand-200 text-brand-800 shadow-sm" 
-                : "text-gray-500 hover:text-gray-900"
+              activeTab === tab.id
+                ? "bg-brand-200 text-brand-800 shadow-sm"
+                : "text-gray-500 hover:text-gray-900",
             )}
           >
             {tab.label}
@@ -156,79 +184,137 @@ export const MissingPersonList = memo(function MissingPersonList({
               {filteredPersons.map((person, index) => {
                 const status = STATUS_MAP[person.status] || STATUS_MAP.PENDING;
                 const date = new Date(person.date);
-                
+
                 return (
-                  <AnimatedListItem key={person.id} index={index} className="contents">
-                    <tr className="group bg-white rounded-3xl transition-all hover:shadow-xl hover:shadow-gray-200/50">
-                      <td className="px-6 py-5 rounded-l-3xl first:border-l-0">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="w-12 h-12 rounded-2xl border-2 border-brand-50 shadow-sm">
-                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${person.fullName}`} />
-                            <AvatarFallback className="bg-brand-50 text-brand-600 font-black">
-                              {person.fullName.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-black text-gray-900 leading-none mb-1">{person.fullName}</p>
-                            <p className="text-[11px] font-bold text-gray-400">
-                              Case #TRK-{person.id.substring(0, 4).toUpperCase()} • Age 24
-                            </p>
-                          </div>
+                  <AnimatedListItem
+                    key={person.id}
+                    index={index}
+                    className="contents group bg-white rounded-3xl transition-all hover:shadow-xl hover:shadow-gray-200/50"
+                  >
+                    <td className="px-6 py-5 rounded-l-3xl first:border-l-0">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="w-12 h-12 rounded-2xl border-2 border-brand-50 shadow-sm">
+                          <AvatarImage
+                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${person.fullName}`}
+                          />
+                          <AvatarFallback className="bg-brand-50 text-brand-600 font-black">
+                            {person.fullName.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-black text-gray-900 leading-none mb-1">
+                            {person.fullName}
+                          </p>
+                          <p className="text-[11px] font-bold text-gray-400">
+                            Case #TRK-
+                            {person.id.substring(0, 4).toUpperCase()} • Age 24
+                          </p>
                         </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <p className="font-black text-gray-900 text-sm">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                        <p className="text-[11px] font-bold text-gray-400">{date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
-                      </td>
-                      <td className="px-6 py-5">
-                        <p className="font-black text-gray-900 text-sm">John Doe</p>
-                        <p className="text-[11px] font-bold text-gray-400">{person.contactPhone || "+1 (555) 000-0000"}</p>
-                      </td>
-                      <td className="px-6 py-5">
-                        <Badge variant="secondary" className={cn("rounded-full px-3 py-1 font-bold text-[10px] uppercase flex items-center gap-1.5 w-fit border-none", status.bg, status.color)}>
-                          <div className={cn("w-1.5 h-1.5 rounded-full", status.color.replace('text-', 'bg-'))} />
-                          {status.label}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-5 text-right rounded-r-3xl">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl hover:bg-gray-50">
-                              <MoreVertical className="w-5 h-5 text-gray-400" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="rounded-2xl border-gray-100 shadow-xl p-2 min-w-[160px]">
-                            <DropdownMenuItem onClick={() => onViewDetail(person)} className="rounded-xl py-3 px-4 font-bold text-gray-600 cursor-pointer">
-                              <Eye className="w-4 h-4 mr-3" />
-                              View Details
-                            </DropdownMenuItem>
-                            {(userRole.includes("Reporter") || userRole.includes("User")) && (
-                              <>
-                                {person.status === "PENDING" && (
-                                  <DropdownMenuItem 
-                                    onClick={() => setConfirmAction({ type: "publish", id: person.id, title: person.fullName })}
-                                    className="rounded-xl py-3 px-4 font-bold text-green-600 cursor-pointer"
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-3" />
-                                    Publish Report
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator className="bg-gray-50 my-1" />
-                                <DropdownMenuItem 
-                                  onClick={() => setConfirmAction({ type: "delete", id: person.id, title: person.fullName })}
-                                  className="rounded-xl py-3 px-4 font-bold text-red-500 cursor-pointer"
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <p className="font-black text-gray-900 text-sm">
+                        {date.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                      <p className="text-[11px] font-bold text-gray-400">
+                        {date.toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </td>
+                    <td className="px-6 py-5">
+                      <p className="font-black text-gray-900 text-sm">
+                        John Doe
+                      </p>
+                      <p className="text-[11px] font-bold text-gray-400">
+                        {person.contactPhone || "+1 (555) 000-0000"}
+                      </p>
+                    </td>
+                    <td className="px-6 py-5">
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "rounded-full px-3 py-1 font-bold text-[10px] uppercase flex items-center gap-1.5 w-fit border-none",
+                          status.bg,
+                          status.color,
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "w-1.5 h-1.5 rounded-full",
+                            status.color.replace("text-", "bg-"),
+                          )}
+                        />
+                        {status.label}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-5 text-right rounded-r-3xl">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="h-10 w-10 p-0 rounded-xl hover:bg-gray-50"
+                          >
+                            <MoreVertical className="w-5 h-5 text-gray-400" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="rounded-2xl border-gray-100 shadow-xl p-2 min-w-[160px]"
+                        >
+                          <DropdownMenuItem
+                            onClick={() => onViewDetail(person)}
+                            className="rounded-xl py-3 px-4 font-bold text-gray-600 cursor-pointer"
+                          >
+                            <Eye className="w-4 h-4 mr-3" />
+                            View Details
+                          </DropdownMenuItem>
+                          {(userRole.includes("Reporter") ||
+                            userRole.includes("User")) && (
+                            <>
+                              {person.status === "PENDING" && (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setConfirmAction({
+                                      type: "publish",
+                                      id: person.id,
+                                      title: person.fullName,
+                                    })
+                                  }
+                                  className="rounded-xl py-3 px-4 font-bold text-green-600 cursor-pointer"
                                 >
-                                  <Trash2 className="w-4 h-4 mr-3" />
-                                  Delete Report
+                                  <CheckCircle className="w-4 h-4 mr-3" />
+                                  Publish Report
                                 </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
+                              )}
+                              <DropdownMenuSeparator className="bg-gray-50 my-1" />
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setConfirmAction({
+                                    type: "delete",
+                                    id: person.id,
+                                    title: person.fullName,
+                                  })
+                                }
+                                className="rounded-xl py-3 px-4 font-bold text-red-500 cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4 mr-3" />
+                                Delete Report
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
                     {/* Spacer row */}
-                    <tr className="h-3"><td colSpan={5}></td></tr>
+                    <tr className="h-3">
+                      <td colSpan={5}></td>
+                    </tr>
                   </AnimatedListItem>
                 );
               })}

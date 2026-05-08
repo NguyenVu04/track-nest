@@ -2,9 +2,14 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { LoginContent } from "./LoginContent";
 
-export const metadata: Metadata = {
-  title: "Login",
-};
+import { getMetadataMessages } from "@/utils/metadata";
+
+export async function generateMetadata() {
+  const messages = await getMetadataMessages();
+  return {
+    title: `${messages.auth.appName} | ${messages.auth.signIn}`,
+  };
+}
 
 function LoginLoading() {
   return (

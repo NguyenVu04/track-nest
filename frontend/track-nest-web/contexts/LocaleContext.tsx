@@ -39,6 +39,8 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const setLocale = (next: Locale) => {
     setLocaleState(next);
     localStorage.setItem(LOCALE_STORAGE_KEY, next);
+    // Set cookie for server-side access (metadata, etc.)
+    document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=31536000`; // 1 year
   };
 
   return (

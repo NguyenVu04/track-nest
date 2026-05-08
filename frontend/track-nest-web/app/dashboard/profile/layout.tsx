@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "My Profile",
-};
+import { getMetadataMessages } from "@/utils/metadata";
+
+export async function generateMetadata() {
+  const messages = await getMetadataMessages();
+  return {
+    title: `${messages.auth.appName} | ${messages.profile.pageTitle}`,
+  };
+}
 
 export default function ProfileLayout({
   children,
