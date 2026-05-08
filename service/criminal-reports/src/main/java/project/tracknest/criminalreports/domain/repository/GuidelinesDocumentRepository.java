@@ -27,6 +27,16 @@ public interface GuidelinesDocumentRepository extends JpaRepository<GuidelinesDo
     @Query("SELECT g FROM GuidelinesDocument g WHERE g.reporter.id = :reporterId AND g.isPublic = :isPublic")
     Page<GuidelinesDocument> findByReporterIdAndIsPublic(@Param("reporterId") UUID reporterId, @Param("isPublic") boolean isPublic, Pageable pageable);
 
+    @Query("SELECT g FROM GuidelinesDocument g WHERE " +
+           "(:reporterId IS NULL OR g.reporter.id = :reporterId) AND " +
+           "(:isPublic IS NULL OR g.isPublic = :isPublic) AND " +
+           "(:title IS NULL OR LOWER(g.title) LIKE :title)")
+    Page<GuidelinesDocument> findByFilters(
+            @Param("reporterId") UUID reporterId,
+            @Param("isPublic") Boolean isPublic,
+            @Param("title") String title,
+            Pageable pageable);
+
     @Query("SELECT COUNT(g) FROM GuidelinesDocument g WHERE g.createdAt >= :since")
     long countCreatedSince(@Param("since") OffsetDateTime since);
 }

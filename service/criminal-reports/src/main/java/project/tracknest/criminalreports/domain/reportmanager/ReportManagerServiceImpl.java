@@ -333,21 +333,12 @@ class ReportManagerServiceImpl implements ReportManagerService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<GuidelinesDocumentResponse> listGuidelinesDocuments(UUID reporterId, boolean isPublic, int page, int size) {
+    public PageResponse<GuidelinesDocumentResponse> listGuidelinesDocuments(UUID reporterId, Boolean isPublic, String title, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<GuidelinesDocument> documents;
-
-        if (reporterId != null) {
-            documents = isPublic
-                    ? guidelinesDocumentRepository.findByReporterIdAndIsPublic(reporterId, true, pageRequest)
-                    : guidelinesDocumentRepository.findByReporterId(reporterId, pageRequest);
-        } else if (isPublic) {
-            documents = guidelinesDocumentRepository.findAllPublic(pageRequest);
-        } else {
-            documents = guidelinesDocumentRepository.findAll(pageRequest);
-        }
-
-        return mapToPageResponse(documents.map(this::mapToGuidelinesDocumentResponse));
+        String titleParam = (title != null && !title.isBlank()) ? "%" + title.trim().toLowerCase() + "%" : null;
+        return mapToPageResponse(
+                guidelinesDocumentRepository.findByFilters(reporterId, isPublic, titleParam, pageRequest)
+                        .map(this::mapToGuidelinesDocumentResponse));
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

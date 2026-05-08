@@ -264,10 +264,11 @@ public class ReportManagerController {
     @GetMapping("/guidelines")
     public ResponseEntity<PageResponse<GuidelinesDocumentResponse>> listGuidelinesDocuments(
             @RequestParam(required = false) UUID reporterId,
-            @RequestParam(defaultValue = "false") boolean isPublic,
+            @RequestParam(required = false) Boolean isPublic,
+            @RequestParam(required = false) String title,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(service.listGuidelinesDocuments(reporterId, isPublic, page, Math.min(size, 100)));
+        return ResponseEntity.ok(service.listGuidelinesDocuments(reporterId, isPublic, title, page, Math.min(size, 100)));
     }
 
     private String resolveContentType(String objectName) {

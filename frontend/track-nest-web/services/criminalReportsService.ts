@@ -490,6 +490,7 @@ export const criminalReportsService = {
   listGuidelinesDocuments: async (params?: {
     reporterId?: string;
     isPublic?: boolean;
+    title?: string;
     page?: number;
     size?: number;
   }): Promise<PageResponse<GuidelinesDocumentResponse>> => {
