@@ -200,6 +200,7 @@ export default function GuidelinesPage() {
                         {isDraft ? "Draft" : "Published"}
                       </div>
                       <button
+                        aria-label="Delete guideline"
                         onClick={() => setConfirmDelete(guideline.id)}
                         className="text-gray-300 hover:text-red-400 transition-colors"
                       >
@@ -237,12 +238,14 @@ export default function GuidelinesPage() {
                         ) : (
                           <>
                             <button
+                              aria-label="View guideline"
                               onClick={() => router.push(`/dashboard/guidelines/${guideline.id}`)}
                               className="p-2.5 bg-gray-50 rounded-xl text-gray-400 hover:text-brand-500 transition-all"
                             >
                               <Eye className="w-5 h-5" />
                             </button>
                             <button
+                              aria-label="Edit guideline"
                               onClick={() => router.push(`/dashboard/guidelines/${guideline.id}/edit`)}
                               className="p-2.5 bg-gray-50 rounded-xl text-gray-400 hover:text-blue-500 transition-all"
                             >

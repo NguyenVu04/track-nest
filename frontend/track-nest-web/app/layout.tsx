@@ -15,7 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TRACK System - Missing Persons & Crime Reports",
+  title: {
+    default: "TrackNest",
+    template: "TrackNest | %s",
+  },
   description: "Track and manage missing person reports and crime incidents",
 };
 

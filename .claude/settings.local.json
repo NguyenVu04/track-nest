@@ -43,7 +43,8 @@
       "Bash(./gradlew compileJava)",
       "Bash(rtk find *)",
       "Bash(rtk lint *)",
-      "Bash(rtk ls *)"
+      "Bash(rtk ls *)",
+      "Bash(rtk jest *)"
     ]
   },
   "hooks": {
