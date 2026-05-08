@@ -217,9 +217,12 @@ services:
       DB_USERNAME: "tracknestadmin"
       DB_PASSWORD: "tracknestadmin"
       KEYCLOAK_AUTH_SERVER_URL: "http://keycloak:8080/auth"
-      KEYCLOAK_CLIENT_ID: "emergency-operations"
-      KEYCLOAK_CLIENT_SECRET: "2Bu3haFOwsOW7ONprnSGnmVoU8SvHLmy"
+      KEYCLOAK_CLIENT_ID: ""
+      KEYCLOAK_CLIENT_SECRET: ""
       KEYCLOAK_PUBLIC_REALM: "public-dev"
+      KEYCLOAK_RESTRICTED_CLIENT_ID: ""
+      KEYCLOAK_RESTRICTED_CLIENT_SECRET: ""
+      KEYCLOAK_RESTRICTED_REALM: "restricted-dev"
       ALLOWED_ORIGINS: "http://localhost,http://localhost:3000,http://localhost:28080"
     networks:
       - track_nest
