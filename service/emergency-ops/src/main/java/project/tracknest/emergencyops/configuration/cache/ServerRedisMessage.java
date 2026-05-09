@@ -16,5 +16,5 @@ import java.util.UUID;
 public class ServerRedisMessage {
     private String method;
     private UUID receiverId;
-    private Object payload;
+    private Object payload; 
 }
