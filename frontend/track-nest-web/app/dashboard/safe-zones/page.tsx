@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { 
   Plus, 
   Trash2, 
@@ -10,10 +10,7 @@ import {
   School, 
   Shield, 
   Filter, 
-  MoreHorizontal, 
   Navigation, 
-  Calendar,
-  Clock,
   Settings2
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
