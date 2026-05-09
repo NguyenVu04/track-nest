@@ -184,11 +184,36 @@ export default function MissingDetailScreen() {
         {/* ── Identity Block ── */}
         <View style={styles.identityBlock}>
           <Text style={styles.nameText}>{person.fullName}</Text>
+          {!!person.title && (
+            <Text style={styles.titleText}>{person.title}</Text>
+          )}
           {missingDays !== null && (
             <Text style={styles.subtitleText}>
               {`Missing ${missingDays} day${missingDays !== 1 ? "s" : ""}`}
             </Text>
           )}
+        </View>
+
+        {/* ── Person Details ── */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="person-outline" size={16} color={colors.primary} />
+            <Text style={styles.sectionTitle}>{t.personDetails ?? "Person Details"}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailKey}>{t.personalId ?? "Personal ID"}</Text>
+            <Text style={styles.detailVal}>{person.personalId || "—"}</Text>
+          </View>
+          <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
+            <Text style={styles.detailKey}>{t.reportedOn ?? "Reported on"}</Text>
+            <Text style={styles.detailVal}>
+              {new Date(person.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </Text>
+          </View>
         </View>
 
         {/* ── Last Seen ── */}
@@ -224,7 +249,6 @@ export default function MissingDetailScreen() {
             </View>
           ) : null}
 
-          {/* Location / Date / Time / Clothing grid */}
           <View style={styles.lastSeenGrid}>
             <View style={styles.lastSeenRow}>
               <Text style={styles.lastSeenKey}>LOCATION</Text>
@@ -234,7 +258,7 @@ export default function MissingDetailScreen() {
                   : "Unknown"}
               </Text>
             </View>
-            <View style={styles.lastSeenRowHalf}>
+            <View style={[styles.lastSeenRowHalf, { borderBottomWidth: 0 }]}>
               <View style={[styles.lastSeenHalfCell, { borderRightWidth: 1, borderRightColor: colors.border }]}>
                 <Text style={styles.lastSeenKey}>DATE</Text>
                 <Text style={styles.lastSeenVal}>{lastSeenDateStr}</Text>
@@ -244,14 +268,48 @@ export default function MissingDetailScreen() {
                 <Text style={styles.lastSeenVal}>{lastSeenTimeStr}</Text>
               </View>
             </View>
-            {!!person.contactPhone && (
-              <View style={[styles.lastSeenRow, { borderBottomWidth: 0 }]}>
-                <Text style={styles.lastSeenKey}>CONTACT</Text>
-                <Text style={styles.lastSeenVal}>{person.contactPhone}</Text>
-              </View>
-            )}
           </View>
         </View>
+
+        {/* ── Contact Information ── */}
+        {(!!person.contactPhone || !!person.contactEmail) && (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="call-outline" size={16} color={colors.primary} />
+              <Text style={styles.sectionTitle}>{t.contactInfo ?? "Contact Information"}</Text>
+            </View>
+            {!!person.contactPhone && (
+              <Pressable
+                style={styles.contactInfoRow}
+                onPress={() => Linking.openURL(`tel:${person.contactPhone}`)}
+              >
+                <View style={styles.contactInfoIcon}>
+                  <Ionicons name="call" size={16} color={colors.primary} />
+                </View>
+                <View style={styles.contactInfoText}>
+                  <Text style={styles.contactInfoLabel}>{t.phone ?? "Phone"}</Text>
+                  <Text style={[styles.contactInfoVal, styles.contactInfoLink]}>{person.contactPhone}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </Pressable>
+            )}
+            {!!person.contactEmail && (
+              <Pressable
+                style={[styles.contactInfoRow, { borderBottomWidth: 0 }]}
+                onPress={() => Linking.openURL(`mailto:${person.contactEmail}`)}
+              >
+                <View style={styles.contactInfoIcon}>
+                  <Ionicons name="mail" size={16} color={colors.primary} />
+                </View>
+                <View style={styles.contactInfoText}>
+                  <Text style={styles.contactInfoLabel}>{t.email ?? "Email"}</Text>
+                  <Text style={[styles.contactInfoVal, styles.contactInfoLink]}>{person.contactEmail}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </Pressable>
+            )}
+          </View>
+        )}
 
         {/* ── Action Buttons ── */}
         <View style={styles.actionRow}>
@@ -394,9 +452,15 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     lineHeight: 34,
   },
+  titleText: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    fontWeight: "500",
+    marginTop: 2,
+  },
   subtitleText: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: colors.textMuted,
     fontWeight: "500",
   },
 
@@ -423,6 +487,68 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     color: colors.textPrimary,
+  },
+
+  // Detail rows (Person Details section)
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  detailKey: {
+    fontSize: 13,
+    color: colors.textMuted,
+    fontWeight: "500",
+  },
+  detailVal: {
+    fontSize: 14,
+    color: colors.textPrimary,
+    fontWeight: "600",
+    flexShrink: 1,
+    textAlign: "right",
+    maxWidth: "60%",
+  },
+
+  // Contact info rows
+  contactInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    gap: 12,
+  },
+  contactInfoIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: colors.primaryMuted,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  contactInfoText: {
+    flex: 1,
+    gap: 2,
+  },
+  contactInfoLabel: {
+    fontSize: 11,
+    color: colors.textMuted,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  contactInfoVal: {
+    fontSize: 14,
+    color: colors.textPrimary,
+    fontWeight: "600",
+  },
+  contactInfoLink: {
+    color: colors.primary,
   },
 
   // Map

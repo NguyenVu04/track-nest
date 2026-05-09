@@ -69,6 +69,25 @@ public class ReportViewerController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/crime-reports/{reportId}/content")
+    public ResponseEntity<byte[]> viewCrimeReportContent(@PathVariable UUID reportId) {
+        CrimeReportResponse report = service.viewCrimeReport(reportId);
+        String content = report.getContent();
+        if (content == null || content.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+        try (InputStream stream = objectStorage.downloadFile(bucketName, content)) {
+            byte[] bytes = stream.readAllBytes();
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .header("Cache-Control", "public, max-age=3600")
+                    .body(bytes);
+        } catch (Exception e) {
+            log.error("Failed to serve content for crime report {}: {}", reportId, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/crime-reports/{reportId}/photos/{objectName}")
     public ResponseEntity<byte[]> viewCrimeReportPhoto(
             @PathVariable UUID reportId,

@@ -18,6 +18,7 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import { WebView } from "react-native-webview";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
 import { showToast } from "@/utils";
@@ -64,15 +65,23 @@ export default function ReportDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [report, setReport] = useState<CrimeReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const [htmlContent, setHtmlContent] = useState<string | null>(null);
+  const [webViewHeight, setWebViewHeight] = useState(200);
 
   useEffect(() => {
     if (!id) return;
     const loadReport = async () => {
       try {
         const data = await criminalReportsService.getUserCrimeReportById(id);
-        // contentDocId comes as a separate field from the API for crime reports.
-        // Preserve it explicitly so the chatbot panel always receives the right value.
         setReport({ ...data, contentDocId: data.contentDocId ?? "" });
+        if (data.content) {
+          try {
+            const html = await criminalReportsService.getCrimeReportContent(data.id);
+            setHtmlContent(html);
+          } catch {
+            // content fetch failed — renderContent falls back to placeholder
+          }
+        }
       } catch (err) {
         console.error("Failed to load report:", err);
       } finally {
@@ -86,7 +95,7 @@ export default function ReportDetailScreen() {
     if (!report) return;
     try {
       await Share.share({
-        message: `[TrackNest] ${report.title}\nLocation: ${report.latitude.toFixed(6)}, ${report.longitude.toFixed(6)}\n${report.content}`,
+        message: `[TrackNest] ${report.title}\nLocation: ${report.latitude.toFixed(6)}, ${report.longitude.toFixed(6)}`,
       });
     } catch (_) {}
   };
@@ -140,25 +149,32 @@ export default function ReportDetailScreen() {
 
   // ── Content Renderer ──────────────────────────────────────────────────────
 
-  const renderContent = () => {
-    const content = report.content || "";
+  // Injected JS measures the document height and posts it back so the WebView
+  // can expand to fit its content without an internal scrollbar inside ScrollView.
+  const HEIGHT_SCRIPT =
+    "window.ReactNativeWebView.postMessage(String(document.documentElement.scrollHeight)); true;";
 
-    if (content.startsWith("http")) {
+  const renderContent = () => {
+    if (htmlContent) {
       return (
-        <Pressable style={styles.viewDocBtn} onPress={() => Linking.openURL(content)}>
-          <Ionicons name="document-text-outline" size={18} color={colors.primary} />
-          <Text style={styles.viewDocBtnText}>{t.viewDocument}</Text>
-          <Ionicons name="open-outline" size={16} color={colors.primary} />
-        </Pressable>
+        <WebView
+          source={{ html: htmlContent, baseUrl: "" }}
+          style={[styles.webView, { height: webViewHeight }]}
+          scrollEnabled={false}
+          showsVerticalScrollIndicator={false}
+          injectedJavaScript={HEIGHT_SCRIPT}
+          onMessage={(e) => {
+            const h = Number(e.nativeEvent.data);
+            if (h > 0) setWebViewHeight(h);
+          }}
+        />
       );
     }
-
-    if (content.trim().startsWith("<")) {
-      const stripped = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-      return <Text style={styles.overviewText}>{stripped}</Text>;
-    }
-
-    return <Text style={styles.overviewText}>{content}</Text>;
+    return (
+      <Text style={styles.overviewText}>
+        {t.noDescription ?? "No description available."}
+      </Text>
+    );
   };
 
   // ── Derived Values ────────────────────────────────────────────────────────
@@ -491,23 +507,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 24,
   },
-  viewDocBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    alignSelf: "flex-start",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: radii.lg,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryMuted,
-  },
-  viewDocBtnText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: colors.primary,
-    flex: 1,
+  webView: {
+    width: "100%",
+    backgroundColor: "transparent",
   },
 
   // Photos
