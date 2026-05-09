@@ -6,9 +6,10 @@ import { ReactNode } from "react";
 interface AnimatedListItemProps {
   children: ReactNode;
   index: number;
+  className?: string;
 }
 
-export function AnimatedListItem({ children, index }: AnimatedListItemProps) {
+export function AnimatedListItem({ children, index, className }: AnimatedListItemProps) {
   return (
     <motion.tr
       initial={{ opacity: 0, x: -20 }}
@@ -22,6 +23,7 @@ export function AnimatedListItem({ children, index }: AnimatedListItemProps) {
         backgroundColor: "rgba(249, 250, 251, 1)",
         transition: { duration: 0.2 },
       }}
+      className={className}
     >
       {children}
     </motion.tr>

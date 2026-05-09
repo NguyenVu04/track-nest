@@ -22,6 +22,7 @@ public class MissingPersonReportResponse {
     private String photo;
     private LocalDate date;
     private String content;
+    private String contentDocId;
     private String contactEmail;
     private String contactPhone;
     private Double latitude;

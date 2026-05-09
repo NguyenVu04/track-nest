@@ -38,7 +38,7 @@ export default function EmergencyRequestsPage() {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await emergencyOpsService.getAllEmergencyRequests(
+        const response = await emergencyOpsService.getEmergencyRequests(
           statusFilter || undefined,
           0,
           50,
@@ -56,20 +56,19 @@ export default function EmergencyRequestsPage() {
   }, [user, t, statusFilter, refresh]);
 
   if (!user) return null;
-
-  // if (user.role !== "Emergency Service") {
-  //   return (
-  //     <div className="flex items-center justify-center h-64">
-  //       <div className="text-center">
-  //         <h3 className="text-lg font-semibold text-gray-900">{tCommon("accessDenied")}</h3>
-  //         <p className="text-gray-500">{t("accessDeniedMessage")}</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
   if (isLoading) {
     return <Loading fullScreen />;
+  }
+
+  if (!user.role.includes("Emergency Service")) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-900">{tCommon("accessDenied")}</h3>
+          <p className="text-gray-500">{t("accessDeniedMessage")}</p>
+        </div>
+      </div>
+    );
   }
 
   const filteredRequests = requests.filter((r) =>

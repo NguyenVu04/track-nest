@@ -9,6 +9,7 @@ export const Vietnamese = {
   notifierTest: "Notifier",
   pushTest: "Kiểm thử Push",
   voiceTest: "Kiểm thử giọng nói",
+  testNotifications: "Kiểm thử TB",
 };
 
 export const English = {
@@ -22,4 +23,5 @@ export const English = {
   notifierTest: "Notifier",
   pushTest: "Push Test",
   voiceTest: "Voice Test",
+  testNotifications: "Notif Test",
 };

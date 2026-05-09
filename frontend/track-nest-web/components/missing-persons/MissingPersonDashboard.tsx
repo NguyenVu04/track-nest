@@ -25,6 +25,7 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
   const t = useTranslations("missingPersons");
   const tCommon = useTranslations("common");
 
+
   const [missingPersons, setMissingPersons] = useState<MissingPerson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -129,46 +130,22 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 space-y-4">
+        <div className="w-12 h-12 border-4 border-brand-100 border-t-brand-600 rounded-full animate-spin" />
+        <p className="text-gray-400 font-bold animate-pulse">Loading reports...</p>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h2 className="text-gray-900">{t("pageTitle")}</h2>
-        {/* {user.role === "Reporter" && ( */}
-          <button
-            onClick={handleCreateNew}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            {t("newReport")}
-          </button>
-        {/* )} */}
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder={tCommon("search")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-12 text-gray-400">Loading...</div>
-      ) : (
-        <MissingPersonList
-          persons={filteredPersons}
-          onViewDetail={handleViewDetail}
-          onPublish={handlePublish}
-          onDelete={handleDelete}
-          userRole={user.role}
-        />
-      )}
-    </div>
+    <MissingPersonList
+      persons={filteredPersons}
+      onViewDetail={handleViewDetail}
+      onPublish={handlePublish}
+      onDelete={handleDelete}
+      userRole={user.role}
+    />
   );
 }

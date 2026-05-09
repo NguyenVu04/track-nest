@@ -11,7 +11,7 @@
 jest.mock("@/services/emergencyOpsService", () => ({
   __esModule: true,
   emergencyOpsService: {
-    getAllEmergencyRequests: jest.fn(),
+    getEmergencyRequests: jest.fn(),
     acceptEmergencyRequest: jest.fn(),
     rejectEmergencyRequest: jest.fn(),
     closeEmergencyRequest: jest.fn(),
@@ -81,6 +81,10 @@ const pendingRequest = {
   status: "PENDING" as const,
   targetLastLatitude: 10.78,
   targetLastLongitude: 106.69,
+  serviceId: "svc-1",
+  serviceUsername: "service_unit_1",
+  servicePhoneNumber: "+84900000001",
+  serviceEmail: "svc1@example.com",
 };
 
 const acceptedRequest = {
@@ -117,7 +121,7 @@ beforeEach(() => {
     unreadCount: 0,
   });
 
-  svc.getAllEmergencyRequests.mockResolvedValue({
+  svc.getEmergencyRequests.mockResolvedValue({
     items: [pendingRequest, acceptedRequest],
     totalItems: 2,
     totalPages: 1,

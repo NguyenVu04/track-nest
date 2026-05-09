@@ -39,7 +39,12 @@
       "Bash(rtk grep *)",
       "Bash(python *)",
       "Bash(Select-Object -ExpandProperty FullName)",
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "Bash(./gradlew compileJava)",
+      "Bash(rtk find *)",
+      "Bash(rtk lint *)",
+      "Bash(rtk ls *)",
+      "Bash(rtk jest *)"
     ]
   },
   "hooks": {

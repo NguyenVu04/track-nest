@@ -65,7 +65,7 @@ export const AppSidebar = memo(function AppSidebar({
 
   const adminNav: NavItem[] = [
     { href: "/dashboard/accounts", nameKey: "accounts", icon: UserCircle, roles: ["Admin"] },
-    { href: "/dashboard/emergency-requests", nameKey: "emergencyRequests", icon: LifeBuoy, roles: ["Admin"] },
+    { href: "/dashboard/emergency-requests/admin", nameKey: "emergencyRequests", icon: LifeBuoy, roles: ["Admin"] },
   ];
 
   const visibleCore     = coreNav.filter(item => !item.roles || hasRole(item.roles));

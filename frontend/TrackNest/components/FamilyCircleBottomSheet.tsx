@@ -92,9 +92,9 @@ export const FamilyCircleBottomSheet: React.FC<
   const handleOpenManage = useCallback(async (circle: FamilyCircle) => {
     setManagingCircle(circle);
     setEditName(circle.name);
-    setMyRole("");
+    setMyRole(circle.role ?? "");
     setCircleMembers([]);
-    setIsCurrentUserAdmin(false);
+    setIsCurrentUserAdmin(circle.isAdmin ?? false);
     setLoadingMembers(true);
 
     try {
@@ -155,6 +155,7 @@ export const FamilyCircleBottomSheet: React.FC<
       try {
         await updateFamilyRole(managingCircle.familyCircleId, role);
         await onRefresh?.();
+        showToast(t.updateRoleSuccess, t.successTitle);
       } catch (e: any) {
         showToast(e?.message ?? t.updateRoleFailed, t.errorTitle);
         setMyRole(prevRole);
@@ -324,18 +325,20 @@ export const FamilyCircleBottomSheet: React.FC<
               {item.name}
             </Text>
             <Text style={styles.circleMeta}>
-              {item.memberCount} {t.members}
-              {item.role === "admin" && ` • ${t.admin}`}
+              {item.role ? item.role : ""}
+              {item.isAdmin && ` • ${t.admin}`}
             </Text>
           </View>
           <View style={styles.circleActions}>
-            <Pressable
-              onPress={() => handleInvite(item)}
-              hitSlop={8}
-              style={styles.actionBtn}
-            >
-              <Ionicons name="share-outline" size={18} color="#74becb" />
-            </Pressable>
+            {item.isAdmin && (
+              <Pressable
+                onPress={() => handleInvite(item)}
+                hitSlop={8}
+                style={styles.actionBtn}
+              >
+                <Ionicons name="share-outline" size={18} color="#74becb" />
+              </Pressable>
+            )}
             <Pressable
               onPress={() => handleOpenManage(item)}
               hitSlop={8}
@@ -354,7 +357,6 @@ export const FamilyCircleBottomSheet: React.FC<
       onSelectCircle,
       selectedCircleId,
       t.admin,
-      t.members,
       handleInvite,
       handleOpenManage,
     ],
@@ -400,8 +402,6 @@ export const FamilyCircleBottomSheet: React.FC<
       </BottomSheetView>
     );
   }
-
-  const isAdmin = isCurrentUserAdmin;
 
   return (
     <>
@@ -529,30 +529,17 @@ export const FamilyCircleBottomSheet: React.FC<
               {/* )} */}
 
               <View style={styles.section}>
-                {/* {!isAdmin ? ( */}
-                <Pressable style={styles.dangerRow} onPress={handleLeave}>
-                  <Ionicons name="exit-outline" size={20} color="#e74c3c" />
-                  <Text style={styles.dangerText}>{t.leaveCircle}</Text>
-                </Pressable>
-                {/* ) : ( */}
-                <>
-                  {/* <View style={styles.adminNotice}>
-                      <Ionicons
-                        name="information-circle-outline"
-                        size={18}
-                        color="#f39c12"
-                      />
-                      <Text style={styles.adminNoticeText}>
-                        Admins cannot leave. Transfer admin role to a member
-                        first.
-                      </Text>
-                    </View> */}
+                {isCurrentUserAdmin ? (
                   <Pressable style={styles.dangerRow} onPress={handleDelete}>
                     <Ionicons name="trash-outline" size={20} color="#e74c3c" />
                     <Text style={styles.dangerText}>{t.deleteCircle}</Text>
                   </Pressable>
-                </>
-                {/* )} */}
+                ) : (
+                  <Pressable style={styles.dangerRow} onPress={handleLeave}>
+                    <Ionicons name="exit-outline" size={20} color="#e74c3c" />
+                    <Text style={styles.dangerText}>{t.leaveCircle}</Text>
+                  </Pressable>
+                )}
               </View>
             </ScrollView>
           </View>
@@ -564,7 +551,7 @@ export const FamilyCircleBottomSheet: React.FC<
         onClose={() => setShowMembersModal(false)}
         circle={managingCircle}
         members={circleMembers}
-        isAdmin={isAdmin}
+        isAdmin={isCurrentUserAdmin}
         isLoading={loadingMembers}
         onRefresh={() => {
           onRefresh?.();

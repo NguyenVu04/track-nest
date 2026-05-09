@@ -130,12 +130,14 @@ function MissingPersonCard({
       </View>
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>
-        <View style={styles.cardMetaRow}>
-          <Ionicons name="person-outline" size={13} color={colors.textMuted} />
-          <Text style={styles.cardMetaText}>
-            {ageLabel}: {item.age} {yearsOldLabel}
-          </Text>
-        </View>
+        {item.age !== undefined && (
+          <View style={styles.cardMetaRow}>
+            <Ionicons name="person-outline" size={13} color={colors.textMuted} />
+            <Text style={styles.cardMetaText}>
+              {ageLabel}: {item.age} {yearsOldLabel}
+            </Text>
+          </View>
+        )}
         <View style={styles.cardMetaRow}>
           <Ionicons name="location-outline" size={13} color={colors.textMuted} />
           <Text style={styles.cardMetaText} numberOfLines={1}>

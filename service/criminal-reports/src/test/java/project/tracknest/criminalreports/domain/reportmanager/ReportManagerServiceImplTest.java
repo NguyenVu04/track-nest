@@ -462,48 +462,84 @@ class ReportManagerServiceImplTest {
     class ListCrimeReports {
 
         @Test
-        void should_filterByReporterAndMinSeverity_whenBothProvided() {
-            when(crimeReportRepository.findByReporterIdAndMinSeverity(eq(REPORTER_ID), eq(3), any(Pageable.class)))
+        void should_delegateToFindByFilters_withNoOptionalParams() {
+            when(crimeReportRepository.findByFilters(isNull(), eq(false), isNull(), isNull(), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listCrimeReports(REPORTER_ID, 3, false, 0, 10);
-            verify(crimeReportRepository).findByReporterIdAndMinSeverity(eq(REPORTER_ID), eq(3), any());
+            service.listCrimeReports(null, null, null, null, false, 0, 10);
+
+            verify(crimeReportRepository).findByFilters(isNull(), eq(false), isNull(), isNull(), isNull(), any());
         }
 
         @Test
-        void should_filterPublicByReporter_whenReporterAndIsPublic() {
-            when(crimeReportRepository.findByReporterIdAndIsPublic(eq(REPORTER_ID), eq(true), any(Pageable.class)))
+        void should_passReporterId_toFindByFilters() {
+            when(crimeReportRepository.findByFilters(eq(REPORTER_ID), eq(false), isNull(), isNull(), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listCrimeReports(REPORTER_ID, null, true, 0, 10);
-            verify(crimeReportRepository).findByReporterIdAndIsPublic(eq(REPORTER_ID), eq(true), any());
+            service.listCrimeReports(REPORTER_ID, null, null, null, false, 0, 10);
+
+            verify(crimeReportRepository).findByFilters(eq(REPORTER_ID), eq(false), isNull(), isNull(), isNull(), any());
         }
 
         @Test
-        void should_filterByReporterOnly_whenNoSeverityOrPublic() {
-            when(crimeReportRepository.findByReporterId(eq(REPORTER_ID), any(Pageable.class)))
+        void should_passMinSeverity_toFindByFilters() {
+            when(crimeReportRepository.findByFilters(isNull(), eq(false), eq(4), isNull(), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listCrimeReports(REPORTER_ID, null, false, 0, 10);
-            verify(crimeReportRepository).findByReporterId(eq(REPORTER_ID), any());
+            service.listCrimeReports(null, 4, null, null, false, 0, 10);
+
+            verify(crimeReportRepository).findByFilters(isNull(), eq(false), eq(4), isNull(), isNull(), any());
         }
 
         @Test
-        void should_findAllPublicWithSeverity_whenIsPublicAndMinSeverity() {
-            when(crimeReportRepository.findAllPublicByMinSeverity(eq(3), any(Pageable.class)))
+        void should_passMaxSeverity_toFindByFilters() {
+            when(crimeReportRepository.findByFilters(isNull(), eq(false), isNull(), eq(2), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listCrimeReports(null, 3, true, 0, 10);
-            verify(crimeReportRepository).findAllPublicByMinSeverity(eq(3), any());
+            service.listCrimeReports(null, null, 2, null, false, 0, 10);
+
+            verify(crimeReportRepository).findByFilters(isNull(), eq(false), isNull(), eq(2), isNull(), any());
         }
 
         @Test
-        void should_findAllPublic_whenIsPublicAndNoSeverity() {
-            when(crimeReportRepository.findAllPublic(any(Pageable.class)))
+        void should_passBothSeverities_toFindByFilters() {
+            when(crimeReportRepository.findByFilters(isNull(), eq(false), eq(3), eq(3), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listCrimeReports(null, null, true, 0, 10);
-            verify(crimeReportRepository).findAllPublic(any());
+            service.listCrimeReports(null, 3, 3, null, false, 0, 10);
+
+            verify(crimeReportRepository).findByFilters(isNull(), eq(false), eq(3), eq(3), isNull(), any());
+        }
+
+        @Test
+        void should_formatTitle_asLowerCaseLikePredicate() {
+            when(crimeReportRepository.findByFilters(isNull(), eq(false), isNull(), isNull(), eq("%robbery%"), any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of(privateCrimeReport())));
+
+            var result = service.listCrimeReports(null, null, null, "Robbery", false, 0, 10);
+
+            assertThat(result.getContent()).hasSize(1);
+            verify(crimeReportRepository).findByFilters(isNull(), eq(false), isNull(), isNull(), eq("%robbery%"), any());
+        }
+
+        @Test
+        void should_passNullTitle_whenTitleIsBlank() {
+            when(crimeReportRepository.findByFilters(isNull(), eq(false), isNull(), isNull(), isNull(), any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of()));
+
+            service.listCrimeReports(null, null, null, "   ", false, 0, 10);
+
+            verify(crimeReportRepository).findByFilters(isNull(), eq(false), isNull(), isNull(), isNull(), any());
+        }
+
+        @Test
+        void should_passIsPublicTrue_toFindByFilters() {
+            when(crimeReportRepository.findByFilters(isNull(), eq(true), isNull(), isNull(), isNull(), any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of()));
+
+            service.listCrimeReports(null, null, null, null, true, 0, 10);
+
+            verify(crimeReportRepository).findByFilters(isNull(), eq(true), isNull(), isNull(), isNull(), any());
         }
     }
 
@@ -618,30 +654,64 @@ class ReportManagerServiceImplTest {
     class ListGuidelinesDocuments {
 
         @Test
-        void should_filterPublicByReporter_whenReporterAndIsPublic() {
-            when(guidelinesDocumentRepository.findByReporterIdAndIsPublic(eq(REPORTER_ID), eq(true), any(Pageable.class)))
+        void should_passNullIsPublic_whenAllFilter() {
+            when(guidelinesDocumentRepository.findByFilters(isNull(), isNull(), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listGuidelinesDocuments(REPORTER_ID, true, 0, 10);
-            verify(guidelinesDocumentRepository).findByReporterIdAndIsPublic(eq(REPORTER_ID), eq(true), any());
+            service.listGuidelinesDocuments(null, null, null, 0, 10);
+
+            verify(guidelinesDocumentRepository).findByFilters(isNull(), isNull(), isNull(), any());
         }
 
         @Test
-        void should_filterByReporterOnly_whenReporterAndNotPublic() {
-            when(guidelinesDocumentRepository.findByReporterId(eq(REPORTER_ID), any(Pageable.class)))
+        void should_passTrueIsPublic_whenPublishedFilter() {
+            when(guidelinesDocumentRepository.findByFilters(isNull(), eq(Boolean.TRUE), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listGuidelinesDocuments(REPORTER_ID, false, 0, 10);
-            verify(guidelinesDocumentRepository).findByReporterId(eq(REPORTER_ID), any());
+            service.listGuidelinesDocuments(null, true, null, 0, 10);
+
+            verify(guidelinesDocumentRepository).findByFilters(isNull(), eq(Boolean.TRUE), isNull(), any());
         }
 
         @Test
-        void should_findAllPublic_whenNoReporterAndIsPublic() {
-            when(guidelinesDocumentRepository.findAllPublic(any(Pageable.class)))
+        void should_passFalseIsPublic_whenDraftFilter() {
+            when(guidelinesDocumentRepository.findByFilters(isNull(), eq(Boolean.FALSE), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listGuidelinesDocuments(null, true, 0, 10);
-            verify(guidelinesDocumentRepository).findAllPublic(any());
+            service.listGuidelinesDocuments(null, false, null, 0, 10);
+
+            verify(guidelinesDocumentRepository).findByFilters(isNull(), eq(Boolean.FALSE), isNull(), any());
+        }
+
+        @Test
+        void should_passReporterId_toFindByFilters() {
+            when(guidelinesDocumentRepository.findByFilters(eq(REPORTER_ID), isNull(), isNull(), any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of()));
+
+            service.listGuidelinesDocuments(REPORTER_ID, null, null, 0, 10);
+
+            verify(guidelinesDocumentRepository).findByFilters(eq(REPORTER_ID), isNull(), isNull(), any());
+        }
+
+        @Test
+        void should_formatTitle_asLowerCaseLikePredicate() {
+            when(guidelinesDocumentRepository.findByFilters(isNull(), isNull(), eq("%safety guide%"), any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of(privateGuideline())));
+
+            var result = service.listGuidelinesDocuments(null, null, "Safety Guide", 0, 10);
+
+            assertThat(result.getContent()).hasSize(1);
+            verify(guidelinesDocumentRepository).findByFilters(isNull(), isNull(), eq("%safety guide%"), any());
+        }
+
+        @Test
+        void should_passNullTitle_whenTitleIsBlank() {
+            when(guidelinesDocumentRepository.findByFilters(isNull(), isNull(), isNull(), any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of()));
+
+            service.listGuidelinesDocuments(null, null, "   ", 0, 10);
+
+            verify(guidelinesDocumentRepository).findByFilters(isNull(), isNull(), isNull(), any());
         }
     }
 }

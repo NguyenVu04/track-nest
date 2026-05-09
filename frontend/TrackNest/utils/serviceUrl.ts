@@ -5,6 +5,7 @@ export const SERVICE_URL_KEY = "@tracknest/service_url";
 export const EMERGENCY_URL_KEY = "@tracknest/emergency_url";
 export const CRIMINAL_URL_KEY = "@tracknest/criminal_url";
 export const GRPC_URL_KEY = "@tracknest/grpc_url";
+export const USER_TRACKING_HTTP_URL_KEY = "@tracknest/user_tracking_http_url";
 
 const getDevHostUrl = (): string | null => {
   const hostUri = Constants.expoConfig?.hostUri;
@@ -70,6 +71,22 @@ export const getCriminalUrl = async (): Promise<string> => {
 };
 
 /**
+ * Returns the user-tracking HTTP base URL (port 18080, context /user-tracking).
+ * Used only by dev/test tooling — the mobile app otherwise talks to user-tracking
+ * exclusively over gRPC.
+ */
+export const getUserTrackingHttpUrl = async (): Promise<string> => {
+  const stored = await getStoredUrl(USER_TRACKING_HTTP_URL_KEY);
+  if (stored) return stored;
+
+  const envUrl = process.env.EXPO_PUBLIC_USER_TRACKING_HTTP_URL?.trim();
+  if (envUrl) return envUrl;
+
+  const devHost = getDevHostUrl();
+  return devHost ? `${devHost}:18080/user-tracking` : "http://localhost:18080/user-tracking";
+};
+
+/**
  * Returns the full gRPC endpoint URL used by all gRPC services.
  * Priority: manual dev-mode override (stored value is used as-is) →
  * derived from base URL using the default port/path convention.
@@ -79,6 +96,9 @@ export const getCriminalUrl = async (): Promise<string> => {
 export const getGrpcUrl = async (): Promise<string> => {
   const stored = await getStoredUrl(GRPC_URL_KEY);
   if (stored) return stored;
+
+  const envUrl = process.env.EXPO_PUBLIC_GRPC_URL?.trim();
+  if (envUrl) return envUrl;
 
   const baseUrl = await getServiceUrl();
   return `${baseUrl}${__DEV__ ? ":8800" : ":443"}`;

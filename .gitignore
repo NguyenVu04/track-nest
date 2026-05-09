@@ -3,3 +3,4 @@
 certs/
 .claude/
 /**/*/*.prod.*
+/**/*/*.dev.*

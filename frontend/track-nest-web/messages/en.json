@@ -317,11 +317,13 @@
   },
   "emergencyRequests": {
     "pageTitle": "Emergency Requests",
+    "adminPageTitle": "Emergency Requests (Overview)",
     "searchPlaceholder": "Search by request ID…",
     "tableId": "Request ID",
     "tableLocation": "Location",
     "tableSender": "Sender",
     "tableTarget": "Target",
+    "tableService": "Assigned Service",
     "tableStatus": "Status",
     "tableCreated": "Created",
     "tableActions": "Actions",

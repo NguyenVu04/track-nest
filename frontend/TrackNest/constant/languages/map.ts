@@ -94,6 +94,7 @@ export const Vietnamese = {
   notAvailable: "N/A",
   familyCircleDefault: "Nhóm gia đình",
   loadMembersFailed: "Không thể tải danh sách thành viên",
+  updateRoleSuccess: "Cập nhật vai trò thành công",
 };
 
 export const English = {
@@ -191,4 +192,5 @@ export const English = {
   notAvailable: "N/A",
   familyCircleDefault: "Family Circle",
   loadMembersFailed: "Failed to load circle members",
+  updateRoleSuccess: "Role updated successfully",
 };

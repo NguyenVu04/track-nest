@@ -548,13 +548,13 @@ export default function FamilyChatScreen() {
         )}
 
         <View style={styles.inputBar}>
-          <Pressable style={styles.attachBtn} hitSlop={8} disabled>
+          {/* <Pressable style={styles.attachBtn} hitSlop={8} disabled>
             <Ionicons
               name="attach-outline"
               size={22}
               color={colors.textMuted}
             />
-          </Pressable>
+          </Pressable> */}
           <TextInput
             style={styles.textInput}
             placeholder={t.messagePlaceholder.replace(

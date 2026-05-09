@@ -317,11 +317,13 @@
   },
   "emergencyRequests": {
     "pageTitle": "Yêu cầu khẩn cấp",
+    "adminPageTitle": "Yêu cầu khẩn cấp (Tổng quan)",
     "searchPlaceholder": "Tìm theo mã yêu cầu…",
     "tableId": "Mã yêu cầu",
     "tableLocation": "Vị trí",
     "tableSender": "Người gửi",
     "tableTarget": "Nạn nhân",
+    "tableService": "Đơn vị xử lý",
     "tableStatus": "Trạng thái",
     "tableCreated": "Ngày tạo",
     "tableActions": "Hành động",

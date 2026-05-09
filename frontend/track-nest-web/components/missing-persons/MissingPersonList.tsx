@@ -1,20 +1,15 @@
 "use client";
 
-import {
-  Eye,
-  CheckCircle,
-  Trash2,
-  Users,
-  Calendar,
-  Phone,
-  Mail,
-} from "lucide-react";
+import { Eye, CheckCircle, Trash2, Users, Filter, Plus } from "lucide-react";
 import { useState, memo } from "react";
 import type { MissingPerson, UserRole } from "@/types";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { AnimatedListItem } from "../animations/AnimatedListItem";
 import { EmptyState } from "../shared/EmptyState";
 import { useTranslations } from "next-intl";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/components/ui/utils";
+import { Button } from "../ui/button";
 
 interface MissingPersonListProps {
   persons: MissingPerson[];
@@ -24,58 +19,31 @@ interface MissingPersonListProps {
   userRole: UserRole[];
 }
 
-const STATUS_STYLE: Record<string, { bg: string; text: string; dot: string }> =
-  {
-    PENDING: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-400" },
-    PUBLISHED: {
-      bg: "bg-brand-50",
-      text: "text-brand-700",
-      dot: "bg-brand-500",
-    },
-    RESOLVED: {
-      bg: "bg-green-50",
-      text: "text-green-700",
-      dot: "bg-green-500",
-    },
-    REJECTED: { bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" },
-    DELETED: { bg: "bg-slate-50", text: "text-slate-500", dot: "bg-slate-400" },
-  };
-
-function StatusBadge({ status }: Readonly<{ status: string }>) {
-  const t = useTranslations("status");
-  const style = STATUS_STYLE[status] ?? {
-    bg: "bg-slate-50",
-    text: "text-slate-600",
+const STATUS_MAP: Record<
+  string,
+  { label: string; dot: string; shadow: string }
+> = {
+  PUBLISHED: {
+    label: "Active Search",
+    dot: "bg-red-500",
+    shadow: "shadow-[0_0_8px_rgba(239,68,68,0.5)]",
+  },
+  PENDING: {
+    label: "Pending",
+    dot: "bg-amber-400",
+    shadow: "shadow-[0_0_8px_rgba(251,191,36,0.5)]",
+  },
+  RESOLVED: {
+    label: "Found",
+    dot: "bg-gray-400",
+    shadow: "",
+  },
+  REJECTED: {
+    label: "Rejected",
     dot: "bg-slate-400",
-  };
-  const label = t(status.toLowerCase());
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text}`}
-    >
-      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${style.dot}`} />
-      {label}
-    </span>
-  );
-}
-
-function getContentPreview(content: string) {
-  if (!content) return "";
-  const trimmed = content.trim();
-  if (trimmed.startsWith("<")) {
-    let result = "";
-    let inTag = false;
-    for (const ch of trimmed) {
-      if (ch === "<") inTag = true;
-      else if (ch === ">") inTag = false;
-      else if (!inTag) result += ch;
-    }
-    return result.trim();
-  }
-  if (trimmed.startsWith("http") || trimmed.endsWith(".html"))
-    return "HTML content";
-  return trimmed;
-}
+    shadow: "",
+  },
+};
 
 export const MissingPersonList = memo(function MissingPersonList({
   persons,
@@ -105,113 +73,146 @@ export const MissingPersonList = memo(function MissingPersonList({
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-4xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/60">
+              <tr className="border-b border-gray-50 bg-gray-50/30">
                 {[
-                  t("tableReport"),
-                  t("tableFullName"),
-                  t("tableDate"),
-                  t("tableContact"),
-                  t("tableStatus"),
-                  t("tableActions"),
+                  "SUBJECT INFO",
+                  "DATE REPORTED",
+                  "CONTACT LEAD",
+                  "STATUS",
+                  "ACTIONS",
                 ].map((h) => (
                   <th
                     key={h}
-                    className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+                    className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest"
                   >
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {persons.map((person, index) => (
-                <AnimatedListItem key={person.id} index={index}>
-                  <td className="px-5 py-4">
-                    <p className="font-medium text-slate-900 leading-tight">
-                      {person.title}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">
-                      {getContentPreview(person.content).slice(0, 60)}…
-                    </p>
-                  </td>
-                  <td className="px-5 py-4 font-medium text-slate-800 whitespace-nowrap">
-                    {person.fullName}
-                  </td>
-                  <td className="px-5 py-4 text-slate-600 whitespace-nowrap">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      {new Date(person.date).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex flex-col gap-1 text-xs text-slate-500">
-                      {person.contactPhone && (
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-3 h-3 shrink-0" />{" "}
-                          {person.contactPhone}
+            <tbody className="divide-y divide-gray-50">
+              {persons.map((person, index) => {
+                const status = STATUS_MAP[person.status] ?? STATUS_MAP.PENDING;
+                const date = new Date(person.date);
+                const formattedDate = date.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                });
+                const formattedTime = date.toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                });
+                const caseId = `#TRK-${person.id.slice(-4).toUpperCase()}`;
+
+                return (
+                  <AnimatedListItem
+                    key={person.id}
+                    index={index}
+                    className="hover:bg-gray-50/50 transition-colors group"
+                  >
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="w-10 h-10 rounded-xl border border-gray-100 shadow-sm shrink-0">
+                          <AvatarImage
+                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${person.fullName}`}
+                          />
+                          <AvatarFallback className="bg-brand-50 text-brand-600 font-black text-xs rounded-xl">
+                            {person.fullName.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-bold text-gray-800 leading-tight group-hover:text-brand-600 transition-colors">
+                            {person.fullName}
+                          </p>
+                          <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">
+                            {caseId} · {person.title}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-bold text-gray-800">
+                        {formattedDate}
+                      </p>
+                      <p className="text-xs text-gray-400 font-medium mt-0.5">
+                        {formattedTime}
+                      </p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-bold text-gray-800">
+                        {person.contactPhone || "—"}
+                      </p>
+                      <p className="text-xs text-gray-400 font-medium mt-0.5">
+                        {person.contactEmail || ""}
+                      </p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={cn(
+                            "w-2 h-2 rounded-full shrink-0",
+                            status.dot,
+                            status.shadow,
+                          )}
+                        />
+                        <span className="text-sm font-bold text-gray-700">
+                          {status.label}
                         </span>
-                      )}
-                      {person.contactEmail && (
-                        <span className="flex items-center gap-1">
-                          <Mail className="w-3 h-3 shrink-0" />{" "}
-                          {person.contactEmail}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <StatusBadge status={person.status} />
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => onViewDetail(person)}
-                        className="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50 transition-colors"
-                        title={tCommon("viewDetails")}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      {(userRole.includes("Reporter") ||
-                        userRole.includes("User")) && (
-                        <>
-                          {person.status === "PENDING" && (
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => onViewDetail(person)}
+                          className="p-2 rounded-xl text-gray-400 hover:text-brand-500 hover:bg-brand-50 transition-all"
+                          title={tCommon("viewDetails")}
+                        >
+                          <Eye className="w-5 h-5" />
+                        </button>
+                        {(userRole.includes("Reporter") ||
+                          userRole.includes("User")) && (
+                          <>
+                            {person.status === "PENDING" && (
+                              <button
+                                onClick={() =>
+                                  setConfirmAction({
+                                    type: "publish",
+                                    id: person.id,
+                                    title: person.title,
+                                  })
+                                }
+                                className="p-2 rounded-xl text-gray-400 hover:text-teal-500 hover:bg-teal-50 transition-all"
+                                title={tCommon("publish")}
+                              >
+                                <CheckCircle className="w-5 h-5" />
+                              </button>
+                            )}
                             <button
                               onClick={() =>
                                 setConfirmAction({
-                                  type: "publish",
+                                  type: "delete",
                                   id: person.id,
                                   title: person.title,
                                 })
                               }
-                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
-                              title={tCommon("publish")}
+                              className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                              title={tCommon("delete")}
                             >
-                              <CheckCircle className="w-4 h-4" />
+                              <Trash2 className="w-5 h-5" />
                             </button>
-                          )}
-                          <button
-                            onClick={() =>
-                              setConfirmAction({
-                                type: "delete",
-                                id: person.id,
-                                title: person.title,
-                              })
-                            }
-                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                            title={tCommon("delete")}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </AnimatedListItem>
-              ))}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </AnimatedListItem>
+                );
+              })}
             </tbody>
           </table>
         </div>
