@@ -8,7 +8,6 @@ import { AnimatedListItem } from "../animations/AnimatedListItem";
 import { EmptyState } from "../shared/EmptyState";
 import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/components/ui/utils";
 
 interface MissingPersonListProps {
@@ -19,11 +18,30 @@ interface MissingPersonListProps {
   userRole: UserRole[];
 }
 
-const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  PUBLISHED: { label: "Active Search", color: "text-red-500",   bg: "bg-red-50"    },
-  PENDING:   { label: "Pending",       color: "text-brand-600", bg: "bg-brand-50"  },
-  RESOLVED:  { label: "Found",         color: "text-gray-500",  bg: "bg-gray-100"  },
-  REJECTED:  { label: "Rejected",      color: "text-slate-500", bg: "bg-slate-100" },
+const STATUS_MAP: Record<
+  string,
+  { label: string; dot: string; shadow: string }
+> = {
+  PUBLISHED: {
+    label: "Active Search",
+    dot: "bg-red-500",
+    shadow: "shadow-[0_0_8px_rgba(239,68,68,0.5)]",
+  },
+  PENDING: {
+    label: "Pending",
+    dot: "bg-amber-400",
+    shadow: "shadow-[0_0_8px_rgba(251,191,36,0.5)]",
+  },
+  RESOLVED: {
+    label: "Found",
+    dot: "bg-gray-400",
+    shadow: "",
+  },
+  REJECTED: {
+    label: "Rejected",
+    dot: "bg-slate-400",
+    shadow: "",
+  },
 };
 
 export const MissingPersonList = memo(function MissingPersonList({
@@ -54,96 +72,107 @@ export const MissingPersonList = memo(function MissingPersonList({
 
   return (
     <>
-      <div className="bg-gray-50/50 rounded-[2.5rem] p-8 border border-gray-100">
+      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                <th className="text-left px-6 pb-6">Subject Info</th>
-                <th className="text-left px-6 pb-6">Date Reported</th>
-                <th className="text-left px-6 pb-6">Contact Lead</th>
-                <th className="text-left px-6 pb-6">Status</th>
-                <th className="text-right px-6 pb-6">Actions</th>
+              <tr className="border-b border-gray-50 bg-gray-50/30">
+                {[
+                  "SUBJECT INFO",
+                  "DATE REPORTED",
+                  "CONTACT LEAD",
+                  "STATUS",
+                  "ACTIONS",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-50">
               {persons.map((person, index) => {
                 const status = STATUS_MAP[person.status] ?? STATUS_MAP.PENDING;
                 const date = new Date(person.date);
+                const formattedDate = date.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                });
+                const formattedTime = date.toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                });
+                const caseId = `#TRK-${person.id.slice(-4).toUpperCase()}`;
+
                 return (
                   <AnimatedListItem
                     key={person.id}
                     index={index}
-                    className="contents group bg-white rounded-3xl transition-all hover:shadow-xl hover:shadow-gray-200/50"
+                    className="hover:bg-gray-50/50 transition-colors group"
                   >
-                    <td className="px-6 py-5 rounded-l-3xl">
+                    <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <Avatar className="w-12 h-12 rounded-2xl border-2 border-brand-50 shadow-sm">
+                        <Avatar className="w-10 h-10 rounded-xl border border-gray-100 shadow-sm shrink-0">
                           <AvatarImage
                             src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${person.fullName}`}
                           />
-                          <AvatarFallback className="bg-brand-50 text-brand-600 font-black">
+                          <AvatarFallback className="bg-brand-50 text-brand-600 font-black text-xs rounded-xl">
                             {person.fullName.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-black text-gray-900 leading-none mb-1">
+                          <p className="font-bold text-gray-800 leading-tight group-hover:text-brand-600 transition-colors">
                             {person.fullName}
                           </p>
-                          <p className="text-[11px] font-bold text-gray-400">
-                            Case #TRK-{person.id.substring(0, 4).toUpperCase()}
+                          <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">
+                            {caseId} · {person.title}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-5">
-                      <p className="font-black text-gray-900 text-sm">
-                        {date.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-bold text-gray-800">
+                        {formattedDate}
                       </p>
-                      <p className="text-[11px] font-bold text-gray-400">
-                        {date.toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                      <p className="text-xs text-gray-400 font-medium mt-0.5">
+                        {formattedTime}
                       </p>
                     </td>
-                    <td className="px-6 py-5">
-                      <p className="font-black text-gray-900 text-sm">
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-bold text-gray-800">
                         {person.contactPhone || "—"}
                       </p>
-                      <p className="text-[11px] font-bold text-gray-400">
+                      <p className="text-xs text-gray-400 font-medium mt-0.5">
                         {person.contactEmail || ""}
                       </p>
                     </td>
-                    <td className="px-6 py-5">
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "rounded-full px-3 py-1 font-bold text-[10px] uppercase flex items-center gap-1.5 w-fit border-none",
-                          status.bg,
-                          status.color,
-                        )}
-                      >
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2">
                         <div
                           className={cn(
-                            "w-1.5 h-1.5 rounded-full",
-                            status.color.replace("text-", "bg-"),
+                            "w-2 h-2 rounded-full shrink-0",
+                            status.dot,
+                            status.shadow,
                           )}
                         />
-                        {status.label}
-                      </Badge>
+                        <span className="text-sm font-bold text-gray-700">
+                          {status.label}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-5 text-right rounded-r-3xl">
-                      <div className="flex items-center justify-end gap-1">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
                         <button
                           onClick={() => onViewDetail(person)}
                           className="p-2 rounded-xl text-gray-400 hover:text-brand-500 hover:bg-brand-50 transition-all"
+                          title={tCommon("viewDetails")}
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-5 h-5" />
                         </button>
                         {(userRole.includes("Reporter") ||
                           userRole.includes("User")) && (
@@ -157,9 +186,10 @@ export const MissingPersonList = memo(function MissingPersonList({
                                     title: person.title,
                                   })
                                 }
-                                className="p-2 rounded-xl text-gray-400 hover:text-green-500 hover:bg-green-50 transition-all"
+                                className="p-2 rounded-xl text-gray-400 hover:text-teal-500 hover:bg-teal-50 transition-all"
+                                title={tCommon("publish")}
                               >
-                                <CheckCircle className="w-4 h-4" />
+                                <CheckCircle className="w-5 h-5" />
                               </button>
                             )}
                             <button
@@ -171,17 +201,14 @@ export const MissingPersonList = memo(function MissingPersonList({
                                 })
                               }
                               className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                              title={tCommon("delete")}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           </>
                         )}
                       </div>
                     </td>
-                    {/* Spacer row */}
-                    <tr className="h-3">
-                      <td colSpan={5}></td>
-                    </tr>
                   </AnimatedListItem>
                 );
               })}
