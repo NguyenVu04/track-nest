@@ -26,11 +26,6 @@ api.interceptors.request.use(async (config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
-    const userId = authService.getUserId();
-    if (userId) {
-      config.headers["X-User-Id"] = userId;
-    }
   }
   return config;
 });
