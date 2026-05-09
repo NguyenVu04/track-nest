@@ -151,26 +151,12 @@ class ReportManagerServiceImpl implements ReportManagerService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<MissingPersonReportResponse> listMissingPersonReports(UUID reporterId, String status, boolean isPublic, int page, int size) {
+    public PageResponse<MissingPersonReportResponse> listMissingPersonReports(UUID reporterId, String status, String title, boolean isPublic, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<MissingPersonReport> reports;
-
-        if (reporterId != null) {
-            if (status != null && !status.isEmpty()) {
-                reports = missingPersonReportRepository.findByReporterIdAndStatus(reporterId, status, pageRequest);
-            } else if (isPublic) {
-                reports = missingPersonReportRepository.findByReporterIdAndStatus(reporterId, ReportStatusConstants.PUBLISHED, pageRequest);
-            } else {
-                reports = missingPersonReportRepository.findByReporterId(reporterId, pageRequest);
-            }
-        } else if (status != null && !status.isEmpty()) {
-            reports = missingPersonReportRepository.findAllPublicByStatus(status, pageRequest);
-        } else if (isPublic) {
-            reports = missingPersonReportRepository.findAllPublic(pageRequest);
-        } else {
-            reports = missingPersonReportRepository.findAll(pageRequest);
-        }
-
+        String titleParam = (title != null && !title.isBlank()) ? "%" + title.trim().toLowerCase() + "%" : null;
+        String statusParam = (status != null && !status.isBlank()) ? status : (isPublic ? ReportStatusConstants.PUBLISHED : null);
+        Page<MissingPersonReport> reports = missingPersonReportRepository.findByFilters(
+                reporterId, statusParam, titleParam, pageRequest);
         return mapToPageResponse(reports.map(this::mapToMissingPersonReportResponse));
     }
 

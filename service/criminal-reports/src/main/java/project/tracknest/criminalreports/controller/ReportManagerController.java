@@ -110,10 +110,11 @@ public class ReportManagerController {
     public ResponseEntity<PageResponse<MissingPersonReportResponse>> listMissingPersonReports(
             @RequestParam(required = false) UUID reporterId,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String title,
             @RequestParam(defaultValue = "false") boolean isPublic,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(service.listMissingPersonReports(reporterId, status, isPublic, page, Math.min(size, 100)));
+        return ResponseEntity.ok(service.listMissingPersonReports(reporterId, status, title, isPublic, page, Math.min(size, 10)));
     }
 
     @PostMapping(value = "/crime-reports", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -211,7 +212,7 @@ public class ReportManagerController {
             @RequestParam(defaultValue = "false") boolean isPublic,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(service.listCrimeReports(reporterId, minSeverity, maxSeverity, title, isPublic, page, Math.min(size, 100)));
+        return ResponseEntity.ok(service.listCrimeReports(reporterId, minSeverity, maxSeverity, title, isPublic, page, Math.min(size, 10)));
     }
 
     @GetMapping("/crime-reports/nearby")

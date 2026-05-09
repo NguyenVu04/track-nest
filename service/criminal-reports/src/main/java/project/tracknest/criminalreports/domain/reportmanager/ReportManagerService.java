@@ -15,7 +15,7 @@ public interface ReportManagerService {
     void deleteMissingPersonReport(UUID reporterId, UUID reportId);
     MissingPersonReportResponse publishMissingPersonReport(UUID reporterId, UUID reportId);
     MissingPersonReportResponse rejectMissingPersonReport(UUID reporterId, UUID reportId);
-    PageResponse<MissingPersonReportResponse> listMissingPersonReports(UUID reporterId, String status, boolean isPublic, int page, int size);
+    PageResponse<MissingPersonReportResponse> listMissingPersonReports(UUID reporterId, String status, String title, boolean isPublic, int page, int size);
 
     CrimeReportResponse createCrimeReport(UUID reporterId, CreateCrimeReportRequest request);
     CrimeReportResponse getCrimeReport(UUID reporterId, UUID reportId);

@@ -336,6 +336,7 @@ export const criminalReportsService = {
   listMissingPersonReports: async (params?: {
     reporterId?: string;
     status?: string;
+    title?: string;
     isPublic?: boolean;
     page?: number;
     size?: number;

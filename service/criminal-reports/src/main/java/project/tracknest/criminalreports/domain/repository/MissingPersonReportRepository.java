@@ -41,4 +41,14 @@ public interface MissingPersonReportRepository extends JpaRepository<MissingPers
 
     @Query("SELECT COUNT(m) FROM MissingPersonReport m WHERE m.status.name = :status")
     long countByStatus(@Param("status") String status);
+
+    @Query("SELECT m FROM MissingPersonReport m WHERE " +
+           "(:reporterId IS NULL OR m.reporter.id = :reporterId) AND " +
+           "(:status IS NULL OR m.status.name = :status) AND " +
+           "(:title IS NULL OR LOWER(m.title) LIKE :title)")
+    Page<MissingPersonReport> findByFilters(
+            @Param("reporterId") UUID reporterId,
+            @Param("status") String status,
+            @Param("title") String title,
+            Pageable pageable);
 }
