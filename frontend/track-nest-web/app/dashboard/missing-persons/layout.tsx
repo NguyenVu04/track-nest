@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-
 import { getMetadataMessages } from "@/utils/metadata";
 
 export async function generateMetadata() {

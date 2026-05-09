@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { DashboardClientContent } from "./DashboardClientContent";
 
 import { getMetadataMessages } from "@/utils/metadata";

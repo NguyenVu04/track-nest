@@ -23,6 +23,11 @@ export const Vietnamese = {
   shareForHelp: "Chia sẻ để giúp đỡ",
   contactAuthorities: "Liên hệ cơ quan",
   communityNote: "Ghi chú cộng đồng",
+  personDetails: "Thông tin người mất tích",
+  personalId: "Số CMND/CCCD",
+  reportedOn: "Ngày báo cáo",
+  phone: "Điện thoại",
+  email: "Email",
 };
 
 export const English = {
@@ -32,7 +37,7 @@ export const English = {
   yearsOld: "years old",
   lastSeen: "Last Seen",
   missingDate: "Missing Date",
-  contactInfo: "Contact Info",
+  contactInfo: "Contact Information",
   description: "Description",
   physicalDescription: "Physical Description",
   height: "Height",
@@ -50,4 +55,9 @@ export const English = {
   shareForHelp: "Share for Help",
   contactAuthorities: "Contact Authorities",
   communityNote: "Community Note",
+  personDetails: "Person Details",
+  personalId: "Personal ID / Passport",
+  reportedOn: "Reported on",
+  phone: "Phone",
+  email: "Email",
 };

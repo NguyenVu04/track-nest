@@ -17,6 +17,7 @@ COPY public/         ./public/
 COPY services/       ./services/
 COPY styles/         ./styles/
 COPY types/          ./types/
+COPY utils/          ./utils/
 COPY next.config.ts  ./
 COPY tsconfig.json   ./
 COPY postcss.config.mjs ./

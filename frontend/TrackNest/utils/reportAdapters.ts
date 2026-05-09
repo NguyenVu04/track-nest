@@ -16,7 +16,7 @@ export type Report = {
 export type MissingPerson = {
   id: string;
   name: string;
-  age: number;
+  age?: number;
   description: string;
   lastSeen: string;
   photo?: string;
@@ -31,8 +31,28 @@ export type Guide = {
   icon?: string;
 };
 
-function adaptCrimeReportToReport(crimeReport: CrimeReport): Report {
-  const date = new Date(crimeReport.createdAt);
+const MINIO_OBJECT_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.\w+$/i;
+
+async function adaptCrimeReportToReport(crimeReport: CrimeReport): Promise<Report> {
+  // Bug 1: use incident date (date field), not record creation timestamp (createdAt)
+  const date = crimeReport.date ? new Date(crimeReport.date) : new Date(crimeReport.createdAt);
+
+  // Bug 2: resolve MinIO object names to viewer URLs
+  const photos = crimeReport.photos && crimeReport.photos.length > 0
+    ? await Promise.all(
+        crimeReport.photos.map((objectName) =>
+          criminalReportsService.getCrimeReportPhotoUrl(crimeReport.id, objectName),
+        ),
+      )
+    : undefined;
+
+  // Bug 3: content field is a MinIO object name, not human-readable text
+  const isMinioRef = MINIO_OBJECT_PATTERN.test(crimeReport.content || "");
+  const description =
+    !isMinioRef && crimeReport.content
+      ? crimeReport.content
+      : `Victims: ${crimeReport.numberOfVictims}, Offenders: ${crimeReport.numberOfOffenders}`;
+
   return {
     id: crimeReport.id,
     title: crimeReport.title,
@@ -43,11 +63,15 @@ function adaptCrimeReportToReport(crimeReport: CrimeReport): Report {
       year: "numeric",
     }),
     severity: getSeverityLabel(crimeReport.severity) as "High" | "Medium" | "Low",
-    description:
-      crimeReport.content ||
-      `Victims: ${crimeReport.numberOfVictims}, Offenders: ${crimeReport.numberOfOffenders}`,
-    photos: crimeReport.photos,
+    description,
+    photos,
   };
+}
+
+function statusToSeverity(status: string | undefined): "High" | "Medium" | "Low" {
+  if (status === "PUBLISHED") return "High";
+  if (status === "PENDING") return "Medium";
+  return "Low";
 }
 
 async function adaptMissingPersonToUI(missingPerson: MissingPersonReport): Promise<MissingPerson> {
@@ -57,11 +81,11 @@ async function adaptMissingPersonToUI(missingPerson: MissingPersonReport): Promi
   const photo = missingPerson.photo
     ? await criminalReportsService.getMissingPersonPhotoUrl(missingPerson.id)
     : undefined;
+
   return {
     id: missingPerson.id,
     name: missingPerson.fullName,
-    age: 0,
-    description: missingPerson.content,
+    description: missingPerson.title,
     lastSeen: date.toLocaleString("en-US", {
       month: "short",
       day: "numeric",
@@ -70,7 +94,7 @@ async function adaptMissingPersonToUI(missingPerson: MissingPersonReport): Promi
       minute: "2-digit",
     }),
     photo,
-    severity: "High" as const,
+    severity: statusToSeverity(missingPerson.status),
   };
 }
 
@@ -85,21 +109,18 @@ function adaptGuidelinesToGuide(guidelines: GuidelinesDocument): Guide {
 
 export async function fetchReports({ page = 1, perPage = 10 } = {}) {
   try {
-    const userRoles = await getUserRoles();
-
-    console.log("User roles:", userRoles);
-
+    await getUserRoles();
     const response = await criminalReportsService.getUserCrimeReports(
       page - 1,
       perPage,
     );
     return {
-      data: response.content.map(adaptCrimeReportToReport),
+      data: await Promise.all(response.content.map(adaptCrimeReportToReport)),
       total: response.totalElements,
       page,
     };
   } catch (error) {
-    console.error("Failed to fetch reports111:", error);
+    console.error("Failed to fetch reports:", error);
     return { data: [] as Report[], total: 0, page };
   }
 }
@@ -107,7 +128,7 @@ export async function fetchReports({ page = 1, perPage = 10 } = {}) {
 export async function getReportById(id: string) {
   try {
     const report = await criminalReportsService.getUserCrimeReportById(id);
-    return adaptCrimeReportToReport(report);
+    return await adaptCrimeReportToReport(report);
   } catch (error) {
     console.error(`Failed to get report by ID: ${id}\n`, error);
     return undefined;
@@ -116,9 +137,10 @@ export async function getReportById(id: string) {
 
 export async function fetchMissingPersons({ page = 1, perPage = 10 } = {}) {
   try {
-    const response = await criminalReportsService.getUserMissingPersonReports(
+    const response = await criminalReportsService.getPublicMissingPersonReports(
       page - 1,
       perPage,
+      true,
     );
     return {
       data: await Promise.all(response.content.map(adaptMissingPersonToUI)),

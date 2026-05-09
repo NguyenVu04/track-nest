@@ -1,37 +1,15 @@
 "use client";
 
-import {
-  Eye,
-  CheckCircle,
-  Trash2,
-  Users,
-  Calendar,
-  Phone,
-  Mail,
-  MoreVertical,
-  Filter,
-  Plus,
-  Clock,
-  User,
-  ExternalLink,
-} from "lucide-react";
-import { useState, memo, useMemo } from "react";
+import { Eye, CheckCircle, Trash2, Users, Filter, Plus } from "lucide-react";
+import { useState, memo } from "react";
 import type { MissingPerson, UserRole } from "@/types";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { AnimatedListItem } from "../animations/AnimatedListItem";
 import { EmptyState } from "../shared/EmptyState";
 import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/components/ui/utils";
+import { Button } from "../ui/button";
 
 interface MissingPersonListProps {
   persons: MissingPerson[];
@@ -39,24 +17,33 @@ interface MissingPersonListProps {
   onPublish: (id: string) => void;
   onDelete: (id: string) => void;
   userRole: UserRole[];
-  onCreateNew?: () => void; // Added to support the Create button in the header
 }
 
-const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> =
-  {
-    PUBLISHED: {
-      label: "Active Search",
-      color: "text-red-500",
-      bg: "bg-red-50",
-    },
-    PENDING: { label: "Pending", color: "text-brand-600", bg: "bg-brand-50" },
-    RESOLVED: { label: "Found", color: "text-gray-500", bg: "bg-gray-100" },
-    REJECTED: {
-      label: "Rejected",
-      color: "text-slate-500",
-      bg: "bg-slate-100",
-    },
-  };
+const STATUS_MAP: Record<
+  string,
+  { label: string; dot: string; shadow: string }
+> = {
+  PUBLISHED: {
+    label: "Active Search",
+    dot: "bg-red-500",
+    shadow: "shadow-[0_0_8px_rgba(239,68,68,0.5)]",
+  },
+  PENDING: {
+    label: "Pending",
+    dot: "bg-amber-400",
+    shadow: "shadow-[0_0_8px_rgba(251,191,36,0.5)]",
+  },
+  RESOLVED: {
+    label: "Found",
+    dot: "bg-gray-400",
+    shadow: "",
+  },
+  REJECTED: {
+    label: "Rejected",
+    dot: "bg-slate-400",
+    shadow: "",
+  },
+};
 
 export const MissingPersonList = memo(function MissingPersonList({
   persons,
@@ -64,234 +51,165 @@ export const MissingPersonList = memo(function MissingPersonList({
   onPublish,
   onDelete,
   userRole,
-  onCreateNew,
 }: MissingPersonListProps) {
   const t = useTranslations("missingPersons");
   const tCommon = useTranslations("common");
 
-  const [activeTab, setActiveTab] = useState<
-    "ALL" | "PUBLISHED" | "PENDING" | "RESOLVED"
-  >("ALL");
   const [confirmAction, setConfirmAction] = useState<{
     type: "publish" | "delete";
     id: string;
     title: string;
   } | null>(null);
 
-  const filteredPersons = useMemo(() => {
-    if (activeTab === "ALL") return persons;
-    return persons.filter((p) => p.status === activeTab);
-  }, [persons, activeTab]);
-
-  const tabs = [
-    { id: "ALL", label: "All Reports" },
-    { id: "PUBLISHED", label: "Active Search" },
-    { id: "PENDING", label: "Pending" },
-    { id: "RESOLVED", label: "Found" },
-  ];
-
   if (persons.length === 0) {
     return (
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-black text-gray-900 tracking-tight">
-              Missing Person Reports
-            </h1>
-            <p className="text-gray-500 font-medium mt-1">
-              Manage and track active search operations.
-            </p>
-          </div>
-          <Button
-            onClick={onCreateNew}
-            className="rounded-2xl h-12 px-6 bg-brand-700 text-white hover:bg-brand-800 font-black"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Create New Report
-          </Button>
-        </div>
-        <EmptyState
-          icon={Users}
-          title={t("emptyTitle")}
-          description={t("emptyDescription")}
-        />
-      </div>
+      <EmptyState
+        icon={Users}
+        title={t("emptyTitle")}
+        description={t("emptyDescription")}
+      />
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Redesigned Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">
-            Missing Person Reports
-          </h1>
-          <p className="text-gray-500 font-medium mt-1">
-            Manage and track active search operations.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            className="rounded-2xl h-12 px-6 border-gray-100 text-gray-600 font-bold hover:bg-gray-50"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
-          <Button
-            onClick={onCreateNew}
-            className="rounded-2xl h-12 px-6 bg-brand-700 text-white hover:bg-brand-800 font-black shadow-lg shadow-brand-700/20 transition-all hover:-translate-y-0.5"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Create New Report
-          </Button>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex items-center gap-2 p-1 bg-gray-100/50 rounded-2xl w-fit">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={cn(
-              "px-6 py-2.5 rounded-xl text-sm font-black transition-all",
-              activeTab === tab.id
-                ? "bg-brand-200 text-brand-800 shadow-sm"
-                : "text-gray-500 hover:text-gray-900",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* List Container */}
-      <div className="bg-gray-50/50 rounded-[2.5rem] p-8 border border-gray-100">
+    <>
+      <div className="bg-white rounded-4xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                <th className="text-left px-6 pb-6">Subject Info</th>
-                <th className="text-left px-6 pb-6">Date Reported</th>
-                <th className="text-left px-6 pb-6">Contact Lead</th>
-                <th className="text-left px-6 pb-6">Status</th>
-                <th className="text-right px-6 pb-6">Actions</th>
+              <tr className="border-b border-gray-50 bg-gray-50/30">
+                {[
+                  "SUBJECT INFO",
+                  "DATE REPORTED",
+                  "CONTACT LEAD",
+                  "STATUS",
+                  "ACTIONS",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="space-y-4">
-              {filteredPersons.map((person, index) => {
-                const status = STATUS_MAP[person.status] || STATUS_MAP.PENDING;
+            <tbody className="divide-y divide-gray-50">
+              {persons.map((person, index) => {
+                const status = STATUS_MAP[person.status] ?? STATUS_MAP.PENDING;
                 const date = new Date(person.date);
+                const formattedDate = date.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                });
+                const formattedTime = date.toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                });
+                const caseId = `#TRK-${person.id.slice(-4).toUpperCase()}`;
 
                 return (
                   <AnimatedListItem
                     key={person.id}
                     index={index}
-                    className="contents group bg-white rounded-3xl transition-all hover:shadow-xl hover:shadow-gray-200/50"
+                    className="hover:bg-gray-50/50 transition-colors group"
                   >
-                    <td className="px-6 py-5 rounded-l-3xl first:border-l-0">
+                    <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <Avatar className="w-12 h-12 rounded-2xl border-2 border-brand-50 shadow-sm">
+                        <Avatar className="w-10 h-10 rounded-xl border border-gray-100 shadow-sm shrink-0">
                           <AvatarImage
                             src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${person.fullName}`}
                           />
-                          <AvatarFallback className="bg-brand-50 text-brand-600 font-black">
+                          <AvatarFallback className="bg-brand-50 text-brand-600 font-black text-xs rounded-xl">
                             {person.fullName.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-black text-gray-900 leading-none mb-1">
+                          <p className="font-bold text-gray-800 leading-tight group-hover:text-brand-600 transition-colors">
                             {person.fullName}
                           </p>
-                          <p className="text-[11px] font-bold text-gray-400">
-                            Case #TRK-
-                            {person.id.substring(0, 4).toUpperCase()} • Age 24
+                          <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider">
+                            {caseId} · {person.title}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-5">
-                      <p className="font-black text-gray-900 text-sm">
-                        {date.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-bold text-gray-800">
+                        {formattedDate}
                       </p>
-                      <p className="text-[11px] font-bold text-gray-400">
-                        {date.toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                      <p className="text-xs text-gray-400 font-medium mt-0.5">
+                        {formattedTime}
                       </p>
                     </td>
-                    <td className="px-6 py-5">
-                      <p className="font-black text-gray-900 text-sm">
-                        John Doe
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-bold text-gray-800">
+                        {person.contactPhone || "—"}
                       </p>
-                      <p className="text-[11px] font-bold text-gray-400">
-                        {person.contactPhone || "+1 (555) 000-0000"}
+                      <p className="text-xs text-gray-400 font-medium mt-0.5">
+                        {person.contactEmail || ""}
                       </p>
                     </td>
-                    <td className="px-6 py-5">
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "rounded-full px-3 py-1 font-bold text-[10px] uppercase flex items-center gap-1.5 w-fit border-none",
-                          status.bg,
-                          status.color,
-                        )}
-                      >
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2">
                         <div
                           className={cn(
-                            "w-1.5 h-1.5 rounded-full",
-                            status.color.replace("text-", "bg-"),
+                            "w-2 h-2 rounded-full shrink-0",
+                            status.dot,
+                            status.shadow,
                           )}
                         />
-                        {status.label}
-                      </Badge>
+                        <span className="text-sm font-bold text-gray-700">
+                          {status.label}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-5 text-right rounded-r-3xl">
-                      <div className="flex items-center justify-end gap-1">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
                         <button
                           onClick={() => onViewDetail(person)}
-                          title="viewDetails"
                           className="p-2 rounded-xl text-gray-400 hover:text-brand-500 hover:bg-brand-50 transition-all"
+                          title={tCommon("viewDetails")}
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-5 h-5" />
                         </button>
-                        {(userRole.includes("Reporter") || userRole.includes("User")) && (
+                        {(userRole.includes("Reporter") ||
+                          userRole.includes("User")) && (
                           <>
                             {person.status === "PENDING" && (
                               <button
                                 onClick={() =>
-                                  setConfirmAction({ type: "publish", id: person.id, title: person.title })
+                                  setConfirmAction({
+                                    type: "publish",
+                                    id: person.id,
+                                    title: person.title,
+                                  })
                                 }
-                                title="publish"
-                                className="p-2 rounded-xl text-gray-400 hover:text-green-500 hover:bg-green-50 transition-all"
+                                className="p-2 rounded-xl text-gray-400 hover:text-teal-500 hover:bg-teal-50 transition-all"
+                                title={tCommon("publish")}
                               >
-                                <CheckCircle className="w-4 h-4" />
+                                <CheckCircle className="w-5 h-5" />
                               </button>
                             )}
                             <button
                               onClick={() =>
-                                setConfirmAction({ type: "delete", id: person.id, title: person.title })
+                                setConfirmAction({
+                                  type: "delete",
+                                  id: person.id,
+                                  title: person.title,
+                                })
                               }
-                              title="delete"
                               className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                              title={tCommon("delete")}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           </>
                         )}
                       </div>
                     </td>
-                    {/* Spacer row */}
-                    <tr className="h-3">
-                      <td colSpan={5}></td>
-                    </tr>
                   </AnimatedListItem>
                 );
               })}
@@ -326,6 +244,6 @@ export const MissingPersonList = memo(function MissingPersonList({
           confirmStyle="danger"
         />
       )}
-    </div>
+    </>
   );
 });
