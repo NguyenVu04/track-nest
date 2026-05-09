@@ -97,6 +97,9 @@ export const getGrpcUrl = async (): Promise<string> => {
   const stored = await getStoredUrl(GRPC_URL_KEY);
   if (stored) return stored;
 
+  const envUrl = process.env.EXPO_PUBLIC_GRPC_URL?.trim();
+  if (envUrl) return envUrl;
+
   const baseUrl = await getServiceUrl();
   return `${baseUrl}${__DEV__ ? ":8800" : ":443"}`;
 };
