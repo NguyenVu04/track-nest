@@ -15,3 +15,4 @@ public interface ChatbotService {
 
     GetSessionResponse retrieveSession(UUID userId, UUID sessionId);
 }
+ 
