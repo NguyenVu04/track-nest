@@ -21,25 +21,6 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function PhysicalRow({
-  label,
-  value,
-  last,
-}: {
-  label: string;
-  value: string;
-  last?: boolean;
-}) {
-  return (
-    <View style={[styles.physicalRow, last && { borderBottomWidth: 0 }]}>
-      <Text style={styles.physicalLabel}>{label}</Text>
-      <Text style={styles.physicalValue}>{value}</Text>
-    </View>
-  );
-}
-
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function MissingDetailScreen() {
@@ -53,12 +34,11 @@ export default function MissingDetailScreen() {
     const loadPerson = async () => {
       if (!id) return;
       try {
-        const data = await criminalReportsService.getUserMissingPersonReportById(id);
+        const data = await criminalReportsService.getPublicMissingPersonReportById(id);
         const resolvedPhoto = data.photo
           ? await criminalReportsService.getMissingPersonPhotoUrl(data.id)
           : undefined;
-        // Preserve the raw content value as the chatbot document ID before any URL resolution.
-        setPerson({ ...data, photo: resolvedPhoto, contentDocId: data.content });
+        setPerson({ ...data, photo: resolvedPhoto });
       } catch (err) {
         console.error("Failed to load missing person:", err);
       } finally {
@@ -76,7 +56,7 @@ export default function MissingDetailScreen() {
           person.date
             ? new Date(person.date).toLocaleDateString("en-US")
             : "Unknown"
-        }\n\n${person.content}`,
+        }${person.contactPhone ? `\nContact: ${person.contactPhone}` : ""}${person.personalId ? `\nCase #${person.personalId}` : ""}`,
       });
     } catch (_) {}
   };
@@ -208,26 +188,6 @@ export default function MissingDetailScreen() {
             <Text style={styles.subtitleText}>
               {`Missing ${missingDays} day${missingDays !== 1 ? "s" : ""}`}
             </Text>
-          )}
-        </View>
-
-        {/* ── Physical Description ── */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="person-outline" size={16} color={colors.primary} />
-            <Text style={styles.sectionTitle}>{t.physicalDescription}</Text>
-          </View>
-          {/* Individual attribute rows */}
-          <PhysicalRow label={t.height} value="—" />
-          <PhysicalRow label={t.weight} value="—" />
-          <PhysicalRow label="Hair Color" value="—" />
-          <PhysicalRow label="Eye Color" value="—" last />
-          {/* Free-text distinguishing features from content */}
-          {!!person.content && (
-            <View style={styles.distinguishingBlock}>
-              <Text style={styles.distinguishingLabel}>Distinguishing Features</Text>
-              <Text style={styles.distinguishingText}>{person.content}</Text>
-            </View>
           )}
         </View>
 
@@ -463,42 +423,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     color: colors.textPrimary,
-  },
-
-  // Physical Rows
-  physicalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  physicalLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontWeight: "500",
-  },
-  physicalValue: {
-    fontSize: 14,
-    color: colors.textPrimary,
-    fontWeight: "600",
-  },
-  distinguishingBlock: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    gap: 6,
-  },
-  distinguishingLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.textSecondary,
-  },
-  distinguishingText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 22,
   },
 
   // Map

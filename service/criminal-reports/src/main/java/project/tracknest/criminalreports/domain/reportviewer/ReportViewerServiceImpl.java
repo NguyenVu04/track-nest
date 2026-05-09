@@ -110,6 +110,7 @@ class ReportViewerServiceImpl implements ReportViewerService {
                 .photo(report.getPhoto())
                 .date(report.getDate())
                 .content(report.getContent())
+                .contentDocId(report.getContent())
                 .contactEmail(report.getContactEmail())
                 .contactPhone(report.getContactPhone())
                 .latitude(report.getLatitude())

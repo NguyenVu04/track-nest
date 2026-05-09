@@ -25,6 +25,7 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
   const t = useTranslations("missingPersons");
   const tCommon = useTranslations("common");
 
+
   const [missingPersons, setMissingPersons] = useState<MissingPerson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -145,7 +146,6 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
       onPublish={handlePublish}
       onDelete={handleDelete}
       userRole={user.role}
-      onCreateNew={handleCreateNew}
     />
   );
 }

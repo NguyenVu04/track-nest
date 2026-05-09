@@ -556,7 +556,7 @@ class CriminalReportsService {
     documentId: string;
   }): Promise<{ sessionId: string }> {
     const client = await this.getMutationClient();
-    const response = await client.post("/chatbot/sessions", params);
+    const response = await client.post("/chatbot/session", params);
     return response.data;
   }
 
@@ -565,16 +565,13 @@ class CriminalReportsService {
     message: string;
   }): Promise<ChatbotMessageResponse> {
     const client = await this.getMutationClient();
-    const response = await client.post(
-      `/chatbot/sessions/${params.sessionId}/messages`,
-      { message: params.message },
-    );
+    const response = await client.post("/chatbot/message", params);
     return response.data;
   }
 
   async getChatbotSession(sessionId: string): Promise<ChatbotSessionResponse> {
     const client = await this.getApiClient();
-    const response = await client.get(`/chatbot/sessions/${sessionId}`);
+    const response = await client.get(`/chatbot/session/${sessionId}`);
     return response.data;
   }
 
@@ -585,6 +582,13 @@ class CriminalReportsService {
       this.baseUrl = await getCriminalUrl();
     }
     return `${this.baseUrl}/report-viewer/missing-person-reports/${reportId}/photo`;
+  }
+
+  async getCrimeReportPhotoUrl(reportId: string, objectName: string): Promise<string> {
+    if (!this.baseUrl) {
+      this.baseUrl = await getCriminalUrl();
+    }
+    return `${this.baseUrl}/report-viewer/crime-reports/${reportId}/photos/${encodeURIComponent(objectName)}`;
   }
 }
 

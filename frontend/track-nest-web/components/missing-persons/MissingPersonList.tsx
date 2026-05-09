@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, CheckCircle, Trash2, Users } from "lucide-react";
+import { Eye, CheckCircle, Trash2, Users, Filter, Plus } from "lucide-react";
 import { useState, memo } from "react";
 import type { MissingPerson, UserRole } from "@/types";
 import { ConfirmModal } from "../shared/ConfirmModal";
@@ -9,6 +9,7 @@ import { EmptyState } from "../shared/EmptyState";
 import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/components/ui/utils";
+import { Button } from "../ui/button";
 
 interface MissingPersonListProps {
   persons: MissingPerson[];
@@ -72,7 +73,7 @@ export const MissingPersonList = memo(function MissingPersonList({
 
   return (
     <>
-      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
+      <div className="bg-white rounded-4xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
