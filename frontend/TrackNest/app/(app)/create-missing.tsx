@@ -1,6 +1,6 @@
 import { createMissing as createMissingLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useReports } from "@/contexts/ReportsContext";
+import { criminalReportsService } from "@/services/criminalReports";
 import { useAppModal } from "@/components/Modals/AppModal";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -28,7 +28,6 @@ export default function CreateMissingScreen() {
   const t = useTranslation(createMissingLang);
   const { modal, showAlert } = useAppModal();
   const { showPhotoPicker, photoPickerModal } = usePhotoPickerModal();
-  const { createMissingPersonReport } = useReports();
 
   const { initialName, initialLat, initialLng, initialAvatar } = useLocalSearchParams<{
     initialName?: string;
@@ -38,7 +37,7 @@ export default function CreateMissingScreen() {
   }>();
 
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const [title, setTitle] = useState("");
   const [fullName, setFullName] = useState(initialName || "");
@@ -48,6 +47,13 @@ export default function CreateMissingScreen() {
   const [contactEmail, setContactEmail] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [description, setDescription] = useState("");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
+  const [hairColor, setHairColor] = useState("");
+  const [eyeColor, setEyeColor] = useState("");
+  const [distinguishingFeatures, setDistinguishingFeatures] = useState("");
   const [photoUri, setPhotoUri] = useState<string | null>(initialAvatar || null);
   const [latitude, setLatitude] = useState(initialLat ? parseFloat(initialLat) : 10.7769);
   const [longitude, setLongitude] = useState(initialLng ? parseFloat(initialLng) : 106.6424);
@@ -82,13 +88,13 @@ export default function CreateMissingScreen() {
         showAlert(t.errorTitle, t.descriptionRequired, "warning");
         return;
       }
-    } else if (currentStep === 3) {
+    } else if (currentStep === 4) {
       if (!contactPhone.trim()) {
         showAlert(t.errorTitle, t.contactPhoneRequired, "warning");
         return;
       }
     }
-    if (currentStep < 4) setCurrentStep(currentStep + 1);
+    if (currentStep < 5) setCurrentStep(currentStep + 1);
   };
 
   const handleBack = () => {
@@ -99,24 +105,39 @@ export default function CreateMissingScreen() {
     }
   };
 
+  const buildHtmlContent = (): string => {
+    const lines: string[] = [];
+    if (nickname) lines.push(`<p><strong>Known as:</strong> ${nickname}</p>`);
+    if (age) lines.push(`<p><strong>Age:</strong> ${age}</p>`);
+    if (gender) lines.push(`<p><strong>Gender:</strong> ${gender}</p>`);
+    if (height) lines.push(`<p><strong>Height:</strong> ${height} cm</p>`);
+    if (weight) lines.push(`<p><strong>Weight:</strong> ${weight} kg</p>`);
+    if (hairColor) lines.push(`<p><strong>Hair Color:</strong> ${hairColor}</p>`);
+    if (eyeColor) lines.push(`<p><strong>Eye Color:</strong> ${eyeColor}</p>`);
+    if (distinguishingFeatures) lines.push(`<p><strong>Distinguishing Features:</strong> ${distinguishingFeatures}</p>`);
+    const physicalSection = lines.length > 0
+      ? `<h3>Physical Description</h3>${lines.join("")}`
+      : "";
+    return `${physicalSection}<h3>Description</h3><p>${description}</p>`;
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const finalContent = nickname ? `Known as: ${nickname}\n\n${description}` : description;
-      await createMissingPersonReport(
-        {
-          title: title.trim(),
-          fullName: fullName.trim(),
-          personalId: personalId.trim(),
-          contactPhone: contactPhone.trim(),
-          contactEmail: contactEmail.trim() || undefined,
-          date,
-          content: finalContent.trim(),
-          latitude,
-          longitude,
-        },
-        photoUri ?? undefined,
-      );
+      await criminalReportsService.submitUserMissingPersonReport({
+        title: title.trim(),
+        fullName: fullName.trim(),
+        personalId: personalId.trim(),
+        contactPhone: contactPhone.trim(),
+        contactEmail: contactEmail.trim() || "",
+        date,
+        content: buildHtmlContent(),
+        latitude,
+        longitude,
+        photo: photoUri
+          ? { uri: photoUri, filename: `photo_${Date.now()}.jpg`, type: "image/jpeg" }
+          : undefined,
+      });
       showAlert(t.successTitle, t.submitSuccess, "success", t.okButton, () =>
         router.back(),
       );
@@ -130,7 +151,7 @@ export default function CreateMissingScreen() {
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case 1:
+      case 1:  // Basic Info
         return (
           <View style={styles.stepContent}>
             <Pressable style={styles.photoPickerWrapper} onPress={handlePickPhoto}>
@@ -216,7 +237,88 @@ export default function CreateMissingScreen() {
             </View>
           </View>
         );
-      case 3:
+      case 3:  // Physical Description
+        return (
+          <View style={styles.stepContent}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Age</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={age}
+                onChangeText={setAge}
+                placeholder="e.g. 25"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Gender</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={gender}
+                onChangeText={setGender}
+                placeholder="e.g. Male / Female / Other"
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Height (cm)</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={height}
+                onChangeText={setHeight}
+                placeholder="e.g. 170"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Weight (kg)</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={weight}
+                onChangeText={setWeight}
+                placeholder="e.g. 60"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Hair Color</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={hairColor}
+                onChangeText={setHairColor}
+                placeholder="e.g. Black"
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Eye Color</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={eyeColor}
+                onChangeText={setEyeColor}
+                placeholder="e.g. Brown"
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Distinguishing Features</Text>
+              <TextInput
+                style={[styles.inputPill, styles.textArea]}
+                value={distinguishingFeatures}
+                onChangeText={setDistinguishingFeatures}
+                placeholder="Tattoos, scars, birthmarks, etc."
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+        );
+      case 4:  // Contact Info
         return (
           <View style={styles.stepContent}>
             <View style={styles.inputGroup}>
@@ -257,7 +359,7 @@ export default function CreateMissingScreen() {
             </View>
           </View>
         );
-      case 4:
+      case 5:  // Review
         return (
           <View style={styles.stepContent}>
             <Text style={styles.reviewTitle}>{t.reviewTitle}</Text>
@@ -267,6 +369,12 @@ export default function CreateMissingScreen() {
               <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.titleLabel}:</Text> {title}</Text>
               <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.personalIdLabel}:</Text> {personalId}</Text>
               <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.dateLabel}:</Text> {date}</Text>
+              {age ? <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>Age:</Text> {age}</Text> : null}
+              {gender ? <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>Gender:</Text> {gender}</Text> : null}
+              {height ? <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>Height:</Text> {height} cm</Text> : null}
+              {weight ? <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>Weight:</Text> {weight} kg</Text> : null}
+              {hairColor ? <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>Hair:</Text> {hairColor}</Text> : null}
+              {eyeColor ? <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>Eyes:</Text> {eyeColor}</Text> : null}
               <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.contactPhoneLabel}:</Text> {contactPhone}</Text>
               {contactEmail ? <Text style={styles.reviewRow}><Text style={styles.reviewLabel}>{t.contactEmailLabel}:</Text> {contactEmail}</Text> : null}
             </View>
@@ -298,16 +406,21 @@ export default function CreateMissingScreen() {
         <Text style={styles.pageTitle}>{t.stepByStepTitle}</Text>
 
         <View style={styles.stepperContainer}>
-          {[1, 2, 3, 4].map((step) => {
+          {[1, 2, 3, 4, 5].map((step) => {
             const isActive = step === currentStep;
             const isCompleted = step < currentStep;
+            const label = step === 1 ? t.stepBasicInfo
+              : step === 2 ? t.stepDetails
+              : step === 3 ? "Appearance"
+              : step === 4 ? t.stepContact
+              : t.stepReview;
             return (
               <View key={step} style={styles.stepWrapper}>
                 <View style={[styles.stepBar, (isActive || isCompleted) && styles.stepBarActive]}>
                   {(isActive || isCompleted) && <Ionicons name="checkmark" size={14} color="#fff" />}
                 </View>
                 <Text style={[styles.stepLabel, (isActive || isCompleted) && styles.stepLabelActive]} numberOfLines={1}>
-                  {step === 1 ? t.stepBasicInfo : step === 2 ? t.stepDetails : step === 3 ? t.stepContact : t.stepReview}
+                  {label}
                 </Text>
               </View>
             );
@@ -330,14 +443,14 @@ export default function CreateMissingScreen() {
           </Pressable>
           <Pressable 
             style={styles.nextButton} 
-            onPress={currentStep < 4 ? handleNextStep : handleSubmit}
+            onPress={currentStep < 5 ? handleNextStep : handleSubmit}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.nextButtonText}>
-                {currentStep < 4 ? t.nextStep : t.submit}
+                {currentStep < 5 ? t.nextStep : t.submit}
               </Text>
             )}
           </Pressable>

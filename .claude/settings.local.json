@@ -44,7 +44,11 @@
       "Bash(rtk find *)",
       "Bash(rtk lint *)",
       "Bash(rtk ls *)",
-      "Bash(rtk jest *)"
+      "Bash(rtk jest *)",
+      "Bash(node_modules/.bin/jest \"test/app/CreateReport\" --no-coverage)",
+      "Bash(node_modules/.bin/jest --listProjects)",
+      "Bash(rtk read *)",
+      "Bash(node_modules/.bin/jest \"test/app/CreateReport\" --no-coverage --testEnvironment node)"
     ]
   },
   "hooks": {

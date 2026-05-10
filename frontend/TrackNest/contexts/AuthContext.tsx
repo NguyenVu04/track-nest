@@ -8,6 +8,7 @@ import {
   unregisterBackgroundTaskAsync,
 } from "@/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { NativeModules, Platform } from "react-native";
 import { makeRedirectUri, refreshAsync } from "expo-auth-session";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -197,6 +198,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ]);
         setTokens(newTokens);
         setIsGuestMode(false);
+
+        // Sync JWT to native SharedPreferences so LocationUploadClient
+        // (Kotlin foreground service) can upload without the React bridge.
+        if (Platform.OS === "android") {
+          NativeModules.NativeLocationModule?.setAuthToken?.(newTokens.accessToken);
+        }
       } catch (error) {
         console.error("Failed to save tokens:", error);
         throw error;

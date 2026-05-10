@@ -2,13 +2,16 @@ package project.tracknest.emergencyops.domain.emergencyrequestmanager.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.emergencyops.configuration.security.KeycloakService;
 import project.tracknest.emergencyops.configuration.security.datatype.KeycloakUserProfile;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
+import project.tracknest.emergencyops.core.datatype.TrackingNotificationMessage;
 import project.tracknest.emergencyops.core.entity.EmergencyRequest;
 import project.tracknest.emergencyops.core.entity.EmergencyRequestStatus;
 import project.tracknest.emergencyops.core.entity.EmergencyService;
@@ -35,6 +38,25 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
     private final EmergencyServiceManagerEmergencyServiceRepository emergencyServiceRepository;
 
     private final KeycloakService keycloakService;
+    private final KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
+
+    @Value("${app.kafka.topics[1]}")
+    private String TRACKING_NOTIFICATION_TOPIC;
+
+    private static final String TYPE_ACCEPTED = "EMERGENCY_REQUEST_ACCEPTED";
+    private static final String TYPE_REJECTED = "EMERGENCY_REQUEST_REJECTED";
+    private static final String TYPE_CLOSED   = "EMERGENCY_REQUEST_CLOSED";
+
+    private void sendStatusChangeNotification(UUID targetId, String type, String title, String content) {
+        TrackingNotificationMessage message = TrackingNotificationMessage.builder()
+                .targetId(targetId)
+                .type(type)
+                .title(title)
+                .content(content)
+                .build();
+        kafkaTemplate.send(TRACKING_NOTIFICATION_TOPIC, message);
+        log.info("Sent {} notification to Kafka for target {}", type, targetId);
+    }
 
     private GetEmergencyRequestsResponse mapToGetEmergencyRequestsResponse(
             EmergencyRequest request,
@@ -159,6 +181,13 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
 
         Long acceptedAtMs = now.toInstant().toEpochMilli();
 
+        sendStatusChangeNotification(
+                request.getTargetId(),
+                TYPE_ACCEPTED,
+                "Emergency Request Accepted",
+                "Your emergency request has been accepted. Help is on the way."
+        );
+
         return new AcceptEmergencyRequestResponse(
                 acceptedAtMs,
                 request.getId()
@@ -202,6 +231,13 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
         request.setCloseAt(now);
 
         emergencyRequestRepository.save(request);
+
+        sendStatusChangeNotification(
+                request.getTargetId(),
+                TYPE_REJECTED,
+                "Emergency Request Rejected",
+                "Your emergency request could not be handled at this time. Please contact another service."
+        );
 
         return new RejectEmergencyRequestResponse(
                 rejectedAtMs,
@@ -255,6 +291,13 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
             EmergencyServiceUser targetUser = userOpt.get();
             emergencyServiceUserRepository.delete(targetUser);
         }
+
+        sendStatusChangeNotification(
+                request.getTargetId(),
+                TYPE_CLOSED,
+                "Emergency Request Closed",
+                "Your emergency request has been closed. We hope you are safe."
+        );
 
         return new CloseEmergencyRequestResponse(
                 closedAtMs,

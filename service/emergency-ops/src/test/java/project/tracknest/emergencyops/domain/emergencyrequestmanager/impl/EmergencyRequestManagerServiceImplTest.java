@@ -9,8 +9,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 import project.tracknest.emergencyops.configuration.security.KeycloakService;
 import project.tracknest.emergencyops.configuration.security.datatype.KeycloakUserProfile;
+import project.tracknest.emergencyops.core.datatype.TrackingNotificationMessage;
 import project.tracknest.emergencyops.core.entity.EmergencyRequest;
 import project.tracknest.emergencyops.core.entity.EmergencyRequestStatus;
 import project.tracknest.emergencyops.core.entity.EmergencyService;
@@ -25,6 +28,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -41,9 +45,16 @@ class EmergencyRequestManagerServiceImplTest {
     private EmergencyServiceManagerEmergencyServiceRepository emergencyServiceRepository;
     @Mock
     private KeycloakService keycloakService;
+    @Mock
+    private KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
 
     @InjectMocks
     private EmergencyRequestManagerServiceImpl service;
+
+    @BeforeEach
+    void injectTopicValue() {
+        ReflectionTestUtils.setField(service, "TRACKING_NOTIFICATION_TOPIC", "tracking-notification");
+    }
 
     private static final UUID SERVICE_ID = UUID.randomUUID();
     private static final UUID REQUEST_ID = UUID.randomUUID();
@@ -178,6 +189,26 @@ class EmergencyRequestManagerServiceImplTest {
         }
 
         @Test
+        @DisplayName("should_publishKafkaNotification_withTypeACCEPTED_whenRequestAccepted")
+        void should_publishKafkaNotification_withTypeACCEPTED_whenRequestAccepted() {
+            EmergencyRequest req = mockRequest(status(EmergencyRequestStatus.Status.PENDING));
+            when(emergencyRequestRepository.findByIdAndEmergencyService_Id(REQUEST_ID, SERVICE_ID))
+                    .thenReturn(Optional.of(req));
+            when(emergencyRequestStatusRepository.findById(EmergencyRequestStatus.Status.ACCEPTED.getValue()))
+                    .thenReturn(Optional.of(status(EmergencyRequestStatus.Status.ACCEPTED)));
+            when(emergencyRequestRepository.save(any())).thenReturn(req);
+            when(emergencyServiceUserRepository.save(any())).thenReturn(new EmergencyServiceUser());
+
+            service.acceptEmergencyRequest(SERVICE_ID, REQUEST_ID);
+
+            verify(kafkaTemplate).send(eq("tracking-notification"), argThat(
+                    (TrackingNotificationMessage msg) ->
+                            "EMERGENCY_REQUEST_ACCEPTED".equals(msg.type())
+                            && TARGET_ID.equals(msg.targetId())
+            ));
+        }
+
+        @Test
         @DisplayName("should_throwIllegalArgument_whenRequestNotFound")
         void should_throwIllegalArgument_whenRequestNotFound() {
             when(emergencyRequestRepository.findByIdAndEmergencyService_Id(any(), any()))
@@ -232,6 +263,25 @@ class EmergencyRequestManagerServiceImplTest {
             assertEquals(REQUEST_ID, result.id());
             assertTrue(result.rejectedAtMs() > 0);
             verify(emergencyRequestRepository).save(req);
+        }
+
+        @Test
+        @DisplayName("should_publishKafkaNotification_withTypeREJECTED_whenRequestRejected")
+        void should_publishKafkaNotification_withTypeREJECTED_whenRequestRejected() {
+            EmergencyRequest req = mockRequest(status(EmergencyRequestStatus.Status.PENDING));
+            when(emergencyRequestRepository.findByIdAndEmergencyService_Id(REQUEST_ID, SERVICE_ID))
+                    .thenReturn(Optional.of(req));
+            when(emergencyRequestStatusRepository.findById(EmergencyRequestStatus.Status.REJECTED.getValue()))
+                    .thenReturn(Optional.of(status(EmergencyRequestStatus.Status.REJECTED)));
+            when(emergencyRequestRepository.save(any())).thenReturn(req);
+
+            service.rejectEmergencyRequest(SERVICE_ID, REQUEST_ID);
+
+            verify(kafkaTemplate).send(eq("tracking-notification"), argThat(
+                    (TrackingNotificationMessage msg) ->
+                            "EMERGENCY_REQUEST_REJECTED".equals(msg.type())
+                            && TARGET_ID.equals(msg.targetId())
+            ));
         }
 
         @Test
@@ -299,6 +349,41 @@ class EmergencyRequestManagerServiceImplTest {
             assertEquals(REQUEST_ID, result.id());
             assertTrue(result.closedAtMs() > 0);
             verify(emergencyServiceUserRepository).delete(trackedUser);
+        }
+
+        @Test
+        @DisplayName("should_publishKafkaNotification_withTypeCLOSED_whenRequestClosed")
+        void should_publishKafkaNotification_withTypeCLOSED_whenRequestClosed() {
+            EmergencyRequest req = mockRequest(status(EmergencyRequestStatus.Status.ACCEPTED));
+
+            when(emergencyRequestRepository.findByIdAndEmergencyService_Id(REQUEST_ID, SERVICE_ID))
+                    .thenReturn(Optional.of(req));
+            when(emergencyRequestStatusRepository.findById(EmergencyRequestStatus.Status.CLOSED.getValue()))
+                    .thenReturn(Optional.of(status(EmergencyRequestStatus.Status.CLOSED)));
+            when(emergencyRequestRepository.save(any())).thenReturn(req);
+            when(emergencyServiceUserRepository.findByEmergencyService_IdAndUserId(any(), any()))
+                    .thenReturn(Optional.empty());
+
+            service.closeEmergencyRequest(SERVICE_ID, REQUEST_ID);
+
+            verify(kafkaTemplate).send(eq("tracking-notification"), argThat(
+                    (TrackingNotificationMessage msg) ->
+                            "EMERGENCY_REQUEST_CLOSED".equals(msg.type())
+                            && TARGET_ID.equals(msg.targetId())
+            ));
+        }
+
+        @Test
+        @DisplayName("should_notPublishKafka_whenCloseFailsDueToMissingStatus")
+        void should_notPublishKafka_whenCloseFailsDueToMissingStatus() {
+            EmergencyRequest req = mockRequest(status(EmergencyRequestStatus.Status.ACCEPTED));
+            when(emergencyRequestRepository.findByIdAndEmergencyService_Id(any(), any()))
+                    .thenReturn(Optional.of(req));
+            when(emergencyRequestStatusRepository.findById(anyString())).thenReturn(Optional.empty());
+
+            assertThrows(IllegalStateException.class,
+                    () -> service.closeEmergencyRequest(SERVICE_ID, REQUEST_ID));
+            verify(kafkaTemplate, never()).send(any(), any(TrackingNotificationMessage.class));
         }
 
         @Test
