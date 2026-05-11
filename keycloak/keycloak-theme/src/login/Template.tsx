@@ -17,7 +17,6 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
         headerNode,
         socialProvidersNode = null,
         infoNode = null,
-        documentTitle,
         bodyClassName,
         kcContext,
         i18n,
@@ -30,10 +29,10 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
 
     const { msg, msgStr, currentLanguage, enabledLanguages } = i18n;
 
-    const { realm, auth, url, message, isAppInitiatedAction } = kcContext;
+    const { auth, url, message, isAppInitiatedAction } = kcContext;
 
     useEffect(() => {
-        document.title = documentTitle ?? msgStr("loginTitle", realm.displayName || realm.name);
+        document.title = "TrackNest";
 
         const link = document.createElement("link");
         link.rel = "icon";
