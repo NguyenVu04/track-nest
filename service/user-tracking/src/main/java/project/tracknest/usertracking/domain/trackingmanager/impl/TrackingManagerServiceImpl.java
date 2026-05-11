@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static project.tracknest.usertracking.core.utils.OtpGenerator.OTP_TTL_SECONDS;
 
@@ -148,7 +149,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
         Map<UUID, FamilyCircleMember> membershipByCircleId = familyCircleMemberRepository
                 .findByCircleIdsAndMemberId(circleIds, userId)
                 .stream()
-                .collect(java.util.stream.Collectors.toMap(
+                .collect(Collectors.toMap(
                         m -> m.getId().getFamilyCircleId(),
                         m -> m
                 ));
