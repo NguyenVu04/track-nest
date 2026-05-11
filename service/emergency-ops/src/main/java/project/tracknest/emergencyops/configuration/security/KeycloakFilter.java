@@ -79,6 +79,9 @@ public class KeycloakFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(principal, authorizationHeader, roles);
                 authentication.setDetails(userDetails);
 
+                log.info("Setting security context with user: {}", principal.getName());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
                 boolean isEmergencyService = Optional.ofNullable(decoded.getRealmAccess())
                         .map(KeycloakAuthorizationHeaderRealmAccess::getRoles)
                         .orElse(Collections.emptyList())
@@ -109,9 +112,6 @@ public class KeycloakFilter extends OncePerRequestFilter {
                         }
                     }
                 }
-
-                log.info("Setting security context with user: {}", principal.getName());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception ex) {
                 log.warn("Failed to set security context from authorization header: {}", ex.getMessage());
             }
