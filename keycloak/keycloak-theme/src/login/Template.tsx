@@ -9,8 +9,6 @@ import type { KcContext } from "./KcContext";
 import type { I18n } from "./i18n";
 import "./tracknest-theme.css";
 
-const LOGO_URL = "https://tracknestapp.org/tracknest-logo.png";
-
 export default function Template(props: TemplateProps<KcContext, I18n>) {
     const {
         displayInfo = false,
@@ -40,7 +38,7 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
         const link = document.createElement("link");
         link.rel = "icon";
         link.type = "image/png";
-        link.href = LOGO_URL;
+        link.href = `${url.resourcesPath}/dist/tracknest-logo.png`;
         document.head.appendChild(link);
         return () => { document.head.removeChild(link); };
     }, []);
