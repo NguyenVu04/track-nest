@@ -240,6 +240,9 @@ data:
                                   timeout: 5s
                                 cache_duration: 3600s
                                 async_fetch: {}
+                              from_headers:
+                                - name: "Authorization"
+                                  value_prefix: "Bearer "
                               from_params:
                                 - "access_token"
                               forward: true
@@ -254,6 +257,9 @@ data:
                                   timeout: 5s
                                 cache_duration: 3600s
                                 async_fetch: {}
+                              from_headers:
+                                - name: "Authorization"
+                                  value_prefix: "Bearer "
                               from_params:
                                 - "access_token"
                               forward: true

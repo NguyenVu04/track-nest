@@ -61,6 +61,11 @@ static_resources:
                               cluster: keycloak_jwks
                               timeout: 5s
                             cache_duration: 600s
+                          from_headers:
+                            - name: "Authorization"
+                              value_prefix: "Bearer "
+                          from_params:
+                            - "access_token"
                           forward: true
                           payload_in_metadata: jwt_payload
                         keycloak_restricted:
@@ -72,6 +77,11 @@ static_resources:
                               cluster: keycloak_jwks
                               timeout: 5s
                             cache_duration: 600s
+                          from_headers:
+                            - name: "Authorization"
+                              value_prefix: "Bearer "
+                          from_params:
+                            - "access_token"
                           forward: true
                           payload_in_metadata: jwt_payload
                       rules:
