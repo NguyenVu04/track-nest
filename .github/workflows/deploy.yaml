@@ -171,40 +171,40 @@ jobs:
   # Frontend → Vercel
   # ──────────────────────────────────────────────────────────────────────────
 
-#   deploy-frontend:
-#     needs: detect-changes
-#     if: needs.detect-changes.outputs.track-nest-web == 'true'
-#     runs-on: ubuntu-24.04
-#     steps:
-#       - uses: actions/checkout@v4
+  deploy-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.track-nest-web == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
 
-#       - name: Build Vercel args
-#         id: vercel-args
-#         run: |
-#           ARGS="${{ github.event_name == 'push' && '--prod' || '' }}"
-#           ARGS="$ARGS --build-env NEXT_PUBLIC_USER_TRACKING_API_URL=${{ secrets.NEXT_PUBLIC_USER_TRACKING_API_URL }}"
-#           ARGS="$ARGS --build-env NEXT_PUBLIC_EMERGENCY_OPS_API_URL=${{ secrets.NEXT_PUBLIC_EMERGENCY_OPS_API_URL }}"
-#           ARGS="$ARGS --build-env NEXT_PUBLIC_EMERGENCY_OPS_WS_URL=${{ secrets.NEXT_PUBLIC_EMERGENCY_OPS_WS_URL }}"
-#           ARGS="$ARGS --build-env NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL=${{ secrets.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL }}"
-#           ARGS="$ARGS --build-env NEXT_PUBLIC_KEYCLOAK_URL=${{ secrets.NEXT_PUBLIC_KEYCLOAK_URL }}"
-#           ARGS="$ARGS --build-env NEXT_PUBLIC_USER_REALM=${{ secrets.NEXT_PUBLIC_USER_REALM }}"
-#           ARGS="$ARGS --build-env NEXT_PUBLIC_REPORTER_REALM=${{ secrets.NEXT_PUBLIC_REPORTER_REALM }}"
-#           ARGS="$ARGS --build-env NEXT_PUBLIC_EMERGENCY_REALM=${{ secrets.NEXT_PUBLIC_EMERGENCY_REALM }}"
-#           ARGS="$ARGS --build-env NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${{ secrets.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }}"
-#           ARGS="$ARGS --build-env NEXT_PUBLIC_KEYCLOAK_FLOW=${{ secrets.NEXT_PUBLIC_KEYCLOAK_FLOW }}"
-#           ARGS="$ARGS --build-env NEXT_PUBLIC_TINYMCE_API_KEY=${{ secrets.NEXT_PUBLIC_TINYMCE_API_KEY }}"
-#           echo "value=$ARGS" >> $GITHUB_OUTPUT
+      - name: Build Vercel args
+        id: vercel-args
+        run: |
+          ARGS="${{ github.event_name == 'push' && '--prod' || '' }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_USER_TRACKING_API_URL=${{ secrets.NEXT_PUBLIC_USER_TRACKING_API_URL }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_EMERGENCY_OPS_API_URL=${{ secrets.NEXT_PUBLIC_EMERGENCY_OPS_API_URL }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_EMERGENCY_OPS_WS_URL=${{ secrets.NEXT_PUBLIC_EMERGENCY_OPS_WS_URL }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL=${{ secrets.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_KEYCLOAK_URL=${{ secrets.NEXT_PUBLIC_KEYCLOAK_URL }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_USER_REALM=${{ secrets.NEXT_PUBLIC_USER_REALM }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_REPORTER_REALM=${{ secrets.NEXT_PUBLIC_REPORTER_REALM }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_EMERGENCY_REALM=${{ secrets.NEXT_PUBLIC_EMERGENCY_REALM }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${{ secrets.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_KEYCLOAK_FLOW=${{ secrets.NEXT_PUBLIC_KEYCLOAK_FLOW }}"
+          ARGS="$ARGS --build-env NEXT_PUBLIC_TINYMCE_API_KEY=${{ secrets.NEXT_PUBLIC_TINYMCE_API_KEY }}"
+          echo "value=$ARGS" >> $GITHUB_OUTPUT
 
-#       - name: Install Vercel CLI
-#         run: npm i -g vercel@latest
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
 
-#       - name: Deploy to Vercel
-#         env:
-#           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-#           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-#           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-#         working-directory: frontend/track-nest-web
-#         run: vercel deploy --token=$VERCEL_TOKEN ${{ steps.vercel-args.outputs.value }}
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: frontend/track-nest-web
+        run: vercel deploy --token=$VERCEL_TOKEN ${{ steps.vercel-args.outputs.value }}
 
   # ──────────────────────────────────────────────────────────────────────────
   # Spring Boot services → DigitalOcean K8s via Helm
