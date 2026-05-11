@@ -8,7 +8,8 @@ import { useInitialize } from "keycloakify/login/Template.useInitialize";
 import type { KcContext } from "./KcContext";
 import type { I18n } from "./i18n";
 import "./tracknest-theme.css";
-import faviconUrl from "./assets/tracknest-logo.png";
+
+const LOGO_URL = "https://tracknestapp.org/tracknest-logo.png";
 
 export default function Template(props: TemplateProps<KcContext, I18n>) {
     const {
@@ -39,7 +40,7 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
         const link = document.createElement("link");
         link.rel = "icon";
         link.type = "image/png";
-        link.href = faviconUrl;
+        link.href = LOGO_URL;
         document.head.appendChild(link);
         return () => { document.head.removeChild(link); };
     }, []);
