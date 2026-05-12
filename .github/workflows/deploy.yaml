@@ -299,11 +299,22 @@ jobs:
       - name: Build image tag overrides
         id: overrides
         run: |
-          ARGS=""
+          # Fetch currently deployed user-supplied values so unchanged services
+          # keep their previously deployed sha tag instead of falling back to
+          # the subchart default ("latest").
+          CURRENT=$(helm get values tracknest -n tracknest -o json 2>/dev/null || echo '{}')
+
           CR_TAG="${{ needs.build-push-criminal-reports.outputs.image-tag }}"
           EO_TAG="${{ needs.build-push-emergency-ops.outputs.image-tag }}"
           UT_TAG="${{ needs.build-push-user-tracking.outputs.image-tag }}"
           KC_TAG="${{ needs.build-push-keycloak.outputs.image-tag }}"
+
+          [ -z "$CR_TAG" ] && CR_TAG=$(echo "$CURRENT" | jq -r '.services.criminalReports.image.tag // empty')
+          [ -z "$EO_TAG" ] && EO_TAG=$(echo "$CURRENT" | jq -r '.services.emergencyOps.image.tag // empty')
+          [ -z "$UT_TAG" ] && UT_TAG=$(echo "$CURRENT" | jq -r '.services.userTracking.image.tag // empty')
+          [ -z "$KC_TAG" ] && KC_TAG=$(echo "$CURRENT" | jq -r '.keycloak.keycloak.image.tag // empty')
+
+          ARGS=""
           [ -n "$CR_TAG" ] && ARGS="$ARGS --set services.criminalReports.image.tag=$CR_TAG"
           [ -n "$EO_TAG" ] && ARGS="$ARGS --set services.emergencyOps.image.tag=$EO_TAG"
           [ -n "$UT_TAG" ] && ARGS="$ARGS --set services.userTracking.image.tag=$UT_TAG"
