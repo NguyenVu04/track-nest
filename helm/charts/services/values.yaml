@@ -76,7 +76,7 @@ userTracking:
 
   image:
     repository: nguyenvu04/tracknest-usertracking
-    tag: "v1.2.8"
+    tag: "latest"
 
   # gRPC (external) and HTTP (internal REST/actuator) ports.
   grpcPort: 19090
@@ -100,7 +100,7 @@ criminalReports:
 
   image:
     repository: nguyenvu04/tracknest-criminalreports
-    tag: "v1.2.8"
+    tag: "latest"
   # database connection injected via CRIMINAL_REPORTS_DB_HOST/PORT/NAME secret keys
 
   gemini:
@@ -123,7 +123,7 @@ emergencyOps:
 
   image:
     repository: nguyenvu04/tracknest-emergencyops
-    tag: "v1.2.8"
+    tag: "latest"
   # database connection injected via EMERGENCY_OPS_DB_HOST/PORT/NAME secret keys
 
   keycloak:
