@@ -48,7 +48,8 @@
       "Bash(node_modules/.bin/jest \"test/app/CreateReport\" --no-coverage)",
       "Bash(node_modules/.bin/jest --listProjects)",
       "Bash(rtk read *)",
-      "Bash(node_modules/.bin/jest \"test/app/CreateReport\" --no-coverage --testEnvironment node)"
+      "Bash(node_modules/.bin/jest \"test/app/CreateReport\" --no-coverage --testEnvironment node)",
+      "Bash(rtk git *)"
     ]
   },
   "hooks": {
