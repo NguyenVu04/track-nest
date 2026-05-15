@@ -186,7 +186,7 @@ export default function MissingPersonsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">
               Missing Person Reports
             </h1>
             <p className="text-gray-500 mt-2 text-lg">

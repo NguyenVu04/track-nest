@@ -50,7 +50,7 @@ export function RichTextEditor({
         toolbar:
           "bold italic underline | bullist numlist | link image",
         content_style:
-          "body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:14px; color:#111827; }",
+          "body { font-family: Geist, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:14px; color:#111827; }",
         branding: false,
       }}
     />

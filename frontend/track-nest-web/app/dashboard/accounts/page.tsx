@@ -158,7 +158,7 @@ export default function AccountsPage() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h2 className="text-gray-900 text-xl font-semibold">
+        <h2 className="text-gray-900 text-xl font-bold">
           Account Management
         </h2>
         <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -185,7 +185,7 @@ export default function AccountsPage() {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent appearance-none"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent appearance-none cursor-pointer"
             >
               <option value="all">All Roles</option>
               <option value="Admin">Admin</option>
@@ -198,7 +198,7 @@ export default function AccountsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent appearance-none"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent appearance-none cursor-pointer"
             >
               <option value="all">All Statuses</option>
               <option value="Active">Active</option>

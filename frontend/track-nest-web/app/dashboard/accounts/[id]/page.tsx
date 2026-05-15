@@ -219,7 +219,7 @@ export default function AccountDetailPage() {
               </span>
             </div>
             <div>
-              <h2 className="text-gray-900 text-xl font-semibold">
+              <h2 className="text-gray-900 text-xl font-bold">
                 {currentAccount.fullName}
               </h2>
               <p className="text-gray-500">@{currentAccount.username}</p>
@@ -323,7 +323,7 @@ export default function AccountDetailPage() {
           <select
             value={activityFilter}
             onChange={(e) => setActivityFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent cursor-pointer"
           >
             <option value="all">All Activities</option>
             <option value="missing-person">Missing Persons</option>

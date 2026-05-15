@@ -90,7 +90,7 @@ export default function AdminEmergencyRequestsPage() {
     <div>
       <Breadcrumbs items={[{ label: t("adminPageTitle") }]} />
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-gray-900 text-xl font-semibold">{t("adminPageTitle")}</h2>
+        <h2 className="text-gray-900 text-xl font-bold">{t("adminPageTitle")}</h2>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
@@ -108,7 +108,7 @@ export default function AdminEmergencyRequestsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent cursor-pointer"
           >
             <option value="">{tCommon("all")}</option>
             <option value="PENDING">{tStatus("pending")}</option>

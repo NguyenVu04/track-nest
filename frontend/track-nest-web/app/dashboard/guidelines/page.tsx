@@ -125,7 +125,7 @@ export default function GuidelinesPage() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Safety Guidelines</h1>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Safety Guidelines</h1>
             <p className="text-gray-500 mt-2 text-lg">Manage and update your family&apos;s safety protocols and emergency checklists.</p>
           </div>
           <button

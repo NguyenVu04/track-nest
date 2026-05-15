@@ -180,7 +180,7 @@ export default function CrimeReportsPage() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Crime Reports Management</h1>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Crime Reports Management</h1>
             <p className="text-gray-500 mt-2 text-lg">Monitor, assign, and resolve active incidents within your jurisdiction.</p>
           </div>
           <div className="flex items-center gap-3">
