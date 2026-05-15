@@ -20,7 +20,7 @@ export default function EmergencyRequestsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { addNotification } = useNotification();
-  const { refresh } = useEmergencyRequestRealtime();
+  const { refresh, realtimeLocation } = useEmergencyRequestRealtime();
   const t = useTranslations("emergencyRequests");
   const tCommon = useTranslations("common");
   const tStatus = useTranslations("status");
@@ -296,15 +296,25 @@ export default function EmergencyRequestsPage() {
             {t("trackingTitle", { id: trackingRequest.id.substring(0, 8) })}
           </h3>
           <MapView
-            center={[trackingRequest.targetLastLatitude, trackingRequest.targetLastLongitude]}
+            center={
+              realtimeLocation
+                ? [realtimeLocation.latitude, realtimeLocation.longitude]
+                : [trackingRequest.targetLastLatitude, trackingRequest.targetLastLongitude]
+            }
             markers={[
               {
-                position: [trackingRequest.targetLastLatitude, trackingRequest.targetLastLongitude],
-                label: "Emergency Location",
+                position: realtimeLocation
+                  ? [realtimeLocation.latitude, realtimeLocation.longitude]
+                  : [trackingRequest.targetLastLatitude, trackingRequest.targetLastLongitude],
+                label: realtimeLocation ? "Live Location" : "Emergency Location",
               },
             ]}
           />
-          <p className="text-gray-600 text-sm mt-3">{t("trackingActive")}</p>
+          <p className="text-gray-600 text-sm mt-3">
+            {realtimeLocation
+              ? `${t("trackingActive")} · Live update at ${new Date(realtimeLocation.timestamp).toLocaleTimeString()}`
+              : t("trackingActive")}
+          </p>
         </div>
       )}
 

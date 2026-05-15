@@ -84,6 +84,37 @@ class NativeLocationModule(private val reactContext: ReactApplicationContext) :
     }
   }
 
+  /**
+   * Called from React Native after each token acquisition or refresh.
+   * Stores the JWT in SharedPreferences so LocationUploadClient can read it
+   * without crossing the React Native bridge.
+   */
+  @ReactMethod
+  fun setAuthToken(token: String) {
+    reactContext
+      .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+      .edit()
+      .putString("jwt_token", token)
+      .apply()
+    LocationUploadClient.resetChannel()
+  }
+
+  /**
+   * Called from React Native once the gRPC server URL is known (from .env / DevModeContext).
+   * host — hostname or IP (e.g. "10.0.2.2" for emulator, "192.168.x.x" for device)
+   * port — integer port (e.g. 8800 for Envoy, 19090 for user-tracking direct)
+   */
+  @ReactMethod
+  fun setGrpcUrl(host: String, port: Int) {
+    reactContext
+      .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+      .edit()
+      .putString("grpc_host", host)
+      .putInt("grpc_port", port)
+      .apply()
+    LocationUploadClient.resetChannel()
+  }
+
   private fun sendEvent(eventName: String, data: Any) {
     try {
       reactContext

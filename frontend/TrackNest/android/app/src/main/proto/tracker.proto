@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "project.tracknest.usertracking.proto.lib";
+option java_outer_classname = "TrackerProto";
+
+// Minimal proto for native Android gRPC location upload.
+// Only includes the UpdateUserLocation RPC — no google.rpc dependency.
+service TrackerController {
+  rpc UpdateUserLocation(UpdateUserLocationRequest)
+      returns (UpdateUserLocationResponse);
+}
+
+message UserLocation {
+  double latitude_deg  = 1;
+  double longitude_deg = 2;
+  float  accuracy_meter = 3;
+  float  velocity_mps  = 4;
+  uint64 timestamp_ms  = 5;
+}
+
+message UpdateUserLocationRequest {
+  repeated UserLocation locations = 1;
+}
+
+message UpdateUserLocationResponse {
+  // Success is indicated by gRPC status code OK.
+  // Extended status omitted to avoid google.rpc dependency.
+}

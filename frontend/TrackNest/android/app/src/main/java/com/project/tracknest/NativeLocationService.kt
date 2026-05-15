@@ -106,6 +106,20 @@ class NativeLocationService : Service() {
       }
 
       prefs.edit().putString(BUFFER_KEY, buffer.toString()).apply()
+
+      // Trigger immediate gRPC upload on a background thread.
+      // This reduces upload latency from ~15 minutes (expo-background-task)
+      // to the location collection interval (5–60 s depending on mode).
+      val entries = locations.map { loc ->
+        LocationUploadClient.LocationEntry(
+          latitude  = loc.latitude,
+          longitude = loc.longitude,
+          accuracy  = loc.accuracy.toDouble(),
+          speed     = loc.speed.toDouble(),
+          timestamp = loc.time,
+        )
+      }
+      Thread { LocationUploadClient.upload(applicationContext, entries) }.start()
     }
   }
 

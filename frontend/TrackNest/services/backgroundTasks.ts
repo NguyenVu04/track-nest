@@ -133,14 +133,34 @@ TaskManager.defineTask(
     }
 
     const notifData = data?.notification?.request?.content?.data;
-    if (notifData?.type !== "chat_message") return;
 
-    try {
-      const stored = await AsyncStorage.getItem(CHAT_UNREAD_KEY);
-      const next = (parseInt(stored ?? "0", 10) || 0) + 1;
-      await AsyncStorage.setItem(CHAT_UNREAD_KEY, String(next));
-    } catch (err) {
-      console.error("[BackgroundNotification] failed to update badge:", err);
+    if (notifData?.type === "chat_message") {
+      try {
+        const stored = await AsyncStorage.getItem(CHAT_UNREAD_KEY);
+        const next = (parseInt(stored ?? "0", 10) || 0) + 1;
+        await AsyncStorage.setItem(CHAT_UNREAD_KEY, String(next));
+      } catch (err) {
+        console.error("[BackgroundNotification] failed to update badge:", err);
+      }
+      return;
+    }
+
+    const EMERGENCY_TYPES = [
+      "EMERGENCY_REQUEST_ASSIGNED",
+      "EMERGENCY_REQUEST_ACCEPTED",
+      "EMERGENCY_REQUEST_REJECTED",
+      "EMERGENCY_REQUEST_CLOSED",
+    ];
+    if (notifData?.type && EMERGENCY_TYPES.includes(notifData.type as string)) {
+      // OS auto-displays the notification (FCM includes notification field).
+      // Store latest emergency event so the SOS screen can refresh on next open.
+      try {
+        await AsyncStorage.setItem("LAST_EMERGENCY_NOTIFICATION_TYPE", notifData.type as string);
+        await AsyncStorage.setItem("LAST_EMERGENCY_NOTIFICATION_TIME", String(Date.now()));
+      } catch (err) {
+        console.error("[BackgroundNotification] failed to store emergency notification:", err);
+      }
+      return;
     }
   },
 );

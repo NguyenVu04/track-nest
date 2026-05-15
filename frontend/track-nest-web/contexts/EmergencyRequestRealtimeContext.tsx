@@ -19,8 +19,16 @@ interface AssignedEmergencyRequestMessage {
   assignedAtMs: number;
 }
 
+export interface RealtimeLocation {
+  userId: string;
+  latitude: number;
+  longitude: number;
+  timestamp: number;
+}
+
 interface EmergencyRequestRealtimeContextType {
   refresh: number;
+  realtimeLocation: RealtimeLocation | null;
 }
 
 const EmergencyRequestRealtimeContext = createContext<
@@ -35,7 +43,9 @@ export function EmergencyRequestRealtimeProvider({
   const { user } = useAuth();
   const { addNotification } = useNotification();
   const [refresh, setRefresh] = useState(0);
+  const [realtimeLocation, setRealtimeLocation] = useState<RealtimeLocation | null>(null);
   const subscriptionRef = useRef<StompSubscription | null>(null);
+  const locationSubscriptionRef = useRef<StompSubscription | null>(null);
 
   useEffect(() => {
     if (!user?.role?.includes("Emergency Service")) return;
@@ -72,6 +82,23 @@ export function EmergencyRequestRealtimeProvider({
             }
           },
         );
+
+        locationSubscriptionRef.current = stompService.subscribe(
+          "/user/queue/user-location",
+          (message) => {
+            try {
+              const body = JSON.parse(message.body);
+              setRealtimeLocation({
+                userId: body.userId ?? "",
+                latitude: body.latitude,
+                longitude: body.longitude,
+                timestamp: body.timestamp ?? Date.now(),
+              });
+            } catch {
+              console.error("Failed to parse location message");
+            }
+          },
+        );
       })
       .catch((err) => {
         console.error("STOMP connection failed:", err);
@@ -81,12 +108,14 @@ export function EmergencyRequestRealtimeProvider({
       cancelled = true;
       subscriptionRef.current?.unsubscribe();
       subscriptionRef.current = null;
+      locationSubscriptionRef.current?.unsubscribe();
+      locationSubscriptionRef.current = null;
       stompService.disconnect();
     };
   }, [user, addNotification]);
 
   return (
-    <EmergencyRequestRealtimeContext.Provider value={{ refresh }}>
+    <EmergencyRequestRealtimeContext.Provider value={{ refresh, realtimeLocation }}>
       {children}
     </EmergencyRequestRealtimeContext.Provider>
   );

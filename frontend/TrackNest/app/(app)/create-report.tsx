@@ -38,6 +38,9 @@ export default function CreateReportScreen() {
   const [photoUris, setPhotoUris] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [numberOfVictims, setNumberOfVictims] = useState(0);
+  const [numberOfOffenders, setNumberOfOffenders] = useState(0);
+  const [arrested, setArrested] = useState(false);
 
   const handleAddPhoto = async () => {
     if (photoUris.length >= MAX_IMAGES) return;
@@ -77,9 +80,12 @@ export default function CreateReportScreen() {
         title: title.trim(),
         content: description.trim(),
         severity: severityMap[severity],
-        date: new Date().toISOString(),
+        date: new Date().toISOString().split("T")[0],
         latitude,
         longitude,
+        numberOfVictims,
+        numberOfOffenders,
+        arrested,
         photos: photoUris.map((uri) => ({ uri })),
       });
       showAlert(t.successTitle, t.submitSuccess, "success", t.okButton, () =>
@@ -178,6 +184,48 @@ export default function CreateReportScreen() {
                 );
               })}
             </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>
+              {t.numberOfVictimsLabel || "Number of Victims"}
+            </Text>
+            <View style={styles.counterRow}>
+              <Pressable onPress={() => setNumberOfVictims(Math.max(0, numberOfVictims - 1))}>
+                <Ionicons name="remove-circle-outline" size={28} color={colors.primary} />
+              </Pressable>
+              <Text style={styles.counterValue}>{numberOfVictims}</Text>
+              <Pressable onPress={() => setNumberOfVictims(numberOfVictims + 1)}>
+                <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>
+              {t.numberOfOffendersLabel || "Number of Offenders"}
+            </Text>
+            <View style={styles.counterRow}>
+              <Pressable onPress={() => setNumberOfOffenders(Math.max(0, numberOfOffenders - 1))}>
+                <Ionicons name="remove-circle-outline" size={28} color={colors.primary} />
+              </Pressable>
+              <Text style={styles.counterValue}>{numberOfOffenders}</Text>
+              <Pressable onPress={() => setNumberOfOffenders(numberOfOffenders + 1)}>
+                <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{t.arrestedLabel || "Arrested"}</Text>
+            <Pressable
+              style={[styles.toggleBtn, arrested && styles.toggleBtnActive]}
+              onPress={() => setArrested(!arrested)}
+            >
+              <Text style={[styles.toggleText, arrested && styles.toggleTextActive]}>
+                {arrested ? (t.yes || "Yes") : (t.no || "No")}
+              </Text>
+            </Pressable>
           </View>
 
           <View style={styles.inputGroup}>
@@ -450,6 +498,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  counterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    paddingVertical: 8,
+  },
+  counterValue: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+    minWidth: 32,
+    textAlign: "center",
+  },
+  toggleBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    backgroundColor: "#f2f6f9",
+    borderWidth: 1,
+    borderColor: "#dce4e8",
+    alignSelf: "flex-start",
+  },
+  toggleBtnActive: {
+    backgroundColor: "#eefcf1",
+    borderColor: "#27ae60",
+  },
+  toggleText: { fontSize: 15, fontWeight: "600", color: "#555" },
+  toggleTextActive: { color: "#27ae60" },
   footer: {
     flexDirection: "row",
     paddingHorizontal: 20,
