@@ -4,6 +4,7 @@ import {
 } from "@/constant";
 import {
   getBaseUrl,
+  getGrpcUrl,
   stopBackgroundLocationTracking,
   unregisterBackgroundTaskAsync,
 } from "@/utils";
@@ -175,9 +176,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (tokensJson) {
           const storedTokens: StoredTokens = JSON.parse(tokensJson);
           setTokens(storedTokens);
+
+          // Re-sync JWT to native SharedPreferences on every boot so the
+          // Kotlin foreground service has a valid token even after an app restart.
+          if (Platform.OS === "android") {
+            NativeModules.NativeLocationModule?.setAuthToken?.(
+              storedTokens.accessToken,
+            );
+          }
         }
 
         setIsGuestMode(guestModeRaw === "true");
+
+        // Push gRPC base URL to native SharedPreferences so LocationUploadClient
+        // uses the correct Envoy endpoint (respects .env and dev-mode overrides).
+        if (Platform.OS === "android") {
+          const grpcUrl = await getGrpcUrl();
+          NativeModules.NativeLocationModule?.setGrpcUrl?.(grpcUrl);
+        }
       } catch (error) {
         console.error("Failed to load tokens:", error);
       } finally {

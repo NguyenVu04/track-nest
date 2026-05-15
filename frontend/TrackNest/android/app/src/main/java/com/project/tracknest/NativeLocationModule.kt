@@ -101,16 +101,15 @@ class NativeLocationModule(private val reactContext: ReactApplicationContext) :
 
   /**
    * Called from React Native once the gRPC server URL is known (from .env / DevModeContext).
-   * host — hostname or IP (e.g. "10.0.2.2" for emulator, "192.168.x.x" for device)
-   * port — integer port (e.g. 8800 for Envoy, 19090 for user-tracking direct)
+   * url — full base URL including scheme and port (e.g. "http://10.0.2.2:8800" for emulator,
+   *        "https://api.tracknestapp.org:443" for production)
    */
   @ReactMethod
-  fun setGrpcUrl(host: String, port: Int) {
+  fun setGrpcUrl(url: String) {
     reactContext
       .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
       .edit()
-      .putString("grpc_host", host)
-      .putInt("grpc_port", port)
+      .putString("grpc_url", url)
       .apply()
     LocationUploadClient.resetChannel()
   }
