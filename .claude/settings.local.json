@@ -50,7 +50,8 @@
       "Bash(rtk read *)",
       "Bash(node_modules/.bin/jest \"test/app/CreateReport\" --no-coverage --testEnvironment node)",
       "Bash(rtk git *)",
-      "Bash(./gradlew test *)"
+      "Bash(./gradlew test *)",
+      "Bash(rtk tsc *)"
     ]
   },
   "hooks": {

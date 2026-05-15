@@ -2,42 +2,45 @@ package com.project.tracknest
 
 import android.content.Context
 import android.util.Log
-import io.grpc.ManagedChannel
-import io.grpc.ManagedChannelBuilder
-import io.grpc.Metadata
-import io.grpc.stub.MetadataUtils
-import project.tracknest.usertracking.proto.lib.TrackerControllerGrpc
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import project.tracknest.usertracking.proto.lib.UpdateUserLocationRequest
 import project.tracknest.usertracking.proto.lib.UserLocation
+import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 
 /**
- * Singleton gRPC client for uploading location batches directly from the
+ * Singleton gRPC-Web client for uploading location batches directly from the
  * native foreground service, bypassing the React Native bridge and the
  * expo-background-task 15-minute interval.
  *
+ * Sends gRPC-Web (HTTP/1.1) requests to Envoy, which translates them to native
+ * gRPC (HTTP/2) before forwarding to user-tracking. This matches the protocol
+ * used by the JS gRPC clients in the mobile app.
+ *
  * Auth token and server URL are written to SharedPreferences by the React
  * Native layer (via NativeLocationModule.setAuthToken / setGrpcUrl).
- *
- * The channel is plaintext because Envoy (or the dev server) terminates TLS
- * upstream. Call resetChannel() when the token or URL changes.
  */
 object LocationUploadClient {
 
     private const val TAG = "LocationUploadClient"
+    private const val PREFS_NAME = "tracknest_native_location"
+    private const val TOKEN_KEY = "jwt_token"
+    private const val URL_KEY = "grpc_url"
 
-    private const val PREFS_NAME  = "tracknest_native_location"
-    private const val TOKEN_KEY   = "jwt_token"
-    private const val HOST_KEY    = "grpc_host"
-    private const val PORT_KEY    = "grpc_port"
+    // Emulator default: host machine on port 8800 (Envoy gRPC-Web bridge).
+    private const val DEFAULT_URL = "http://10.0.2.2:8800"
 
-    // Defaults: Android emulator → host machine on port 8800 (Envoy).
-    private const val DEFAULT_HOST = "10.0.2.2"
-    private const val DEFAULT_PORT = 8800
+    private const val METHOD_PATH =
+        "/project.tracknest.usertracking.proto.v1.TrackerController/UpdateUserLocation"
 
-    @Volatile private var channel: ManagedChannel? = null
-    @Volatile private var channelHost: String = ""
-    @Volatile private var channelPort: Int = 0
+    private val GRPC_WEB_MEDIA_TYPE = "application/grpc-web+proto".toMediaType()
+
+    private val httpClient = OkHttpClient.Builder()
+        .callTimeout(15, TimeUnit.SECONDS)
+        .build()
 
     data class LocationEntry(
         val latitude: Double,
@@ -48,8 +51,8 @@ object LocationUploadClient {
     )
 
     /**
-     * Uploads [locations] to the user-tracking gRPC service.
-     * Must be called from a background thread — uses a blocking stub.
+     * Uploads [locations] to the user-tracking gRPC service via gRPC-Web.
+     * Must be called from a background thread — uses a blocking OkHttp call.
      * Silently swallows network errors; the React-side background task
      * retries any unsent buffered locations.
      */
@@ -63,21 +66,9 @@ object LocationUploadClient {
             return
         }
 
-        val host = prefs.getString(HOST_KEY, DEFAULT_HOST) ?: DEFAULT_HOST
-        val port = prefs.getInt(PORT_KEY, DEFAULT_PORT)
+        val baseUrl = (prefs.getString(URL_KEY, DEFAULT_URL) ?: DEFAULT_URL).trimEnd('/')
 
         try {
-            val ch = getOrCreateChannel(host, port)
-
-            val authKey = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER)
-            val metadata = Metadata().apply { put(authKey, "Bearer $token") }
-
-            val stub = MetadataUtils.attachHeaders(
-                TrackerControllerGrpc.newBlockingStub(ch)
-                    .withDeadlineAfter(10, TimeUnit.SECONDS),
-                metadata,
-            )
-
             val userLocations = locations.map { entry ->
                 UserLocation.newBuilder()
                     .setLatitudeDeg(entry.latitude)
@@ -88,48 +79,41 @@ object LocationUploadClient {
                     .build()
             }
 
-            val request = UpdateUserLocationRequest.newBuilder()
+            val requestProto = UpdateUserLocationRequest.newBuilder()
                 .addAllLocations(userLocations)
                 .build()
 
-            stub.updateUserLocation(request)
-            Log.d(TAG, "Uploaded ${locations.size} location(s) via gRPC")
-        } catch (e: Exception) {
-            Log.w(TAG, "gRPC upload failed: ${e.message}")
-        }
-    }
+            val body = wrapGrpcWebFrame(requestProto.toByteArray())
+                .toRequestBody(GRPC_WEB_MEDIA_TYPE)
 
-    private fun getOrCreateChannel(host: String, port: Int): ManagedChannel {
-        val existing = channel
-        if (existing != null && !existing.isShutdown && host == channelHost && port == channelPort) {
-            return existing
-        }
-        return synchronized(this) {
-            val checked = channel
-            if (checked != null && !checked.isShutdown && host == channelHost && port == channelPort) {
-                checked
-            } else {
-                checked?.shutdownNow()
-                ManagedChannelBuilder
-                    .forAddress(host, port)
-                    .usePlaintext()
-                    .build()
-                    .also {
-                        channel = it
-                        channelHost = host
-                        channelPort = port
-                    }
+            val request = Request.Builder()
+                .url("$baseUrl$METHOD_PATH")
+                .post(body)
+                .addHeader("Authorization", "Bearer $token")
+                .addHeader("Accept", "application/grpc-web+proto")
+                .addHeader("X-Grpc-Web", "1")
+                .build()
+
+            httpClient.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    Log.d(TAG, "Uploaded ${locations.size} location(s) via gRPC-Web")
+                } else {
+                    Log.w(TAG, "gRPC-Web upload HTTP ${response.code}: ${response.message}")
+                }
             }
+        } catch (e: Exception) {
+            Log.w(TAG, "gRPC-Web upload failed: ${e.message}")
         }
     }
 
-    /** Call when auth token or server URL changes so the next upload reconnects. */
-    fun resetChannel() {
-        synchronized(this) {
-            channel?.shutdownNow()
-            channel = null
-            channelHost = ""
-            channelPort = 0
-        }
-    }
+    /** Wraps protobuf bytes in a gRPC-Web data frame: [0x00][4-byte big-endian length][data]. */
+    private fun wrapGrpcWebFrame(protoBytes: ByteArray): ByteArray =
+        ByteBuffer.allocate(5 + protoBytes.size).apply {
+            put(0x00) // compression flag: not compressed
+            putInt(protoBytes.size)
+            put(protoBytes)
+        }.array()
+
+    /** No-op kept for API compatibility — OkHttp client is connection-less. */
+    fun resetChannel() = Unit
 }
