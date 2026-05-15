@@ -4,15 +4,19 @@ import {
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
   ReactNode,
 } from "react";
+import { defer, from, switchMap, takeUntil } from "rxjs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
 import { authService } from "@/services/authService";
 import stompService from "@/services/stompService";
-import type { StompSubscription } from "@stomp/stompjs";
+import {
+  createDestroy$,
+  completeDestroy$,
+  fromStompChannel,
+} from "@/lib/rxjs-helpers";
 
 interface AssignedEmergencyRequestMessage {
   requestId: string;
@@ -43,9 +47,8 @@ export function EmergencyRequestRealtimeProvider({
   const { user } = useAuth();
   const { addNotification } = useNotification();
   const [refresh, setRefresh] = useState(0);
-  const [realtimeLocation, setRealtimeLocation] = useState<RealtimeLocation | null>(null);
-  const subscriptionRef = useRef<StompSubscription | null>(null);
-  const locationSubscriptionRef = useRef<StompSubscription | null>(null);
+  const [realtimeLocation, setRealtimeLocation] =
+    useState<RealtimeLocation | null>(null);
 
   useEffect(() => {
     if (!user?.role?.includes("Emergency Service")) return;
@@ -53,63 +56,68 @@ export function EmergencyRequestRealtimeProvider({
     const token = authService.getAccessToken();
     if (!token) return;
 
-    let cancelled = false;
+    const destroy$ = createDestroy$();
 
-    stompService
-      .connect(token)
-      .then(() => {
-        if (cancelled) {
-          stompService.disconnect();
-          return;
-        }
+    // Lazy connect — re-executes on each subscription (Strict Mode safe)
+    const connect$ = defer(() => from(stompService.connect(token)));
 
-        subscriptionRef.current = stompService.subscribe(
-          "/user/queue/emergency-request",
-          (message) => {
-            try {
-              const body: AssignedEmergencyRequestMessage = JSON.parse(
-                message.body,
-              );
-              addNotification({
-                type: "emergency",
-                title: "New Emergency Request",
-                description: `Emergency request #${body.requestId.substring(0, 8)} has been assigned to your service.`,
-                reportId: body.requestId,
-              });
-              setRefresh((prev) => prev + 1);
-            } catch {
-              console.error("Failed to parse emergency request message");
-            }
-          },
-        );
+    // Emergency request channel
+    connect$
+      .pipe(
+        switchMap(() =>
+          fromStompChannel("/user/queue/emergency-request"),
+        ),
+        takeUntil(destroy$),
+      )
+      .subscribe({
+        next: (message) => {
+          try {
+            const body: AssignedEmergencyRequestMessage = JSON.parse(
+              message.body,
+            );
+            addNotification({
+              type: "emergency",
+              title: "New Emergency Request",
+              description: `Emergency request #${body.requestId.substring(0, 8)} has been assigned to your service.`,
+              reportId: body.requestId,
+            });
+            setRefresh((prev) => prev + 1);
+          } catch {
+            console.error("Failed to parse emergency request message");
+          }
+        },
+        error: (err) =>
+          console.error("[STOMP] emergency channel error:", err),
+      });
 
-        locationSubscriptionRef.current = stompService.subscribe(
-          "/user/queue/user-location",
-          (message) => {
-            try {
-              const body = JSON.parse(message.body);
-              setRealtimeLocation({
-                userId: body.userId ?? "",
-                latitude: body.latitude,
-                longitude: body.longitude,
-                timestamp: body.timestamp ?? Date.now(),
-              });
-            } catch {
-              console.error("Failed to parse location message");
-            }
-          },
-        );
-      })
-      .catch((err) => {
-        console.error("STOMP connection failed:", err);
+    // Live location channel
+    connect$
+      .pipe(
+        switchMap(() =>
+          fromStompChannel("/user/queue/user-location"),
+        ),
+        takeUntil(destroy$),
+      )
+      .subscribe({
+        next: (message) => {
+          try {
+            const body = JSON.parse(message.body);
+            setRealtimeLocation({
+              userId: body.userId ?? "",
+              latitude: body.latitude,
+              longitude: body.longitude,
+              timestamp: body.timestamp ?? Date.now(),
+            });
+          } catch {
+            console.error("Failed to parse location message");
+          }
+        },
+        error: (err) =>
+          console.error("[STOMP] location channel error:", err),
       });
 
     return () => {
-      cancelled = true;
-      subscriptionRef.current?.unsubscribe();
-      subscriptionRef.current = null;
-      locationSubscriptionRef.current?.unsubscribe();
-      locationSubscriptionRef.current = null;
+      completeDestroy$(destroy$);
       stompService.disconnect();
     };
   }, [user, addNotification]);
