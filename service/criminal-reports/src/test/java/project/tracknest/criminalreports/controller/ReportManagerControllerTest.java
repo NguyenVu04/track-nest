@@ -244,7 +244,7 @@ class ReportManagerControllerTest {
 
         @Test
         void should_return200_withDefaultPagination() throws Exception {
-            when(service.listMissingPersonReports(any(), any(), anyBoolean(), anyInt(), anyInt()))
+            when(service.listMissingPersonReports(any(), any(), any(), anyBoolean(), anyInt(), anyInt()))
                     .thenReturn(PageResponse.<MissingPersonReportResponse>builder()
                             .content(List.of()).page(0).size(10).totalElements(0).totalPages(0)
                             .first(true).last(true).build());
@@ -256,7 +256,7 @@ class ReportManagerControllerTest {
 
         @Test
         void should_capSizeAt100() throws Exception {
-            when(service.listMissingPersonReports(any(), any(), anyBoolean(), anyInt(), eq(100)))
+            when(service.listMissingPersonReports(any(), any(), any(), anyBoolean(), anyInt(), eq(100)))
                     .thenReturn(PageResponse.<MissingPersonReportResponse>builder()
                             .content(List.of()).page(0).size(100).totalElements(0).totalPages(0)
                             .first(true).last(true).build());
@@ -264,7 +264,7 @@ class ReportManagerControllerTest {
             mockMvc.perform(get("/report-manager/missing-person-reports").param("size", "999"))
                     .andExpect(status().isOk());
 
-            verify(service).listMissingPersonReports(any(), any(), anyBoolean(), anyInt(), eq(100));
+            verify(service).listMissingPersonReports(any(), any(), any(), anyBoolean(), anyInt(), eq(100));
         }
     }
 
@@ -414,6 +414,226 @@ class ReportManagerControllerTest {
 
             mockMvc.perform(delete("/report-manager/guidelines/{id}", DOC_ID))
                     .andExpect(status().isNoContent());
+        }
+    }
+
+    // ── Missing tests added to match current implementation ──────────────────
+
+    @Nested @DisplayName("PUT /report-manager/missing-person-reports/{id}")
+    class UpdateMissingPersonReport {
+
+        @Test
+        void should_return200_whenUpdated() throws Exception {
+            when(service.updateMissingPersonReport(eq(REPORTER_ID), eq(REPORT_ID), any())).thenReturn(sampleMissingResponse());
+
+            mockMvc.perform(put("/report-manager/missing-person-reports/{id}", REPORT_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(
+                                    UpdateMissingPersonReportRequest.builder()
+                                            .title("Updated").fullName("Jane").personalId("ID1")
+                                            .date(LocalDate.now()).contactPhone("+1234567890").build())))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(REPORT_ID.toString()));
+        }
+
+        @Test
+        void should_return409_whenAlreadyPublished() throws Exception {
+            when(service.updateMissingPersonReport(eq(REPORTER_ID), eq(REPORT_ID), any()))
+                    .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT));
+
+            mockMvc.perform(put("/report-manager/missing-person-reports/{id}", REPORT_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(
+                                    UpdateMissingPersonReportRequest.builder()
+                                            .title("X").fullName("X").personalId("X")
+                                            .date(LocalDate.now()).contactPhone("+1234567890").build())))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
+        void should_return400_whenTitleBlank() throws Exception {
+            mockMvc.perform(put("/report-manager/missing-person-reports/{id}", REPORT_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(
+                                    UpdateMissingPersonReportRequest.builder()
+                                            .title("").fullName("Jane").personalId("ID1")
+                                            .date(LocalDate.now()).contactPhone("+1234567890").build())))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested @DisplayName("GET /report-manager/crime-reports/{id}")
+    class GetCrimeReport {
+
+        @Test
+        void should_return200_whenFound() throws Exception {
+            when(service.getCrimeReport(REPORTER_ID, REPORT_ID)).thenReturn(sampleCrimeResponse());
+
+            mockMvc.perform(get("/report-manager/crime-reports/{id}", REPORT_ID))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(REPORT_ID.toString()));
+        }
+
+        @Test
+        void should_return404_whenNotFound() throws Exception {
+            when(service.getCrimeReport(REPORTER_ID, REPORT_ID))
+                    .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+            mockMvc.perform(get("/report-manager/crime-reports/{id}", REPORT_ID))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested @DisplayName("DELETE /report-manager/crime-reports/{id}")
+    class DeleteCrimeReport {
+
+        @Test
+        void should_return204_whenDeleted() throws Exception {
+            doNothing().when(service).deleteCrimeReport(REPORTER_ID, REPORT_ID);
+
+            mockMvc.perform(delete("/report-manager/crime-reports/{id}", REPORT_ID))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Test
+        void should_return404_whenNotFound() throws Exception {
+            doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND))
+                    .when(service).deleteCrimeReport(REPORTER_ID, REPORT_ID);
+
+            mockMvc.perform(delete("/report-manager/crime-reports/{id}", REPORT_ID))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested @DisplayName("GET /report-manager/crime-reports")
+    class ListCrimeReports {
+
+        @Test
+        void should_return200_withDefaultPagination() throws Exception {
+            when(service.listCrimeReports(any(), any(), any(), any(), anyBoolean(), anyInt(), anyInt()))
+                    .thenReturn(PageResponse.<CrimeReportResponse>builder()
+                            .content(List.of()).page(0).size(10).totalElements(0).totalPages(0)
+                            .first(true).last(true).build());
+
+            mockMvc.perform(get("/report-manager/crime-reports"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray());
+        }
+
+        @Test
+        void should_capSizeAt100() throws Exception {
+            when(service.listCrimeReports(any(), any(), any(), any(), anyBoolean(), anyInt(), eq(100)))
+                    .thenReturn(PageResponse.<CrimeReportResponse>builder()
+                            .content(List.of()).page(0).size(100).totalElements(0).totalPages(0)
+                            .first(true).last(true).build());
+
+            mockMvc.perform(get("/report-manager/crime-reports").param("size", "999"))
+                    .andExpect(status().isOk());
+
+            verify(service).listCrimeReports(any(), any(), any(), any(), anyBoolean(), anyInt(), eq(100));
+        }
+    }
+
+    @Nested @DisplayName("GET /report-manager/crime-reports/nearby")
+    class ListCrimeReportsNearby {
+
+        @Test
+        void should_return200_withDefaultRadius() throws Exception {
+            when(service.listCrimeReportsWithinRadius(anyDouble(), anyDouble(), anyDouble(), anyInt(), anyInt()))
+                    .thenReturn(PageResponse.<CrimeReportResponse>builder()
+                            .content(List.of()).page(0).size(10).totalElements(0).totalPages(0)
+                            .first(true).last(true).build());
+
+            mockMvc.perform(get("/report-manager/crime-reports/nearby")
+                            .param("longitude", "106.7")
+                            .param("latitude", "10.7"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray());
+        }
+
+        @Test
+        void should_return400_whenLongitudeOrLatitudeMissing() throws Exception {
+            mockMvc.perform(get("/report-manager/crime-reports/nearby")
+                            .param("latitude", "10.7"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested @DisplayName("GET /report-manager/guidelines/{id}")
+    class GetGuidelinesDocument {
+
+        @Test
+        void should_return200_whenFound() throws Exception {
+            when(service.getGuidelinesDocument(REPORTER_ID, DOC_ID)).thenReturn(sampleGuidelineResponse());
+
+            mockMvc.perform(get("/report-manager/guidelines/{id}", DOC_ID))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(DOC_ID.toString()));
+        }
+
+        @Test
+        void should_return404_whenNotFound() throws Exception {
+            when(service.getGuidelinesDocument(REPORTER_ID, DOC_ID))
+                    .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+            mockMvc.perform(get("/report-manager/guidelines/{id}", DOC_ID))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested @DisplayName("PUT /report-manager/guidelines/{id}")
+    class UpdateGuidelinesDocument {
+
+        @Test
+        void should_return200_whenUpdated() throws Exception {
+            when(service.updateGuidelinesDocument(eq(REPORTER_ID), eq(DOC_ID), any())).thenReturn(sampleGuidelineResponse());
+
+            mockMvc.perform(put("/report-manager/guidelines/{id}", DOC_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(
+                                    UpdateGuidelinesDocumentRequest.builder()
+                                            .title("Updated").abstractText("New Abstract").build())))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(DOC_ID.toString()));
+        }
+
+        @Test
+        void should_return409_whenAlreadyPublic() throws Exception {
+            when(service.updateGuidelinesDocument(eq(REPORTER_ID), eq(DOC_ID), any()))
+                    .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT));
+
+            mockMvc.perform(put("/report-manager/guidelines/{id}", DOC_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(
+                                    UpdateGuidelinesDocumentRequest.builder()
+                                            .title("X").abstractText("X").build())))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
+        void should_return400_whenTitleBlank() throws Exception {
+            mockMvc.perform(put("/report-manager/guidelines/{id}", DOC_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(
+                                    UpdateGuidelinesDocumentRequest.builder()
+                                            .title("").abstractText("Abstract").build())))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested @DisplayName("GET /report-manager/guidelines")
+    class ListGuidelinesDocuments {
+
+        @Test
+        void should_return200_withDefaultPagination() throws Exception {
+            when(service.listGuidelinesDocuments(any(), any(), any(), anyInt(), anyInt()))
+                    .thenReturn(PageResponse.<GuidelinesDocumentResponse>builder()
+                            .content(List.of()).page(0).size(10).totalElements(0).totalPages(0)
+                            .first(true).last(true).build());
+
+            mockMvc.perform(get("/report-manager/guidelines"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray());
         }
     }
 }

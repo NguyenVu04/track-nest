@@ -305,47 +305,47 @@ class ReportManagerServiceImplTest {
 
         @Test
         void should_filterByReporterAndStatus_whenBothProvided() {
-            when(missingPersonReportRepository.findByReporterIdAndStatus(eq(REPORTER_ID), eq("PENDING"), any(Pageable.class)))
+            when(missingPersonReportRepository.findByFilters(eq(REPORTER_ID), eq("PENDING"), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of(pendingReport())));
 
-            var resp = service.listMissingPersonReports(REPORTER_ID, "PENDING", false, 0, 10);
+            var resp = service.listMissingPersonReports(REPORTER_ID, "PENDING", null, false, 0, 10);
             assertThat(resp.getContent()).hasSize(1);
         }
 
         @Test
         void should_filterPublishedByReporter_whenReporterAndIsPublic() {
-            when(missingPersonReportRepository.findByReporterIdAndStatus(eq(REPORTER_ID), eq(ReportStatusConstants.PUBLISHED), any(Pageable.class)))
+            when(missingPersonReportRepository.findByFilters(eq(REPORTER_ID), eq(ReportStatusConstants.PUBLISHED), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listMissingPersonReports(REPORTER_ID, null, true, 0, 10);
-            verify(missingPersonReportRepository).findByReporterIdAndStatus(eq(REPORTER_ID), eq(ReportStatusConstants.PUBLISHED), any());
+            service.listMissingPersonReports(REPORTER_ID, null, null, true, 0, 10);
+            verify(missingPersonReportRepository).findByFilters(eq(REPORTER_ID), eq(ReportStatusConstants.PUBLISHED), isNull(), any());
         }
 
         @Test
         void should_filterByReporterOnly_whenNoStatusOrPublic() {
-            when(missingPersonReportRepository.findByReporterId(eq(REPORTER_ID), any(Pageable.class)))
+            when(missingPersonReportRepository.findByFilters(eq(REPORTER_ID), isNull(), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listMissingPersonReports(REPORTER_ID, null, false, 0, 10);
-            verify(missingPersonReportRepository).findByReporterId(eq(REPORTER_ID), any());
+            service.listMissingPersonReports(REPORTER_ID, null, null, false, 0, 10);
+            verify(missingPersonReportRepository).findByFilters(eq(REPORTER_ID), isNull(), isNull(), any());
         }
 
         @Test
         void should_findAllPublic_whenNoReporterAndIsPublic() {
-            when(missingPersonReportRepository.findAllPublic(any(Pageable.class)))
+            when(missingPersonReportRepository.findByFilters(isNull(), eq(ReportStatusConstants.PUBLISHED), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listMissingPersonReports(null, null, true, 0, 10);
-            verify(missingPersonReportRepository).findAllPublic(any());
+            service.listMissingPersonReports(null, null, null, true, 0, 10);
+            verify(missingPersonReportRepository).findByFilters(isNull(), eq(ReportStatusConstants.PUBLISHED), isNull(), any());
         }
 
         @Test
         void should_findAll_whenNoFilters() {
-            when(missingPersonReportRepository.findAll(any(Pageable.class)))
+            when(missingPersonReportRepository.findByFilters(isNull(), isNull(), isNull(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of()));
 
-            service.listMissingPersonReports(null, null, false, 0, 10);
-            verify(missingPersonReportRepository).findAll(any(Pageable.class));
+            service.listMissingPersonReports(null, null, null, false, 0, 10);
+            verify(missingPersonReportRepository).findByFilters(isNull(), isNull(), isNull(), any(Pageable.class));
         }
     }
 
