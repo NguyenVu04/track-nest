@@ -85,8 +85,17 @@ export const AppSidebar = memo(function AppSidebar({
     ...adminNav.filter((item) => hasRole(item.roles!)),
   ];
 
-  const isActive = (href: string) =>
-    pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+  const isActive = (href: string) => {
+    if (pathname === href) return true;
+    if (href === "/dashboard") return false;
+    
+    // Prevent overlapping match for admin route
+    if (href === "/dashboard/emergency-requests" && pathname.startsWith("/dashboard/emergency-requests/admin")) {
+      return false;
+    }
+    
+    return pathname.startsWith(`${href}/`);
+  };
 
   const NavItemComponent = ({ href, nameKey, icon: Icon }: Omit<NavItem, "roles">) => {
     const active = isActive(href);
