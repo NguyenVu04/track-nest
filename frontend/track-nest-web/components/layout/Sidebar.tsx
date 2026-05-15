@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -10,14 +11,15 @@ import {
   LifeBuoy,
   MapPin,
   UserCircle,
-  Radar,
+  PlusCircle,
+  HelpCircle,
+  LogOut,
 } from "lucide-react";
 import {
   Sidebar as SidebarPrimitive,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -27,6 +29,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useTranslations } from "next-intl";
 import type { UserRole } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AppSidebarProps {
   pathname: string;
@@ -45,7 +48,13 @@ export const AppSidebar = memo(function AppSidebar({
   userRoles,
 }: AppSidebarProps) {
   const t = useTranslations("nav");
-  const tCommon = useTranslations("common");
+  const { logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   const hasRole = (allowed: UserRole[]) => allowed.some(r => userRoles.includes(r));
 
@@ -68,132 +77,99 @@ export const AppSidebar = memo(function AppSidebar({
     { href: "/dashboard/emergency-requests/admin", nameKey: "emergencyRequests", icon: LifeBuoy, roles: ["Admin"] },
   ];
 
-  const visibleCore     = coreNav.filter(item => !item.roles || hasRole(item.roles));
-  const visibleReporter = reporterNav.filter(item => hasRole(item.roles!));
-  const visibleOps      = opsNav.filter(item => hasRole(item.roles!));
-  const visibleAdmin    = adminNav.filter(item => hasRole(item.roles!));
+  // Combine all visible items into a flat list
+  const allItems = [
+    ...coreNav.filter((item) => !item.roles || hasRole(item.roles)),
+    ...reporterNav.filter((item) => hasRole(item.roles!)),
+    ...opsNav.filter((item) => hasRole(item.roles!)),
+    ...adminNav.filter((item) => hasRole(item.roles!)),
+  ];
 
   const isActive = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
-  const NavItem = ({ href, nameKey, icon: Icon }: Omit<NavItem, "roles">) => (
-    <SidebarMenuItem>
-      <SidebarMenuButton asChild isActive={isActive(href)}>
-        <Link
-          href={href}
-          className={
-            isActive(href)
-              ? "bg-brand-500/15! text-brand-400! font-medium"
-              : "text-slate-400 hover:text-white! hover:bg-white/5!"
-          }
+  const NavItemComponent = ({ href, nameKey, icon: Icon }: Omit<NavItem, "roles">) => {
+    const active = isActive(href);
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton 
+          asChild 
+          isActive={active} 
+          className="h-auto p-0 hover:bg-transparent active:bg-transparent hover:text-current data-[active=true]:bg-transparent data-[active=true]:text-current"
         >
-          <Icon
-            className={`size-4 shrink-0 ${isActive(href) ? "text-brand-400" : ""}`}
-          />
-          <span className="text-sm">
-            {t(nameKey as Parameters<typeof t>[0])}
-          </span>
-          {isActive(href) && (
-            <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400" />
-          )}
-        </Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
+          <Link
+            href={href}
+            className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl transition-all duration-200 ${
+              active
+                ? "bg-[#e0f2f1] text-[#006064] font-bold"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-semibold"
+            }`}
+          >
+            <Icon className={`w-5 h-5 shrink-0 ${active ? "text-[#006064]" : "text-slate-400"}`} strokeWidth={active ? 2.5 : 2} />
+            <span className="text-[15px]">
+              {t(nameKey as Parameters<typeof t>[0])}
+            </span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
 
   return (
     <SidebarPrimitive
       collapsible="offcanvas"
-      className="border-r-0"
-      style={{ background: "var(--color-sidebar-dark, #0d1e2b)" }}
+      className="border-r-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-40 [&_[data-slot=sidebar-inner]]:bg-white [&_[data-slot=sidebar-inner]]:rounded-r-[2.5rem] [&_[data-slot=sidebar-inner]]:border-r-0"
     >
       {/* ── Brand header ── */}
-      <SidebarHeader className="px-4 py-5 border-b border-white/8">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-brand-500/20 ring-1 ring-brand-500/40">
-            <Radar className="size-5 text-brand-400" />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-white tracking-wide">
-              {t("brand")}
-            </p>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest">
-              {t("brandSubtitle")}
-            </p>
-          </div>
+      <SidebarHeader className="px-8 pt-10 pb-8 border-b-0">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-[22px] font-extrabold text-[#006064] tracking-tight leading-none">
+            TrackNest
+          </h1>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">
+            Family Sanctuary
+          </p>
         </div>
       </SidebarHeader>
 
       {/* ── Navigation ── */}
-      <SidebarContent className="px-2 py-3">
-        {visibleCore.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-slate-600 px-2 mb-1">
-              {t("sectionMain")}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
-                {visibleCore.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {visibleReporter.length > 0 && (
-          <SidebarGroup className="mt-4">
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-slate-600 px-2 mb-1">
-              {t("sectionReporting")}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
-                {visibleReporter.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {visibleOps.length > 0 && (
-          <SidebarGroup className="mt-4">
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-slate-600 px-2 mb-1">
-              {t("sectionOperations")}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
-                {visibleOps.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {visibleAdmin.length > 0 && (
-          <SidebarGroup className="mt-4">
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-slate-600 px-2 mb-1">
-              {t("sectionAdministration")}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
-                {visibleAdmin.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+      <SidebarContent className="px-5 flex-1">
+        <SidebarGroup className="p-0">
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-2.5">
+              {allItems.map((item) => (
+                <NavItemComponent key={item.href} {...item} />
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
-      {/* ── Footer badge ── */}
-      <SidebarFooter className="px-4 py-4 border-t border-white/8">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <p className="text-[11px] text-slate-500">
-            {tCommon("systemOnline")}
-          </p>
+      {/* ── Footer Actions ── */}
+      <SidebarFooter className="px-6 pb-10 pt-4">
+        <div className="flex flex-col gap-5">
+          <button className="flex items-center justify-center gap-2 bg-[#006064] hover:bg-[#004d40] text-white px-4 py-3.5 rounded-[1rem] font-bold shadow-md shadow-teal-900/10 transition-all duration-200">
+            <PlusCircle className="w-[18px] h-[18px] stroke-[2.5]" />
+            <span className="text-[15px]">Add Member</span>
+          </button>
+
+          <div className="flex flex-col gap-1 mt-2">
+            <Link
+              href="/dashboard/help"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-semibold transition-colors"
+            >
+              <HelpCircle className="w-5 h-5 shrink-0 text-slate-400" />
+              <span className="text-[14px]">Help Center</span>
+            </Link>
+            
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-slate-500 hover:bg-slate-50 hover:text-red-600 font-semibold transition-colors w-full text-left"
+            >
+              <LogOut className="w-5 h-5 shrink-0 text-slate-400" />
+              <span className="text-[14px]">Sign Out</span>
+            </button>
+          </div>
         </div>
       </SidebarFooter>
 
