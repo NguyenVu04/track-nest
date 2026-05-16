@@ -2,8 +2,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { MapType } from "react-native-maps";
@@ -18,16 +20,12 @@ type MapContextType = {
 const MapContext = createContext<MapContextType | undefined>(undefined);
 
 const isValidMapType = (value: string): value is MapType => {
-  return [
-    "standard",
-    "hybrid",
-  ].includes(value);
+  return ["standard", "hybrid"].includes(value);
 };
 
 export const MapProvider = ({ children }: { children: ReactNode }) => {
   const [mapType, setMapTypeState] = useState<MapType>("standard");
 
-  // Load saved map type preference on mount
   useEffect(() => {
     loadMapType();
   }, []);
@@ -35,13 +33,6 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
   const loadMapType = async () => {
     try {
       const savedMapType = await AsyncStorage.getItem(MAP_TYPE_KEY);
-
-      console.log(
-        "Is valid map type?: ",
-        isValidMapType(savedMapType!),
-        savedMapType,
-      );
-
       if (savedMapType !== null && isValidMapType(savedMapType)) {
         setMapTypeState(savedMapType);
       }
@@ -50,17 +41,26 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const setMapType = async (value: MapType) => {
+  // Stable reference — recreating this on every render was breaking React.memo
+  // on all MapView consumers that depend on mapType or its setter.
+  const setMapType = useCallback(async (value: MapType) => {
     try {
       await AsyncStorage.setItem(MAP_TYPE_KEY, value);
       setMapTypeState(value);
     } catch (error) {
       console.error("Failed to save map type preference:", error);
     }
-  };
+  }, []);
+
+  // Memoize context value to prevent unnecessary re-renders of all consumers
+  // when the provider itself re-renders for unrelated reasons.
+  const contextValue = useMemo(
+    () => ({ mapType, setMapType }),
+    [mapType, setMapType],
+  );
 
   return (
-    <MapContext.Provider value={{ mapType, setMapType }}>
+    <MapContext.Provider value={contextValue}>
       {children}
     </MapContext.Provider>
   );

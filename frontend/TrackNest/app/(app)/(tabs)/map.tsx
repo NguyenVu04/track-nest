@@ -393,15 +393,18 @@ function MapScreenContent() {
     list.push(...followersToRender);
     return list;
   }, [meItem, followersToRender]);
-  const initialRegion = useMemo(
-    () => ({
-      latitude: location?.latitude || 0,
-      longitude: location?.longitude || 0,
+  // Capture initialRegion once at mount — MapView only reads this prop on first
+  // render, so recomputing it on every location heartbeat wastes work and can
+  // cause MapView to re-evaluate its internal region state.
+  const initialRegionRef = useRef<Region | null>(null);
+  if (!initialRegionRef.current && location) {
+    initialRegionRef.current = {
+      latitude: location.latitude,
+      longitude: location.longitude,
       latitudeDelta: regionDelta,
       longitudeDelta: regionDelta,
-    }),
-    [location, regionDelta],
-  );
+    };
+  }
 
   const checkBeforeCenterMap = useCallback(() => {
     if (location) {
@@ -647,14 +650,14 @@ function MapScreenContent() {
 
         <MapView
           loadingEnabled={true}
-          // cacheEnabled={true}
+          cacheEnabled={true}
           moveOnMarkerPress={true}
           showsCompass={false}
           ref={mapRef}
           provider={PROVIDER_GOOGLE}
           mapType={mapType || "standard"}
           style={[StyleSheet.absoluteFillObject]}
-          initialRegion={initialRegion}
+          initialRegion={initialRegionRef.current ?? undefined}
           showsUserLocation={false}
           showsMyLocationButton={false}
           onMapReady={handleMapReady}

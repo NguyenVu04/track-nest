@@ -15,7 +15,7 @@ type Props = {
 
 const MIN_MARKER_MOVEMENT_DELTA = 0.00003;
 
-export default function CurrentLocationMarker({
+function CurrentLocationMarker({
   latitude,
   longitude,
   speed,
@@ -253,3 +253,5 @@ const localStyles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
+export default React.memo(CurrentLocationMarker);
