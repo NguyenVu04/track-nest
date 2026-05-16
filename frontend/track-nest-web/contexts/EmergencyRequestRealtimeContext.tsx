@@ -23,6 +23,12 @@ interface AssignedEmergencyRequestMessage {
   assignedAtMs: number;
 }
 
+interface EmergencyStatusMessage {
+  requestId: string;
+  status: "ACCEPTED" | "REJECTED" | "CLOSED";
+  closedAtMs: number | null;
+}
+
 export interface RealtimeLocation {
   userId: string;
   latitude: number;
@@ -51,70 +57,102 @@ export function EmergencyRequestRealtimeProvider({
     useState<RealtimeLocation | null>(null);
 
   useEffect(() => {
-    if (!user?.role?.includes("Emergency Service")) return;
+    if (!user) return;
 
     const token = authService.getAccessToken();
     if (!token) return;
 
+    const isEmergencyService = user?.role?.includes("Emergency Service");
     const destroy$ = createDestroy$();
 
     // Lazy connect — re-executes on each subscription (Strict Mode safe)
     const connect$ = defer(() => from(stompService.connect(token)));
 
-    // Emergency request channel
-    connect$
-      .pipe(
-        switchMap(() =>
-          fromStompChannel("/user/queue/emergency-request"),
-        ),
-        takeUntil(destroy$),
-      )
-      .subscribe({
-        next: (message) => {
-          try {
-            const body: AssignedEmergencyRequestMessage = JSON.parse(
-              message.body,
-            );
-            addNotification({
-              type: "emergency",
-              title: "New Emergency Request",
-              description: `Emergency request #${body.requestId.substring(0, 8)} has been assigned to your service.`,
-              reportId: body.requestId,
-            });
-            setRefresh((prev) => prev + 1);
-          } catch {
-            console.error("Failed to parse emergency request message");
-          }
-        },
-        error: (err) =>
-          console.error("[STOMP] emergency channel error:", err),
-      });
+    if (isEmergencyService) {
+      // Emergency request channel
+      connect$
+        .pipe(
+          switchMap(() => fromStompChannel("/user/queue/emergency-request")),
+          takeUntil(destroy$),
+        )
+        .subscribe({
+          next: (message) => {
+            try {
+              const body: AssignedEmergencyRequestMessage = JSON.parse(
+                message.body,
+              );
+              addNotification({
+                type: "emergency",
+                title: "New Emergency Request",
+                description: `Emergency request #${body.requestId.substring(0, 8)} has been assigned to your service.`,
+                reportId: body.requestId,
+              });
+              setRefresh((prev) => prev + 1);
+            } catch {
+              console.error("Failed to parse emergency request message");
+            }
+          },
+          error: (err) =>
+            console.error("[STOMP] emergency channel error:", err),
+        });
 
-    // Live location channel
-    connect$
-      .pipe(
-        switchMap(() =>
-          fromStompChannel("/user/queue/user-location"),
-        ),
-        takeUntil(destroy$),
-      )
-      .subscribe({
-        next: (message) => {
-          try {
-            const body = JSON.parse(message.body);
-            setRealtimeLocation({
-              userId: body.userId ?? "",
-              latitude: body.latitude,
-              longitude: body.longitude,
-              timestamp: body.timestamp ?? Date.now(),
-            });
-          } catch {
-            console.error("Failed to parse location message");
-          }
-        },
-        error: (err) =>
-          console.error("[STOMP] location channel error:", err),
-      });
+      // Live location channel
+      connect$
+        .pipe(
+          switchMap(() => fromStompChannel("/user/queue/user-location")),
+          takeUntil(destroy$),
+        )
+        .subscribe({
+          next: (message) => {
+            try {
+              const body = JSON.parse(message.body);
+              setRealtimeLocation({
+                userId: body.userId ?? "",
+                latitude: body.latitude,
+                longitude: body.longitude,
+                timestamp: body.timestamp ?? Date.now(),
+              });
+            } catch {
+              console.error("Failed to parse location message");
+            }
+          },
+          error: (err) =>
+            console.error("[STOMP] location channel error:", err),
+        });
+    } else {
+      // USER role: receive status updates when their emergency request is acted on
+      connect$
+        .pipe(
+          switchMap(() =>
+            fromStompChannel("/user/queue/emergency-request-status"),
+          ),
+          takeUntil(destroy$),
+        )
+        .subscribe({
+          next: (message) => {
+            try {
+              const body: EmergencyStatusMessage = JSON.parse(message.body);
+              const label =
+                body.status === "ACCEPTED"
+                  ? "accepted"
+                  : body.status === "REJECTED"
+                    ? "rejected"
+                    : "closed";
+              addNotification({
+                type: "emergency",
+                title: `Emergency request ${label}`,
+                description: `Your emergency request has been ${label}.`,
+                reportId: body.requestId,
+              });
+              setRefresh((prev) => prev + 1);
+            } catch {
+              console.error("Failed to parse emergency status message");
+            }
+          },
+          error: (err) =>
+            console.error("[STOMP] emergency status channel error:", err),
+        });
+    }
 
     return () => {
       completeDestroy$(destroy$);
