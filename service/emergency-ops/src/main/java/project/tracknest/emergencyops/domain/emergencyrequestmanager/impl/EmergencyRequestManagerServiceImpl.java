@@ -6,10 +6,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.tracknest.emergencyops.configuration.cache.ServerRedisMessage;
+import project.tracknest.emergencyops.configuration.cache.ServerRedisMessagePublisher;
 import project.tracknest.emergencyops.configuration.security.KeycloakService;
 import project.tracknest.emergencyops.configuration.security.datatype.KeycloakUserProfile;
+import project.tracknest.emergencyops.core.datatype.EmergencyStatusMessage;
 import project.tracknest.emergencyops.core.datatype.PageResponse;
 import project.tracknest.emergencyops.core.datatype.TrackingNotificationMessage;
 import project.tracknest.emergencyops.core.entity.EmergencyRequest;
@@ -18,6 +22,7 @@ import project.tracknest.emergencyops.core.entity.EmergencyService;
 import project.tracknest.emergencyops.core.entity.EmergencyServiceUser;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.*;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.service.EmergencyRequestManagerService;
+import project.tracknest.emergencyops.domain.emergencyrequestmanager.service.EmergencyRequestManagerSubscriber;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -31,7 +36,7 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerService {
+class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerService, EmergencyRequestManagerSubscriber {
     private final EmergencyRequestManagerEmergencyRequestRepository emergencyRequestRepository;
     private final EmergencyRequestManagerEmergencyRequestStatusRepository emergencyRequestStatusRepository;
     private final EmergencyRequestManagerEmergencyServiceUserRepository emergencyServiceUserRepository;
@@ -39,9 +44,14 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
 
     private final KeycloakService keycloakService;
     private final KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
+    private final ServerRedisMessagePublisher redisPublisher;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Value("${app.kafka.topics[1]}")
     private String TRACKING_NOTIFICATION_TOPIC;
+
+    @Value("${app.stomp.queue.emergency-request-status:/queue/emergency-request-status}")
+    private String EMERGENCY_REQUEST_STATUS_QUEUE;
 
     private static final String TYPE_ACCEPTED = "EMERGENCY_REQUEST_ACCEPTED";
     private static final String TYPE_REJECTED = "EMERGENCY_REQUEST_REJECTED";
@@ -56,6 +66,25 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
                 .build();
         kafkaTemplate.send(TRACKING_NOTIFICATION_TOPIC, message);
         log.info("Sent {} notification to Kafka for target {}", type, targetId);
+    }
+
+    private void sendStompStatusToSender(UUID senderId, EmergencyStatusMessage statusMessage) {
+        try {
+            ServerRedisMessage redisMsg = ServerRedisMessage.builder()
+                    .method("receiveEmergencyStatusMessage")
+                    .receiverId(senderId)
+                    .payload(statusMessage)
+                    .build();
+            redisPublisher.publishMessage(redisMsg, senderId);
+        } catch (Exception e) {
+            log.warn("Failed to send STOMP status notification to sender {}: {}", senderId, e.getMessage());
+        }
+    }
+
+    @Override
+    public void receiveEmergencyStatusMessage(UUID senderId, EmergencyStatusMessage message) {
+        messagingTemplate.convertAndSendToUser(senderId.toString(), EMERGENCY_REQUEST_STATUS_QUEUE, message);
+        log.info("Sent STOMP status {} to sender {}", message.status(), senderId);
     }
 
     private GetEmergencyRequestsResponse mapToGetEmergencyRequestsResponse(
@@ -187,6 +216,8 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
                 "Emergency Request Accepted",
                 "Your emergency request has been accepted. Help is on the way."
         );
+        sendStompStatusToSender(request.getSenderId(),
+                new EmergencyStatusMessage(request.getId().toString(), "ACCEPTED", null));
 
         return new AcceptEmergencyRequestResponse(
                 acceptedAtMs,
@@ -238,6 +269,8 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
                 "Emergency Request Rejected",
                 "Your emergency request could not be handled at this time. Please contact another service."
         );
+        sendStompStatusToSender(request.getSenderId(),
+                new EmergencyStatusMessage(request.getId().toString(), "REJECTED", null));
 
         return new RejectEmergencyRequestResponse(
                 rejectedAtMs,
@@ -298,6 +331,8 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
                 "Emergency Request Closed",
                 "Your emergency request has been closed. We hope you are safe."
         );
+        sendStompStatusToSender(request.getSenderId(),
+                new EmergencyStatusMessage(request.getId().toString(), "CLOSED", closedAtMs));
 
         return new CloseEmergencyRequestResponse(
                 closedAtMs,
