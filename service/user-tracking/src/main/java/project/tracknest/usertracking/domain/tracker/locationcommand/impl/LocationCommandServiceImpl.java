@@ -58,6 +58,7 @@ class LocationCommandServiceImpl implements LocationCommandService {
                     .longitude(userLocation.getLongitudeDeg())
                     .accuracy(userLocation.getAccuracyMeter())
                     .velocity(userLocation.getVelocityMps())
+                    .timeSpentMs(userLocation.getTimeSpentMs())
                     .id(Location.LocationId
                             .builder()
                             .userId(userId)
