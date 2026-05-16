@@ -13,6 +13,8 @@ import { useDrivingMode } from "@/hooks/useDrivingMode";
 import "@/services/backgroundTasks";
 import fetch from "cross-fetch"; // polyfill for RN
 import { Stack } from "expo-router";
+import { TamaguiProvider } from "tamagui";
+import tamaguiConfig from "../tamagui.config";
 
 global.fetch = global.fetch || fetch;
 
@@ -20,6 +22,7 @@ export default function RootLayout() {
   const drivingMode = useDrivingMode();
   useDistractionTracker(drivingMode);
   return (
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
     <AuthProvider>
       <DevModeProvider>
         <LanguageProvider>
@@ -41,5 +44,6 @@ export default function RootLayout() {
         </LanguageProvider>
       </DevModeProvider>
     </AuthProvider>
+    </TamaguiProvider>
   );
 }

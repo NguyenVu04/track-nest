@@ -1,8 +1,8 @@
 import { colors } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button, Text, XStack } from "tamagui";
 
 interface AppHeaderProps {
   onFamilyPress?: () => void;
@@ -14,43 +14,47 @@ export default function AppHeader({ onFamilyPress }: AppHeaderProps) {
   const router = useRouter();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Pressable style={styles.iconBtn} onPress={onFamilyPress} hitSlop={8}>
+    <XStack
+      alignItems="center"
+      justifyContent="space-between"
+      paddingHorizontal={20}
+      paddingBottom={6}
+      paddingTop={insets.top}
+      backgroundColor={colors.primaryMuted}
+    >
+      <Button
+        onPress={onFamilyPress}
+        width={40}
+        height={40}
+        borderRadius={20}
+        backgroundColor="transparent"
+        alignItems="center"
+        justifyContent="center"
+        pressStyle={{ opacity: 0.7 }}
+        padding={0}
+        hitSlop={8}
+      >
         <Ionicons name="people" size={24} color={colors.primary} />
-      </Pressable>
+      </Button>
 
-      <Text style={styles.title}>TrackNest</Text>
+      <Text fontSize={18} fontWeight="700" color={colors.primary} letterSpacing={0.3}>
+        TrackNest
+      </Text>
 
-      <Pressable
-        style={styles.iconBtn}
+      <Button
         onPress={() => router.push("/(app)/notifications" as any)}
+        width={40}
+        height={40}
+        borderRadius={20}
+        backgroundColor="transparent"
+        alignItems="center"
+        justifyContent="center"
+        pressStyle={{ opacity: 0.7 }}
+        padding={0}
         hitSlop={8}
       >
         <Ionicons name="notifications" size={24} color={colors.primary} />
-      </Pressable>
-    </View>
+      </Button>
+    </XStack>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingBottom: 6,
-    backgroundColor: colors.primaryMuted,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.primary,
-    letterSpacing: 0.3,
-  },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

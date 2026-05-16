@@ -1,7 +1,8 @@
-import { colors, shadows } from "@/styles/styles";
+import { colors } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, StyleSheet, ViewStyle } from "react-native";
+import { ViewStyle } from "react-native";
+import { Button } from "tamagui";
 
 type FabProps = {
   size?: "small" | "large";
@@ -22,41 +23,32 @@ export default function Fab({
 }: FabProps) {
   const isLarge = size === "large";
   const iconColor = color || (isLarge ? "#fff" : "#333");
+  const dimension = isLarge ? 72 : 44;
+
   return (
-    <Pressable
+    <Button
       onPress={onPress}
-      style={[isLarge ? localStyles.big : localStyles.small, style]}
+      width={dimension}
+      height={dimension}
+      borderRadius={dimension / 2}
+      backgroundColor={isLarge ? colors.danger : "#fff"}
+      alignItems="center"
+      justifyContent="center"
+      shadowColor="#000"
+      shadowOpacity={isLarge ? 0.12 : 0.08}
+      shadowRadius={isLarge ? 6 : 4}
+      elevation={isLarge ? 4 : 2}
+      pressStyle={{ opacity: 0.8 }}
+      style={style}
+      padding={0}
     >
-      {children ? (
-        children
-      ) : (
+      {children ?? (
         <Ionicons
           name={icon as any}
           size={isLarge ? 28 : 20}
           color={iconColor}
         />
       )}
-    </Pressable>
+    </Button>
   );
 }
-
-const localStyles = StyleSheet.create({
-  small: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadows.small,
-  },
-  big: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.danger,
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadows.medium,
-  },
-});
