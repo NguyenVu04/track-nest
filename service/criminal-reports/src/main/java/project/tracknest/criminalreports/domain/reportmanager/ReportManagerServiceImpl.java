@@ -7,9 +7,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import project.tracknest.criminalreports.core.dto.ReportNotificationMessage;
 import project.tracknest.criminalreports.configuration.objectstorage.ObjectStorage;
 import project.tracknest.criminalreports.core.datatype.PageResponse;
 import project.tracknest.criminalreports.core.datatype.ReportStatusConstants;
@@ -41,11 +43,28 @@ class ReportManagerServiceImpl implements ReportManagerService {
     private final ReporterRepository reporterRepository;
     private final MissingPersonReportStatusRepository statusRepository;
     private final ObjectStorage objectStorage;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Value("${app.minio.buckets.criminal-reports:criminal-reports}")
     private String bucketName;
 
     private static final String DEFAULT_STATUS = ReportStatusConstants.PENDING;
+    private static final String TOPIC_MISSING_PERSON = "/topic/reports/missing-person";
+    private static final String TOPIC_CRIME          = "/topic/reports/crime";
+    private static final String TOPIC_GUIDELINE      = "/topic/reports/guideline";
+
+    private void broadcast(String topic, String eventType, UUID reportId, String title, String reportType) {
+        try {
+            messagingTemplate.convertAndSend(topic, ReportNotificationMessage.builder()
+                    .eventType(eventType)
+                    .reportId(reportId)
+                    .title(title)
+                    .reportType(reportType)
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to broadcast {} notification for {}: {}", eventType, reportId, e.getMessage());
+        }
+    }
 
     // ── Missing Person Reports ────────────────────────────────────────────────
 
@@ -75,7 +94,9 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .createdAt(OffsetDateTime.now())
                 .build();
 
-        return mapToMissingPersonReportResponse(missingPersonReportRepository.save(report));
+        MissingPersonReportResponse response = mapToMissingPersonReportResponse(missingPersonReportRepository.save(report));
+        broadcast(TOPIC_MISSING_PERSON, "CREATED", response.getId(), response.getTitle(), "missing-person");
+        return response;
     }
 
     @Override
@@ -115,8 +136,10 @@ class ReportManagerServiceImpl implements ReportManagerService {
     public void deleteMissingPersonReport(UUID reporterId, UUID reportId) {
         MissingPersonReport report = findMissingPersonReportOwned(reporterId, reportId);
         String photo = report.getPhoto();
+        String title = report.getTitle();
         missingPersonReportRepository.delete(report);
         if (photo != null && !photo.isBlank()) objectStorage.deleteFile(bucketName, photo);
+        broadcast(TOPIC_MISSING_PERSON, "DELETED", reportId, title, "missing-person");
     }
 
     @Override
@@ -131,7 +154,9 @@ class ReportManagerServiceImpl implements ReportManagerService {
         MissingPersonReportStatus publishedStatus = statusRepository.findByName(ReportStatusConstants.PUBLISHED)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "PUBLISHED status not found"));
         report.setStatus(publishedStatus);
-        return mapToMissingPersonReportResponse(missingPersonReportRepository.save(report));
+        MissingPersonReportResponse response = mapToMissingPersonReportResponse(missingPersonReportRepository.save(report));
+        broadcast(TOPIC_MISSING_PERSON, "PUBLISHED", response.getId(), response.getTitle(), "missing-person");
+        return response;
     }
 
     @Override
@@ -187,7 +212,9 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .updatedAt(OffsetDateTime.now())
                 .build();
 
-        return mapToCrimeReportResponse(crimeReportRepository.save(report));
+        CrimeReportResponse response = mapToCrimeReportResponse(crimeReportRepository.save(report));
+        broadcast(TOPIC_CRIME, "CREATED", response.getId(), response.getTitle(), "crime");
+        return response;
     }
 
     @Override
@@ -227,13 +254,18 @@ class ReportManagerServiceImpl implements ReportManagerService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Crime report is already published");
         }
         report.setPublic(true);
-        return mapToCrimeReportResponse(crimeReportRepository.save(report));
+        CrimeReportResponse response = mapToCrimeReportResponse(crimeReportRepository.save(report));
+        broadcast(TOPIC_CRIME, "PUBLISHED", response.getId(), response.getTitle(), "crime");
+        return response;
     }
 
     @Override
     @Transactional
     public void deleteCrimeReport(UUID reporterId, UUID reportId) {
-        crimeReportRepository.delete(findCrimeReportOwned(reporterId, reportId));
+        CrimeReport report = findCrimeReportOwned(reporterId, reportId);
+        String title = report.getTitle();
+        crimeReportRepository.delete(report);
+        broadcast(TOPIC_CRIME, "DELETED", reportId, title, "crime");
     }
 
     @Override
@@ -273,7 +305,9 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .createdAt(OffsetDateTime.now())
                 .build();
 
-        return mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
+        GuidelinesDocumentResponse response = mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
+        broadcast(TOPIC_GUIDELINE, "CREATED", response.getId(), response.getTitle(), "guideline");
+        return response;
     }
 
     @Override
@@ -307,14 +341,18 @@ class ReportManagerServiceImpl implements ReportManagerService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Guidelines document is already published");
         }
         document.setPublic(true);
-        return mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
+        GuidelinesDocumentResponse response = mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
+        broadcast(TOPIC_GUIDELINE, "PUBLISHED", response.getId(), response.getTitle(), "guideline");
+        return response;
     }
 
     @Override
     @Transactional
     public void deleteGuidelinesDocument(UUID reporterId, UUID documentId) {
         GuidelinesDocument document = findGuidelinesDocumentOwned(reporterId, documentId);
+        String title = document.getTitle();
         guidelinesDocumentRepository.delete(document);
+        broadcast(TOPIC_GUIDELINE, "DELETED", documentId, title, "guideline");
     }
 
     @Override

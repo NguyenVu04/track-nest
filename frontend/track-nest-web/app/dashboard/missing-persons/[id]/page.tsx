@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
 import type { MissingPerson } from "@/types";
 import { MissingPersonDetail } from "@/components/missing-persons/MissingPersonDetail";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 import { criminalReportsService } from "@/services/criminalReportsService";
@@ -109,12 +110,14 @@ export default function MissingPersonDetailPage() {
           : prev,
       );
       toast.success("Report published successfully");
-      addNotification({
-        type: "missing-person",
-        title: "Missing person report published",
-        description: `${person.fullName} is now public and visible to users`,
-        reportId: person.id,
-      });
+      if (person) {
+        addNotification({
+          type: "missing-person",
+          title: "Missing person report published",
+          description: `${person.fullName} is now public and visible to users`,
+          reportId: person.id,
+        });
+      }
     } catch (error) {
       toast.error("Failed to publish report");
       console.error(error);
@@ -125,12 +128,14 @@ export default function MissingPersonDetailPage() {
     try {
       await criminalReportsService.deleteMissingPersonReport(reportId);
       toast.success("Report deleted successfully");
-      addNotification({
-        type: "missing-person",
-        title: "Missing person report deleted",
-        description: `${person.fullName} report has been removed`,
-        reportId: person.id,
-      });
+      if (person) {
+        addNotification({
+          type: "missing-person",
+          title: "Missing person report deleted",
+          description: `${person.fullName} report has been removed`,
+          reportId: person.id,
+        });
+      }
       router.push("/dashboard/missing-persons");
     } catch (error) {
       toast.error("Failed to delete report");
@@ -147,13 +152,21 @@ export default function MissingPersonDetailPage() {
   };
 
   return (
-    <MissingPersonDetail
-      person={person}
-      onBack={handleBack}
-      onEdit={handleEdit}
-      onPublish={handlePublish}
-      onDelete={handleDelete}
-      userRole={user.role}
-    />
+    <>
+      <Breadcrumbs
+        items={[
+          { label: "Missing Persons", href: "/dashboard/missing-persons" },
+          { label: person.fullName },
+        ]}
+      />
+      <MissingPersonDetail
+        person={person}
+        onBack={handleBack}
+        onEdit={handleEdit}
+        onPublish={handlePublish}
+        onDelete={handleDelete}
+        userRole={user.role}
+      />
+    </>
   );
 }

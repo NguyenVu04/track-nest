@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import project.tracknest.emergencyops.core.datatype.EmergencyStatusMessage;
 import project.tracknest.emergencyops.core.datatype.LocationMessage;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.AssignedEmergencyRequestMessage;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.service.EmergencyRequestReceiverSubscriber;
+import project.tracknest.emergencyops.domain.emergencyrequestmanager.service.EmergencyRequestManagerSubscriber;
 import project.tracknest.emergencyops.domain.emergencyresponder.service.EmergencyResponderSubscriber;
 
 @Slf4j
@@ -17,6 +19,7 @@ public class ServerRedisMessageReceiver {
 
     private final EmergencyResponderSubscriber emergencyResponderSubscriber;
     private final EmergencyRequestReceiverSubscriber emergencyRequestReceiverSubscriber;
+    private final EmergencyRequestManagerSubscriber emergencyRequestManagerSubscriber;
 
     public void receiveMessage(String message) {
         try {
@@ -46,6 +49,16 @@ public class ServerRedisMessageReceiver {
                     emergencyRequestReceiverSubscriber.receiveEmergencyRequestMessage(
                             redisMessage.getReceiverId(),
                             emergencyRequestMessage
+                    );
+                    break;
+                case "receiveEmergencyStatusMessage":
+                    EmergencyStatusMessage statusMessage = redisMessage.getPayload() instanceof EmergencyStatusMessage
+                            ? (EmergencyStatusMessage) redisMessage.getPayload()
+                            : OBJECT_MAPPER.convertValue(redisMessage.getPayload(), EmergencyStatusMessage.class);
+
+                    emergencyRequestManagerSubscriber.receiveEmergencyStatusMessage(
+                            redisMessage.getReceiverId(),
+                            statusMessage
                     );
                     break;
                 default:

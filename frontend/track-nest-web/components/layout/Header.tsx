@@ -2,11 +2,12 @@
 
 import { memo } from "react";
 import Link from "next/link";
-import { LogOut, Bell, Languages } from "lucide-react";
+import { LogOut, Languages } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { useTranslations } from "next-intl";
 import { useLocale, type Locale } from "@/contexts/LocaleContext";
+import { NotificationButton } from "@/components/shared/NotificationButton";
 
 interface HeaderProps {
   user: {
@@ -87,10 +88,7 @@ export const Header = memo(function Header({ user, onLogout }: HeaderProps) {
         </div>
 
         {/* Notification bell */}
-        <button className="relative p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors">
-          <Bell className="size-4" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500" />
-        </button>
+        <NotificationButton />
 
         {/* User pill */}
         <Link

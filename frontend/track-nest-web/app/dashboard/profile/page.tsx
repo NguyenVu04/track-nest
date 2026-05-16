@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { User, Mail, Lock, Save } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -38,7 +39,8 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl">
-      <h2 className="text-gray-900 mb-6 text-xl font-semibold">User Profile</h2>
+      <Breadcrumbs items={[{ label: "User Profile" }]} />
+      <h2 className="text-gray-900 mb-6 text-xl font-bold">User Profile</h2>
 
       {successMessage && (
         <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">

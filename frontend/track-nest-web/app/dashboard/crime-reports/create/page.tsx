@@ -2,13 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotification } from "@/contexts/NotificationContext";
 import type { CrimeReport } from "@/types";
 import { CrimeReportForm } from "@/components/crime-reports/CrimeReportForm";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { toast } from "sonner";
 
 export default function CreateCrimeReportPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { addNotification } = useNotification();
 
   if (!user) {
     return (
@@ -27,8 +30,14 @@ export default function CreateCrimeReportPage() {
     );
   }
 
-  const handleSave = (_report: CrimeReport) => {
+  const handleSave = (report: CrimeReport) => {
     toast.success("Report created successfully");
+    addNotification({
+      type: "crime",
+      title: "Crime report created",
+      description: report.title,
+      reportId: report.id,
+    });
     router.push("/dashboard/crime-reports");
   };
 
@@ -37,11 +46,19 @@ export default function CreateCrimeReportPage() {
   };
 
   return (
-    <CrimeReportForm
-      report={null}
-      onSave={handleSave}
-      onCancel={handleCancel}
-      mode="create"
-    />
+    <>
+      <Breadcrumbs
+        items={[
+          { label: "Crime Reports", href: "/dashboard/crime-reports" },
+          { label: "New Report" },
+        ]}
+      />
+      <CrimeReportForm
+        report={null}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        mode="create"
+      />
+    </>
   );
 }
