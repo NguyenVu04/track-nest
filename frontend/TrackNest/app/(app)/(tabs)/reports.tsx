@@ -55,19 +55,18 @@ function SeverityBadge({ severity }: { severity: string }) {
 
 function ReportCard({ item }: { item: Report }) {
   const router = useRouter();
-  const [photoError, setPhotoError] = useState(false);
   return (
     <Pressable
       style={({ pressed }) => [styles.card, pressed && { opacity: 0.82 }]}
       onPress={() => router.push(`/report-detail?id=${item.id}`)}
     >
       <View style={styles.cardImageArea}>
-        {item.photos && item.photos.length > 0 && !photoError ? (
+        {item.photos && item.photos.length > 0 ? (
           <Image
             source={{ uri: item.photos[0] }}
+            placeholder={require("@/assets/images/splash-icon.png")}
             style={styles.cardPhoto}
             contentFit="cover"
-            onError={() => setPhotoError(true)}
           />
         ) : (
           <View style={styles.cardImagePlaceholder}>
@@ -107,19 +106,18 @@ function MissingPersonCard({
   lastSeenLabel: string;
 }) {
   const router = useRouter();
-  const [photoError, setPhotoError] = useState(false);
   return (
     <Pressable
       style={({ pressed }) => [styles.card, pressed && { opacity: 0.82 }]}
       onPress={() => router.push(`/missing-detail?id=${item.id}`)}
     >
       <View style={styles.cardImageArea}>
-        {item.photo && !photoError ? (
+        {item.photo ? (
           <Image
             source={{ uri: item.photo }}
+            placeholder={require("@/assets/images/splash-icon.png")}
             style={styles.cardPhoto}
             contentFit="cover"
-            onError={() => setPhotoError(true)}
           />
         ) : (
           <View style={[styles.cardImagePlaceholder, { backgroundColor: "#fef2f2" }]}>
