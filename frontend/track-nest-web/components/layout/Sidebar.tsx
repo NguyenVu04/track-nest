@@ -11,7 +11,6 @@ import {
   LifeBuoy,
   MapPin,
   UserCircle,
-  PlusCircle,
   HelpCircle,
   LogOut,
 } from "lucide-react";
@@ -20,12 +19,14 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
   SidebarRail,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useTranslations } from "next-intl";
 import type { UserRole } from "@/types";
@@ -40,6 +41,12 @@ type NavItem = {
   href: string;
   nameKey: string;
   icon: typeof LayoutDashboard;
+  roles: UserRole[] | null;
+};
+
+type NavGroup = {
+  labelKey: string;
+  items: NavItem[];
   roles: UserRole[] | null;
 };
 
@@ -58,42 +65,54 @@ export const AppSidebar = memo(function AppSidebar({
 
   const hasRole = (allowed: UserRole[]) => allowed.some(r => userRoles.includes(r));
 
-  const coreNav: NavItem[] = [
-    { href: "/dashboard", nameKey: "overview", icon: LayoutDashboard, roles: null },
-  ];
-  const reporterNav: NavItem[] = [
-    { href: "/dashboard/missing-persons", nameKey: "missingPersons", icon: Users, roles: ["Reporter"] },
-    { href: "/dashboard/crime-reports", nameKey: "crimeReports", icon: Shield, roles: ["Reporter"] },
-    { href: "/dashboard/guidelines", nameKey: "guidelines", icon: BookOpen, roles: ["Reporter"] },
+  const navGroups: NavGroup[] = [
+    {
+      labelKey: "sectionMain",
+      roles: null,
+      items: [
+        { href: "/dashboard", nameKey: "overview", icon: LayoutDashboard, roles: null },
+      ],
+    },
+    {
+      labelKey: "sectionReporting",
+      roles: ["Reporter"],
+      items: [
+        { href: "/dashboard/missing-persons", nameKey: "missingPersons", icon: Users, roles: ["Reporter"] },
+        { href: "/dashboard/crime-reports", nameKey: "crimeReports", icon: Shield, roles: ["Reporter"] },
+        { href: "/dashboard/guidelines", nameKey: "guidelines", icon: BookOpen, roles: ["Reporter"] },
+      ],
+    },
+    {
+      labelKey: "sectionOperations",
+      roles: ["Emergency Service"],
+      items: [
+        { href: "/dashboard/emergency-requests", nameKey: "emergencyRequests", icon: LifeBuoy, roles: ["Emergency Service"] },
+        { href: "/dashboard/safe-zones", nameKey: "safeZones", icon: MapPin, roles: ["Emergency Service"] },
+      ],
+    },
+    {
+      labelKey: "sectionAdministration",
+      roles: ["Admin"],
+      items: [
+        { href: "/dashboard/accounts", nameKey: "accounts", icon: UserCircle, roles: ["Admin"] },
+        { href: "/dashboard/emergency-requests/admin", nameKey: "emergencyRequests", icon: LifeBuoy, roles: ["Admin"] },
+      ],
+    },
   ];
 
-  const opsNav: NavItem[] = [
-    { href: "/dashboard/emergency-requests", nameKey: "emergencyRequests", icon: LifeBuoy, roles: ["Emergency Service"] },
-    { href: "/dashboard/safe-zones", nameKey: "safeZones", icon: MapPin, roles: ["Emergency Service"] },
-  ];
-
-  const adminNav: NavItem[] = [
-    { href: "/dashboard/accounts", nameKey: "accounts", icon: UserCircle, roles: ["Admin"] },
-    { href: "/dashboard/emergency-requests/admin", nameKey: "emergencyRequests", icon: LifeBuoy, roles: ["Admin"] },
-  ];
-
-  // Combine all visible items into a flat list
-  const allItems = [
-    ...coreNav.filter((item) => !item.roles || hasRole(item.roles)),
-    ...reporterNav.filter((item) => hasRole(item.roles!)),
-    ...opsNav.filter((item) => hasRole(item.roles!)),
-    ...adminNav.filter((item) => hasRole(item.roles!)),
-  ];
+  const visibleGroups = navGroups.filter(
+    group => !group.roles || hasRole(group.roles),
+  );
 
   const isActive = (href: string) => {
     if (pathname === href) return true;
     if (href === "/dashboard") return false;
-    
-    // Prevent overlapping match for admin route
-    if (href === "/dashboard/emergency-requests" && pathname.startsWith("/dashboard/emergency-requests/admin")) {
+    if (
+      href === "/dashboard/emergency-requests" &&
+      pathname.startsWith("/dashboard/emergency-requests/admin")
+    ) {
       return false;
     }
-    
     return pathname.startsWith(`${href}/`);
   };
 
@@ -101,9 +120,9 @@ export const AppSidebar = memo(function AppSidebar({
     const active = isActive(href);
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton 
-          asChild 
-          isActive={active} 
+        <SidebarMenuButton
+          asChild
+          isActive={active}
           className="h-auto p-0 hover:bg-transparent active:bg-transparent hover:text-current data-[active=true]:bg-transparent data-[active=true]:text-current"
         >
           <Link
@@ -114,7 +133,10 @@ export const AppSidebar = memo(function AppSidebar({
                 : "text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-semibold"
             }`}
           >
-            <Icon className={`w-5 h-5 shrink-0 ${active ? "text-[#006064]" : "text-slate-400"}`} strokeWidth={active ? 2.5 : 2} />
+            <Icon
+              className={`w-5 h-5 shrink-0 ${active ? "text-[#006064]" : "text-slate-400"}`}
+              strokeWidth={active ? 2.5 : 2}
+            />
             <span className="text-[15px]">
               {t(nameKey as Parameters<typeof t>[0])}
             </span>
@@ -143,26 +165,33 @@ export const AppSidebar = memo(function AppSidebar({
 
       {/* ── Navigation ── */}
       <SidebarContent className="px-5 flex-1">
-        <SidebarGroup className="p-0">
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-2.5">
-              {allItems.map((item) => (
-                <NavItemComponent key={item.href} {...item} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {visibleGroups.map((group, idx) => (
+          <div key={group.labelKey}>
+            {idx > 0 && (
+              <SidebarSeparator className="my-3 mx-2 bg-slate-100" />
+            )}
+            <SidebarGroup className="p-0">
+              {group.roles !== null && (
+                <SidebarGroupLabel className="px-4 mb-1 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                  {t(group.labelKey as Parameters<typeof t>[0])}
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-1">
+                  {group.items.map(item => (
+                    <NavItemComponent key={item.href} {...item} />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </div>
+        ))}
       </SidebarContent>
 
       {/* ── Footer Actions ── */}
       <SidebarFooter className="px-6 pb-10 pt-4">
         <div className="flex flex-col gap-5">
-          <button className="flex items-center justify-center gap-2 bg-[#006064] hover:bg-[#004d40] text-white px-4 py-3.5 rounded-[1rem] font-bold shadow-md shadow-teal-900/10 transition-all duration-200">
-            <PlusCircle className="w-[18px] h-[18px] stroke-[2.5]" />
-            <span className="text-[15px]">Add Member</span>
-          </button>
-
-          <div className="flex flex-col gap-1 mt-2">
+          <div className="flex flex-col gap-1">
             <Link
               href="/dashboard/help"
               className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-semibold transition-colors"
@@ -170,7 +199,7 @@ export const AppSidebar = memo(function AppSidebar({
               <HelpCircle className="w-5 h-5 shrink-0 text-slate-400" />
               <span className="text-[14px]">Help Center</span>
             </Link>
-            
+
             <button
               onClick={handleLogout}
               className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-slate-500 hover:bg-slate-50 hover:text-red-600 font-semibold transition-colors w-full text-left"
