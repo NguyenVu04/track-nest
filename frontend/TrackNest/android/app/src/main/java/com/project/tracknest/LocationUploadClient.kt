@@ -48,6 +48,7 @@ object LocationUploadClient {
         val accuracy: Double,
         val speed: Double,
         val timestamp: Long,
+        val timeSpentMs: Long = 0L,
     )
 
     /**
@@ -76,6 +77,7 @@ object LocationUploadClient {
                     .setAccuracyMeter(entry.accuracy.toFloat())
                     .setVelocityMps(entry.speed.toFloat())
                     .setTimestampMs(entry.timestamp)
+                    .setTimeSpentMs(entry.timeSpentMs)
                     .build()
             }
 

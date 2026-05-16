@@ -12,11 +12,12 @@ service TrackerController {
 }
 
 message UserLocation {
-  double latitude_deg  = 1;
-  double longitude_deg = 2;
+  double latitude_deg   = 1;
+  double longitude_deg  = 2;
   float  accuracy_meter = 3;
-  float  velocity_mps  = 4;
-  uint64 timestamp_ms  = 5;
+  float  velocity_mps   = 4;
+  uint64 timestamp_ms   = 5;
+  uint64 time_spent_ms  = 6;
 }
 
 message UpdateUserLocationRequest {

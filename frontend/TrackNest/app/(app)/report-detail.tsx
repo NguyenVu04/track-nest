@@ -21,7 +21,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { WebView } from "react-native-webview";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
-import { showToast } from "@/utils";
+import { hapticLight, hapticMedium, showToast } from "@/utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -65,8 +65,10 @@ export default function ReportDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [report, setReport] = useState<CrimeReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [webViewHeight, setWebViewHeight] = useState(200);
+  const [webViewError, setWebViewError] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -84,6 +86,7 @@ export default function ReportDetailScreen() {
         }
       } catch (err) {
         console.error("Failed to load report:", err);
+        setFetchError(true);
       } finally {
         setLoading(false);
       }
@@ -92,6 +95,7 @@ export default function ReportDetailScreen() {
   }, [id]);
 
   const handleShare = async () => {
+    hapticLight();
     if (!report) return;
     try {
       await Share.share({
@@ -108,6 +112,7 @@ export default function ReportDetailScreen() {
   };
 
   const handleFollowIncident = () => {
+    hapticMedium();
     showToast("You will be notified of any updates to this incident.", t.followIncident);
   };
 
@@ -139,10 +144,34 @@ export default function ReportDetailScreen() {
           <Text style={styles.headerTitle}>{t.pageTitle}</Text>
           <View style={{ width: 44 }} />
         </View>
-        <View style={styles.center}>
-          <Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
-          <Text style={styles.emptyText}>{t.reportNotFound}</Text>
-        </View>
+        {fetchError ? (
+          <View style={styles.center}>
+            <Ionicons name="cloud-offline-outline" size={48} color={colors.textMuted} />
+            <Text style={styles.emptyText}>{t.errorLoad ?? "Could not load report"}</Text>
+            <Pressable
+              style={styles.retryBtn}
+              onPress={() => {
+                setFetchError(false);
+                setLoading(true);
+                // Re-trigger by resetting id dependency via a key change isn't
+                // possible here, so we replicate the load inline.
+                if (id) {
+                  criminalReportsService.getUserCrimeReportById(id)
+                    .then((data) => setReport({ ...data, contentDocId: data.contentDocId ?? "" }))
+                    .catch(() => setFetchError(true))
+                    .finally(() => setLoading(false));
+                }
+              }}
+            >
+              <Text style={styles.retryText}>{t.retry ?? "Retry"}</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.center}>
+            <Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
+            <Text style={styles.emptyText}>{t.reportNotFound}</Text>
+          </View>
+        )}
       </SafeAreaView>
     );
   }
@@ -155,7 +184,7 @@ export default function ReportDetailScreen() {
     "window.ReactNativeWebView.postMessage(String(document.documentElement.scrollHeight)); true;";
 
   const renderContent = () => {
-    if (htmlContent) {
+    if (htmlContent && !webViewError) {
       return (
         <WebView
           source={{ html: htmlContent, baseUrl: "" }}
@@ -166,6 +195,10 @@ export default function ReportDetailScreen() {
           onMessage={(e) => {
             const h = Number(e.nativeEvent.data);
             if (h > 0) setWebViewHeight(h);
+          }}
+          onError={() => {
+            setWebViewError(true);
+            showToast(t.contentLoadFailed ?? "Could not load report content", "Error");
           }}
         />
       );
@@ -245,7 +278,10 @@ export default function ReportDetailScreen() {
             />
           </MapView>
           <View style={styles.getDirectionsBtnWrapper}>
-            <Pressable style={styles.getDirectionsBtn} onPress={handleGetDirections}>
+            <Pressable
+              style={({ pressed }) => [styles.getDirectionsBtn, pressed && { opacity: 0.75 }]}
+              onPress={handleGetDirections}
+            >
               <Ionicons name="navigate-outline" size={15} color={colors.primary} />
               <Text style={styles.getDirectionsBtnText}>{t.getDirections}</Text>
             </Pressable>
@@ -322,11 +358,17 @@ export default function ReportDetailScreen() {
 
         {/* ── Action Buttons ── */}
         <View style={styles.actionRow}>
-          <Pressable style={[styles.actionBtn, styles.shareBtn]} onPress={handleShare}>
+          <Pressable
+            style={({ pressed }) => [styles.actionBtn, styles.shareBtn, pressed && { opacity: 0.82 }]}
+            onPress={handleShare}
+          >
             <Ionicons name="share-social-outline" size={20} color={colors.textPrimary} />
             <Text style={styles.shareBtnText}>{t.share}</Text>
           </Pressable>
-          <Pressable style={[styles.actionBtn, styles.followBtn]} onPress={handleFollowIncident}>
+          <Pressable
+            style={({ pressed }) => [styles.actionBtn, styles.followBtn, pressed && { opacity: 0.85 }]}
+            onPress={handleFollowIncident}
+          >
             <Ionicons name="notifications" size={20} color="#fff" />
             <Text style={styles.followBtnText}>{t.followIncident}</Text>
           </Pressable>
@@ -369,6 +411,13 @@ const styles = StyleSheet.create({
   },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   emptyText: { fontSize: 16, color: colors.textSecondary },
+  retryBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+  },
+  retryText: { color: "#fff", fontWeight: "700" as const, fontSize: 14 },
 
   // Header
   header: {

@@ -1276,7 +1276,8 @@ latitudeDeg: jspb.Message.getFloatingPointFieldWithDefault(msg, 1, 0.0),
 longitudeDeg: jspb.Message.getFloatingPointFieldWithDefault(msg, 2, 0.0),
 accuracyMeter: jspb.Message.getFloatingPointFieldWithDefault(msg, 3, 0.0),
 velocityMps: jspb.Message.getFloatingPointFieldWithDefault(msg, 4, 0.0),
-timestampMs: jspb.Message.getFieldWithDefault(msg, 5, 0)
+timestampMs: jspb.Message.getFieldWithDefault(msg, 5, 0),
+timeSpentMs: jspb.Message.getFieldWithDefault(msg, 6, 0)
   };
 
   if (includeInstance) {
@@ -1332,6 +1333,10 @@ proto.project.tracknest.usertracking.proto.v1.UserLocation.deserializeBinaryFrom
     case 5:
       var value = /** @type {number} */ (reader.readUint64());
       msg.setTimestampMs(value);
+      break;
+    case 6:
+      var value = /** @type {number} */ (reader.readUint64());
+      msg.setTimeSpentMs(value);
       break;
     default:
       reader.skipField();
@@ -1394,6 +1399,13 @@ proto.project.tracknest.usertracking.proto.v1.UserLocation.serializeBinaryToWrit
   if (f !== 0) {
     writer.writeUint64(
       5,
+      f
+    );
+  }
+  f = message.getTimeSpentMs();
+  if (f !== 0) {
+    writer.writeUint64(
+      6,
       f
     );
   }
@@ -1487,6 +1499,24 @@ proto.project.tracknest.usertracking.proto.v1.UserLocation.prototype.getTimestam
  */
 proto.project.tracknest.usertracking.proto.v1.UserLocation.prototype.setTimestampMs = function(value) {
   return jspb.Message.setProto3IntField(this, 5, value);
+};
+
+
+/**
+ * optional uint64 time_spent_ms = 6;
+ * @return {number}
+ */
+proto.project.tracknest.usertracking.proto.v1.UserLocation.prototype.getTimeSpentMs = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 6, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.project.tracknest.usertracking.proto.v1.UserLocation} returns this
+ */
+proto.project.tracknest.usertracking.proto.v1.UserLocation.prototype.setTimeSpentMs = function(value) {
+  return jspb.Message.setProto3IntField(this, 6, value);
 };
 
 
