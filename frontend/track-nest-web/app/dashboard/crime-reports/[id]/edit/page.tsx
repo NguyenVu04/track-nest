@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { CrimeReport } from "@/types";
 import { CrimeReportForm } from "@/components/crime-reports/CrimeReportForm";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 import {
@@ -115,11 +116,20 @@ export default function EditCrimeReportPage() {
   };
 
   return (
-    <CrimeReportForm
-      report={report}
-      onSave={handleSave}
-      onCancel={handleCancel}
-      mode="edit"
-    />
+    <>
+      <Breadcrumbs
+        items={[
+          { label: "Crime Reports", href: "/dashboard/crime-reports" },
+          { label: report.title, href: `/dashboard/crime-reports/${report.id}` },
+          { label: "Edit" },
+        ]}
+      />
+      <CrimeReportForm
+        report={report}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        mode="edit"
+      />
+    </>
   );
 }

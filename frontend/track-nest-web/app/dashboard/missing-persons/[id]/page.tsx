@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
 import type { MissingPerson } from "@/types";
 import { MissingPersonDetail } from "@/components/missing-persons/MissingPersonDetail";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 import { criminalReportsService } from "@/services/criminalReportsService";
@@ -147,13 +148,21 @@ export default function MissingPersonDetailPage() {
   };
 
   return (
-    <MissingPersonDetail
-      person={person}
-      onBack={handleBack}
-      onEdit={handleEdit}
-      onPublish={handlePublish}
-      onDelete={handleDelete}
-      userRole={user.role}
-    />
+    <>
+      <Breadcrumbs
+        items={[
+          { label: "Missing Persons", href: "/dashboard/missing-persons" },
+          { label: person.fullName },
+        ]}
+      />
+      <MissingPersonDetail
+        person={person}
+        onBack={handleBack}
+        onEdit={handleEdit}
+        onPublish={handlePublish}
+        onDelete={handleDelete}
+        userRole={user.role}
+      />
+    </>
   );
 }

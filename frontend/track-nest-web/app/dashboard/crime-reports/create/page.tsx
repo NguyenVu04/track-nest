@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { CrimeReport } from "@/types";
 import { CrimeReportForm } from "@/components/crime-reports/CrimeReportForm";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { toast } from "sonner";
 
 export default function CreateCrimeReportPage() {
@@ -37,11 +38,19 @@ export default function CreateCrimeReportPage() {
   };
 
   return (
-    <CrimeReportForm
-      report={null}
-      onSave={handleSave}
-      onCancel={handleCancel}
-      mode="create"
-    />
+    <>
+      <Breadcrumbs
+        items={[
+          { label: "Crime Reports", href: "/dashboard/crime-reports" },
+          { label: "New Report" },
+        ]}
+      />
+      <CrimeReportForm
+        report={null}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        mode="create"
+      />
+    </>
   );
 }

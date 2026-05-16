@@ -23,6 +23,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import type { User, UserActivity, UserRole } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 
@@ -201,13 +202,12 @@ export default function AccountDetailPage() {
 
   return (
     <div className="max-w-4xl">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-6"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Accounts
-      </button>
+      <Breadcrumbs
+        items={[
+          { label: "Account Management", href: "/dashboard/accounts" },
+          { label: currentAccount.fullName },
+        ]}
+      />
 
       {/* Account Info Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">

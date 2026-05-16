@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { CrimeReport } from "@/types";
 import { CrimeReportDetail } from "@/components/crime-reports/CrimeReportDetail";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 import { criminalReportsService } from "@/services/criminalReportsService";
@@ -122,13 +123,21 @@ export default function CrimeReportDetailPage() {
   };
 
   return (
-    <CrimeReportDetail
-      report={report}
-      onBack={handleBack}
-      onEdit={handleEdit}
-      onPublish={handlePublish}
-      onDelete={handleDelete}
-      userRole={user.role}
-    />
+    <>
+      <Breadcrumbs
+        items={[
+          { label: "Crime Reports", href: "/dashboard/crime-reports" },
+          { label: report.title },
+        ]}
+      />
+      <CrimeReportDetail
+        report={report}
+        onBack={handleBack}
+        onEdit={handleEdit}
+        onPublish={handlePublish}
+        onDelete={handleDelete}
+        userRole={user.role}
+      />
+    </>
   );
 }

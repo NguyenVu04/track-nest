@@ -22,6 +22,7 @@ import { Loading } from "@/components/loading/Loading";
 import { useTranslations } from "next-intl";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MapView } from "@/components/shared/MapView";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
 export default function AdminEmergencyRequestsPage() {
   const router = useRouter();
@@ -115,6 +116,12 @@ export default function AdminEmergencyRequestsPage() {
 
   return (
     <div className="max-w-screen-2xl mx-auto pb-10">
+      <Breadcrumbs
+        items={[
+          { label: t("pageTitle"), href: "/dashboard/emergency-requests" },
+          { label: "Admin View" },
+        ]}
+      />
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
         <div>

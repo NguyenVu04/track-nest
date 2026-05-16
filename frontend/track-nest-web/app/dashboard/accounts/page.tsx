@@ -16,6 +16,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import type { User, UserRole } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { toast } from "sonner";
 
 export default function AccountsPage() {
@@ -157,6 +158,7 @@ export default function AccountsPage() {
 
   return (
     <div>
+      <Breadcrumbs items={[{ label: "Account Management" }]} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-gray-900 text-xl font-bold">
           Account Management

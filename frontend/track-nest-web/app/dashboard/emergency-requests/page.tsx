@@ -26,6 +26,7 @@ import { emergencyOpsService, EmergencyRequestResponse } from "@/services/emerge
 import { Loading } from "@/components/loading/Loading";
 import { useTranslations } from "next-intl";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
 export default function EmergencyRequestsPage() {
   const router = useRouter();
@@ -202,6 +203,7 @@ export default function EmergencyRequestsPage() {
 
   return (
     <div className="max-w-screen-2xl mx-auto pb-10">
+      <Breadcrumbs items={[{ label: t("pageTitle") }]} />
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
         <div>

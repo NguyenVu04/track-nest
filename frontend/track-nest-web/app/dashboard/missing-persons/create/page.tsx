@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { MissingPerson } from "@/types";
 import { MissingPersonForm } from "@/components/missing-persons/MissingPersonForm";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { toast } from "sonner";
 
 export default function CreateMissingPersonPage() {
@@ -37,11 +38,19 @@ export default function CreateMissingPersonPage() {
   };
 
   return (
-    <MissingPersonForm
-      person={null}
-      onSave={handleSave}
-      onCancel={handleCancel}
-      mode="create"
-    />
+    <>
+      <Breadcrumbs
+        items={[
+          { label: "Missing Persons", href: "/dashboard/missing-persons" },
+          { label: "New Report" },
+        ]}
+      />
+      <MissingPersonForm
+        person={null}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        mode="create"
+      />
+    </>
   );
 }
