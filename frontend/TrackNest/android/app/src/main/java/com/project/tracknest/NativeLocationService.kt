@@ -47,6 +47,19 @@ class NativeLocationService : Service() {
     private const val ACCURACY_THRESHOLD = 30f
     private const val MAX_DISPLACEMENT_METERS = 50f
     private const val ACTIVITY_UPDATE_INTERVAL_MS = 5_000L
+
+    // Same threshold as the JS-side isSamePlace() in locationGeometry.ts.
+    private const val STAY_RADIUS_METERS = 100.0
+
+    private fun distanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+      val r = 6_371_000.0
+      val dLat = Math.toRadians(lat2 - lat1)
+      val dLon = Math.toRadians(lon2 - lon1)
+      val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2)
+      return r * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    }
   }
 
   private enum class TrackingMode {
@@ -74,6 +87,15 @@ class NativeLocationService : Service() {
   private lateinit var prefs: SharedPreferences
   private var trackingMode: TrackingMode = TrackingMode.NORMAL
   private var currentActivity: UserActivity = UserActivity.UNKNOWN
+
+  // Stay-deduplication state. Mirrors the JS-side computeLocationMerge logic so
+  // that the native direct-upload path produces the same (user_id, timestamp) key
+  // as the JS background-upload path, enabling DB UPSERT instead of duplicate INSERTs.
+  private var stayStartTimestampMs: Long = 0L
+  private var stayLat: Double = 0.0
+  private var stayLng: Double = 0.0
+  private var stayTimeSpentMs: Long = 0L
+  private var lastSampleTimestampMs: Long = 0L
 
   private val locationCallback = object : LocationCallback() {
     override fun onLocationResult(result: LocationResult) {
@@ -107,19 +129,50 @@ class NativeLocationService : Service() {
 
       prefs.edit().putString(BUFFER_KEY, buffer.toString()).apply()
 
-      // Trigger immediate gRPC upload on a background thread.
-      // This reduces upload latency from ~15 minutes (expo-background-task)
-      // to the location collection interval (5–60 s depending on mode).
-      val entries = locations.map { loc ->
-        LocationUploadClient.LocationEntry(
-          latitude  = loc.latitude,
-          longitude = loc.longitude,
-          accuracy  = loc.accuracy.toDouble(),
-          speed     = loc.speed.toDouble(),
-          timestamp = loc.time,
-        )
+      // Trigger immediate gRPC upload on a background thread. Deduplicate
+      // same-place locations using the same 100 m radius as the JS-side
+      // isSamePlace(). Same-place samples reuse stayStartTimestampMs as the
+      // upload timestamp so the backend can UPSERT (update time_spent_ms on the
+      // existing row) rather than INSERT a new duplicate row.
+      val uploadEntries = mutableListOf<LocationUploadClient.LocationEntry>()
+      for (loc in locations) {
+        val now = loc.time
+        val deltaMs = if (lastSampleTimestampMs > 0L) (now - lastSampleTimestampMs).coerceAtLeast(0L) else 0L
+        lastSampleTimestampMs = now
+
+        val isSamePlace = stayStartTimestampMs > 0L &&
+          distanceMeters(stayLat, stayLng, loc.latitude, loc.longitude) <= STAY_RADIUS_METERS
+
+        if (isSamePlace) {
+          stayTimeSpentMs += deltaMs
+          uploadEntries.add(
+            LocationUploadClient.LocationEntry(
+              latitude    = stayLat,
+              longitude   = stayLng,
+              accuracy    = loc.accuracy.toDouble(),
+              speed       = loc.speed.toDouble(),
+              timestamp   = stayStartTimestampMs,
+              timeSpentMs = stayTimeSpentMs,
+            )
+          )
+        } else {
+          stayStartTimestampMs = now
+          stayLat = loc.latitude
+          stayLng = loc.longitude
+          stayTimeSpentMs = 0L
+          uploadEntries.add(
+            LocationUploadClient.LocationEntry(
+              latitude    = loc.latitude,
+              longitude   = loc.longitude,
+              accuracy    = loc.accuracy.toDouble(),
+              speed       = loc.speed.toDouble(),
+              timestamp   = now,
+              timeSpentMs = 0L,
+            )
+          )
+        }
       }
-      Thread { LocationUploadClient.upload(applicationContext, entries) }.start()
+      Thread { LocationUploadClient.upload(applicationContext, uploadEntries) }.start()
     }
   }
 
