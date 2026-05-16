@@ -4,6 +4,7 @@ export type LocationQueueEntry = {
   accuracy: number;
   speed: number;
   timestamp: number;
+  time_spent?: number;
 };
 
 export type LocationUploadStatus =

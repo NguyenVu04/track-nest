@@ -57,6 +57,7 @@ export async function uploadPendingLocations(
       accuracyMeter: entry.accuracy,
       velocityMps: entry.speed,
       timestampMs: entry.timestamp,
+      timeSpentMs: (entry.time_spent ?? 0) * 1000,
     }));
 
     try {

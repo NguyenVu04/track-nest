@@ -50,7 +50,10 @@ function upsertEntry(
       {
         ...last,
         time_spent: (last.time_spent ?? 0) + Math.max(0, deltaSeconds),
-        timestamp: sample.timestamp,
+        // Keep the original arrival timestamp as a stable key.
+        // The native upload path uses the same stay-start timestamp so both
+        // paths resolve to the same (user_id, timestamp) PK — enabling a DB
+        // UPSERT instead of duplicate INSERTs.
       },
     ];
   }
