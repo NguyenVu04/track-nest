@@ -650,7 +650,6 @@ function MapScreenContent() {
 
         <MapView
           loadingEnabled={true}
-          cacheEnabled={true}
           moveOnMarkerPress={true}
           showsCompass={false}
           ref={mapRef}
