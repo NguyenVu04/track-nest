@@ -419,7 +419,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [tokens, isTokenExpired, refreshTokensHandler]);
 
   const isAuthenticated = useMemo(() => {
-    return tokens !== null && !isTokenExpired(tokens);
+    if (tokens === null) return false;
+    // Access token still valid — definitely authenticated.
+    if (!isTokenExpired(tokens)) return true;
+    // Access token expired but refresh token exists — the bootstrap effect will
+    // refresh silently; treat as authenticated so useRequireAuth doesn't redirect
+    // before the refresh has a chance to complete.
+    return tokens.refreshToken !== null;
   }, [tokens, isTokenExpired]);
 
   const canUseApp = useMemo(() => {
