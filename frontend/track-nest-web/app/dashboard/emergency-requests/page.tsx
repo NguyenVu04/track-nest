@@ -161,6 +161,12 @@ export default function EmergencyRequestsPage() {
         ),
       );
       toast.success(t("toastRejected"));
+      addNotification({
+        type: "emergency",
+        title: "Emergency request rejected",
+        description: `Request #${rejecting.id.substring(0, 8).toUpperCase()} has been rejected`,
+        reportId: rejecting.id,
+      });
       setRejecting(null);
       setRejectReason("");
     } catch (error) {
@@ -184,6 +190,12 @@ export default function EmergencyRequestsPage() {
         setTrackingRequest(null);
       }
       toast.success(t("toastClosed"));
+      addNotification({
+        type: "emergency",
+        title: "Emergency request closed",
+        description: `Request #${completing.id.substring(0, 8).toUpperCase()} has been resolved`,
+        reportId: completing.id,
+      });
       setCompleting(null);
       setCompletionNote("");
     } catch (error) {

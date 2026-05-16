@@ -12,7 +12,7 @@ import {
 import { Subject } from "rxjs";
 import { scan } from "rxjs/operators";
 
-export type NotificationType = "crime" | "missing-person" | "emergency";
+export type NotificationType = "crime" | "missing-person" | "emergency" | "guideline";
 
 export interface Notification {
   id: string;

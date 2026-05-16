@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, X } from "lucide-react";
-import { useNotification } from "@/contexts/NotificationContext";
+import { useNotification, type NotificationType } from "@/contexts/NotificationContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,16 +25,12 @@ export function NotificationButton() {
     setIsOpen(open);
   };
 
-  const handleNotificationClick = (
-    reportId: string,
-    type: "crime" | "missing-person" | "emergency",
-  ) => {
+  const handleNotificationClick = (reportId: string, type: NotificationType) => {
     const path =
-      type === "crime"
-        ? `/dashboard/crime-reports/${reportId}`
-        : type === "missing-person"
-          ? `/dashboard/missing-persons/${reportId}`
-          : `/dashboard/emergency-requests`;
+      type === "crime"          ? `/dashboard/crime-reports/${reportId}`   :
+      type === "missing-person" ? `/dashboard/missing-persons/${reportId}` :
+      type === "guideline"      ? `/dashboard/guidelines/${reportId}`      :
+                                  `/dashboard/emergency-requests`;
     router.push(path);
     setIsOpen(false);
   };

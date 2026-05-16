@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotification } from "@/contexts/NotificationContext";
 import type { CrimeReport } from "@/types";
 import { CrimeReportDetail } from "@/components/crime-reports/CrimeReportDetail";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -14,6 +15,7 @@ export default function CrimeReportDetailPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { addNotification } = useNotification();
 
   const [report, setReport] = useState<CrimeReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -101,6 +103,14 @@ export default function CrimeReportDetailPage() {
       await criminalReportsService.publishCrimeReport(reportId);
       setReport((prev) => (prev ? { ...prev, isPublic: true } : prev));
       toast.success("Report published successfully");
+      if (report) {
+        addNotification({
+          type: "crime",
+          title: "Crime report published",
+          description: `"${report.title}" is now public`,
+          reportId: report.id,
+        });
+      }
     } catch (error) {
       toast.error("Error publishing report");
       console.error(error);
@@ -111,6 +121,14 @@ export default function CrimeReportDetailPage() {
     try {
       await criminalReportsService.deleteCrimeReport(reportId);
       toast.success("Report deleted successfully");
+      if (report) {
+        addNotification({
+          type: "crime",
+          title: "Crime report deleted",
+          description: `"${report.title}" has been removed`,
+          reportId: report.id,
+        });
+      }
       router.push("/dashboard/crime-reports");
     } catch (error) {
       toast.error("Failed to delete crime report");

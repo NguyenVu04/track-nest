@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Plus, Search, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotification } from "@/contexts/NotificationContext";
 import type { CrimeReport } from "@/types";
 import { CrimeReportList } from "@/components/crime-reports/CrimeReportList";
 import { toast } from "sonner";
@@ -64,6 +65,7 @@ function mapResponseToLocal(item: CrimeReportResponse): CrimeReport {
 export default function CrimeReportsPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { addNotification } = useNotification();
   const t = useTranslations("crimeReports");
 
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -122,26 +124,40 @@ export default function CrimeReportsPage() {
   }, [router]);
 
   const handlePublish = useCallback(async (id: string) => {
+    const report = crimeReports.find((r) => r.id === id);
     try {
       await criminalReportsService.publishCrimeReport(id);
       toast.success("Report published successfully");
+      addNotification({
+        type: "crime",
+        title: "Crime report published",
+        description: report?.title ?? "A crime report was published",
+        reportId: id,
+      });
       refresh();
     } catch (error) {
       toast.error("Error publishing report");
       console.error(error);
     }
-  }, [refresh]);
+  }, [crimeReports, addNotification, refresh]);
 
   const handleDelete = useCallback(async (id: string) => {
+    const report = crimeReports.find((r) => r.id === id);
     try {
       await criminalReportsService.deleteCrimeReport(id);
       toast.success(t("toastDeleted"));
+      addNotification({
+        type: "crime",
+        title: "Crime report deleted",
+        description: report?.title ?? "A crime report was removed",
+        reportId: id,
+      });
       refresh();
     } catch (error) {
       toast.error(t("toastDeleteError"));
       console.error(error);
     }
-  }, [t, refresh]);
+  }, [crimeReports, addNotification, t, refresh]);
 
   if (!user) return null;
 

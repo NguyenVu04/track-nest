@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, FileText, Eye, MoreVertical, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotification } from "@/contexts/NotificationContext";
 import type { Guideline } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { Loading } from "@/components/loading/Loading";
@@ -32,6 +33,7 @@ function toIsPublic(filter: StatusFilter): boolean | undefined {
 export default function GuidelinesPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { addNotification } = useNotification();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -86,16 +88,23 @@ export default function GuidelinesPage() {
   };
 
   const handleDelete = useCallback(async (id: string) => {
+    const guideline = guidelines.find((g) => g.id === id);
     try {
       await criminalReportsService.deleteGuidelinesDocument(id);
       setConfirmDelete(null);
       toast.success("Guideline deleted");
+      addNotification({
+        type: "guideline",
+        title: "Guideline deleted",
+        description: guideline?.title ?? "A guideline was removed",
+        reportId: id,
+      });
       refresh();
     } catch (error) {
       toast.error("Failed to delete guideline");
       console.error(error);
     }
-  }, [refresh]);
+  }, [guidelines, addNotification, refresh]);
 
   if (!user) return null;
 

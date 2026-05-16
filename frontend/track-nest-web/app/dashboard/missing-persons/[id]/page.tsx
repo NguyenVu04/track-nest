@@ -110,12 +110,14 @@ export default function MissingPersonDetailPage() {
           : prev,
       );
       toast.success("Report published successfully");
-      addNotification({
-        type: "missing-person",
-        title: "Missing person report published",
-        description: `${person.fullName} is now public and visible to users`,
-        reportId: person.id,
-      });
+      if (person) {
+        addNotification({
+          type: "missing-person",
+          title: "Missing person report published",
+          description: `${person.fullName} is now public and visible to users`,
+          reportId: person.id,
+        });
+      }
     } catch (error) {
       toast.error("Failed to publish report");
       console.error(error);
@@ -126,12 +128,14 @@ export default function MissingPersonDetailPage() {
     try {
       await criminalReportsService.deleteMissingPersonReport(reportId);
       toast.success("Report deleted successfully");
-      addNotification({
-        type: "missing-person",
-        title: "Missing person report deleted",
-        description: `${person.fullName} report has been removed`,
-        reportId: person.id,
-      });
+      if (person) {
+        addNotification({
+          type: "missing-person",
+          title: "Missing person report deleted",
+          description: `${person.fullName} report has been removed`,
+          reportId: person.id,
+        });
+      }
       router.push("/dashboard/missing-persons");
     } catch (error) {
       toast.error("Failed to delete report");
