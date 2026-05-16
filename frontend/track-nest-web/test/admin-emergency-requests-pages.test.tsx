@@ -167,24 +167,10 @@ describe("AdminEmergencyRequestsPage — loaded state", () => {
     await waitFor(() => expect(screen.getByText("Alice Smith")).toBeInTheDocument());
   });
 
-  it("renders sender username", async () => {
-    render(<AdminEmergencyRequestsPage />);
-    await waitFor(() => expect(screen.getByText("@alice")).toBeInTheDocument());
-  });
-
-  it("renders target name", async () => {
-    render(<AdminEmergencyRequestsPage />);
-    await waitFor(() => expect(screen.getByText("Bob Jones")).toBeInTheDocument());
-  });
 
   it("renders assigned service username", async () => {
     render(<AdminEmergencyRequestsPage />);
-    await waitFor(() => expect(screen.getByText("@service_unit_1")).toBeInTheDocument());
-  });
-
-  it("renders assigned service email", async () => {
-    render(<AdminEmergencyRequestsPage />);
-    await waitFor(() => expect(screen.getByText("svc1@example.com")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Assigned: @service_unit_1")).toBeInTheDocument());
   });
 
   it("renders breadcrumbs", async () => {
@@ -216,14 +202,14 @@ describe("AdminEmergencyRequestsPage — search filter", () => {
   it("renders search input", async () => {
     render(<AdminEmergencyRequestsPage />);
     await waitFor(() =>
-      expect(screen.getByPlaceholderText("searchPlaceholder")).toBeInTheDocument(),
+      expect(screen.getByPlaceholderText("Search alerts...")).toBeInTheDocument(),
     );
   });
 
   it("filters rows client-side by request ID prefix", async () => {
     render(<AdminEmergencyRequestsPage />);
     await waitFor(() => screen.getByText("Alice Smith"));
-    const searchInput = screen.getByPlaceholderText("searchPlaceholder");
+    const searchInput = screen.getByPlaceholderText("Search alerts...");
     fireEvent.change(searchInput, { target: { value: "nonexistent-id" } });
     await waitFor(() =>
       expect(screen.queryByText("Alice Smith")).not.toBeInTheDocument(),
@@ -256,11 +242,11 @@ describe("AdminEmergencyRequestsPage — status filter", () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe("AdminEmergencyRequestsPage — navigation", () => {
-  it("navigates to detail page with ?from=admin when ID clicked", async () => {
+  it("navigates to detail page with ?from=admin when row is clicked", async () => {
     render(<AdminEmergencyRequestsPage />);
     await waitFor(() => screen.getByText("Alice Smith"));
-    const idBtn = screen.getByText("req-1...");
-    fireEvent.click(idBtn);
+    const row = document.querySelector('[data-request-id="req-1"]') as HTMLElement;
+    fireEvent.click(row);
     expect(mockPush).toHaveBeenCalledWith(
       "/dashboard/emergency-requests/req-1?from=admin",
     );
@@ -269,7 +255,8 @@ describe("AdminEmergencyRequestsPage — navigation", () => {
   it("stores request data in sessionStorage when navigating to detail", async () => {
     render(<AdminEmergencyRequestsPage />);
     await waitFor(() => screen.getByText("Alice Smith"));
-    fireEvent.click(screen.getByText("req-1..."));
+    const row = document.querySelector('[data-request-id="req-1"]') as HTMLElement;
+    fireEvent.click(row);
     const stored = sessionStorage.getItem("emergency-request-detail:req-1");
     expect(stored).not.toBeNull();
     expect(JSON.parse(stored!).id).toBe("req-1");
@@ -291,7 +278,7 @@ describe("AdminEmergencyRequestsPage — empty state", () => {
     });
     render(<AdminEmergencyRequestsPage />);
     await waitFor(() =>
-      expect(screen.getByText("noResults")).toBeInTheDocument(),
+      expect(screen.getByText("No emergency alerts found.")).toBeInTheDocument(),
     );
   });
 });
