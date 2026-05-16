@@ -18,4 +18,15 @@ const config: Config = {
   },
 }
 
-export default createJestConfig(config)
+// nextJest sets its own transformIgnorePatterns which excludes all node_modules.
+// Export as async so we can patch the resolved config after Next.js builds it,
+// adding the ESM-only packages that must be transpiled by Babel/SWC.
+export default async () => {
+  const nextConfig = await createJestConfig(config)()
+  return {
+    ...nextConfig,
+    transformIgnorePatterns: [
+      '/node_modules/(?!(keycloak-js|react-leaflet|leaflet|@react-leaflet)/)',
+    ],
+  }
+}
