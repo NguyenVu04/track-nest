@@ -21,7 +21,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { WebView } from "react-native-webview";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
-import { showToast } from "@/utils";
+import { hapticLight, hapticMedium, showToast } from "@/utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -95,6 +95,7 @@ export default function ReportDetailScreen() {
   }, [id]);
 
   const handleShare = async () => {
+    hapticLight();
     if (!report) return;
     try {
       await Share.share({
@@ -111,6 +112,7 @@ export default function ReportDetailScreen() {
   };
 
   const handleFollowIncident = () => {
+    hapticMedium();
     showToast("You will be notified of any updates to this incident.", t.followIncident);
   };
 
@@ -276,7 +278,10 @@ export default function ReportDetailScreen() {
             />
           </MapView>
           <View style={styles.getDirectionsBtnWrapper}>
-            <Pressable style={styles.getDirectionsBtn} onPress={handleGetDirections}>
+            <Pressable
+              style={({ pressed }) => [styles.getDirectionsBtn, pressed && { opacity: 0.75 }]}
+              onPress={handleGetDirections}
+            >
               <Ionicons name="navigate-outline" size={15} color={colors.primary} />
               <Text style={styles.getDirectionsBtnText}>{t.getDirections}</Text>
             </Pressable>
@@ -353,11 +358,17 @@ export default function ReportDetailScreen() {
 
         {/* ── Action Buttons ── */}
         <View style={styles.actionRow}>
-          <Pressable style={[styles.actionBtn, styles.shareBtn]} onPress={handleShare}>
+          <Pressable
+            style={({ pressed }) => [styles.actionBtn, styles.shareBtn, pressed && { opacity: 0.82 }]}
+            onPress={handleShare}
+          >
             <Ionicons name="share-social-outline" size={20} color={colors.textPrimary} />
             <Text style={styles.shareBtnText}>{t.share}</Text>
           </Pressable>
-          <Pressable style={[styles.actionBtn, styles.followBtn]} onPress={handleFollowIncident}>
+          <Pressable
+            style={({ pressed }) => [styles.actionBtn, styles.followBtn, pressed && { opacity: 0.85 }]}
+            onPress={handleFollowIncident}
+          >
             <Ionicons name="notifications" size={20} color="#fff" />
             <Text style={styles.followBtnText}>{t.followIncident}</Text>
           </Pressable>
