@@ -16,7 +16,7 @@ import {
 } from "@/services/familyMessenger";
 import { listFamilyCircleMembers } from "@/services/trackingManager";
 import { colors, radii, spacing } from "@/styles/styles";
-import { getUserId } from "@/utils";
+import { getUserId, hapticMedium } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -372,6 +372,7 @@ export default function FamilyChatScreen() {
   }, [messages.length]);
 
   const handleSend = useCallback(async () => {
+    hapticMedium();
     const text = inputText.trim();
     if (!text || !selectedCircle || sending) return;
     setSending(true);
@@ -518,6 +519,7 @@ export default function FamilyChatScreen() {
             keyExtractor={(item) => item.messageId}
             contentContainerStyle={styles.messageList}
             showsVerticalScrollIndicator={false}
+            keyboardDismissMode="on-drag"
             onContentSizeChange={() =>
               listRef.current?.scrollToEnd({ animated: false })
             }
