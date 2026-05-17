@@ -162,7 +162,7 @@ function CurrentLocationMarker({
     <Marker
       ref={markerRef}
       coordinate={markerCoordinate}
-      tracksViewChanges={tracksViewChanges}
+      tracksViewChanges={true}
       anchor={{ x: 0.5, y: 0.5 }}
       onPress={(e) => {
         e.stopPropagation();
