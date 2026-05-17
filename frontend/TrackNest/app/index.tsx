@@ -10,10 +10,18 @@ import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import LottieView from "lottie-react-native";
 
+const SPLASH_MIN_MS = 2000;
+
 export default function Index() {
   const { isAuthenticated, isGuestMode, isLoading } = useAuth();
   const [isIntroStateLoading, setIsIntroStateLoading] = useState(true);
   const [hasCompletedIntro, setHasCompletedIntro] = useState(false);
+  const [minDelayDone, setMinDelayDone] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinDelayDone(true), SPLASH_MIN_MS);
+    return () => clearTimeout(timer);
+  }, []);
 
   const requestBackgroundLocationPermission = async () => {
     const { status: foregroundStatus } =
@@ -64,8 +72,8 @@ export default function Index() {
     );
   }, [hasCompletedIntro, isIntroStateLoading]);
 
-  // Show loading state while checking authentication
-  if (isLoading || isIntroStateLoading) {
+  // Show animation until auth + intro checks finish AND the minimum splash time elapses
+  if (isLoading || isIntroStateLoading || !minDelayDone) {
     return (
       <View style={styles.loader}>
         <LottieView
