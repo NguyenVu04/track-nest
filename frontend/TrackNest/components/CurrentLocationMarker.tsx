@@ -142,10 +142,10 @@ function CurrentLocationMarker({
     return () => animRef.current?.stop?.();
   }, [scale, opacity, disabled, isEmergency]);
 
-  // const pulseScale = scale.interpolate({
-  //   inputRange: [0, 1],
-  //   outputRange: [0.6, 2.2],
-  // });
+  const pulseScale = scale.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.6, 2.2],
+  });
 
   const outerBorder = disabled
     ? "#bdbdbd"
@@ -170,16 +170,18 @@ function CurrentLocationMarker({
       }}
     >
       <View style={localStyles.wrapper}>
-        {/* <Animated.View
+        <Animated.View
           style={[
             localStyles.pulse,
             {
               transform: [{ scale: pulseScale }],
               opacity,
-              backgroundColor: pulseColor,
+              backgroundColor: isEmergency
+                ? "rgba(204,46,29,0.25)"
+                : "rgba(116,190,203,0.25)",
             },
           ]}
-        /> */}
+        />
 
         {heading != null && !disabled && (
           <View
