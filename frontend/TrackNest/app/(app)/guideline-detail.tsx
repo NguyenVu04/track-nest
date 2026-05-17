@@ -1,3 +1,5 @@
+import { guidelineDetail as guidelineDetailLang } from "@/constant/languages";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -24,6 +26,7 @@ const HEIGHT_SCRIPT =
 
 export default function GuidelineDetailScreen() {
   const router = useRouter();
+  const t = useTranslation(guidelineDetailLang);
   const { id } = useLocalSearchParams<{ id: string }>();
   const [guideline, setGuideline] = useState<GuidelinesDocument | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,6 +47,7 @@ export default function GuidelineDetailScreen() {
           setHtmlContent(html);
         } catch {
           // Falls back to showing abstractText as plain text below.
+          showToast(t.contentLoadError, t.errorTitle);
         }
       } catch (err) {
         console.error("Failed to load guideline:", err);
@@ -76,11 +80,11 @@ export default function GuidelineDetailScreen() {
           <Pressable onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </Pressable>
-          <Text style={styles.headerTitle}>Guideline</Text>
+          <Text style={styles.headerTitle}>{t.headerTitle}</Text>
           <View style={{ width: 44 }} />
         </View>
         <View style={styles.center}>
-          <Text style={styles.notFoundText}>Guideline not found</Text>
+          <Text style={styles.notFoundText}>{t.notFoundMessage}</Text>
         </View>
       </SafeAreaView>
     );
@@ -101,7 +105,7 @@ export default function GuidelineDetailScreen() {
           }}
           onError={() => {
             setWebViewError(true);
-            showToast("Could not load guideline content", "Error");
+            showToast(t.contentLoadError, t.errorTitle);
           }}
         />
       );
@@ -122,7 +126,7 @@ export default function GuidelineDetailScreen() {
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </Pressable>
-        <Text style={styles.headerTitle}>Guideline Detail</Text>
+        <Text style={styles.headerTitle}>{t.headerTitleDetail}</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -143,23 +147,22 @@ export default function GuidelineDetailScreen() {
           {guideline.abstractText ? (
             <>
               <View style={styles.divider} />
-              <Text style={styles.sectionTitle}>Abstract</Text>
+              <Text style={styles.sectionTitle}>{t.abstractSectionTitle}</Text>
               <Text style={styles.abstractText}>{guideline.abstractText}</Text>
             </>
           ) : null}
 
           <View style={styles.divider} />
-          <Text style={styles.sectionTitle}>Content</Text>
+          <Text style={styles.sectionTitle}>{t.contentSectionTitle}</Text>
           {renderContent()}
         </View>
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* documentId is the guideline's own ID — the backend resolves context */}
       <ChatbotPanel
         documentId={guideline.id}
         title={guideline.title}
-        emptyState="Ask a question about this guideline."
+        emptyState={t.chatbotEmptyState}
       />
     </SafeAreaView>
   );

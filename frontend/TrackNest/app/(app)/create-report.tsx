@@ -187,9 +187,7 @@ export default function CreateReportScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              {t.numberOfVictimsLabel || "Number of Victims"}
-            </Text>
+            <Text style={styles.label}>{t.numberOfVictimsLabel}</Text>
             <View style={styles.counterRow}>
               <Pressable onPress={() => setNumberOfVictims(Math.max(0, numberOfVictims - 1))}>
                 <Ionicons name="remove-circle-outline" size={28} color={colors.primary} />
@@ -202,9 +200,7 @@ export default function CreateReportScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              {t.numberOfOffendersLabel || "Number of Offenders"}
-            </Text>
+            <Text style={styles.label}>{t.numberOfOffendersLabel}</Text>
             <View style={styles.counterRow}>
               <Pressable onPress={() => setNumberOfOffenders(Math.max(0, numberOfOffenders - 1))}>
                 <Ionicons name="remove-circle-outline" size={28} color={colors.primary} />
@@ -217,13 +213,13 @@ export default function CreateReportScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t.arrestedLabel || "Arrested"}</Text>
+            <Text style={styles.label}>{t.arrestedLabel}</Text>
             <Pressable
               style={[styles.toggleBtn, arrested && styles.toggleBtnActive]}
               onPress={() => setArrested(!arrested)}
             >
               <Text style={[styles.toggleText, arrested && styles.toggleTextActive]}>
-                {arrested ? (t.yes || "Yes") : (t.no || "No")}
+                {arrested ? t.yes : t.no}
               </Text>
             </Pressable>
           </View>
@@ -280,7 +276,7 @@ export default function CreateReportScreen() {
 
         <View style={styles.footer}>
           <Pressable style={styles.cancelButton} onPress={() => router.back()} disabled={loading}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text style={styles.cancelButtonText}>{t.cancelButton}</Text>
           </Pressable>
           <Pressable style={styles.nextButton} onPress={handleSubmit} disabled={loading}>
             {loading ? (

@@ -64,5 +64,9 @@ export const FCM_TOKEN_KEY = "@tracknest/fcm_device_token";
 // Notification bell — AsyncStorage key for persisted unread badge count
 export const NOTIFICATION_UNREAD_KEY = "@tracknest/notification_unread_count";
 
+// Notifications screen — timestamp (ms) of the last time the screen was opened,
+// used to derive per-card "new" indicator without a backend read-state field.
+export const NOTIFICATIONS_LAST_VIEWED_KEY = "@tracknest/notifications_last_viewed";
+
 // DeviceEventEmitter event emitted when a background notification arrives
 export const NOTIFICATION_RECEIVED_EVENT = "notificationReceived";

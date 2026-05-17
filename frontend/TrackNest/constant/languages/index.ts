@@ -25,6 +25,8 @@ export * as MapHeader from "./MapHeader";
 export * as MapTypeBottomSheet from "./MapTypeBottomSheet";
 export * as missingDetail from "./missing-detail";
 export * as notificationTest from "./notification-test";
+export * as notifications from "./notifications";
+export * as guidelineDetail from "./guideline-detail";
 export * as notifierTest from "./notifier-test";
 export * as onboarding from "./onboarding";
 export * as reportDetail from "./report-detail";

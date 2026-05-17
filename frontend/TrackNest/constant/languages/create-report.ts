@@ -3,6 +3,7 @@ export const Vietnamese = {
   errorTitle: "Lỗi",
   successTitle: "Thành công",
   okButton: "OK",
+  cancelButton: "Hủy",
   titleLabel: "Tiêu đề",
   titlePlaceholder: "Nhập tiêu đề báo cáo",
   titleRequired: "Vui lòng nhập tiêu đề",
@@ -22,6 +23,11 @@ export const Vietnamese = {
   submit: "Gửi",
   submitSuccess: "Báo cáo đã được gửi thành công",
   submitError: "Gửi báo cáo thất bại",
+  numberOfVictimsLabel: "Số nạn nhân",
+  numberOfOffendersLabel: "Số đối tượng",
+  arrestedLabel: "Đã bắt giữ",
+  yes: "Có",
+  no: "Không",
 };
 
 export const English = {
@@ -29,6 +35,7 @@ export const English = {
   errorTitle: "Error",
   successTitle: "Success",
   okButton: "OK",
+  cancelButton: "Cancel",
   titleLabel: "Title",
   titlePlaceholder: "Enter report title",
   titleRequired: "Please enter a title",
@@ -48,4 +55,9 @@ export const English = {
   submit: "Submit",
   submitSuccess: "Report submitted successfully",
   submitError: "Failed to submit report",
+  numberOfVictimsLabel: "Number of Victims",
+  numberOfOffendersLabel: "Number of Offenders",
+  arrestedLabel: "Arrested",
+  yes: "Yes",
+  no: "No",
 };

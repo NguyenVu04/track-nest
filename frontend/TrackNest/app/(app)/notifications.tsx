@@ -1,7 +1,11 @@
-import { AppNotification, useNotifications } from "@/hooks/useNotifications";
+import { NOTIFICATIONS_LAST_VIEWED_KEY } from "@/constant";
+import { notifications as notificationsLang } from "@/constant/languages";
 import { useNotificationContext } from "@/contexts/NotificationContext";
+import { AppNotification, useNotifications } from "@/hooks/useNotifications";
+import { useTranslation } from "@/hooks/useTranslation";
 import { colors, radii, spacing } from "@/styles/styles";
 import { formatTimeAgo } from "@/utils";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -22,6 +26,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
+// ─── Unread helpers ───────────────────────────────────────────────────────────
+
+/** Returns true if the notification arrived after the user's last screen visit. */
+function isUnread(item: AppNotification, lastViewedMs: number): boolean {
+  return item.createdAtMs > lastViewedMs;
+}
+
 // ─── Notification icon helpers ────────────────────────────────────────────────
 
 const TRACKING_ICONS: Record<string, React.ComponentProps<typeof Ionicons>["name"]> = {
@@ -39,29 +50,58 @@ function getTrackingIcon(title: string): React.ComponentProps<typeof Ionicons>["
   return TRACKING_ICONS.default;
 }
 
-// ─── Notification Card ────────────────────────────────────────────────────────
+// ─── Notification Cards ───────────────────────────────────────────────────────
 
 function TrackingNotificationCard({
   item,
   onDelete,
+  unread,
+  newBadgeLabel,
 }: {
   item: AppNotification;
   onDelete: (id: string) => void;
+  unread: boolean;
+  newBadgeLabel: string;
 }) {
   const icon = getTrackingIcon(item.title);
   return (
-    <View style={styles.notifCard}>
+    <View style={[styles.notifCard, unread && styles.notifCardUnread]}>
+      {/* Unread indicator strip */}
+      {unread && <View style={styles.unreadStrip} />}
+
       <View style={[styles.notifIconCircle, { backgroundColor: colors.primary + "20" }]}>
         <Ionicons name={icon} size={20} color={colors.primary} />
       </View>
+
       <View style={styles.notifBody}>
         <View style={styles.notifTitleRow}>
-          <Text style={styles.notifTitle} numberOfLines={1}>{item.title}</Text>
-          <Text style={styles.notifTime}>{formatTimeAgo(item.createdAtMs)}</Text>
+          <Text
+            style={[styles.notifTitle, unread && styles.notifTitleUnread]}
+            numberOfLines={1}
+          >
+            {item.title}
+          </Text>
+          <View style={styles.notifRightMeta}>
+            {unread && (
+              <View style={styles.newBadge}>
+                <Text style={styles.newBadgeText}>{newBadgeLabel}</Text>
+              </View>
+            )}
+            <Text style={styles.notifTime}>{formatTimeAgo(item.createdAtMs)}</Text>
+          </View>
         </View>
         <Text style={styles.notifContent} numberOfLines={3}>{item.content}</Text>
+        {item.memberUsername ? (
+          <Text style={styles.notifMember}>{item.memberUsername}</Text>
+        ) : null}
       </View>
-      <Pressable onPress={() => onDelete(item.id)} hitSlop={8} style={styles.deleteBtn}>
+
+      <Pressable
+        onPress={() => onDelete(item.id)}
+        hitSlop={8}
+        style={styles.deleteBtn}
+        accessibilityLabel="Delete notification"
+      >
         <Ionicons name="close" size={15} color="#b0b8c1" />
       </Pressable>
     </View>
@@ -71,29 +111,57 @@ function TrackingNotificationCard({
 function RiskNotificationCard({
   item,
   onDelete,
+  unread,
+  urgentLabel,
+  newBadgeLabel,
 }: {
   item: AppNotification;
   onDelete: (id: string) => void;
+  unread: boolean;
+  urgentLabel: string;
+  newBadgeLabel: string;
 }) {
   return (
-    <View style={[styles.notifCard, styles.riskCard]}>
+    <View style={[styles.notifCard, styles.riskCard, unread && styles.notifCardUnread]}>
+      {unread && <View style={[styles.unreadStrip, { backgroundColor: colors.danger }]} />}
+
       <View style={[styles.notifIconCircle, { backgroundColor: "#fde8e8" }]}>
         <Ionicons name="alert-circle" size={20} color={colors.danger} />
       </View>
+
       <View style={styles.notifBody}>
         <View style={styles.notifTitleRow}>
-          <Text style={[styles.notifTitle, { color: colors.danger }]} numberOfLines={1}>
+          <Text
+            style={[styles.notifTitle, { color: colors.danger }, unread && styles.notifTitleUnread]}
+            numberOfLines={1}
+          >
             {item.title}
           </Text>
-          <View style={styles.urgentBadge}>
-            <Text style={styles.urgentText}>URGENT</Text>
+          <View style={styles.notifRightMeta}>
+            {unread && (
+              <View style={[styles.newBadge, { backgroundColor: colors.danger + "18" }]}>
+                <Text style={[styles.newBadgeText, { color: colors.danger }]}>{newBadgeLabel}</Text>
+              </View>
+            )}
+            <View style={styles.urgentBadge}>
+              <Text style={styles.urgentText}>{urgentLabel}</Text>
+            </View>
           </View>
         </View>
         <Text style={[styles.notifContent, { color: colors.danger + "cc" }]} numberOfLines={3}>
           {item.content}
         </Text>
+        {item.memberUsername ? (
+          <Text style={styles.notifMember}>{item.memberUsername}</Text>
+        ) : null}
       </View>
-      <Pressable onPress={() => onDelete(item.id)} hitSlop={8} style={styles.deleteBtn}>
+
+      <Pressable
+        onPress={() => onDelete(item.id)}
+        hitSlop={8}
+        style={styles.deleteBtn}
+        accessibilityLabel="Delete notification"
+      >
         <Ionicons name="close" size={15} color="#b0b8c1" />
       </Pressable>
     </View>
@@ -102,50 +170,19 @@ function RiskNotificationCard({
 
 // ─── Section Header ───────────────────────────────────────────────────────────
 
-function SectionHeader({ label, onMarkAll }: { label: string; onMarkAll?: () => void }) {
+function SectionHeader({ label, onMarkAll, markAllLabel }: {
+  label: string;
+  markAllLabel: string;
+  onMarkAll?: () => void;
+}) {
   return (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionLabel}>{label}</Text>
       {onMarkAll && (
         <Pressable onPress={onMarkAll} hitSlop={8}>
-          <Text style={styles.markAllText}>Mark all as read</Text>
+          <Text style={styles.markAllText}>{markAllLabel}</Text>
         </Pressable>
       )}
-    </View>
-  );
-}
-
-// ─── Weekly Summary Card ──────────────────────────────────────────────────────
-
-function WeeklySummaryCard() {
-  return (
-    <View style={styles.summaryCard}>
-      <Text style={styles.summaryTitle}>Weekly Summary</Text>
-      <Text style={styles.summaryBody}>
-        All family members stayed within designated safe zones 98% of the time.
-      </Text>
-      <Pressable style={styles.summaryBtn}>
-        <Text style={styles.summaryBtnText}>View Report</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-// ─── Stats Row ────────────────────────────────────────────────────────────────
-
-function StatsRow({ activeZones, networkStatus }: { activeZones: number; networkStatus: string }) {
-  return (
-    <View style={styles.statsRow}>
-      <View style={styles.statCard}>
-        <Ionicons name="map" size={22} color={colors.primary} />
-        <Text style={styles.statValue}>{activeZones}</Text>
-        <Text style={styles.statLabel}>Active Zones</Text>
-      </View>
-      <View style={styles.statCard}>
-        <Ionicons name="shield-checkmark" size={22} color={colors.primary} />
-        <Text style={styles.statValue}>{networkStatus}</Text>
-        <Text style={styles.statLabel}>Network Status</Text>
-      </View>
     </View>
   );
 }
@@ -154,6 +191,7 @@ function StatsRow({ activeZones, networkStatus }: { activeZones: number; network
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const t = useTranslation(notificationsLang);
   const { markAllRead } = useNotificationContext();
   const {
     trackingNotifications,
@@ -167,10 +205,26 @@ export default function NotificationsScreen() {
     deleteRisk,
   } = useNotifications();
 
-  // Reset the bell badge whenever this screen comes into focus.
+  // Timestamp of the last time this screen was viewed. Notifications that
+  // arrived after this timestamp are highlighted as "new" / unread.
+  const [lastViewedMs, setLastViewedMs] = useState<number>(Date.now());
+
+  // On focus: read the persisted last-viewed timestamp BEFORE updating it, so
+  // we can still show the "new" indicator for items that arrived since the
+  // previous visit. Then immediately update the timestamp so that on the next
+  // visit those same items will no longer be highlighted.
   useFocusEffect(
     useCallback(() => {
       markAllRead();
+
+      AsyncStorage.getItem(NOTIFICATIONS_LAST_VIEWED_KEY)
+        .then((stored) => {
+          const prev = parseInt(stored ?? "0", 10) || 0;
+          setLastViewedMs(prev);
+          // Update the stored value to now so next visit marks these as read.
+          AsyncStorage.setItem(NOTIFICATIONS_LAST_VIEWED_KEY, String(Date.now())).catch(() => {});
+        })
+        .catch(() => setLastViewedMs(0));
     }, [markAllRead]),
   );
 
@@ -181,8 +235,6 @@ export default function NotificationsScreen() {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
-
-  // ── Tab switching ──────────────────────────────────────────────────────────
 
   const goToTab = (index: number) => {
     setTabIndex(index);
@@ -201,7 +253,7 @@ export default function NotificationsScreen() {
   });
   const indicatorWidth = SCREEN_WIDTH / 2;
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const tabLabels = [t.tabTracking, t.tabRisk];
 
   return (
     <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
@@ -210,12 +262,8 @@ export default function NotificationsScreen() {
         <Pressable onPress={() => router.back()} style={styles.headerBtn} hitSlop={8}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </Pressable>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        <Pressable
-          onPress={clearAll}
-          style={styles.headerBtn}
-          hitSlop={8}
-        >
+        <Text style={styles.headerTitle}>{t.headerTitle}</Text>
+        <Pressable onPress={clearAll} style={styles.headerBtn} hitSlop={8}>
           <Ionicons name="ellipsis-vertical" size={22} color={colors.textPrimary} />
         </Pressable>
       </View>
@@ -223,7 +271,7 @@ export default function NotificationsScreen() {
       {/* Tab bar */}
       <View style={styles.tabBarWrap}>
         <View style={styles.tabBarInner}>
-          {["Tracking", "Risk"].map((label, i) => (
+          {tabLabels.map((label, i) => (
             <Pressable key={label} style={styles.tabBtn} onPress={() => goToTab(i)}>
               <Text style={[styles.tabText, tabIndex === i && styles.tabTextActive]}>
                 {label}
@@ -243,7 +291,7 @@ export default function NotificationsScreen() {
         scrollEventThrottle={16}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false }
+          { useNativeDriver: false },
         )}
         onMomentumScrollEnd={onScrollEnd}
         style={{ flex: 1 }}
@@ -259,29 +307,26 @@ export default function NotificationsScreen() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.listContent}
               ListHeaderComponent={
-                <>
-                  <SectionHeader
-                    label="TODAY"
-                    onMarkAll={() => clearTrackingTab(trackingNotifications.map((n) => n.id))}
-                  />
-                </>
+                <SectionHeader
+                  label={t.todaySection}
+                  markAllLabel={t.markAllAsRead}
+                  onMarkAll={() => clearTrackingTab(trackingNotifications.map((n) => n.id))}
+                />
               }
               renderItem={({ item }) => (
-                <TrackingNotificationCard item={item} onDelete={deleteTracking} />
+                <TrackingNotificationCard
+                  item={item}
+                  onDelete={deleteTracking}
+                  unread={isUnread(item, lastViewedMs)}
+                  newBadgeLabel={t.newBadge}
+                />
               )}
               ListEmptyComponent={
                 <View style={styles.emptyWrap}>
                   <Ionicons name="notifications-off-outline" size={48} color={colors.textMuted} />
-                  <Text style={styles.emptyText}>No tracking notifications</Text>
+                  <Text style={styles.emptyText}>{t.emptyStateTracking}</Text>
                 </View>
               }
-              // ListFooterComponent={
-              //   <>
-              //     <WeeklySummaryCard />
-              //     <StatsRow activeZones={12} networkStatus="Secure" />
-              //     <View style={{ height: 32 }} />
-              //   </>
-              // }
             />
           )}
         </View>
@@ -299,27 +344,27 @@ export default function NotificationsScreen() {
               ListHeaderComponent={
                 riskNotifications.length > 0 ? (
                   <SectionHeader
-                    label="RECENT HIGH PRIORITY"
+                    label={t.recentHighPrioritySection}
+                    markAllLabel={t.markAllAsRead}
                     onMarkAll={() => clearRiskTab(riskNotifications.map((n) => n.id))}
                   />
                 ) : null
               }
               renderItem={({ item }) => (
-                <RiskNotificationCard item={item} onDelete={deleteRisk} />
+                <RiskNotificationCard
+                  item={item}
+                  onDelete={deleteRisk}
+                  unread={isUnread(item, lastViewedMs)}
+                  urgentLabel={t.urgentBadge}
+                  newBadgeLabel={t.newBadge}
+                />
               )}
               ListEmptyComponent={
                 <View style={styles.emptyWrap}>
                   <Ionicons name="shield-checkmark-outline" size={48} color={colors.textMuted} />
-                  <Text style={styles.emptyText}>No risk alerts</Text>
+                  <Text style={styles.emptyText}>{t.emptyStateRisk}</Text>
                 </View>
               }
-              // ListFooterComponent={
-              //   <>
-              //     <WeeklySummaryCard />
-              //     <StatsRow activeZones={12} networkStatus="Secure" />
-              //     <View style={{ height: 32 }} />
-              //   </>
-              // }
             />
           )}
         </View>
@@ -333,7 +378,6 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#f5f7fa" },
 
-  // Header
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -347,7 +391,6 @@ const styles = StyleSheet.create({
   headerBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   headerTitle: { fontSize: 20, fontWeight: "700", color: colors.textPrimary },
 
-  // Tab bar
   tabBarWrap: {
     backgroundColor: "#fff",
     borderBottomWidth: 1,
@@ -367,11 +410,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 3,
   },
 
-  // Pages
   page: { width: SCREEN_WIDTH, flex: 1 },
-  listContent: { paddingHorizontal: spacing.md, paddingTop: spacing.md },
+  listContent: { paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: 32 },
 
-  // Section header
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -388,12 +429,13 @@ const styles = StyleSheet.create({
   },
   markAllText: { fontSize: 13, color: colors.primary, fontWeight: "600" },
 
-  // Notification card
+  // ── Notification card ──
   notifCard: {
     backgroundColor: "#fff",
     borderRadius: radii.lg,
     marginBottom: 12,
     padding: spacing.md,
+    paddingLeft: spacing.md + 4, // extra left padding for the unread strip space
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
@@ -404,6 +446,23 @@ const styles = StyleSheet.create({
     elevation: 1,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: "hidden",
+    position: "relative",
+  },
+  notifCardUnread: {
+    backgroundColor: colors.primaryMuted + "60",
+    borderColor: colors.primary + "40",
+  },
+  // Left-edge colored strip shown only on unread cards
+  unreadStrip: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: colors.primary,
+    borderTopLeftRadius: radii.lg,
+    borderBottomLeftRadius: radii.lg,
   },
   riskCard: {
     borderColor: colors.danger + "30",
@@ -427,12 +486,39 @@ const styles = StyleSheet.create({
   },
   notifTitle: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "600",
     color: colors.textPrimary,
     flex: 1,
   },
-  notifTime: { fontSize: 11, color: colors.textMuted, flexShrink: 0 },
+  notifTitleUnread: {
+    fontWeight: "700",
+  },
+  notifRightMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    flexShrink: 0,
+  },
+  notifTime: { fontSize: 11, color: colors.textMuted },
   notifContent: { fontSize: 13, color: colors.textSecondary, lineHeight: 19 },
+  notifMember: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 4,
+    fontStyle: "italic",
+  },
+  newBadge: {
+    backgroundColor: colors.primary + "18",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  newBadgeText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: colors.primary,
+    letterSpacing: 0.4,
+  },
   urgentBadge: {
     backgroundColor: colors.danger + "18",
     paddingHorizontal: 8,
@@ -442,53 +528,6 @@ const styles = StyleSheet.create({
   urgentText: { fontSize: 10, fontWeight: "800", color: colors.danger, letterSpacing: 0.5 },
   deleteBtn: { padding: 4, marginTop: 2 },
 
-  // Weekly summary
-  summaryCard: {
-    backgroundColor: colors.primaryDark,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    marginTop: spacing.md,
-    marginBottom: 12,
-    gap: spacing.sm,
-  },
-  summaryTitle: { fontSize: 18, fontWeight: "700", color: "#fff" },
-  summaryBody: { fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 20 },
-  summaryBtn: {
-    backgroundColor: "rgba(255,255,255,0.18)",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    alignSelf: "flex-start",
-    marginTop: 4,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.3)",
-  },
-  summaryBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
-
-  // Stats
-  statsRow: { flexDirection: "row", gap: 12 },
-  statCard: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    alignItems: "flex-start",
-    gap: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: "#000",
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  statValue: { fontSize: 26, fontWeight: "800", color: colors.textPrimary, marginTop: 4 },
-  statLabel: { fontSize: 12, color: colors.textMuted },
-
-  // Empty
-  emptyWrap: {
-    alignItems: "center",
-    paddingTop: 60,
-    gap: 12,
-  },
+  emptyWrap: { alignItems: "center", paddingTop: 60, gap: 12 },
   emptyText: { fontSize: 15, color: colors.textSecondary },
 });

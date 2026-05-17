@@ -21,6 +21,7 @@ type MyInfoSheetProps = {
   lastUpdatedLabel: string;
   resolvingAddressLabel: string;
   notAvailableLabel: string;
+  activeNowLabel: string;
   myAddress: string | null;
   speedKmh: number | null;
   timeSpentAtPlace: string | null;
@@ -66,6 +67,7 @@ export default function MyInfoSheet({
   lastUpdatedLabel,
   resolvingAddressLabel,
   notAvailableLabel,
+  activeNowLabel,
   myAddress,
   speedKmh,
   timeSpentAtPlace,
@@ -110,7 +112,7 @@ export default function MyInfoSheet({
               <Text style={styles.title}>{title}</Text>
               <View style={styles.statusRow}>
                 <View style={styles.statusDot} />
-                <Text style={styles.statusText}>Active Now</Text>
+                <Text style={styles.statusText}>{activeNowLabel}</Text>
               </View>
             </View>
           </View>

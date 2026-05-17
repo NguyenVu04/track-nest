@@ -805,6 +805,7 @@ function MapScreenContent() {
         lastUpdatedLabel={t.infoLastUpdatedLabel}
         resolvingAddressLabel={t.infoResolvingAddress}
         notAvailableLabel={t.notAvailable}
+        activeNowLabel={t.infoActiveNowLabel}
         myAddress={myAddress}
         speedKmh={speedKmh}
         timeSpentAtPlace={timeSpentAtPlace}
