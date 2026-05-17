@@ -1,4 +1,5 @@
 import { getInitials } from "@/utils";
+import { moderateScale } from "@/utils/responsive";
 import React, { memo, useEffect, useRef, useState } from "react";
 import { Image, Platform, StyleSheet, Text, View } from "react-native";
 import { AnimatedRegion, MapMarker, MarkerAnimated } from "react-native-maps";
@@ -170,28 +171,31 @@ function areEqual(prev: Props, next: Props) {
 
 export default memo(FollowerMarker, areEqual);
 
+const AVATAR_OUTER = moderateScale(44);
+const AVATAR_INNER = moderateScale(38);
+
 const styles = StyleSheet.create({
   container: {
     overflow: "visible",
   },
   avatarWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: AVATAR_OUTER,
+    height: AVATAR_OUTER,
+    borderRadius: AVATAR_OUTER / 2,
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
     elevation: 2,
   },
   avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: AVATAR_INNER,
+    height: AVATAR_INNER,
+    borderRadius: AVATAR_INNER / 2,
   },
   initialsBg: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: AVATAR_INNER,
+    height: AVATAR_INNER,
+    borderRadius: AVATAR_INNER / 2,
     alignItems: "center",
     justifyContent: "center",
   },

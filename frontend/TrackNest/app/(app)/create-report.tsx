@@ -108,7 +108,7 @@ export default function CreateReportScreen() {
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.headerIcon}>

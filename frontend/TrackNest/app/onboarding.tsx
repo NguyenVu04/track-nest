@@ -1,5 +1,6 @@
 import { onboarding as onboardingLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
+import { fontScale, moderateScale, scale } from "@/utils/responsive";
 import { markIntroWalkthroughCompleted } from "@/utils/walkthrough";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -67,7 +68,7 @@ export default function OnboardingScreen() {
       style={[styles.slide, { backgroundColor: item.backgroundColor }]}
     >
       <View style={styles.iconWrap}>
-        <Ionicons name={item.icon} size={84} color="#15616D" />
+        <Ionicons name={item.icon} size={moderateScale(72)} color="#15616D" />
       </View>
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.text}>{item.text}</Text>
@@ -111,86 +112,90 @@ export default function OnboardingScreen() {
   );
 }
 
+const ICON_SIZE = moderateScale(150);
+
 const styles = StyleSheet.create({
   slide: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 36,
+    paddingHorizontal: scale(24),
+    paddingTop: scale(36),
     justifyContent: "center",
     alignItems: "center",
   },
   iconWrap: {
-    width: 170,
-    height: 170,
-    borderRadius: 85,
+    width: ICON_SIZE,
+    height: ICON_SIZE,
+    borderRadius: ICON_SIZE / 2,
     backgroundColor: "rgba(255,255,255,0.65)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 28,
+    marginBottom: scale(24),
   },
   title: {
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: fontScale(26),
+    lineHeight: fontScale(32),
     fontWeight: "800",
     color: "#0F172A",
     textAlign: "center",
-    marginBottom: 16,
+    marginBottom: scale(16),
   },
   text: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: fontScale(15),
+    lineHeight: fontScale(22),
     fontWeight: "500",
     color: "#334155",
     textAlign: "center",
-    paddingHorizontal: 10,
+    paddingHorizontal: scale(10),
   },
   actionButton: {
-    minWidth: 142,
-    height: 48,
-    borderRadius: 24,
+    minWidth: scale(130),
+    height: scale(46),
+    minHeight: 44,
+    borderRadius: scale(23),
     backgroundColor: "#15616D",
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    marginHorizontal: 10,
-    marginBottom: 20,
+    marginHorizontal: scale(10),
+    marginBottom: scale(20),
   },
   actionLabel: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: fontScale(15),
     fontWeight: "700",
   },
   skipButton: {
-    minWidth: 96,
-    height: 42,
-    borderRadius: 21,
+    minWidth: scale(88),
+    height: scale(40),
+    minHeight: 44,
+    borderRadius: scale(20),
     borderWidth: 1,
     borderColor: "#94A3B8",
-    paddingHorizontal: 14,
+    paddingHorizontal: scale(14),
     alignItems: "center",
     justifyContent: "center",
-    marginHorizontal: 10,
-    marginBottom: 20,
+    marginHorizontal: scale(10),
+    marginBottom: scale(20),
   },
   skipLabel: {
     color: "#334155",
-    fontSize: 14,
+    fontSize: fontScale(13),
     fontWeight: "700",
   },
   dot: {
     backgroundColor: "#CBD5E1",
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: moderateScale(10),
+    height: moderateScale(10),
+    borderRadius: moderateScale(5),
     marginHorizontal: 4,
   },
   activeDot: {
     backgroundColor: "#15616D",
-    width: 22,
-    height: 10,
-    borderRadius: 5,
+    width: moderateScale(22),
+    height: moderateScale(10),
+    borderRadius: moderateScale(5),
     marginHorizontal: 4,
   },
 });

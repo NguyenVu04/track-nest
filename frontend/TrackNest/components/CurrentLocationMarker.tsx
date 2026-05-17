@@ -1,6 +1,7 @@
 // import { CurrentLocationMarker as currentLocationMarkerLang } from "@/constant/languages";
 import useDeviceHeading from "@/hooks/useDeviceHeading";
 // import { useTranslation } from "@/hooks/useTranslation";
+import { fontScale, moderateScale } from "@/utils/responsive";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Platform, StyleSheet, Text, View } from "react-native";
 import { MapMarker, Marker } from "react-native-maps";
@@ -191,52 +192,57 @@ function CurrentLocationMarker({
   );
 }
 
+const WRAPPER = moderateScale(56);
+const PULSE = moderateScale(36);
+const DOT_OUTER = moderateScale(22);
+const DOT_INNER = moderateScale(14);
+
 const localStyles = StyleSheet.create({
   wrapper: {
-    width: 60,
-    height: 60,
+    width: WRAPPER,
+    height: WRAPPER,
     alignItems: "center",
     justifyContent: "center",
   },
   pulse: {
     position: "absolute",
-    width: 38,
-    height: 38,
-    borderRadius: 38 / 2,
+    width: PULSE,
+    height: PULSE,
+    borderRadius: PULSE / 2,
     backgroundColor: "rgba(116,190,203,0.25)",
-    top: (1 / 2) * 60 - 19,
-    left: (1 / 2) * 60 - 19,
+    top: WRAPPER / 2 - PULSE / 2,
+    left: WRAPPER / 2 - PULSE / 2,
   },
   headingArrow: {
     position: "absolute",
-    width: 60,
-    height: 40,
+    width: WRAPPER,
+    height: moderateScale(38),
     alignItems: "center",
     justifyContent: "flex-start",
   },
   arrowHead: {
     width: 0,
     height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderBottomWidth: 12,
+    borderLeftWidth: moderateScale(5),
+    borderRightWidth: moderateScale(5),
+    borderBottomWidth: moderateScale(10),
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
     borderBottomColor: "rgba(116,190,203,1)",
   },
   dotOuter: {
-    width: 22,
-    height: 22,
-    borderRadius: 14,
+    width: DOT_OUTER,
+    height: DOT_OUTER,
+    borderRadius: DOT_OUTER / 2,
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
   },
   dotInner: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: DOT_INNER,
+    height: DOT_INNER,
+    borderRadius: DOT_INNER / 2,
     backgroundColor: "#74becb",
   },
   speedContainer: {
@@ -249,7 +255,7 @@ const localStyles = StyleSheet.create({
   },
   speedText: {
     color: "#fff",
-    fontSize: 10,
+    fontSize: fontScale(10),
     fontWeight: "600",
   },
 });
