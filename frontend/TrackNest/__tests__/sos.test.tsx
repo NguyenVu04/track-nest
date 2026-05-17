@@ -46,6 +46,7 @@ jest.mock("@/hooks/useTranslation", () => ({
 
 jest.mock("@/utils", () => ({
   showToast: jest.fn(),
+  hapticHeavy: jest.fn(),
 }));
 
 jest.mock("axios", () => ({

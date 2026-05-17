@@ -88,9 +88,9 @@ describe("LoginScreen", () => {
     setupAuthRequest({ request: null });
 
     const { queryByText, UNSAFE_getByType } = render(<LoginScreen />);
-    const { ActivityIndicator } = require("react-native");
+    const LottieView = require("lottie-react-native");
 
-    expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
+    expect(UNSAFE_getByType(LottieView)).toBeTruthy();
     expect(queryByText("Login")).toBeNull();
   });
 

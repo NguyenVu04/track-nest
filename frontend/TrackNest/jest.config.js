@@ -10,6 +10,12 @@ module.exports = {
   moduleNameMapper: {
     'expo/src/winter/ImportMetaRegistry': '<rootDir>/__mocks__/expoImportMetaRegistry.js',
     'expo/src/winter/runtime': '<rootDir>/__mocks__/expoRuntime.js',
+    '@react-native-async-storage/async-storage': '<rootDir>/node_modules/@react-native-async-storage/async-storage/jest/async-storage-mock',
+    '^lottie-react-native$': '<rootDir>/__mocks__/lottie-react-native.js',
+    '^react-native-webview$': '<rootDir>/__mocks__/react-native-webview.js',
+    '^tamagui$': '<rootDir>/__mocks__/tamagui.js',
+    '^@tamagui/.*': '<rootDir>/__mocks__/tamagui.js',
+    'tamagui\\.config': '<rootDir>/__mocks__/tamagui-config.js',
   },
   collectCoverage: true,
   coverageReporters: ['lcov', 'text'],

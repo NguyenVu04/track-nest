@@ -1,5 +1,5 @@
 import React from "react";
-import { render, act, waitFor } from "@testing-library/react-native";
+import { render, act } from "@testing-library/react-native";
 import Index from "@/app/index";
 
 // --- mocks ---
@@ -44,6 +44,7 @@ jest.mock("@/constant", () => ({
 }));
 
 beforeEach(() => {
+  jest.useFakeTimers({ doNotFake: ["nextTick", "setImmediate"] });
   jest.clearAllMocks();
   mockUseAuth.mockReturnValue({
     isAuthenticated: false,
@@ -51,6 +52,10 @@ beforeEach(() => {
     isLoading: false,
   });
   mockHasCompleted.mockResolvedValue(true);
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe("Index screen", () => {
@@ -61,14 +66,18 @@ describe("Index screen", () => {
       isLoading: true,
     });
     const { UNSAFE_getByType } = render(<Index />);
-    const { ActivityIndicator } = require("react-native");
-    expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
+    const LottieView = require("lottie-react-native");
+    expect(UNSAFE_getByType(LottieView)).toBeTruthy();
   });
 
   it("redirects to /onboarding when intro not completed", async () => {
     mockHasCompleted.mockResolvedValue(false);
-    const { findByText } = render(<Index />);
-    expect(await findByText("redirect:/onboarding")).toBeTruthy();
+    const { getByText } = render(<Index />);
+    // Flush pending async effects (intro check promise)
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    // Advance past the 2-second splash delay
+    await act(async () => { jest.runAllTimers(); });
+    expect(getByText("redirect:/onboarding")).toBeTruthy();
   });
 
   it("redirects to /map when authenticated and intro done", async () => {
@@ -77,8 +86,10 @@ describe("Index screen", () => {
       isGuestMode: false,
       isLoading: false,
     });
-    const { findByText } = render(<Index />);
-    expect(await findByText("redirect:/map")).toBeTruthy();
+    const { getByText } = render(<Index />);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => { jest.runAllTimers(); });
+    expect(getByText("redirect:/map")).toBeTruthy();
   });
 
   it("redirects to /map when in guest mode and intro done", async () => {
@@ -87,18 +98,20 @@ describe("Index screen", () => {
       isGuestMode: true,
       isLoading: false,
     });
-    const { findByText } = render(<Index />);
-    expect(await findByText("redirect:/map")).toBeTruthy();
+    const { getByText } = render(<Index />);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => { jest.runAllTimers(); });
+    expect(getByText("redirect:/map")).toBeTruthy();
   });
 
   it("redirects to /auth/login when unauthenticated and intro done", async () => {
-    // __DEV__ is true in jest-expo, so this will redirect to /map instead.
-    // We test the unauthenticated branch by disabling __DEV__
     const originalDev = (global as any).__DEV__;
     (global as any).__DEV__ = false;
     try {
-      const { findByText } = render(<Index />);
-      expect(await findByText("redirect:/auth/login")).toBeTruthy();
+      const { getByText } = render(<Index />);
+      await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+      await act(async () => { jest.runAllTimers(); });
+      expect(getByText("redirect:/auth/login")).toBeTruthy();
     } finally {
       (global as any).__DEV__ = originalDev;
     }

@@ -62,6 +62,13 @@ jest.mock("rn-tourguide", () => ({
 }));
 
 // Context mocks
+jest.mock("@/contexts/EmergencyContext", () => ({
+  useEmergency: jest.fn().mockReturnValue({
+    createEmergencyRequest: jest.fn().mockResolvedValue({ id: "e1" }),
+    cancelEmergencyRequest: jest.fn().mockResolvedValue(undefined),
+    activeRequest: null,
+  }),
+}));
 jest.mock("@/contexts/MapContext", () => ({
   useMapContext: jest.fn().mockReturnValue({
     selectedSafeZone: null,
