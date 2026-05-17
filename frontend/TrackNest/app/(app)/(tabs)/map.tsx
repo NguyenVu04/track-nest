@@ -376,6 +376,9 @@ function MapScreenContent() {
     return null;
   }, [selectedFollower]);
 
+  // Only re-derive meItem when position changes meaningfully, not on every GPS
+  // heartbeat. Keeping lastActive out of deps prevents generalInfoListData from
+  // getting a new array reference (and thus re-rendering the sheet) on every tick.
   const meItem: Follower | null = useMemo(() => {
     if (!location) return null;
     return {
@@ -384,11 +387,12 @@ function MapScreenContent() {
       longitude: location.longitude,
       name: t.me,
       avatar: undefined,
-      lastActive: Date.now(),
+      lastActive: location.timestamp ?? Date.now(),
       sharingActive: true,
       shareTracking: true,
     };
-  }, [location, t.me]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location?.latitude, location?.longitude, t.me]);
   const generalInfoListData = useMemo(() => {
     const list: Follower[] = [];
     if (meItem) list.push(meItem);
@@ -439,20 +443,19 @@ function MapScreenContent() {
 
   const handleGeneralInfoModalPress = useCallback(() => {
     generalInfoSheetRef.current?.present();
-  }, [generalInfoSheetRef]);
+  }, []);
 
   useEffect(() => {
+    // Reference the ref directly so this effect never needs to re-run.
+    // Re-running would briefly leave zero listeners and could lead to
+    // the event being missed or double-registered.
     const subscription = DeviceEventEmitter.addListener(
       OPEN_GENERAL_INFO_SHEET_EVENT,
-      () => {
-        handleGeneralInfoModalPress();
-      },
+      () => generalInfoSheetRef.current?.present(),
     );
-
-    return () => {
-      subscription.remove();
-    };
-  }, [handleGeneralInfoModalPress]);
+    return () => subscription.remove();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMyInfoModalPress = useCallback(() => {
     myInfoSheetRef.current?.present();
@@ -780,14 +783,12 @@ function MapScreenContent() {
         onSosPress={() => router.push("/(app)/sos" as any)}
       />
 
-      {generalInfoListData.length > 0 && (
-        <GeneralFollowerInfoSheet
-          generalInfoSheetRef={generalInfoSheetRef}
-          generalInfoListData={generalInfoListData}
-          generalInfoRenderItem={generalInfoRenderItem}
-          tabBarHeight={tabBarHeight}
-        />
-      )}
+      <GeneralFollowerInfoSheet
+        generalInfoSheetRef={generalInfoSheetRef}
+        generalInfoListData={generalInfoListData}
+        generalInfoRenderItem={generalInfoRenderItem}
+        tabBarHeight={tabBarHeight}
+      />
 
       <MyInfoSheet
         myInfoSheetRef={myInfoSheetRef}
