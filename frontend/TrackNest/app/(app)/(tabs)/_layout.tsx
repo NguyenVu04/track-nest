@@ -154,19 +154,6 @@ export default function RootLayout() {
         }}
       />
       <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: t.dashboard,
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "grid" : "grid-outline"}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="settings"
         options={{
           title: t.settings,
@@ -179,7 +166,20 @@ export default function RootLayout() {
           ),
         }}
       />
-
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: t.dashboard,
+          href: showDevTabs ? undefined : null,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "grid" : "grid-outline"}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="tracker-test"
         options={{
