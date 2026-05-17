@@ -1,7 +1,4 @@
-import {
-  CHAT_BADGE_CHANGED_EVENT,
-  CHAT_UNREAD_KEY,
-} from "@/constant";
+import { FCM_TOKEN_KEY } from "@/constant";
 import { registerMobileDevice } from "@/services/notifier";
 import {
   configureNotificationHandler,
@@ -11,14 +8,31 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import { Router, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { DeviceEventEmitter, Platform } from "react-native";
+import { Platform } from "react-native";
 
 configureNotificationHandler();
+
+async function retryWithBackoff(
+  fn: () => Promise<void>,
+  delays: number[],
+): Promise<void> {
+  for (let i = 0; i <= delays.length; i++) {
+    try {
+      await fn();
+      return;
+    } catch (err) {
+      if (i === delays.length) throw err;
+      await new Promise((r) => setTimeout(r, delays[i]));
+    }
+  }
+}
 
 /**
  * Hook that manages the full FCM push-notification lifecycle:
  * - Requests permission & retrieves the FCM device token
- * - Registers the token with the backend
+ * - Persists the token to AsyncStorage and re-registers it on boot
+ *   even if the backend was unreachable at the previous session
+ * - Registers the token with the backend with exponential-backoff retry
  * - Listens for incoming notifications (foreground)
  * - Handles notification taps (background / killed)
  * - Listens for token refreshes and re-registers
@@ -31,31 +45,45 @@ export function usePushNotifications(enabled: boolean = true) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!enabled) {
-      return;
-    }
+    if (!enabled) return;
 
-    // 1. Register for push notifications and send token to backend
+    const RETRY_DELAYS = [1_000, 2_000, 4_000];
+
+    const registerToken = async (token: string) => {
+      const platform = Platform.OS;
+      await retryWithBackoff(
+        () => registerMobileDevice(token, platform, "en").then(() => {}),
+        RETRY_DELAYS,
+      );
+      await AsyncStorage.setItem(FCM_TOKEN_KEY, token);
+    };
+
+    // Fast path: re-register cached token immediately on boot so the device
+    // keeps receiving notifications even if getDevicePushTokenAsync is slow.
+    AsyncStorage.getItem(FCM_TOKEN_KEY)
+      .then((cached) => {
+        if (cached) {
+          registerToken(cached).catch((err) =>
+            console.warn("Cached token re-registration failed:", err),
+          );
+        }
+      })
+      .catch(() => {});
+
+    // Full path: request a fresh token, compare with cache, register if changed.
     registerForPushNotificationsAsync().then(async (token) => {
       if (!token) return;
       setFcmToken(token);
 
+      const cached = await AsyncStorage.getItem(FCM_TOKEN_KEY).catch(() => null);
+      if (token === cached) return; // already registered with backend
+
       try {
-        const platform = Platform.OS; // "android" | "ios"
-        await registerMobileDevice(token, platform, "en");
-        /* console.log("Device registered with backend for FCM") */;
+        await registerToken(token);
       } catch (err) {
-        console.error("Failed to register device with backend:", err);
+        console.error("Failed to register device token after retries:", err);
       }
     });
-
-    // 2. Foreground FCM listener.
-    // Chat notifications are suppressed by configureNotificationHandler (the
-    // gRPC stream handles those). Emergency notifications show system banners.
-    notificationListener.current =
-      Notifications.addNotificationReceivedListener((_notification) => {
-        /* console.log("Notification received in foreground:", _notification) */;
-      });
 
     const EMERGENCY_TYPES = [
       "EMERGENCY_REQUEST_ASSIGNED",
@@ -64,11 +92,16 @@ export function usePushNotifications(enabled: boolean = true) {
       "EMERGENCY_REQUEST_CLOSED",
     ];
 
-    // 3. Notification tap / interaction listener (app backgrounded).
+    // Foreground FCM listener — chat suppressed (gRPC stream handles those).
+    notificationListener.current =
+      Notifications.addNotificationReceivedListener((_notification) => {
+        /* console.log("Notification received in foreground:", _notification) */;
+      });
+
+    // Notification tap / interaction listener (app backgrounded).
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data;
-        /* console.log("Notification tapped, data:", data) */;
 
         if (data?.type && EMERGENCY_TYPES.includes(data.type as string)) {
           router.push("/(app)/sos");
@@ -86,14 +119,16 @@ export function usePushNotifications(enabled: boolean = true) {
     // We track the handled notification ID in AsyncStorage to avoid re-routing
     // on subsequent app opens.
     const LAST_HANDLED_NOTIF_KEY = "last_handled_notification_id";
-    Notifications.getLastNotificationResponseAsync().then(async (response) => {
-      if (!response) return;
-      const notifId = response.notification.request.identifier;
+    (async () => {
+      const lastNotiResponse = Notifications.getLastNotificationResponse();
+      if (!lastNotiResponse) return;
+
+      const notifId = lastNotiResponse.notification.request.identifier;
       const lastHandled = await AsyncStorage.getItem(LAST_HANDLED_NOTIF_KEY);
       if (lastHandled === notifId) return;
       await AsyncStorage.setItem(LAST_HANDLED_NOTIF_KEY, notifId);
 
-      const data = response.notification.request.content.data;
+      const data = lastNotiResponse.notification.request.content.data;
 
       if (data?.type && EMERGENCY_TYPES.includes(data.type as string)) {
         router.push("/(app)/sos");
@@ -103,19 +138,16 @@ export function usePushNotifications(enabled: boolean = true) {
       if (data?.route) {
         router.push(data.route as Parameters<Router["push"]>[0]);
       }
-    });
+    })().catch(() => {});
 
-    // 4. Token refresh listener — re-register when FCM rotates the token
+    // Token refresh listener — re-register when FCM rotates the token.
     tokenRefreshListener.current = Notifications.addPushTokenListener(
       async (newToken) => {
         const token = newToken.data as string;
-        /* console.log("FCM token refreshed:", token) */;
         setFcmToken(token);
 
         try {
-          const platform = Platform.OS;
-          await registerMobileDevice(token, platform, "en");
-          /* console.log("Refreshed token registered with backend") */;
+          await registerToken(token);
         } catch (err) {
           console.error("Failed to register refreshed token:", err);
         }

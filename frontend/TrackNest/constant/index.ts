@@ -57,3 +57,12 @@ export const CHAT_FOCUS_EVENT = "chatFocusChanged";
 export const CHAT_CIRCLE_CHANGED_EVENT = "chatCircleChanged";
 
 export type TrackingMode = "NORMAL" | "NAVIGATION";
+
+// Push notifications — AsyncStorage key for cached FCM token (used for offline-boot retry)
+export const FCM_TOKEN_KEY = "@tracknest/fcm_device_token";
+
+// Notification bell — AsyncStorage key for persisted unread badge count
+export const NOTIFICATION_UNREAD_KEY = "@tracknest/notification_unread_count";
+
+// DeviceEventEmitter event emitted when a background notification arrives
+export const NOTIFICATION_RECEIVED_EVENT = "notificationReceived";
