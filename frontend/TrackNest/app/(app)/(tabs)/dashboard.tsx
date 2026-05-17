@@ -10,13 +10,13 @@ import { useEffect, useState } from "react";
 
 type DashboardTranslations = ReturnType<typeof useTranslation<typeof dashboardLang>>;
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { AppLoader } from "@/components/Loaders/AppLoader";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // ─── Stat Grid ───────────────────────────────────────────────────────────────
@@ -260,7 +260,7 @@ export default function DashboardScreen() {
     return (
       <SafeAreaView style={styles.screen} edges={["left", "right", "bottom"]}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <AppLoader size={200} />
         </View>
       </SafeAreaView>
     );

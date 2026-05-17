@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { AppLoader } from "./Loaders/AppLoader";
 import MapView, { Marker, Polyline, Region } from "react-native-maps";
 
 export type LocationHistoryPoint = {
@@ -285,11 +286,9 @@ export function LocationHistoryViewer({
     <View style={styles.container}>
       <View style={[styles.mapContainer, { marginBottom: mapMarginBottom }]}>
         {isLoading ? (
-          <ActivityIndicator
-            size="large"
-            color="#74becb"
-            style={StyleSheet.absoluteFill}
-          />
+          <View style={styles.mapLoader}>
+            <AppLoader size={140} />
+          </View>
         ) : (
           <MapView
             ref={mapRef}
@@ -531,6 +530,12 @@ const styles = StyleSheet.create({
   },
   orderMarkerTextSelected: {
     color: "#0f172a",
+  },
+  mapLoader: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f5f7fa",
   },
   emptyOverlay: {
     ...StyleSheet.absoluteFillObject,

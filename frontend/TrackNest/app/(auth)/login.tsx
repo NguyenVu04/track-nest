@@ -25,6 +25,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { AppLoader } from "@/components/Loaders/AppLoader";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -138,7 +139,7 @@ export default function LoginScreen() {
   if (isCheckingAuth) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#74becb" />
+        <AppLoader size={200} />
       </View>
     );
   }
