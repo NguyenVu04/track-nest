@@ -1,7 +1,9 @@
 // import { CurrentLocationMarker as currentLocationMarkerLang } from "@/constant/languages";
 import useDeviceHeading from "@/hooks/useDeviceHeading";
 // import { useTranslation } from "@/hooks/useTranslation";
+import { colors } from "@/styles/styles";
 import { fontScale, moderateScale } from "@/utils/responsive";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Platform, StyleSheet, Text, View } from "react-native";
 import { MapMarker, Marker } from "react-native-maps";
@@ -11,6 +13,7 @@ type Props = {
   longitude: number;
   speed?: number | null; // speed in m/s
   disabled?: boolean; // when true show subdued grey dot and pause pulse
+  isEmergency?: boolean; // when true show red pulsing emergency marker
   handlePress?: () => void; // optional press handler for the marker
 };
 
@@ -21,6 +24,7 @@ function CurrentLocationMarker({
   longitude,
   speed,
   disabled = false,
+  isEmergency = false,
   handlePress,
 }: Props) {
   // const t = useTranslation(currentLocationMarkerLang);
@@ -105,9 +109,9 @@ function CurrentLocationMarker({
   const animRef = useRef<any>(null);
 
   useEffect(() => {
+    animRef.current?.stop?.();
+
     if (disabled) {
-      // stop animation and set subdued visuals
-      animRef.current?.stop?.();
       opacity.setValue(0.2);
       scale.setValue(0.6);
       return;
@@ -116,16 +120,19 @@ function CurrentLocationMarker({
     scale.setValue(0);
     opacity.setValue(0.6);
 
+    // Emergency mode pulses twice as fast to signal urgency.
+    const duration = isEmergency ? 600 : 1200;
+
     animRef.current = Animated.loop(
       Animated.parallel([
         Animated.timing(scale, {
           toValue: 1,
-          duration: 1200,
+          duration,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           toValue: 0,
-          duration: 1200,
+          duration,
           useNativeDriver: true,
         }),
       ]),
@@ -133,16 +140,23 @@ function CurrentLocationMarker({
 
     animRef.current.start();
     return () => animRef.current?.stop?.();
-  }, [scale, opacity, disabled]);
+  }, [scale, opacity, disabled, isEmergency]);
 
   // const pulseScale = scale.interpolate({
   //   inputRange: [0, 1],
   //   outputRange: [0.6, 2.2],
   // });
 
-  const outerBorder = disabled ? "#bdbdbd" : "rgba(116,190,203,0.9)";
-  const innerColor = disabled ? "#999" : "#74becb";
-  // const pulseColor = disabled ? "rgba(0,0,0,0)" : "rgba(116,190,203,0.25)";
+  const outerBorder = disabled
+    ? "#bdbdbd"
+    : isEmergency
+      ? "rgba(204,46,29,0.9)"
+      : "rgba(116,190,203,0.9)";
+  const innerColor = disabled
+    ? "#999"
+    : isEmergency
+      ? colors.danger
+      : "#74becb";
 
   return (
     <Marker
@@ -182,6 +196,15 @@ function CurrentLocationMarker({
             style={[localStyles.dotInner, { backgroundColor: innerColor }]}
           />
         </View>
+        {isEmergency && !disabled && (
+          <View style={localStyles.emergencyIconWrap}>
+            <Ionicons
+              name="alert-circle"
+              size={moderateScale(12)}
+              color={colors.danger}
+            />
+          </View>
+        )}
         {hasSpeedData && (
           <View style={localStyles.speedContainer}>
             <Text style={localStyles.speedText}>{`${speedKmh} km/h`}</Text>
@@ -257,6 +280,13 @@ const localStyles = StyleSheet.create({
     color: "#fff",
     fontSize: fontScale(10),
     fontWeight: "600",
+  },
+  emergencyIconWrap: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    borderRadius: moderateScale(8),
   },
 });
 

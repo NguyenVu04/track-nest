@@ -45,6 +45,7 @@ import { OPEN_GENERAL_INFO_SHEET_EVENT } from "@/constant";
 import { map as mapLang } from "@/constant/languages";
 import { getMockFollowersForCircle } from "@/constant/mockFamilyCircles";
 import { FamilyCircle, Follower, SafeZone } from "@/constant/types";
+import { useEmergency } from "@/contexts/EmergencyContext";
 import { useMapContext } from "@/contexts/MapContext";
 import { usePOIAnalytics } from "@/contexts/POIAnalyticsContext";
 import { useTracking } from "@/contexts/TrackingContext";
@@ -167,6 +168,7 @@ function MapScreenContent() {
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const { mapType, setMapType } = useMapContext();
   const { tracking, shareLocation } = useTracking();
+  const { activeEmergency } = useEmergency();
   const { crimeHeatmapPoints, loadCrimeHeatmap } =
     usePOIAnalytics();
   const { circles, selectedCircle, selectCircle, refreshCircles } =
@@ -747,6 +749,7 @@ function MapScreenContent() {
               longitude={location.longitude}
               speed={location.speed}
               disabled={!tracking}
+              isEmergency={!!activeEmergency}
               handlePress={handleMyInfoModalPress}
             />
           ) : null}
