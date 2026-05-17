@@ -100,6 +100,7 @@ export const FollowerBottomSheet = ({
   const [locationHistory, setLocationHistory] = useState<
     FamilyMemberLocation.AsObject[] | null
   >(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
   // Filter state
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
@@ -207,6 +208,7 @@ export const FollowerBottomSheet = ({
     }
 
     const fetchHistory = async () => {
+      setIsHistoryLoading(true);
       try {
         const response = await listFamilyMemberLocationHistory(
           follower.familyCircleId as string,
@@ -215,6 +217,8 @@ export const FollowerBottomSheet = ({
         setLocationHistory(response.locationsList);
       } catch (error: any) {
         console.warn("Failed to fetch follower history:", error?.message);
+      } finally {
+        setIsHistoryLoading(false);
       }
     };
 
@@ -373,6 +377,7 @@ export const FollowerBottomSheet = ({
 
           <LocationHistoryViewer
             points={viewerPoints}
+            isLoading={isHistoryLoading}
             emptyText={t.noLocationHistoryAvailable}
             centerButtonLabel={t.centerOnStart}
             pointSingularLabel={t.pointSingular}
