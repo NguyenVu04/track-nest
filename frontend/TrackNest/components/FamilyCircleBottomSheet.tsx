@@ -910,12 +910,12 @@ const styles = StyleSheet.create({
   },
   // ── Generic modals (invite / join) ──
   modalContent: {
-    backgroundColor: “#fff”,
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 20,
-    width: “100%”,
+    width: "100%",
     maxWidth: Math.min(360, screenWidth * 0.92),
-    alignSelf: “center”,
+    alignSelf: "center",
     marginHorizontal: 20,
     marginBottom: 40,
   },
