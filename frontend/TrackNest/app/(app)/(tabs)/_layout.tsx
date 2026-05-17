@@ -9,6 +9,7 @@ import { useRequireAuth } from "@/contexts/AuthContext";
 import { useDevMode } from "@/contexts/DevModeContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { colors, spacing } from "@/styles/styles";
+import { scale } from "@/utils/responsive";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Tabs, useRouter, useSegments } from "expo-router";
@@ -16,8 +17,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { DeviceEventEmitter, InteractionManager } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const TAB_BAR_HEIGHT = 70;
-const APP_HEADER_CONTENT_HEIGHT = 46;
+const TAB_BAR_HEIGHT = scale(60);
+const APP_HEADER_CONTENT_HEIGHT = scale(46);
 
 export default function RootLayout() {
   const t = useTranslation(tabsLang);

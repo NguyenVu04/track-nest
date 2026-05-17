@@ -30,6 +30,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FollowerInfo } from "./FollowerInfo";
 import { colors, radii, spacing } from "@/styles/styles";
 
@@ -92,6 +93,7 @@ export const FollowerBottomSheet = ({
 }) => {
   const t = useTranslation(followerBottomSheetLang);
   const router = useRouter();
+  const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const filterSheetRef = useRef<BottomSheetModal>(null);
   const hasFetchedHistoryRef = useRef(false);
@@ -234,7 +236,7 @@ export const FollowerBottomSheet = ({
   const battery = follower.batteryLevel;
 
   return (
-    <BottomSheetView style={styles.sheetContainer}>
+    <BottomSheetView style={[styles.sheetContainer, { paddingBottom: bottomInset || 8 }]}>
       <View style={styles.card}>
         <View style={styles.topRow}>
           <Pressable onPress={() => setShowHistoryModal(true)} style={styles.avatarFallback}>
@@ -339,7 +341,7 @@ export const FollowerBottomSheet = ({
       >
         <View style={styles.modalContainer}>
           {/* Header */}
-          <View style={styles.historyHeader}>
+          <View style={[styles.historyHeader, { paddingTop: topInset + 12 }]}>
             <Text style={styles.modalTitle}>
               {t.historyTitleWithName.replace("{{name}}", follower.name)}
             </Text>
@@ -701,7 +703,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 52,
     paddingBottom: 16,
     backgroundColor: "#fff",
     borderBottomWidth: 1,

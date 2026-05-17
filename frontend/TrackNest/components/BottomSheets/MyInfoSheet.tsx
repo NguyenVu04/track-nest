@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import React from "react";
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors, radii, spacing } from "@/styles/styles";
 
@@ -72,6 +73,7 @@ export default function MyInfoSheet({
   longitude,
   lastUpdatedText,
 }: MyInfoSheetProps) {
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const avatarLetter = title.trim().charAt(0).toUpperCase() || "M";
   const resolvedAddress = myAddress ?? resolvingAddressLabel;
   const speedValue = speedKmh != null ? `${speedKmh}` : notAvailableLabel;
@@ -98,7 +100,7 @@ export default function MyInfoSheet({
       bottomInset={tabBarHeight}
       containerStyle={containerStyle}
     >
-      <BottomSheetView style={styles.sheetContainer}>
+      <BottomSheetView style={[styles.sheetContainer, { paddingBottom: spacing.md + bottomInset }]}>
         <View style={styles.card}>
           <View style={styles.topRow}>
             <View style={styles.avatarFallback}>
