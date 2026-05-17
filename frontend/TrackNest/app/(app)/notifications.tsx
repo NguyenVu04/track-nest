@@ -1,9 +1,10 @@
 import { AppNotification, useNotifications } from "@/hooks/useNotifications";
+import { useNotificationContext } from "@/contexts/NotificationContext";
 import { colors, radii, spacing } from "@/styles/styles";
 import { formatTimeAgo } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -153,6 +154,7 @@ function StatsRow({ activeZones, networkStatus }: { activeZones: number; network
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { markAllRead } = useNotificationContext();
   const {
     trackingNotifications,
     riskNotifications,
@@ -164,6 +166,13 @@ export default function NotificationsScreen() {
     deleteTracking,
     deleteRisk,
   } = useNotifications();
+
+  // Reset the bell badge whenever this screen comes into focus.
+  useFocusEffect(
+    useCallback(() => {
+      markAllRead();
+    }, [markAllRead]),
+  );
 
   const [tabIndex, setTabIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);

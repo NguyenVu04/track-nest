@@ -3,6 +3,7 @@ import { DevModeProvider } from "@/contexts/DevModeContext";
 import { EmergencyProvider } from "@/contexts/EmergencyContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { MapProvider } from "@/contexts/MapContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { POIAnalyticsProvider } from "@/contexts/POIAnalyticsContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { ReportsProvider } from "@/contexts/ReportsContext";
@@ -24,6 +25,7 @@ export default function RootLayout() {
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
     <AuthProvider>
+      <NotificationProvider>
       <DevModeProvider>
         <LanguageProvider>
           <ProfileProvider>
@@ -43,6 +45,7 @@ export default function RootLayout() {
           </ProfileProvider>
         </LanguageProvider>
       </DevModeProvider>
+      </NotificationProvider>
     </AuthProvider>
     </TamaguiProvider>
   );

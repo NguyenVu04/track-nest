@@ -1,4 +1,9 @@
-import { FCM_TOKEN_KEY } from "@/constant";
+import {
+  CHAT_BADGE_CHANGED_EVENT,
+  CHAT_UNREAD_KEY,
+  FCM_TOKEN_KEY,
+} from "@/constant";
+import { useNotificationContext } from "@/contexts/NotificationContext";
 import { registerMobileDevice } from "@/services/notifier";
 import {
   configureNotificationHandler,
@@ -43,6 +48,7 @@ export function usePushNotifications(enabled: boolean = true) {
   const responseListener = useRef<Notifications.EventSubscription>(null);
   const tokenRefreshListener = useRef<Notifications.EventSubscription>(null);
   const router = useRouter();
+  const { refreshCount } = useNotificationContext();
 
   useEffect(() => {
     if (!enabled) return;
@@ -75,7 +81,9 @@ export function usePushNotifications(enabled: boolean = true) {
       if (!token) return;
       setFcmToken(token);
 
-      const cached = await AsyncStorage.getItem(FCM_TOKEN_KEY).catch(() => null);
+      const cached = await AsyncStorage.getItem(FCM_TOKEN_KEY).catch(
+        () => null,
+      );
       if (token === cached) return; // already registered with backend
 
       try {
@@ -95,13 +103,16 @@ export function usePushNotifications(enabled: boolean = true) {
     // Foreground FCM listener — chat suppressed (gRPC stream handles those).
     notificationListener.current =
       Notifications.addNotificationReceivedListener((_notification) => {
-        /* console.log("Notification received in foreground:", _notification) */;
+        /* console.log("Notification received in foreground:", _notification) */
       });
 
     // Notification tap / interaction listener (app backgrounded).
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data;
+
+        // Refresh the bell badge after the user taps any notification.
+        refreshCount().catch(() => {});
 
         if (data?.type && EMERGENCY_TYPES.includes(data.type as string)) {
           router.push("/(app)/sos");
@@ -129,6 +140,9 @@ export function usePushNotifications(enabled: boolean = true) {
       await AsyncStorage.setItem(LAST_HANDLED_NOTIF_KEY, notifId);
 
       const data = lastNotiResponse.notification.request.content.data;
+
+      // Reconcile badge count after killed-state launch.
+      refreshCount().catch(() => {});
 
       if (data?.type && EMERGENCY_TYPES.includes(data.type as string)) {
         router.push("/(app)/sos");
@@ -159,7 +173,7 @@ export function usePushNotifications(enabled: boolean = true) {
       responseListener.current?.remove();
       tokenRefreshListener.current?.remove();
     };
-  }, [enabled, router]);
+  }, [enabled, router, refreshCount]);
 
   return { fcmToken };
 }
