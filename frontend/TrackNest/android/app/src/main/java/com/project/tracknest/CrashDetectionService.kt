@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -45,7 +46,15 @@ class CrashDetectionService : Service(), SensorEventListener {
     cooldownMs = intent?.getLongExtra(EXTRA_COOLDOWN_MS, 15_000L) ?: 15_000L
     isDrivingMode = intent?.getBooleanExtra(EXTRA_DRIVING_MODE, false) ?: false
 
-    startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification())
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      startForeground(
+        FOREGROUND_NOTIFICATION_ID,
+        buildForegroundNotification(),
+        ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH,
+      )
+    } else {
+      startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification())
+    }
     startAccelerometerMonitoring()
 
     return START_STICKY
