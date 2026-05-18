@@ -1,6 +1,4 @@
 import {
-  CRASH_NOTIFICATION_COOLDOWN_MS,
-  DRIVING_CRASH_THRESHOLD,
   TRACKING_MODE_CHANGED_EVENT,
   TrackingMode,
 } from "@/constant";
@@ -40,17 +38,11 @@ export function useDrivingMode(): TrackingMode {
       const sub = emitter.addListener(
         TRACKING_MODE_CHANGED_EVENT,
         (newMode: string) => {
-          const typed = newMode as TrackingMode;
-          setMode(typed);
-          if (typed === "NAVIGATION") {
-            nativeCrashDetection?.start(
-              DRIVING_CRASH_THRESHOLD,
-              CRASH_NOTIFICATION_COOLDOWN_MS,
-              true,
-            );
-          } else {
-            nativeCrashDetection?.stop();
-          }
+          setMode(newMode as TrackingMode);
+          // NativeLocationService manages CrashDetectionService lifecycle
+          // directly from Kotlin (startDrivingCrashDetection / stopCrashDetection).
+          // Starting it here too would cause a double-start race that prevents
+          // CrashDetectionService from calling startForeground() in time.
         },
       );
 

@@ -50,7 +50,7 @@ class CrashDetectionService : Service(), SensorEventListener {
       startForeground(
         FOREGROUND_NOTIFICATION_ID,
         buildForegroundNotification(),
-        ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH,
+        ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
       )
     } else {
       startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification())
