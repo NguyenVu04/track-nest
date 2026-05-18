@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -65,6 +66,20 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                         Collectors.mapping(MobileDevice::getDeviceToken, Collectors.toList())));
 
         boolean anyDelivered = false;
+
+        List<String> targetTokens = mobileRepository.findAllByUserId(target.getId())
+                .stream()
+                .map(MobileDevice::getDeviceToken)
+                .toList();
+        if (!targetTokens.isEmpty()) {
+            int targetSent = fcmService.sendToTokensWithData(
+                    targetTokens,
+                    message.title(),
+                    message.content(),
+                    Map.of("type", message.type()));
+            if (targetSent > 0) anyDelivered = true;
+        }
+
         for (User member : familyMembers) {
             List<String> deviceTokens = tokensByMember.getOrDefault(member.getId(), List.of());
             int sent = fcmService.sendToTokensWithData(
@@ -110,14 +125,13 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
             return;
         }
 
-        List<MobileDevice> devices = mobileRepository
-                .findByTargetId(message.userId());
+        List<String> userTokens = mobileRepository.findAllByUserId(message.userId())
+                .stream().map(MobileDevice::getDeviceToken).toList();
+        List<String> familyTokens = mobileRepository.findByTargetId(message.userId())
+                .stream().map(MobileDevice::getDeviceToken).toList();
+        List<String> allTokens = Stream.concat(userTokens.stream(), familyTokens.stream()).toList();
 
-        List<String> deviceTokens = devices.stream()
-                .map(MobileDevice::getDeviceToken)
-                .toList();
-
-        int sent = fcmService.sendToTokens(deviceTokens, message.title(), message.content());
+        int sent = fcmService.sendToTokens(allTokens, message.title(), message.content());
 
         RiskNotification riskNotification = RiskNotification
                 .builder()
