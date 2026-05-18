@@ -25,7 +25,7 @@ public class MobileDevice {
 
     @NotBlank
     @Size(min = 1)
-    @Column(name = "device_token", nullable = false, updatable = false, columnDefinition = "TEXT")
+    @Column(name = "device_token", nullable = false, columnDefinition = "TEXT")
     private String deviceToken;
 
     @NotBlank

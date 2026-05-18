@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -58,6 +59,11 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                 .findAllUserFamilyMembers(target.getId());
 
         List<UUID> memberIds = familyMembers.stream().map(User::getId).toList();
+        if (memberIds.isEmpty()) {
+            log.warn("No family members found for target user {}. Skipping tracking notification.", target.getId());
+            return;
+        }
+
         Map<UUID, List<String>> tokensByMember = mobileRepository.findAllByUserIdIn(memberIds)
                 .stream()
                 .collect(Collectors.groupingBy(
@@ -110,12 +116,25 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
             return;
         }
 
-        List<MobileDevice> devices = mobileRepository
-                .findByTargetId(message.userId());
-
-        List<String> deviceTokens = devices.stream()
+        List<String> familyTokens = mobileRepository
+                .findByTargetId(message.userId())
+                .stream()
                 .map(MobileDevice::getDeviceToken)
                 .toList();
+
+        List<String> ownTokens = mobileRepository
+                .findAllByUserId(message.userId())
+                .stream()
+                .map(MobileDevice::getDeviceToken)
+                .toList();
+
+        List<String> deviceTokens = Stream.concat(familyTokens.stream(), ownTokens.stream())
+                .distinct()
+                .toList();
+
+        if (deviceTokens.isEmpty()) {
+            log.warn("No devices found for at-risk user {} or their family members. Skipping FCM delivery.", message.userId());
+        }
 
         int sent = fcmService.sendToTokens(deviceTokens, message.title(), message.content());
 

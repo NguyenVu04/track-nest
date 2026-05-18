@@ -5,6 +5,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.SendResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ public class FcmService {
             int failureCount = response.getFailureCount();
             if (failureCount > 0) {
                 log.warn("FCM multicast: {}/{} messages failed", failureCount, tokens.size());
+                logPerTokenFailures(tokens, response);
             }
             return response.getSuccessCount();
         } catch (FirebaseMessagingException e) {
@@ -77,11 +79,26 @@ public class FcmService {
             int failureCount = response.getFailureCount();
             if (failureCount > 0) {
                 log.warn("FCM multicast with data: {}/{} messages failed", failureCount, tokens.size());
+                logPerTokenFailures(tokens, response);
             }
             return response.getSuccessCount();
         } catch (FirebaseMessagingException e) {
             log.error("FCM multicast with data failed entirely for {} tokens: {}", tokens.size(), e.getMessage(), e);
             return -1;
+        }
+    }
+
+    private void logPerTokenFailures(List<String> tokens, BatchResponse response) {
+        List<SendResponse> responses = response.getResponses();
+        for (int i = 0; i < responses.size(); i++) {
+            SendResponse sr = responses.get(i);
+            if (!sr.isSuccessful()) {
+                String token = tokens.get(i);
+                String errorCode = sr.getException() != null
+                        ? sr.getException().getErrorCode().name()
+                        : "UNKNOWN";
+                log.warn("FCM delivery failed for token ...{}: errorCode={}", token.substring(Math.max(0, token.length() - 8)), errorCode);
+            }
         }
     }
 }
