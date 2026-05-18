@@ -20,7 +20,7 @@ npm run cypress:run           # headless
 npm run cypress:run:headless  # headless Chrome
 ```
 
-> Package manager is **pnpm** (`packageManager: pnpm@10.32.0` in package.json). Use `pnpm` for installs, `npm run` for scripts.
+> Package manager is **npm**. Use `npm install <pkg>` for installs and `npm run <script>` for scripts. (The `packageManager` field in package.json references pnpm but is not used.)
 
 ## Stack
 

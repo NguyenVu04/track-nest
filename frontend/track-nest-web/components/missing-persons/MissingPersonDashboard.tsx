@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Search } from "lucide-react";
+import { LottieLoader } from "@/components/loading/LottieLoader";
 import type { MissingPerson, UserRole } from "@/types";
 import { MissingPersonList } from "./MissingPersonList";
 import { MissingPersonDetail } from "./MissingPersonDetail";
@@ -132,9 +133,9 @@ export function MissingPersonDashboard({ user }: MissingPersonDashboardProps) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 space-y-4">
-        <div className="w-12 h-12 border-4 border-brand-100 border-t-brand-600 rounded-full animate-spin" />
-        <p className="text-gray-400 font-bold animate-pulse">Loading reports...</p>
+      <div className="flex flex-col items-center justify-center py-16 space-y-2">
+        <LottieLoader size={120} />
+        <p className="text-slate-400 text-sm">Loading reports...</p>
       </div>
     );
   }

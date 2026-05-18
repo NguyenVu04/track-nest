@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Radar, ArrowRight, ShieldCheck, MapPin, Users } from "lucide-react";
+import { Radar, ArrowRight, ShieldCheck, MapPin, Users } from "lucide-react";
 import { authService } from "@/services/authService";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { LottieLoader } from "@/components/loading/LottieLoader";
 
 function LoginContentInner() {
   const [isLoading, setIsLoading] = useState(true);
@@ -42,8 +43,8 @@ function LoginContentInner() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 p-10 bg-white rounded-2xl shadow-xl w-full max-w-sm">
-        <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+      <div className="flex flex-col items-center justify-center gap-2 p-10 bg-white rounded-2xl shadow-xl w-full max-w-sm">
+        <LottieLoader size={120} />
         <p className="text-sm text-slate-500">{t("initialisingSession")}</p>
       </div>
     );
@@ -108,8 +109,8 @@ export function LoginContent() {
       <div className="relative z-10 w-full max-w-sm">
         <Suspense
           fallback={
-            <div className="flex flex-col items-center justify-center gap-4 p-10 bg-white rounded-2xl shadow-xl">
-              <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+            <div className="flex flex-col items-center justify-center gap-2 p-10 bg-white rounded-2xl shadow-xl">
+              <LottieLoader size={120} />
             </div>
           }
         >

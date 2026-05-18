@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Search, BarChart3 } from "lucide-react";
+import { LottieLoader } from "@/components/loading/LottieLoader";
 import type { CrimeReport, UserRole } from "@/types";
 import {
   criminalReportsService,
@@ -213,8 +214,8 @@ export function CrimeDashboard({ user }: CrimeDashboardProps) {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="flex justify-center py-8">
+          <LottieLoader size={100} />
         </div>
       ) : (
         <CrimeReportList
