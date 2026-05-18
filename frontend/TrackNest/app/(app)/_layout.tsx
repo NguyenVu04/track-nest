@@ -2,6 +2,7 @@ import { settings as settingsLang } from "@/constant/languages";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useChatStream } from "@/hooks/useChatStream";
+import { useLocationNotification } from "@/hooks/useLocationNotification";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useVoiceSosActivation } from "@/hooks/useVoiceSosActivation";
@@ -31,6 +32,7 @@ export default function AppLayout() {
   usePushNotifications(isAuthenticated);
   useChatStream(isAuthenticated);
   useVoiceSosActivation((isAuthenticated || __DEV__) && voiceSettings.enabled);
+  useLocationNotification();
 
   useEffect(() => {
     if (!isGuestMode || isAuthenticated || isLoading) {

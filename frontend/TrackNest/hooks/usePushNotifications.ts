@@ -78,6 +78,7 @@ export function usePushNotifications(enabled: boolean = true) {
 
     // Full path: request a fresh token, compare with cache, register if changed.
     registerForPushNotificationsAsync().then(async (token) => {
+      console.log("Obtained FCM token:", token);
       if (!token) return;
       setFcmToken(token);
 

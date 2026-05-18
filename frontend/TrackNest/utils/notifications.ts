@@ -1,4 +1,4 @@
-import { CHAT_NOTIFICATION_CHANNEL_ID, LOCATION_UPLOAD_CHANNEL_ID } from "@/constant";
+import { CHAT_NOTIFICATION_CHANNEL_ID, LOCATION_UPDATE_CHANNEL_ID, LOCATION_UPLOAD_CHANNEL_ID } from "@/constant";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
@@ -149,6 +149,54 @@ export async function setupUploadNotificationChannel(): Promise<void> {
         sound: undefined,
       },
     );
+  }
+}
+
+/**
+ * Creates the Android notification channel used for per-update location
+ * confirmation notifications. LOW importance means no sound and no heads-up.
+ */
+export async function setupLocationUpdateNotificationChannel(): Promise<void> {
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync(LOCATION_UPDATE_CHANNEL_ID, {
+      name: "Location Updates",
+      description: "Shown each time your device location is recorded",
+      importance: Notifications.AndroidImportance.LOW,
+      vibrationPattern: [0],
+      enableVibrate: false,
+      sound: undefined,
+    });
+  }
+}
+
+/**
+ * Schedules an immediate local notification confirming a location update,
+ * then auto-dismisses it after `durationMs` milliseconds (default 4 s).
+ */
+export async function scheduleLocationUpdateNotification(
+  latitude: number,
+  longitude: number,
+  speed?: number | null,
+  durationMs = 4000,
+): Promise<void> {
+  const speedSuffix =
+    speed != null && speed > 0
+      ? ` · ${Math.round(speed * 3.6)} km/h`
+      : "";
+  try {
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Location Updated",
+        body: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}${speedSuffix}`,
+        ...(Platform.OS === "android" && { channelId: LOCATION_UPDATE_CHANNEL_ID }),
+      },
+      trigger: null,
+    });
+    setTimeout(() => {
+      Notifications.dismissNotificationAsync(id).catch(() => {});
+    }, durationMs);
+  } catch (err) {
+    console.warn("Failed to schedule location update notification:", err);
   }
 }
 

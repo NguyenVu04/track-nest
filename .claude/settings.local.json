@@ -52,7 +52,9 @@
       "Bash(rtk git *)",
       "Bash(./gradlew test *)",
       "Bash(rtk tsc *)",
-      "Bash(rtk npx *)"
+      "Bash(rtk npx *)",
+      "Bash(git -C /d/track-nest ls-files --error-unmatch \"frontend/track-nest-web/assets/hummingbird 1.json\")",
+      "Bash(git -C /d/track-nest ls-files --error-unmatch \"frontend/track-nest-web/assets/404 Error Animation.json\")"
     ]
   },
   "hooks": {

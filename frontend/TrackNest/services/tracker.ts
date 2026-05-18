@@ -46,7 +46,7 @@ export const streamFamilyMemberLocations = async (
   });
 
   stream.on("error", (err: Error) => {
-    console.error("Stream error:", err);
+    console.error("Stream error service:", err);
     onError?.(err);
   });
 

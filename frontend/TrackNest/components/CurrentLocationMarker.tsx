@@ -121,7 +121,7 @@ function CurrentLocationMarker({
     opacity.setValue(0.6);
 
     // Emergency mode pulses twice as fast to signal urgency.
-    const duration = isEmergency ? 600 : 1200;
+    const duration = isEmergency ? 2000 : 1200;
 
     animRef.current = Animated.loop(
       Animated.parallel([
@@ -190,7 +190,14 @@ function CurrentLocationMarker({
               { transform: [{ rotate: `${heading}deg` }] },
             ]}
           >
-            <View style={localStyles.arrowHead} />
+            <View
+              style={[
+                localStyles.arrowHead,
+                {
+                  borderBottomColor: innerColor
+                },
+              ]}
+            />
           </View>
         )}
         <View style={[localStyles.dotOuter, { borderColor: outerBorder }]}>
@@ -208,7 +215,7 @@ function CurrentLocationMarker({
           </View>
         )}
         {hasSpeedData && (
-          <View style={localStyles.speedContainer}>
+          <View style={[localStyles.speedContainer, { backgroundColor: innerColor }]}>
             <Text style={localStyles.speedText}>{`${speedKmh} km/h`}</Text>
           </View>
         )}

@@ -10,7 +10,10 @@ import {
 } from "@/constant";
 import { uploadPendingLocations } from "@/services/locationUpload";
 import { processBatchLocations } from "@/utils";
-import { scheduleAutoDisappearNotification } from "@/utils/notifications";
+import {
+  scheduleAutoDisappearNotification,
+  scheduleLocationUpdateNotification,
+} from "@/utils/notifications";
 import { subscribeToActivityChanges, getCurrentActivity } from "@/utils/activityDetection";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as BackgroundTask from "expo-background-task";
@@ -60,9 +63,10 @@ TaskManager.defineTask(
         /* console.log(
           `Location processed for upload (queue size: ${queueSize}).`,
         ) */;
-        await scheduleAutoDisappearNotification(
-          "Location Recorded",
-          `Position saved · ${queueSize} update(s) pending upload.`,
+        await scheduleLocationUpdateNotification(
+          latest.latitude,
+          latest.longitude,
+          latest.speed,
         );
         return BackgroundTask.BackgroundTaskResult.Success;
       } catch (err: any) {

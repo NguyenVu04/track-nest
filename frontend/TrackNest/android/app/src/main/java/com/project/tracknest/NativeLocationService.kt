@@ -7,6 +7,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
@@ -231,7 +232,15 @@ class NativeLocationService : Service() {
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-    startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification())
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      startForeground(
+        FOREGROUND_NOTIFICATION_ID,
+        buildForegroundNotification(),
+        ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
+      )
+    } else {
+      startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification())
+    }
     startLocationUpdates(TrackingMode.NORMAL)
     return START_STICKY
   }

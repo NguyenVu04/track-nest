@@ -1,7 +1,10 @@
 import { BACKGROUND_LOCATION_UPLOAD_TASK_NAME, BACKGROUND_NOTIFICATION_TASK_NAME } from "@/constant";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerBackgroundTaskAsync } from "@/utils";
-import { setupUploadNotificationChannel } from "@/utils/notifications";
+import {
+  setupLocationUpdateNotificationChannel,
+  setupUploadNotificationChannel,
+} from "@/utils/notifications";
 import { hasCompletedIntroWalkthrough } from "@/utils/walkthrough";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
@@ -69,6 +72,9 @@ export default function Index() {
     );
     setupUploadNotificationChannel().catch((err) =>
       console.warn("Failed to set up upload notification channel:", err),
+    );
+    setupLocationUpdateNotificationChannel().catch((err) =>
+      console.warn("Failed to set up location update notification channel:", err),
     );
   }, [hasCompletedIntro, isIntroStateLoading]);
 
