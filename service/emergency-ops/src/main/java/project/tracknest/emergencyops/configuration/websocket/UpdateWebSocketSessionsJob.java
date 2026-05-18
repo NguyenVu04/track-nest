@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
-import org.springframework.messaging.simp.user.SimpSession;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Component;
 import project.tracknest.emergencyops.configuration.common.ServerIdProvider;
@@ -23,18 +22,17 @@ public class UpdateWebSocketSessionsJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) {
-        Set<String> sessionIds = simpUserRegistry.getUsers().stream()
-                .flatMap(user -> user.getSessions().stream())
-                .map(SimpSession::getId)
+        Set<String> userIds = simpUserRegistry.getUsers().stream()
+                .map(user -> user.getName())
                 .collect(Collectors.toSet());
 
-        for (String sessionId : sessionIds) {
+        for (String userId : userIds) {
             try {
-                WebSocketSession session = sessionService.getSession(UUID.fromString(sessionId));
+                WebSocketSession session = sessionService.getSession(UUID.fromString(userId));
                 session.serverIds().add(serverIdProvider.getServerId());
                 sessionService.updateSession(session);
             } catch (Exception e) {
-                log.error("Failed to update WebSocket session {}: {}", sessionId, e.getMessage());
+                log.error("Failed to update WebSocket session for user {}: {}", userId, e.getMessage());
             }
         }
 
