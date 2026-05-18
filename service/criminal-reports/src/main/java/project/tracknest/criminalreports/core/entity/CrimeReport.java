@@ -79,6 +79,9 @@ public class CrimeReport {
     @Column(name = "photo_url")
     private List<String> photos = new ArrayList<>();
 
+    @Column(name = "submitted_by_user", nullable = false, updatable = false)
+    private boolean submittedByUser;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reporter_id", nullable = false, updatable = false)
     private Reporter reporter;

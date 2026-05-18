@@ -304,7 +304,7 @@ export default function EmergencyRequestsPage() {
                   </tr>
                 ) : (
                   filteredRequests.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50/50 transition-colors group cursor-pointer" onClick={() => navigateToRequestDetail(request)}>
+                    <tr key={request.id} data-request-id={request.id} className="hover:bg-gray-50/50 transition-colors group cursor-pointer" onClick={() => navigateToRequestDetail(request)}>
                       <td className="px-8 py-4">
                         <div className="flex items-center gap-3">
                            <div className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-inner">
@@ -347,16 +347,16 @@ export default function EmergencyRequestsPage() {
                              </DropdownMenuItem>
                              {request.status === "PENDING" && user.role.includes("Emergency Service") && (
                                <>
-                                 <DropdownMenuItem onClick={() => handleAccept(request)} className="rounded-lg cursor-pointer font-medium text-green-700 focus:bg-green-50 focus:text-green-800">
+                                 <DropdownMenuItem title={t("accept")} onClick={() => handleAccept(request)} className="rounded-lg cursor-pointer font-medium text-green-700 focus:bg-green-50 focus:text-green-800">
                                    <CheckCircle className="w-4 h-4 mr-2" /> Accept
                                  </DropdownMenuItem>
-                                 <DropdownMenuItem onClick={() => setRejecting(request)} className="rounded-lg cursor-pointer font-medium text-red-700 focus:bg-red-50 focus:text-red-800">
+                                 <DropdownMenuItem title={t("reject")} onClick={() => setRejecting(request)} className="rounded-lg cursor-pointer font-medium text-red-700 focus:bg-red-50 focus:text-red-800">
                                    <XCircle className="w-4 h-4 mr-2" /> Reject
                                  </DropdownMenuItem>
                                </>
                              )}
                              {request.status === "ACCEPTED" && user.role.includes("Emergency Service") && (
-                                <DropdownMenuItem onClick={() => setCompleting(request)} className="rounded-lg cursor-pointer font-medium text-blue-700 focus:bg-blue-50 focus:text-blue-800">
+                                <DropdownMenuItem title={t("close")} onClick={() => setCompleting(request)} className="rounded-lg cursor-pointer font-medium text-blue-700 focus:bg-blue-50 focus:text-blue-800">
                                    <ClipboardCheck className="w-4 h-4 mr-2" /> Resolve
                                 </DropdownMenuItem>
                              )}

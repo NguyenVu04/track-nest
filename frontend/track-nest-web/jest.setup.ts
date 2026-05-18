@@ -47,6 +47,20 @@ jest.mock("sonner", () => ({
   Toaster: () => null,
 }));
 
+// ── NotificationContext ────────────────────────────────────────────────────
+// Many dashboard pages render realtime-context providers that call
+// useNotification(). Mock globally so tests don't need a NotificationProvider.
+jest.mock("@/contexts/NotificationContext", () => ({
+  useNotification: () => ({
+    notifications: [],
+    addNotification: jest.fn(),
+    removeNotification: jest.fn(),
+    clearNotifications: jest.fn(),
+    markAsRead: jest.fn(),
+  }),
+  NotificationProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 // ── framer-motion: render plain elements, no animation runtime ────────────
 jest.mock("framer-motion", () => {
   const React = jest.requireActual("react") as typeof import("react");

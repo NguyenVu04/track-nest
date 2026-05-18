@@ -264,8 +264,8 @@ describe("MissingPersonsPage — loaded state", () => {
 
   it("navigates to create page when New Report clicked", async () => {
     render(<MissingPersonsListPage />);
-    await waitFor(() => screen.getByText("newReport"));
-    fireEvent.click(screen.getByText("newReport"));
+    await waitFor(() => screen.getByText("Create New Report"));
+    fireEvent.click(screen.getByText("Create New Report"));
     expect(mockPush).toHaveBeenCalledWith("/dashboard/missing-persons/create");
   });
 

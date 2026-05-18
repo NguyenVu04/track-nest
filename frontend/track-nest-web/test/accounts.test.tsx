@@ -112,7 +112,7 @@ describe("AccountsPage — authenticated", () => {
   it("renders Account Management heading", () => {
     const Page = AccountsPage;
     render(<Page />);
-    expect(screen.getByText("Account Management")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Account Management" })).toBeInTheDocument();
   });
 
   it("renders 0 total accounts initially", () => {

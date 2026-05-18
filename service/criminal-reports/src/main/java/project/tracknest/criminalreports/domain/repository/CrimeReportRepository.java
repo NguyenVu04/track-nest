@@ -22,6 +22,9 @@ public interface CrimeReportRepository extends JpaRepository<CrimeReport, UUID> 
     
     @Query("SELECT c FROM CrimeReport c WHERE c.reporter.id = :reporterId AND c.id = :id")
     Optional<CrimeReport> findByReporterIdAndId(@Param("reporterId") UUID reporterId, @Param("id") UUID id);
+
+    @Query("SELECT c FROM CrimeReport c WHERE (c.reporter.id = :reporterId OR c.submittedByUser = true) AND c.id = :id")
+    Optional<CrimeReport> findByReporterIdOrUserSubmittedAndId(@Param("reporterId") UUID reporterId, @Param("id") UUID id);
     
     @Query("SELECT c FROM CrimeReport c WHERE c.isPublic = true")
     Page<CrimeReport> findAllPublic(Pageable pageable);
@@ -39,7 +42,7 @@ public interface CrimeReportRepository extends JpaRepository<CrimeReport, UUID> 
     Page<CrimeReport> findByReporterIdAndIsPublic(@Param("reporterId") UUID reporterId, @Param("isPublic") boolean isPublic, Pageable pageable);
 
     @Query("SELECT c FROM CrimeReport c WHERE " +
-           "(:reporterId IS NULL OR c.reporter.id = :reporterId) AND " +
+           "(:reporterId IS NULL OR c.reporter.id = :reporterId OR c.submittedByUser = true) AND " +
            "(:isPublic = false OR c.isPublic = true) AND " +
            "(:minSeverity IS NULL OR c.severity >= :minSeverity) AND " +
            "(:maxSeverity IS NULL OR c.severity <= :maxSeverity) AND " +

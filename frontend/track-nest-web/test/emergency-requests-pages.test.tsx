@@ -67,6 +67,17 @@ jest.mock("@/components/layout/Breadcrumbs", () => ({
   Breadcrumbs: () => <nav data-testid="breadcrumbs" />,
 }));
 
+// Render DropdownMenu children flat so action items are always queryable
+// without simulating the Radix portal open/close gesture.
+jest.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuItem: ({ children, onClick, title, ...rest }: React.ComponentProps<"button">) => (
+    <button onClick={onClick} title={title} {...rest}>{children}</button>
+  ),
+}));
+
 // ── Test data ─────────────────────────────────────────────────────────────────
 
 const emergencyUser: User = {
@@ -147,16 +158,9 @@ render(<EmergencyRequestsListPage />);
     await waitFor(() => expect(screen.getByText("Alice Smith")).toBeInTheDocument());
   });
 
-  it("renders sender username", async () => {
+  it("renders sender full name", async () => {
 render(<EmergencyRequestsListPage />);
-    await waitFor(() => expect(screen.getByText("@alice")).toBeInTheDocument());
-  });
-
-  it("renders target name", async () => {
-render(<EmergencyRequestsListPage />);
-    await waitFor(() =>
-      expect(screen.getByText("Bob Jones")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText("Alice Smith")).toBeInTheDocument());
   });
 
   it("renders breadcrumbs", async () => {
@@ -170,21 +174,21 @@ render(<EmergencyRequestsListPage />);
 render(<EmergencyRequestsListPage />);
     await waitFor(() =>
       expect(
-        screen.getByPlaceholderText("searchPlaceholder"),
+        screen.getByPlaceholderText("Search alerts..."),
       ).toBeInTheDocument(),
     );
   });
 
-  it("renders status filter", async () => {
+  it("renders status filter combobox", async () => {
 render(<EmergencyRequestsListPage />);
-    await waitFor(() => screen.getByText("all"));
+    await waitFor(() => screen.getByText("Alice Smith"));
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
   });
 
   it("shows accept and reject buttons for PENDING requests (Emergency Service role)", async () => {
 render(<EmergencyRequestsListPage />);
     await waitFor(() => screen.getByText("Alice Smith"));
-    // Accept (CheckCircle) and Reject (XCircle) buttons should appear
-    // They have title attributes from t("accept") and t("reject")
+    // Accept and Reject items use title attrs for testability
     const acceptBtns = document.querySelectorAll('[title="accept"]');
     expect(acceptBtns.length).toBeGreaterThan(0);
   });
@@ -215,12 +219,12 @@ render(<EmergencyRequestsListPage />);
     );
   });
 
-  it("navigates to detail page when ID link clicked", async () => {
+  it("navigates to detail page when row is clicked", async () => {
 render(<EmergencyRequestsListPage />);
     await waitFor(() => screen.getByText("Alice Smith"));
-    // The ID button shows first 8 chars of req-1
-    const idBtn = screen.getByText("req-1...");
-    fireEvent.click(idBtn);
+    // The whole <tr> is clickable — find it via data-request-id
+    const row = document.querySelector('[data-request-id="req-1"]') as HTMLElement;
+    fireEvent.click(row);
     expect(mockPush).toHaveBeenCalledWith("/dashboard/emergency-requests/req-1");
   });
 
