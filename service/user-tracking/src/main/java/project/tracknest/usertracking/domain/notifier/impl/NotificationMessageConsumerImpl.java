@@ -81,7 +81,7 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                     targetTokens,
                     message.title(),
                     message.content(),
-                    Map.of("type", message.type()));
+                    Map.of("type", message.type(), "route", "/(app)/sos"));
             if (targetSent > 0) anyDelivered = true;
         }
 
@@ -91,7 +91,7 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                     deviceTokens,
                     message.title(),
                     message.content(),
-                    Map.of("type", message.type()));
+                    Map.of("type", message.type(), "route", "/(app)/sos"));
             if (sent > 0) anyDelivered = true;
 
             TrackerTrackingNotification.TrackerTrackingNotificationId trackerTrackingNotificationId =
@@ -150,7 +150,11 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
             log.warn("No devices found for at-risk user {} or their family members. Skipping FCM delivery.", message.userId());
         }
 
-        int sent = fcmService.sendToTokens(deviceTokens, message.title(), message.content());
+        int sent = fcmService.sendToTokensWithData(
+                deviceTokens,
+                message.title(),
+                message.content(),
+                Map.of("type", message.type(), "route", "/(app)/notifications"));
 
         RiskNotification riskNotification = RiskNotification
                 .builder()
