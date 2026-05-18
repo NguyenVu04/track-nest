@@ -67,7 +67,7 @@ function TrackingNotificationCard({
   return (
     <View style={[styles.notifCard, unread && styles.notifCardUnread]}>
       {/* Unread indicator strip */}
-      {unread && <View style={styles.unreadStrip} />}
+      {/* {unread && <View style={styles.unreadStrip} />} */}
 
       <View style={[styles.notifIconCircle, { backgroundColor: colors.primary + "20" }]}>
         <Ionicons name={icon} size={20} color={colors.primary} />
@@ -82,11 +82,11 @@ function TrackingNotificationCard({
             {item.title}
           </Text>
           <View style={styles.notifRightMeta}>
-            {unread && (
+            {/* {unread && (
               <View style={styles.newBadge}>
                 <Text style={styles.newBadgeText}>{newBadgeLabel}</Text>
               </View>
-            )}
+            )} */}
             <Text style={styles.notifTime}>{formatTimeAgo(item.createdAtMs)}</Text>
           </View>
         </View>
