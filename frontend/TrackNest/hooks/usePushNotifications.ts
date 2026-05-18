@@ -83,8 +83,16 @@ export function usePushNotifications(enabled: boolean = true) {
     // 4. Killed-state launch: app was opened by tapping a notification.
     // addNotificationResponseReceivedListener does not fire in this case,
     // so we check the last stored response once on mount.
-    Notifications.getLastNotificationResponseAsync().then((response) => {
+    // We track the handled notification ID in AsyncStorage to avoid re-routing
+    // on subsequent app opens.
+    const LAST_HANDLED_NOTIF_KEY = "last_handled_notification_id";
+    Notifications.getLastNotificationResponseAsync().then(async (response) => {
       if (!response) return;
+      const notifId = response.notification.request.identifier;
+      const lastHandled = await AsyncStorage.getItem(LAST_HANDLED_NOTIF_KEY);
+      if (lastHandled === notifId) return;
+      await AsyncStorage.setItem(LAST_HANDLED_NOTIF_KEY, notifId);
+
       const data = response.notification.request.content.data;
 
       if (data?.type && EMERGENCY_TYPES.includes(data.type as string)) {
