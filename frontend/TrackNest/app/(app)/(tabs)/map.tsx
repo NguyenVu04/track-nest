@@ -45,6 +45,7 @@ import { OPEN_GENERAL_INFO_SHEET_EVENT } from "@/constant";
 import { map as mapLang } from "@/constant/languages";
 import { getMockFollowersForCircle } from "@/constant/mockFamilyCircles";
 import { FamilyCircle, Follower, SafeZone } from "@/constant/types";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEmergency } from "@/contexts/EmergencyContext";
 import { useMapContext } from "@/contexts/MapContext";
 import { usePOIAnalytics } from "@/contexts/POIAnalyticsContext";
@@ -168,7 +169,8 @@ function MapScreenContent() {
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const { mapType, setMapType } = useMapContext();
   const { tracking, shareLocation } = useTracking();
-  const { activeEmergency } = useEmergency();
+  const { user } = useAuth();
+  const { isEmergencyActive, refreshActiveEmergencyStatus } = useEmergency();
   const { crimeHeatmapPoints, loadCrimeHeatmap } =
     usePOIAnalytics();
   const { circles, selectedCircle, selectCircle, refreshCircles } =
@@ -222,6 +224,16 @@ function MapScreenContent() {
         familyCircleSheetRef.current?.dismiss();
       };
     }, [])
+  );
+
+  // Check whether the user currently has an active emergency each time the
+  // map screen comes into focus (including the return from the SOS screen).
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.sub) {
+        refreshActiveEmergencyStatus(user.sub);
+      }
+    }, [user?.sub, refreshActiveEmergencyStatus]),
   );
 
   useEffect(() => {
@@ -752,7 +764,7 @@ function MapScreenContent() {
               longitude={location.longitude}
               speed={location.speed}
               disabled={!tracking}
-              isEmergency={!!activeEmergency}
+              isEmergency={isEmergencyActive}
               handlePress={handleMyInfoModalPress}
             />
           ) : null}

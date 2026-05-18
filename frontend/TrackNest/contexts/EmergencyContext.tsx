@@ -8,7 +8,6 @@ import React, {
 } from "react";
 import { NativeModules } from "react-native";
 import type {
-  EmergencyRequest,
   PostEmergencyRequestResponse,
   SafeZone,
   CreateEmergencyRequestData,
@@ -19,11 +18,14 @@ import * as Location from "expo-location";
 const { NativeLocationModule } = NativeModules;
 
 interface EmergencyContextType {
-  activeEmergency: EmergencyRequest | null;
-  /** Set the active emergency and switch native location to NAVIGATION (5 s) mode. */
-  setActiveEmergency: (req: EmergencyRequest | null) => void;
-  /** Fetch the most recent PENDING or ACCEPTED emergency from the backend. */
-  fetchActiveEmergency: () => Promise<void>;
+  /** True when the current user has a PENDING or ACCEPTED emergency request. */
+  isEmergencyActive: boolean;
+  /**
+   * Re-evaluate whether the user has an active emergency by calling
+   * GET /emergency-request-receiver/user/{userId}/emergency-request-allowed.
+   * Call this whenever the map screen gains focus.
+   */
+  refreshActiveEmergencyStatus: (userId: string) => Promise<void>;
   createEmergencyRequest: (targetId: string) => Promise<PostEmergencyRequestResponse>;
   getNearestSafeZones: (location?: { lat: number; lng: number }) => Promise<SafeZone[]>;
 }
@@ -43,32 +45,42 @@ interface EmergencyProviderProps {
 }
 
 export const EmergencyProvider: React.FC<EmergencyProviderProps> = ({ children }) => {
-  const [activeEmergency, _setActiveEmergency] = useState<EmergencyRequest | null>(null);
+  const [isEmergencyActive, setIsEmergencyActive] = useState(false);
 
-  // Wrap the setter so it also tells the native location service to switch
-  // to NAVIGATION mode (5-second updates) for the duration of the emergency.
-  const setActiveEmergency = useCallback((req: EmergencyRequest | null) => {
-    _setActiveEmergency(req);
+  // Sync the native location-service tracking mode whenever emergency state changes.
+  // Wrapped in its own effect so we never call the native module from inside an
+  // async callback where errors would be harder to isolate.
+  useEffect(() => {
     try {
-      NativeLocationModule?.forceTrackingMode(req ? "NAVIGATION" : "NORMAL");
+      if (
+        NativeLocationModule &&
+        typeof NativeLocationModule.forceTrackingMode === "function"
+      ) {
+        NativeLocationModule.forceTrackingMode(
+          isEmergencyActive ? "NAVIGATION" : "NORMAL",
+        );
+      }
     } catch {
       // Native module may not be available in Expo Go / unit tests.
     }
-  }, []);
+  }, [isEmergencyActive]);
 
-  // Restore active emergency from the backend after an app restart.
-  const fetchActiveEmergency = useCallback(async () => {
-    try {
-      const page = await emergencyService.getMyEmergencyRequests(0, 10);
-      const active =
-        page.items.find(
-          (r) => r.statusName === "PENDING" || r.statusName === "ACCEPTED",
-        ) ?? null;
-      setActiveEmergency(active);
-    } catch {
-      // Silently ignore — no network at boot is fine, we just start with null.
-    }
-  }, [setActiveEmergency]);
+  /**
+   * Ask the backend whether the user is allowed to create a new emergency
+   * request. allowed=false  →  an active (PENDING/ACCEPTED) request exists.
+   */
+  const refreshActiveEmergencyStatus = useCallback(
+    async (userId: string): Promise<void> => {
+      if (!userId) return;
+      try {
+        const result = await emergencyService.checkEmergencyRequestAllowed(userId);
+        setIsEmergencyActive(!result.allowed);
+      } catch {
+        // Silently ignore — network unavailable on boot or background is fine.
+      }
+    },
+    [],
+  );
 
   const createEmergencyRequest = useCallback(
     async (targetId: string): Promise<PostEmergencyRequestResponse> => {
@@ -85,17 +97,9 @@ export const EmergencyProvider: React.FC<EmergencyProviderProps> = ({ children }
 
         const result = await emergencyService.createEmergencyRequest(requestData);
 
-        // Mark this request as active so the map marker updates immediately.
-        setActiveEmergency({
-          id: result.id,
-          openAt: new Date().toISOString(),
-          senderId: targetId,
-          targetId,
-          emergencyServiceId: "",
-          statusName: "PENDING",
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        });
+        // Optimistically mark emergency as active so the marker updates
+        // immediately, before the next useFocusEffect refresh fires.
+        setIsEmergencyActive(true);
 
         return result;
       } catch (error) {
@@ -103,7 +107,7 @@ export const EmergencyProvider: React.FC<EmergencyProviderProps> = ({ children }
         throw error;
       }
     },
-    [setActiveEmergency],
+    [],
   );
 
   const getNearestSafeZones = useCallback(
@@ -121,8 +125,7 @@ export const EmergencyProvider: React.FC<EmergencyProviderProps> = ({ children }
           };
         }
 
-        const safeZones = await emergencyService.getNearestSafeZones(queryLocation);
-        return safeZones;
+        return await emergencyService.getNearestSafeZones(queryLocation);
       } catch (error) {
         console.error("Failed to fetch nearest safe zones:", error);
         return [];
@@ -131,15 +134,9 @@ export const EmergencyProvider: React.FC<EmergencyProviderProps> = ({ children }
     [],
   );
 
-  // On mount, restore any emergency that was active in a previous session.
-  useEffect(() => {
-    fetchActiveEmergency();
-  }, [fetchActiveEmergency]);
-
   const contextValue: EmergencyContextType = {
-    activeEmergency,
-    setActiveEmergency,
-    fetchActiveEmergency,
+    isEmergencyActive,
+    refreshActiveEmergencyStatus,
     createEmergencyRequest,
     getNearestSafeZones,
   };
