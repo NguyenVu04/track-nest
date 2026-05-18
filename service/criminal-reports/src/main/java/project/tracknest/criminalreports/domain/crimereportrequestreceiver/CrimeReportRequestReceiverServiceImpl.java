@@ -62,6 +62,7 @@ class CrimeReportRequestReceiverServiceImpl implements CrimeReportRequestReceive
                 .photos(photos)
                 .reporter(reporter)
                 .isPublic(false)
+                .submittedByUser(true)
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .build();
