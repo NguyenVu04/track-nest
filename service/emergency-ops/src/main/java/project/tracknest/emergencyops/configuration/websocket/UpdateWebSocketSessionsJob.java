@@ -37,6 +37,6 @@ public class UpdateWebSocketSessionsJob implements Job {
         }
 
         log.info("Updated WebSocket sessions for {} connected users on server {}",
-                sessionIds.size(), serverIdProvider.getServerId());
+                userIds.size(), serverIdProvider.getServerId());
     }
 }
