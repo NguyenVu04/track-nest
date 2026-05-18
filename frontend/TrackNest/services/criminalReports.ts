@@ -586,6 +586,15 @@ class CriminalReportsService {
     return response.data;
   }
 
+  async getGuidelinesContent(documentId: string): Promise<string> {
+    const client = await this.getApiClient();
+    const response = await client.get<string>(
+      `/report-viewer/guidelines/${documentId}/content`,
+      { responseType: "text" },
+    );
+    return response.data;
+  }
+
   async getMissingPersonPhotoUrl(reportId: string): Promise<string> {
     if (!this.baseUrl) {
       this.baseUrl = await getCriminalUrl();

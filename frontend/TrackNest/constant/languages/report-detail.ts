@@ -40,6 +40,9 @@ export const Vietnamese = {
   private: "Riêng tư",
   visibility: "Phạm vi hiển thị",
   viewDocument: "Xem tài liệu",
+  contentLoadFailed: "Không thể tải nội dung báo cáo",
+  errorLoad: "Không thể tải báo cáo",
+  retry: "Thử lại",
 };
 
 export const English = {
@@ -84,4 +87,7 @@ export const English = {
   private: "Private",
   visibility: "Visibility",
   viewDocument: "View Document",
+  contentLoadFailed: "Could not load report content",
+  errorLoad: "Could not load report",
+  retry: "Retry",
 };

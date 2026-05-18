@@ -88,6 +88,7 @@ message UserLocation {
    float accuracy_meter = 3;
    float velocity_mps = 4;
    uint64 timestamp_ms = 5;
+   uint64 time_spent_ms = 6;
 }
 
 message UpdateUserLocationRequest {

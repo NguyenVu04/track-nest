@@ -32,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/components/ui/utils";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
 const DEFAULT_CENTER: [number, number] = [10.8231, 106.6297];
 
@@ -154,6 +155,7 @@ export default function SafeZonesPage() {
 
   return (
     <div className="space-y-8 pb-12">
+      <Breadcrumbs items={[{ label: "Safe Zone Management" }]} />
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="max-w-2xl">

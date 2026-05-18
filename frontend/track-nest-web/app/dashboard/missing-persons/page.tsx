@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,7 +10,6 @@ import { MissingPersonList } from "@/components/missing-persons/MissingPersonLis
 import { toast } from "sonner";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { useDebouncedCallback } from "use-debounce";
 import {
   criminalReportsService,
   MissingPersonReportResponse,
@@ -19,6 +18,7 @@ import { Loading } from "@/components/loading/Loading";
 import { useTranslations } from "next-intl";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { usePagedList } from "@/hooks/usePagedList";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -54,52 +54,46 @@ export default function MissingPersonsPage() {
   const { addNotification } = useNotification();
   const t = useTranslations("missingPersons");
 
-  const [missingPersons, setMissingPersons] = useState<MissingPerson[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<StatusTab>("ALL");
-  const [searchTitle, setSearchTitle] = useState("");
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    setIsLoading(true);
-    criminalReportsService
-      .listMissingPersonReports({
-        status: activeTab !== "ALL" ? activeTab : undefined,
-        title: searchTitle.trim() || undefined,
-        isPublic: false,
-        page: currentPage,
-        size: PAGE_SIZE,
-      })
-      .then((response) => {
-        if (cancelled) return;
-        setMissingPersons(response.content.map(mapResponseToLocal));
-        setTotalPages(response.totalPages);
-        setTotalElements(response.totalElements);
-      })
-      .catch(() => {
-        if (!cancelled) toast.error("Failed to load missing person reports");
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [user, currentPage, activeTab, searchTitle, refreshKey]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  const debouncedSetTitle = useDebouncedCallback((value: string) => {
-    setCurrentPage(0);
-    setSearchTitle(value);
-  }, 400);
+  const {
+    items: missingPersons,
+    isLoading,
+    totalPages,
+    totalElements,
+    currentPage,
+    setSearch,
+    setTab,
+    setPage,
+    refresh,
+  } = usePagedList<MissingPerson>(
+    ({ page, size, searchTitle, tab }) =>
+      criminalReportsService
+        .listMissingPersonReports({
+          status: (tab as StatusTab) !== "ALL" ? (tab as StatusTab) : undefined,
+          title: searchTitle.trim() || undefined,
+          isPublic: false,
+          page,
+          size,
+        })
+        .then((response) => ({
+          content: response.content.map(mapResponseToLocal),
+          totalPages: response.totalPages,
+          totalElements: response.totalElements,
+        }))
+        .catch(() => {
+          toast.error("Failed to load missing person reports");
+          return { content: [], totalPages: 0, totalElements: 0 };
+        }),
+    "ALL",
+    0,
+    PAGE_SIZE,
+    !!user,
+  );
 
   const handleTabChange = (tab: StatusTab) => {
     setActiveTab(tab);
-    setCurrentPage(0);
+    setTab(tab);
   };
 
   const handleCreateNew = useCallback(() => {
@@ -119,11 +113,6 @@ export default function MissingPersonsPage() {
       if (!person) return;
       try {
         await criminalReportsService.publishMissingPersonReport(id);
-        setMissingPersons((prev) =>
-          prev.map((p) =>
-            p.id === id ? { ...p, status: "PUBLISHED" as const } : p,
-          ),
-        );
         toast.success(t("toastPublished"));
         addNotification({
           type: "missing-person",
@@ -131,11 +120,12 @@ export default function MissingPersonsPage() {
           description: `${person.fullName} is now public and visible to users`,
           reportId: person.id,
         });
+        refresh();
       } catch {
         toast.error(t("toastPublishError"));
       }
     },
-    [missingPersons, addNotification, t],
+    [missingPersons, addNotification, t, refresh],
   );
 
   const handleDelete = useCallback(
@@ -151,12 +141,12 @@ export default function MissingPersonsPage() {
           description: `${person.fullName} report has been removed`,
           reportId: person.id,
         });
-        setRefreshKey((k) => k + 1);
+        refresh();
       } catch {
         toast.error(t("toastDeleteError"));
       }
     },
-    [missingPersons, addNotification, t],
+    [missingPersons, addNotification, t, refresh],
   );
 
   if (!user) return null;
@@ -186,7 +176,7 @@ export default function MissingPersonsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">
               Missing Person Reports
             </h1>
             <p className="text-gray-500 mt-2 text-lg">
@@ -226,7 +216,7 @@ export default function MissingPersonsPage() {
             <input
               type="text"
               placeholder={t("searchPlaceholder")}
-              onChange={(e) => debouncedSetTitle(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="pl-11 pr-5 py-3 bg-white border border-gray-100 rounded-2xl text-sm font-medium text-gray-900 focus:ring-4 focus:ring-brand-100 focus:border-brand-400 outline-none transition-all w-full md:w-[300px] shadow-sm"
             />
           </div>
@@ -254,7 +244,7 @@ export default function MissingPersonsPage() {
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setCurrentPage((p) => p - 1)}
+                onClick={() => setPage(currentPage - 1)}
                 disabled={currentPage === 0}
                 className="p-2.5 bg-white border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
@@ -265,7 +255,7 @@ export default function MissingPersonsPage() {
                 {pageNumbers.map((p) => (
                   <button
                     key={p}
-                    onClick={() => setCurrentPage(p)}
+                    onClick={() => setPage(p)}
                     className={cn(
                       "w-10 h-10 rounded-xl text-sm font-bold transition-all",
                       p === currentPage
@@ -279,7 +269,7 @@ export default function MissingPersonsPage() {
               </div>
 
               <button
-                onClick={() => setCurrentPage((p) => p + 1)}
+                onClick={() => setPage(currentPage + 1)}
                 disabled={currentPage >= totalPages - 1}
                 className="p-2.5 bg-white border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >

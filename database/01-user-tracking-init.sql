@@ -17,13 +17,15 @@ CREATE TABLE location (
     "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     accuracy FLOAT NOT NULL DEFAULT 0,
     velocity FLOAT NOT NULL DEFAULT 0,
+    time_spent_ms BIGINT NOT NULL DEFAULT 0,
     user_id UUID NOT NULL,
     geom geometry(Point,4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude),4326)) STORED,
     PRIMARY KEY (user_id, "timestamp"),
     CHECK ( longitude >= -180 AND longitude <= 180 ),
     CHECK ( latitude >= -90 AND latitude <= 90 ),
     CHECK ( accuracy >= 0 ),
-    CHECK ( velocity >= 0 )
+    CHECK ( velocity >= 0 ),
+    CHECK ( time_spent_ms >= 0 )
 );
 
 SELECT create_hypertable('location', 'timestamp',

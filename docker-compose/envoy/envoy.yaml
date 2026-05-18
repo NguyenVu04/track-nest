@@ -40,6 +40,8 @@ static_resources:
                           route:
                             cluster: criminal_reports_rest
                             timeout: 0s
+                            upgrade_configs:
+                              - upgrade_type: websocket
                         - match: { prefix: "/" }
                           route:
                             cluster: user_tracking_grpc
@@ -106,6 +108,8 @@ static_resources:
                             prefix: "/criminal-reports/file/"
                         - match:
                             prefix: "/criminal-reports/report-viewer/"
+                        - match:
+                            prefix: "/criminal-reports/ws"
                         - match:
                             prefix: "/criminal-reports/"
                           requires:

@@ -12,6 +12,8 @@ export const English = {
   radiusWithMeters: "Radius {meters}m",
   loading: "Loading safe zones...",
   empty: "No safe zones found nearby.",
+  errorLoad: "Could not load safe zones",
+  retry: "Retry",
 };
 
 export const Vietnamese = {
@@ -28,4 +30,6 @@ export const Vietnamese = {
   radiusWithMeters: "Bán kính {meters}m",
   loading: "Đang tải khu vực an toàn...",
   empty: "Không tìm thấy khu vực an toàn lân cận.",
+  errorLoad: "Không thể tải khu vực an toàn",
+  retry: "Thử lại",
 };

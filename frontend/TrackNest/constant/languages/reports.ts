@@ -14,6 +14,8 @@ export const Vietnamese = {
   emptySubtitleReports: "Nhấn nút để tạo báo cáo mới.",
   emptyTitleGuides: "Chưa có hướng dẫn nào",
   emptySubtitleGuides: "Vui lòng quay lại sau.",
+  errorLoad: "Không thể tải dữ liệu",
+  retry: "Thử lại",
 };
 
 export const English = {
@@ -32,4 +34,6 @@ export const English = {
   emptySubtitleReports: "Tap the button to create a new report.",
   emptyTitleGuides: "No guides found yet",
   emptySubtitleGuides: "Check back later for new guides.",
+  errorLoad: "Could not load data",
+  retry: "Retry",
 };

@@ -17,6 +17,7 @@ import {
   Users
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotification } from "@/contexts/NotificationContext";
 import type { Guideline } from "@/types";
 import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
@@ -36,6 +37,7 @@ export default function GuidelineDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
 
+  const { addNotification } = useNotification();
   const [guideline, setGuideline] = useState<Guideline | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -106,6 +108,12 @@ export default function GuidelineDetailPage() {
     try {
       await criminalReportsService.deleteGuidelinesDocument(id);
       toast.success("Guideline deleted");
+      addNotification({
+        type: "guideline",
+        title: "Guideline deleted",
+        description: guideline?.title ?? "A guideline was removed",
+        reportId: id,
+      });
       router.push("/dashboard/guidelines");
     } catch (error) {
       toast.error("Failed to delete guideline");
@@ -120,6 +128,12 @@ export default function GuidelineDetailPage() {
         prev ? { ...prev, isPublic: response.isPublic } : prev,
       );
       toast.success("Guideline published");
+      addNotification({
+        type: "guideline",
+        title: "Guideline published",
+        description: `"${guideline?.title}" is now public`,
+        reportId: id,
+      });
     } catch (error) {
       toast.error("Failed to publish guideline");
       console.error(error);

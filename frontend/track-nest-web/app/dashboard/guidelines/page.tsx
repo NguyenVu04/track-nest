@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, FileText, Eye, MoreVertical, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotification } from "@/contexts/NotificationContext";
 import type { Guideline } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { Loading } from "@/components/loading/Loading";
@@ -11,9 +12,9 @@ import { toast } from "sonner";
 import { criminalReportsService } from "@/services/criminalReportsService";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { useDebouncedCallback } from "use-debounce";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { usePagedList } from "@/hooks/usePagedList";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -32,33 +33,33 @@ function toIsPublic(filter: StatusFilter): boolean | undefined {
 export default function GuidelinesPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { addNotification } = useNotification();
 
-  const [guidelines, setGuidelines] = useState<Guideline[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [searchTitle, setSearchTitle] = useState("");
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    setIsLoading(true);
-    criminalReportsService
-      .listGuidelinesDocuments({
-        isPublic: toIsPublic(statusFilter),
-        title: searchTitle.trim() || undefined,
-        page: currentPage,
-        size: PAGE_SIZE,
-      })
-      .then((response) => {
-        if (cancelled) return;
-        setGuidelines(
-          response.content.map((item) => ({
+  const {
+    items: guidelines,
+    isLoading,
+    totalPages,
+    totalElements,
+    currentPage,
+    searchValue,
+    setSearch,
+    setTab,
+    setPage,
+    refresh,
+  } = usePagedList<Guideline>(
+    ({ page, size, searchTitle, tab }) =>
+      criminalReportsService
+        .listGuidelinesDocuments({
+          isPublic: toIsPublic(tab as StatusFilter),
+          title: searchTitle.trim() || undefined,
+          page,
+          size,
+        })
+        .then((response) => ({
+          content: response.content.map((item) => ({
             id: item.id,
             title: item.title,
             abstractText: item.abstractText,
@@ -68,37 +69,42 @@ export default function GuidelinesPage() {
             reporterId: item.reporterId,
             isPublic: item.isPublic,
           })),
-        );
-        setTotalPages(response.totalPages);
-        setTotalElements(response.totalElements);
-      })
-      .catch(() => { if (!cancelled) toast.error("Failed to load guidelines"); })
-      .finally(() => { if (!cancelled) setIsLoading(false); });
-    return () => { cancelled = true; };
-  }, [user, statusFilter, searchTitle, currentPage, refreshKey]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  const debouncedSetTitle = useDebouncedCallback((value: string) => {
-    setCurrentPage(0);
-    setSearchTitle(value);
-  }, 400);
+          totalPages: response.totalPages,
+          totalElements: response.totalElements,
+        }))
+        .catch(() => {
+          toast.error("Failed to load guidelines");
+          return { content: [], totalPages: 0, totalElements: 0 };
+        }),
+    "all",
+    0,
+    PAGE_SIZE,
+    !!user,
+  );
 
   const handleStatusChange = (filter: StatusFilter) => {
     setStatusFilter(filter);
-    setCurrentPage(0);
+    setTab(filter);
   };
 
   const handleDelete = useCallback(async (id: string) => {
+    const guideline = guidelines.find((g) => g.id === id);
     try {
       await criminalReportsService.deleteGuidelinesDocument(id);
       setConfirmDelete(null);
       toast.success("Guideline deleted");
-      setRefreshKey((k) => k + 1);
+      addNotification({
+        type: "guideline",
+        title: "Guideline deleted",
+        description: guideline?.title ?? "A guideline was removed",
+        reportId: id,
+      });
+      refresh();
     } catch (error) {
       toast.error("Failed to delete guideline");
       console.error(error);
     }
-  }, []);
+  }, [guidelines, addNotification, refresh]);
 
   if (!user) return null;
 
@@ -125,7 +131,7 @@ export default function GuidelinesPage() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Safety Guidelines</h1>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Safety Guidelines</h1>
             <p className="text-gray-500 mt-2 text-lg">Manage and update your family&apos;s safety protocols and emergency checklists.</p>
           </div>
           <button
@@ -162,7 +168,7 @@ export default function GuidelinesPage() {
             <input
               type="text"
               placeholder="Search guidelines…"
-              onChange={(e) => debouncedSetTitle(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="pl-11 pr-5 py-2.5 bg-white border border-gray-100 rounded-2xl text-sm font-medium text-gray-900 focus:ring-4 focus:ring-brand-100 focus:border-brand-400 outline-none transition-all w-full md:w-[260px] shadow-sm"
             />
           </div>
@@ -181,7 +187,7 @@ export default function GuidelinesPage() {
             ) : (
               guidelines.map((guideline, idx) => {
                 const isDraft = !guideline.isPublic;
-                const isFeatured = idx === 0 && !searchTitle;
+                const isFeatured = idx === 0 && !searchValue;
                 return (
                   <div
                     key={guideline.id}
@@ -270,7 +276,7 @@ export default function GuidelinesPage() {
             </p>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setCurrentPage((p) => p - 1)}
+                onClick={() => setPage(currentPage - 1)}
                 disabled={currentPage === 0}
                 className="p-2.5 bg-white border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
@@ -280,7 +286,7 @@ export default function GuidelinesPage() {
                 {pageNumbers.map((p) => (
                   <button
                     key={p}
-                    onClick={() => setCurrentPage(p)}
+                    onClick={() => setPage(p)}
                     className={cn(
                       "w-10 h-10 rounded-xl text-sm font-bold transition-all",
                       p === currentPage ? "bg-brand-500 text-white shadow-md" : "text-gray-400 hover:bg-gray-50",
@@ -291,7 +297,7 @@ export default function GuidelinesPage() {
                 ))}
               </div>
               <button
-                onClick={() => setCurrentPage((p) => p + 1)}
+                onClick={() => setPage(currentPage + 1)}
                 disabled={currentPage >= totalPages - 1}
                 className="p-2.5 bg-white border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >

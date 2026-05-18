@@ -23,6 +23,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import type { User, UserActivity, UserRole } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 
@@ -201,13 +202,12 @@ export default function AccountDetailPage() {
 
   return (
     <div className="max-w-4xl">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-6"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Accounts
-      </button>
+      <Breadcrumbs
+        items={[
+          { label: "Account Management", href: "/dashboard/accounts" },
+          { label: currentAccount.fullName },
+        ]}
+      />
 
       {/* Account Info Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -219,7 +219,7 @@ export default function AccountDetailPage() {
               </span>
             </div>
             <div>
-              <h2 className="text-gray-900 text-xl font-semibold">
+              <h2 className="text-gray-900 text-xl font-bold">
                 {currentAccount.fullName}
               </h2>
               <p className="text-gray-500">@{currentAccount.username}</p>
@@ -323,7 +323,7 @@ export default function AccountDetailPage() {
           <select
             value={activityFilter}
             onChange={(e) => setActivityFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-black focus:border-transparent cursor-pointer"
           >
             <option value="all">All Activities</option>
             <option value="missing-person">Missing Persons</option>

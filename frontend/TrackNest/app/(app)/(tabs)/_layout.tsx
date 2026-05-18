@@ -112,6 +112,10 @@ export default function RootLayout() {
         name="map"
         options={{
           title: t.map,
+          // Keep MapView alive across tab switches so tiles don't reload.
+          // unmountOnBlur is a valid React Navigation option passed through
+          // by Expo Router at runtime; cast needed as types don't expose it.
+          ...({ unmountOnBlur: false } as object),
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "map" : "map-outline"}

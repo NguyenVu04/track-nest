@@ -2,13 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotification } from "@/contexts/NotificationContext";
 import type { MissingPerson } from "@/types";
 import { MissingPersonForm } from "@/components/missing-persons/MissingPersonForm";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { toast } from "sonner";
 
 export default function CreateMissingPersonPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { addNotification } = useNotification();
 
   if (!user) {
     return (
@@ -27,8 +30,14 @@ export default function CreateMissingPersonPage() {
     );
   }
 
-  const handleSave = (_person: MissingPerson) => {
+  const handleSave = (person: MissingPerson) => {
     toast.success("Missing person report created");
+    addNotification({
+      type: "missing-person",
+      title: "Missing person report created",
+      description: person.fullName,
+      reportId: person.id,
+    });
     router.push("/dashboard/missing-persons");
   };
 
@@ -37,11 +46,19 @@ export default function CreateMissingPersonPage() {
   };
 
   return (
-    <MissingPersonForm
-      person={null}
-      onSave={handleSave}
-      onCancel={handleCancel}
-      mode="create"
-    />
+    <>
+      <Breadcrumbs
+        items={[
+          { label: "Missing Persons", href: "/dashboard/missing-persons" },
+          { label: "New Report" },
+        ]}
+      />
+      <MissingPersonForm
+        person={null}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        mode="create"
+      />
+    </>
   );
 }

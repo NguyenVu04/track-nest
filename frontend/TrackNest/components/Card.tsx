@@ -1,6 +1,6 @@
-import { radii, shadows } from "@/styles/styles";
 import React from "react";
-import { StyleSheet, View, ViewStyle } from "react-native";
+import { ViewStyle } from "react-native";
+import { YStack } from "tamagui";
 
 type CardProps = {
   children: React.ReactNode;
@@ -8,15 +8,19 @@ type CardProps = {
 };
 
 export default function Card({ children, style }: CardProps) {
-  return <View style={[localStyles.card, style]}>{children}</View>;
+  return (
+    <YStack
+      backgroundColor="$bg"
+      borderRadius="$md"
+      padding="$md"
+      marginBottom={10}
+      shadowColor="#000"
+      shadowOpacity={0.08}
+      shadowRadius={4}
+      elevation={2}
+      style={style}
+    >
+      {children}
+    </YStack>
+  );
 }
-
-const localStyles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: radii.md,
-    padding: 12,
-    marginBottom: 10,
-    ...shadows.small,
-  },
-});

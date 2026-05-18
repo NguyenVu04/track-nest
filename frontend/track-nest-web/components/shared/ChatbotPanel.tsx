@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { defer, from, takeUntil } from "rxjs";
+import { map, catchError, tap } from "rxjs/operators";
 import {
   ChatbotSessionMessage,
   criminalReportsService,
 } from "@/services/criminalReportsService";
+import { createDestroy$, completeDestroy$ } from "@/lib/rxjs-helpers";
 
 interface ChatbotPanelProps {
   documentId: string | undefined;
@@ -31,58 +34,74 @@ export function ChatbotPanel({
   useEffect(() => {
     if (!documentId) return;
 
-    let isActive = true;
+    const destroy$ = createDestroy$();
+    setIsChatLoading(true);
+    setChatError(null);
 
-    const startSession = async () => {
-      setIsChatLoading(true);
-      setChatError(null);
-      try {
-        let sessionId: string | null = null;
+    // defer ensures sessionStorage.getItem runs at subscription time (SSR safe)
+    defer(() => {
+      const stored =
+        typeof window !== "undefined"
+          ? sessionStorage.getItem(sessionKeyForDocument(documentId))
+          : null;
 
-        if (typeof window !== "undefined") {
-          sessionId = sessionStorage.getItem(sessionKeyForDocument(documentId));
-        }
-
-        if (sessionId) {
-          try {
-            const history =
-              await criminalReportsService.getChatbotSession(sessionId);
-            if (!isActive) return;
-            setChatSessionId(sessionId);
-            setChatMessages(history.messages);
-            return;
-          } catch (error) {
-            console.warn("Failed to reuse chatbot session:", error);
-          }
-        }
-
-        const session = await criminalReportsService.startChatbotSession({
-          documentId,
-        });
-        if (!isActive) return;
-        setChatSessionId(session.sessionId);
-
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem(
-            sessionKeyForDocument(documentId),
-            session.sessionId,
-          );
-        }
-      } catch (error) {
-        console.error("Failed to start chatbot session:", error);
-        if (isActive) {
-          setChatError("Failed to start chatbot session.");
-        }
-      } finally {
-        if (isActive) setIsChatLoading(false);
+      if (stored) {
+        // Try to reuse existing session; fall back to creating a new one
+        return from(criminalReportsService.getChatbotSession(stored)).pipe(
+          map((history) => ({
+            sessionId: stored,
+            messages: history.messages,
+          })),
+          catchError(() =>
+            from(
+              criminalReportsService.startChatbotSession({ documentId }),
+            ).pipe(
+              map((s) => ({ sessionId: s.sessionId, messages: [] as ChatbotSessionMessage[] })),
+              tap((s) => {
+                if (typeof window !== "undefined") {
+                  sessionStorage.setItem(
+                    sessionKeyForDocument(documentId),
+                    s.sessionId,
+                  );
+                }
+              }),
+            ),
+          ),
+        );
       }
-    };
 
-    startSession();
+      return from(
+        criminalReportsService.startChatbotSession({ documentId }),
+      ).pipe(
+        map((s) => ({ sessionId: s.sessionId, messages: [] as ChatbotSessionMessage[] })),
+        tap((s) => {
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(
+              sessionKeyForDocument(documentId),
+              s.sessionId,
+            );
+          }
+        }),
+      );
+    })
+      .pipe(
+        // takeUntil replaces all five isActive guards from the previous implementation
+        takeUntil(destroy$),
+      )
+      .subscribe({
+        next: ({ sessionId, messages }) => {
+          setChatSessionId(sessionId);
+          setChatMessages(messages);
+          setIsChatLoading(false);
+        },
+        error: (err) => {
+          console.error("Failed to start chatbot session:", err);
+          setChatError("Failed to start chatbot session.");
+          setIsChatLoading(false);
+        },
+      });
 
-    return () => {
-      isActive = false;
-    };
+    return () => completeDestroy$(destroy$);
   }, [documentId]);
 
   const handleSendMessage = async () => {

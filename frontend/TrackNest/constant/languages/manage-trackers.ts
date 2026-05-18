@@ -12,6 +12,10 @@ export const Vietnamese = {
   adminSuffix: "(Quản trị viên)",
   addNewTracker: "Thêm thiết bị theo dõi mới",
   loading: "Đang tải...",
+  noMembersInCircle: "Không có thành viên trong nhóm này",
+  errorLoadCircles: "Không thể tải nhóm gia đình",
+  errorLoadMembers: "Không thể tải danh sách thành viên",
+  retry: "Thử lại",
 };
 
 export const English = {
@@ -28,4 +32,8 @@ export const English = {
   adminSuffix: "(Admin)",
   addNewTracker: "Add new tracker",
   loading: "Loading...",
+  noMembersInCircle: "No members in this circle",
+  errorLoadCircles: "Could not load family circles",
+  errorLoadMembers: "Could not load members",
+  retry: "Retry",
 };

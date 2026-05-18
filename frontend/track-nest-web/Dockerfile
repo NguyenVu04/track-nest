@@ -14,6 +14,8 @@ COPY contexts/       ./contexts/
 COPY messages/       ./messages/
 COPY mocks/          ./mocks/
 COPY public/         ./public/
+COPY hooks/          ./hooks/
+COPY lib/            ./lib/
 COPY services/       ./services/
 COPY styles/         ./styles/
 COPY types/          ./types/

@@ -3,12 +3,16 @@
 import {
   createContext,
   useContext,
+  useEffect,
+  useRef,
   useState,
   useCallback,
   ReactNode,
 } from "react";
+import { Subject } from "rxjs";
+import { scan } from "rxjs/operators";
 
-export type NotificationType = "crime" | "missing-person" | "emergency";
+export type NotificationType = "crime" | "missing-person" | "emergency" | "guideline";
 
 export interface Notification {
   id: string;
@@ -19,6 +23,44 @@ export interface Notification {
   timestamp: number;
   read: boolean;
 }
+
+// ─── Action discriminated union ───────────────────────────────────────────────
+
+type NotificationAction =
+  | { type: "ADD"; payload: Omit<Notification, "id" | "timestamp" | "read"> }
+  | { type: "MARK_READ"; id: string }
+  | { type: "REMOVE"; id: string }
+  | { type: "CLEAR" };
+
+// ─── Pure reducer — no React deps, fully unit-testable ────────────────────────
+
+export function notificationReducer(
+  state: Notification[],
+  action: NotificationAction,
+): Notification[] {
+  switch (action.type) {
+    case "ADD":
+      return [
+        {
+          ...action.payload,
+          id: `${Date.now()}-${Math.random()}`,
+          timestamp: Date.now(),
+          read: false,
+        },
+        ...state,
+      ];
+    case "MARK_READ":
+      return state.map((n) =>
+        n.id === action.id ? { ...n, read: true } : n,
+      );
+    case "REMOVE":
+      return state.filter((n) => n.id !== action.id);
+    case "CLEAR":
+      return [];
+  }
+}
+
+// ─── Context ──────────────────────────────────────────────────────────────────
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -36,41 +78,39 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
 );
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
+  // Stable ref — survives re-renders; useRef prevents Strict Mode double-creation
+  const action$ = useRef(new Subject<NotificationAction>()).current;
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
+  useEffect(() => {
+    // scan accumulates actions into state; setNotifications bridges to React
+    const sub = action$
+      .pipe(scan(notificationReducer, []))
+      .subscribe(setNotifications);
+    return () => sub.unsubscribe();
+  }, []); // action$ is a stable ref — no deps needed
+
+  // Public API is unchanged; each method dispatches an action to the Subject
   const addNotification = useCallback(
-    (notification: Omit<Notification, "id" | "timestamp" | "read">) => {
-      const id = `${Date.now()}-${Math.random()}`;
-      setNotifications((prev) => [
-        {
-          ...notification,
-          id,
-          timestamp: Date.now(),
-          read: false,
-        },
-        ...prev,
-      ]);
-    },
-    [],
+    (payload: Omit<Notification, "id" | "timestamp" | "read">) =>
+      action$.next({ type: "ADD", payload }),
+    [action$],
   );
 
-  const markAsRead = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification,
-      ),
-    );
-  }, []);
+  const markAsRead = useCallback(
+    (id: string) => action$.next({ type: "MARK_READ", id }),
+    [action$],
+  );
 
-  const removeNotification = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id),
-    );
-  }, []);
+  const removeNotification = useCallback(
+    (id: string) => action$.next({ type: "REMOVE", id }),
+    [action$],
+  );
 
-  const clearAll = useCallback(() => {
-    setNotifications([]);
-  }, []);
+  const clearAll = useCallback(
+    () => action$.next({ type: "CLEAR" }),
+    [action$],
+  );
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

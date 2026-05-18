@@ -179,6 +179,9 @@ export class UserLocation extends jspb.Message {
   getTimestampMs(): number;
   setTimestampMs(value: number): UserLocation;
 
+  getTimeSpentMs(): number;
+  setTimeSpentMs(value: number): UserLocation;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UserLocation.AsObject;
   static toObject(includeInstance: boolean, msg: UserLocation): UserLocation.AsObject;
@@ -194,6 +197,7 @@ export namespace UserLocation {
     accuracyMeter: number;
     velocityMps: number;
     timestampMs: number;
+    timeSpentMs: number;
   };
 }
 

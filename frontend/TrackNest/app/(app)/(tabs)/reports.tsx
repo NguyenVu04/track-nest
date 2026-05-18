@@ -1,4 +1,5 @@
 import { reports as reportsLang } from "@/constant/languages";
+import { SkeletonCard } from "@/components/Loaders/SkeletonLoader";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
   fetchGuides,
@@ -8,19 +9,20 @@ import {
   type MissingPerson,
   type Report,
 } from "@/utils/reportAdapters";
+import { hapticLight } from "@/utils";
 import { colors, radii, spacing } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Animated,
   Dimensions,
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -53,19 +55,18 @@ function SeverityBadge({ severity }: { severity: string }) {
 
 function ReportCard({ item }: { item: Report }) {
   const router = useRouter();
-  const [photoError, setPhotoError] = useState(false);
   return (
     <Pressable
-      style={styles.card}
+      style={({ pressed }) => [styles.card, pressed && { opacity: 0.82 }]}
       onPress={() => router.push(`/report-detail?id=${item.id}`)}
     >
       <View style={styles.cardImageArea}>
-        {item.photos && item.photos.length > 0 && !photoError ? (
+        {item.photos && item.photos.length > 0 ? (
           <Image
             source={{ uri: item.photos[0] }}
+            placeholder={require("@/assets/images/splash-icon.png")}
             style={styles.cardPhoto}
             contentFit="cover"
-            onError={() => setPhotoError(true)}
           />
         ) : (
           <View style={styles.cardImagePlaceholder}>
@@ -105,19 +106,18 @@ function MissingPersonCard({
   lastSeenLabel: string;
 }) {
   const router = useRouter();
-  const [photoError, setPhotoError] = useState(false);
   return (
     <Pressable
-      style={styles.card}
+      style={({ pressed }) => [styles.card, pressed && { opacity: 0.82 }]}
       onPress={() => router.push(`/missing-detail?id=${item.id}`)}
     >
       <View style={styles.cardImageArea}>
-        {item.photo && !photoError ? (
+        {item.photo ? (
           <Image
             source={{ uri: item.photo }}
+            placeholder={require("@/assets/images/splash-icon.png")}
             style={styles.cardPhoto}
             contentFit="cover"
-            onError={() => setPhotoError(true)}
           />
         ) : (
           <View style={[styles.cardImagePlaceholder, { backgroundColor: "#fef2f2" }]}>
@@ -191,29 +191,47 @@ function TabPage<T extends { id: string }>({
   renderItem,
   loading,
   refreshing,
+  hasError,
   onRefresh,
   onEndReached,
   emptyTitle,
   emptySubtitle,
+  errorLabel,
+  retryLabel,
 }: {
   data: T[];
   renderItem: ({ item }: { item: T }) => React.ReactElement | null;
   loading: boolean;
   refreshing: boolean;
+  hasError: boolean;
   onRefresh: () => void;
   onEndReached: () => void;
   emptyTitle: string;
   emptySubtitle: string;
+  errorLabel: string;
+  retryLabel: string;
 }) {
   if (loading) {
     return (
-      <View style={[styles.tabPage, styles.loadingWrap]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.tabPage, { paddingHorizontal: spacing.lg, paddingTop: spacing.md }]}>
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
       </View>
     );
   }
 
-  console.log("Rendering TabPage with data length:", data);
+  if (hasError) {
+    return (
+      <View style={[styles.tabPage, styles.loadingWrap]}>
+        <Ionicons name="cloud-offline-outline" size={48} color={colors.textMuted} />
+        <Text style={styles.errorText}>{errorLabel}</Text>
+        <Pressable style={styles.retryBtn} onPress={() => { hapticLight(); onRefresh(); }}>
+          <Text style={styles.retryText}>{retryLabel}</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.tabPage}>
@@ -267,17 +285,20 @@ export default function ReportsScreen() {
   const [pages, setPages] = useState({ reports: 1, missing: 1, guides: 1 });
   const [loading, setLoading] = useState({ reports: true, missing: true, guides: true });
   const [refreshing, setRefreshing] = useState({ reports: false, missing: false, guides: false });
+  const [error, setError] = useState({ reports: false, missing: false, guides: false });
 
   // ── Load helpers ─────────────────────────────────────────────────────────────
 
   const loadReports = async (pageToLoad = 1) => {
     try {
       if (pageToLoad === 1) setLoading((p) => ({ ...p, reports: true }));
+      setError((p) => ({ ...p, reports: false }));
       const res = await fetchReports({ page: pageToLoad, perPage: 10 });
       setReports((prev) => (pageToLoad === 1 ? res.data : [...prev, ...res.data]));
       setPages((p) => ({ ...p, reports: res.page }));
     } catch (err) {
       console.error("fetchReports error", err);
+      setError((p) => ({ ...p, reports: true }));
     } finally {
       setLoading((p) => ({ ...p, reports: false }));
       setRefreshing((p) => ({ ...p, reports: false }));
@@ -287,11 +308,13 @@ export default function ReportsScreen() {
   const loadMissing = async (pageToLoad = 1) => {
     try {
       if (pageToLoad === 1) setLoading((p) => ({ ...p, missing: true }));
+      setError((p) => ({ ...p, missing: false }));
       const res = await fetchMissingPersons({ page: pageToLoad, perPage: 10 });
       setMissing((prev) => (pageToLoad === 1 ? res.data : [...prev, ...res.data]));
       setPages((p) => ({ ...p, missing: res.page }));
     } catch (err) {
       console.error("fetchMissing error", err);
+      setError((p) => ({ ...p, missing: true }));
     } finally {
       setLoading((p) => ({ ...p, missing: false }));
       setRefreshing((p) => ({ ...p, missing: false }));
@@ -301,11 +324,13 @@ export default function ReportsScreen() {
   const loadGuides = async (pageToLoad = 1) => {
     try {
       if (pageToLoad === 1) setLoading((p) => ({ ...p, guides: true }));
+      setError((p) => ({ ...p, guides: false }));
       const res = await fetchGuides({ page: pageToLoad, perPage: 10 });
       setGuides((prev) => (pageToLoad === 1 ? res.data : [...prev, ...res.data]));
       setPages((p) => ({ ...p, guides: res.page }));
     } catch (err) {
       console.error("fetchGuides error", err);
+      setError((p) => ({ ...p, guides: true }));
     } finally {
       setLoading((p) => ({ ...p, guides: false }));
       setRefreshing((p) => ({ ...p, guides: false }));
@@ -322,6 +347,7 @@ export default function ReportsScreen() {
   // ── Tab switching ─────────────────────────────────────────────────────────────
 
   const goToTab = (index: number) => {
+    hapticLight();
     setTabIndex(index);
     scrollRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
   };
@@ -394,6 +420,7 @@ export default function ReportsScreen() {
           renderItem={({ item }) => <ReportCard item={item} />}
           loading={loading.reports}
           refreshing={refreshing.reports}
+          hasError={error.reports}
           onRefresh={() => {
             setRefreshing((p) => ({ ...p, reports: true }));
             loadReports(1);
@@ -401,6 +428,8 @@ export default function ReportsScreen() {
           onEndReached={() => loadReports(pages.reports + 1)}
           emptyTitle={t.emptyTitleReports || "No reports found yet"}
           emptySubtitle={t.emptySubtitleReports || "Tap the button to create a new report."}
+          errorLabel={t.errorLoad || "Could not load data"}
+          retryLabel={t.retry || "Retry"}
         />
 
         {/* Page 1 — Missing Persons */}
@@ -416,6 +445,7 @@ export default function ReportsScreen() {
           )}
           loading={loading.missing}
           refreshing={refreshing.missing}
+          hasError={error.missing}
           onRefresh={() => {
             setRefreshing((p) => ({ ...p, missing: true }));
             loadMissing(1);
@@ -423,6 +453,8 @@ export default function ReportsScreen() {
           onEndReached={() => loadMissing(pages.missing + 1)}
           emptyTitle={t.emptyTitleReports || "No reports found yet"}
           emptySubtitle={t.emptySubtitleReports || "Tap the button to create a new report."}
+          errorLabel={t.errorLoad || "Could not load data"}
+          retryLabel={t.retry || "Retry"}
         />
 
         {/* Page 2 — Guidelines */}
@@ -433,6 +465,7 @@ export default function ReportsScreen() {
           )}
           loading={loading.guides}
           refreshing={refreshing.guides}
+          hasError={error.guides}
           onRefresh={() => {
             setRefreshing((p) => ({ ...p, guides: true }));
             loadGuides(1);
@@ -440,12 +473,17 @@ export default function ReportsScreen() {
           onEndReached={() => loadGuides(pages.guides + 1)}
           emptyTitle={t.emptyTitleGuides || "No guides found yet"}
           emptySubtitle={t.emptySubtitleGuides || "Check back later for new guides."}
+          errorLabel={t.errorLoad || "Could not load data"}
+          retryLabel={t.retry || "Retry"}
         />
       </Animated.ScrollView>
 
       {/* ── FAB ── */}
       {tabIndex !== 2 && (
-        <Pressable style={styles.fab} onPress={onCreateReport}>
+        <Pressable
+          style={({ pressed }) => [styles.fab, pressed && { opacity: 0.85 }]}
+          onPress={onCreateReport}
+        >
           <Ionicons name="add" size={22} color="#fff" />
           <Text style={styles.fabText}>{t.createReport}</Text>
         </Pressable>
@@ -602,6 +640,26 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
     fontSize: 15,
+  },
+
+  // Error state
+  errorText: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: "center",
+    marginTop: 12,
+  },
+  retryBtn: {
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+  },
+  retryText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
   },
 
   // Empty State

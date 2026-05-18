@@ -1,4 +1,7 @@
 import Keycloak, { type KeycloakInitOptions } from "keycloak-js";
+import { defer, from, type Observable } from "rxjs";
+import { tap, shareReplay } from "rxjs/operators";
+import { firstValueFrom } from "rxjs";
 
 const KEYCLOAK_BASE_URL =
   process.env.NEXT_PUBLIC_KEYCLOAK_URL || "http://localhost/auth";
@@ -45,8 +48,8 @@ export interface KeycloakUserInfo {
 }
 
 let keycloakInstance: Keycloak | null = null;
-let keycloakInitialized = false;
-let keycloakInitPromise: Promise<boolean> | null = null;
+// shareReplay(1) replaces the hand-rolled keycloakInitialized + keycloakInitPromise singleton
+let keycloakInit$: Observable<boolean> | null = null;
 
 const getKeycloak = (): Keycloak => {
   if (!keycloakInstance) {
@@ -134,23 +137,14 @@ const buildTokenResponse = (): LoginResponse => {
 };
 
 export const authService = {
-  initKeycloak: async (
-    options?: Partial<KeycloakInitOptions>,
-  ): Promise<boolean> => {
+  initKeycloak: (options?: Partial<KeycloakInitOptions>): Promise<boolean> => {
     if (typeof window === "undefined") {
-      return false;
+      return Promise.resolve(false);
     }
 
-    const keycloak = getKeycloak();
+    if (!keycloakInit$) {
+      const keycloak = getKeycloak();
 
-    if (keycloakInitialized) {
-      if (keycloak.authenticated) {
-        persistKeycloakAuth();
-      }
-      return !!keycloak.authenticated;
-    }
-
-    if (!keycloakInitPromise) {
       const initOptions: KeycloakInitOptions = {
         onLoad: "check-sso",
         checkLoginIframe: false,
@@ -162,36 +156,40 @@ export const authService = {
         initOptions.pkceMethod = "S256";
       }
 
-      keycloakInitPromise = keycloak.init(initOptions).then((authenticated) => {
-        keycloakInitialized = true;
-
-        if (authenticated) {
-          persistKeycloakAuth();
-        } else {
-          clearStoredAuth();
-        }
-
-        keycloak.onTokenExpired = async () => {
-          try {
-            await keycloak.updateToken(30);
+      // defer ensures keycloak.init() runs lazily — safe for module-level usage
+      // shareReplay(1) replaces keycloakInitialized + keycloakInitPromise:
+      // any late subscriber receives the cached result without re-running init
+      keycloakInit$ = defer(() => from(keycloak.init(initOptions))).pipe(
+        tap((authenticated) => {
+          if (authenticated) {
             persistKeycloakAuth();
-          } catch (error) {
-            console.error("Failed to refresh Keycloak token:", error);
+          } else {
             clearStoredAuth();
           }
-        };
 
-        return authenticated;
-      });
+          keycloak.onTokenExpired = async () => {
+            try {
+              await keycloak.updateToken(30);
+              persistKeycloakAuth();
+            } catch (error) {
+              console.error("Failed to refresh Keycloak token:", error);
+              clearStoredAuth();
+            }
+          };
+        }),
+        shareReplay(1),
+      );
     }
 
-    return keycloakInitPromise;
+    // firstValueFrom converts the observable back to a Promise so all
+    // existing callers (await authService.initKeycloak()) need no changes
+    return firstValueFrom(keycloakInit$);
   },
 
   loginWithKeycloak: async (redirectUri?: string): Promise<void> => {
     const keycloak = getKeycloak();
 
-    if (!keycloakInitialized) {
+    if (!keycloakInit$) {
       await authService.initKeycloak();
     }
 
@@ -278,7 +276,7 @@ export const authService = {
     const keycloak = getKeycloak();
 
     clearStoredAuth();
-    if (!keycloakInitialized) {
+    if (!keycloakInit$) {
       return;
     }
 

@@ -2,7 +2,7 @@ import { sos as sosLang } from "@/constant/languages";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmergency } from "@/contexts/EmergencyContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import { showToast } from "@/utils";
+import { hapticHeavy, showToast } from "@/utils";
 import { isAxiosError } from "axios";
 import { colors } from "@/styles/styles";
 import * as Notifications from "expo-notifications";
@@ -15,6 +15,7 @@ import {
   Dimensions,
   PanResponder,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -129,6 +130,7 @@ export default function SosScreen() {
   useEffect(() => {
     if (isCancelled) return;
     countdownRef.current = setInterval(() => {
+      hapticHeavy();
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(countdownRef.current!);
@@ -162,6 +164,7 @@ export default function SosScreen() {
       },
       onPanResponderRelease: (_, gs) => {
         if (gs.dx > SWIPE_THRESHOLD) {
+          hapticHeavy();
           Animated.timing(translateX, {
             toValue: SCREEN_WIDTH,
             duration: 200,
@@ -233,6 +236,18 @@ export default function SosScreen() {
               <Text style={styles.swipeChevrons}>{">>"}</Text>
             </Animated.View>
           </View>
+
+          <Pressable
+            style={styles.sendNowBtn}
+            onPress={() => {
+              hapticHeavy();
+              if (countdownRef.current) clearInterval(countdownRef.current);
+              triggerEmergency();
+            }}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.sendNowText}>{t.sendEmergencyNow}</Text>
+          </Pressable>
         </>
       )}
     </View>
@@ -346,5 +361,21 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.danger,
     letterSpacing: -2,
+  },
+  sendNowBtn: {
+    width: SCREEN_WIDTH - 64,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sendNowText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#fff",
+    letterSpacing: 0.5,
   },
 });

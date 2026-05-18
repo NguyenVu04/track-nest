@@ -93,4 +93,33 @@ class CrimeLocatorControllerTest {
                         .param("latitude", "10.7"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void should_returnFalse_whenNotHighRiskZone() throws Exception {
+        when(service.isHighRiskZone(anyDouble(), anyDouble())).thenReturn(false);
+
+        mockMvc.perform(get("/crime-locator/high-risk-check")
+                        .param("longitude", "106.7")
+                        .param("latitude", "10.7"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    @Test
+    void should_returnTrue_whenHighRiskZone() throws Exception {
+        when(service.isHighRiskZone(anyDouble(), anyDouble())).thenReturn(true);
+
+        mockMvc.perform(get("/crime-locator/high-risk-check")
+                        .param("longitude", "106.7")
+                        .param("latitude", "10.7"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
+    }
+
+    @Test
+    void should_return400_whenHighRiskCheckMissingParams() throws Exception {
+        mockMvc.perform(get("/crime-locator/high-risk-check")
+                        .param("latitude", "10.7"))
+                .andExpect(status().isBadRequest());
+    }
 }

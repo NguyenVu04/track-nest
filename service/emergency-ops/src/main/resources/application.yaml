@@ -103,6 +103,7 @@ app:
     queue:
       user-location: /queue/user-location
       emergency-request: /queue/emergency-request
+      emergency-request-status: /queue/emergency-request-status
   server-name: ${POD_NAME:emergency-ops}
   server-uid: ${$POD_UID:0}
   quartz:

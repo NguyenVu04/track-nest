@@ -36,6 +36,10 @@ public class Location {
     @Column(name = "velocity", nullable = false, updatable = false)
     private float velocity;
 
+    @Min(value = 0, message = "Time spent must be non-negative")
+    @Column(name = "time_spent_ms", nullable = false)
+    private long timeSpentMs;
+
     @Generated
     @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", updatable = false)
     private Point geom;

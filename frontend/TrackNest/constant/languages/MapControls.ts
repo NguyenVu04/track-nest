@@ -17,6 +17,7 @@ export const Vietnamese = {
   crimeHeatmapDesc: "Đánh dấu khu vực điểm nóng tội phạm trên bản đồ",
   poisLabel: "Địa điểm nổi bật",
   poisDesc: "Hiển thị địa danh và địa điểm đáng chú ý",
+  poisUnavailableDesc: "Tính năng tạm thời không khả dụng",
   zoomLabel: "Thu phóng",
   zoomDesc: "Điều chỉnh mức thu phóng bản đồ",
 };
@@ -40,6 +41,7 @@ export const English = {
   crimeHeatmapDesc: "Highlight crime hotspot areas on the map",
   poisLabel: "Points of Interest",
   poisDesc: "Show landmarks and notable locations",
+  poisUnavailableDesc: "Feature temporarily unavailable",
   zoomLabel: "Zoom",
   zoomDesc: "Adjust the map zoom level",
 };

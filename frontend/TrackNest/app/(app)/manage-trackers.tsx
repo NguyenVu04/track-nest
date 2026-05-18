@@ -1,6 +1,7 @@
 import { manageTrackers as manageTrackersLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
-import { getInitials } from "@/utils";
+import { getInitials, hapticLight, showToast } from "@/utils";
+import { colors } from "@/styles/styles";
 import {
   listFamilyCircles,
   listFamilyCircleMembers,
@@ -14,6 +15,7 @@ import {
   Alert,
   FlatList,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
@@ -36,15 +38,17 @@ export default function ManageTrackersScreen() {
   const t = useTranslation(manageTrackersLang);
 
   const [circles, setCircles] = useState<CircleOption[]>([]);
-  const [selectedCircle, setSelectedCircle] = useState<CircleOption | null>(
-    null,
-  );
+  const [selectedCircle, setSelectedCircle] = useState<CircleOption | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingCircles, setLoadingCircles] = useState(true);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [circleError, setCircleError] = useState(false);
+  const [memberError, setMemberError] = useState(false);
 
   const loadCircles = useCallback(async () => {
     setLoadingCircles(true);
+    setCircleError(false);
     try {
       const result = await listFamilyCircles(50);
       const circleList = result.familyCirclesList.map((c) => ({
@@ -57,6 +61,7 @@ export default function ManageTrackersScreen() {
       }
     } catch (err) {
       console.error("Failed to load circles:", err);
+      setCircleError(true);
     } finally {
       setLoadingCircles(false);
     }
@@ -64,11 +69,13 @@ export default function ManageTrackersScreen() {
 
   const loadMembers = useCallback(async (circleId: string) => {
     setLoadingMembers(true);
+    setMemberError(false);
     try {
       const result = await listFamilyCircleMembers(circleId);
       setMembers(result.membersList as Member[]);
     } catch (err) {
       console.error("Failed to load members:", err);
+      setMemberError(true);
       setMembers([]);
     } finally {
       setLoadingMembers(false);
@@ -98,14 +105,13 @@ export default function ManageTrackersScreen() {
           text: t.removeButton,
           style: "destructive",
           onPress: async () => {
+            hapticLight();
             try {
               await removeMemberFromFamilyCircle(
                 selectedCircle.familyCircleId,
                 member.memberId,
               );
-              setMembers((prev) =>
-                prev.filter((m) => m.memberId !== member.memberId),
-              );
+              setMembers((prev) => prev.filter((m) => m.memberId !== member.memberId));
             } catch (err: any) {
               showToast(err?.message ?? t.removeFailedMessage, t.errorTitle);
             }
@@ -118,41 +124,24 @@ export default function ManageTrackersScreen() {
   const renderMember = ({ item }: { item: Member }) => {
     const isOnline = item.online;
     const lastActiveLabel = item.lastActiveMs
-      ? new Date(item.lastActiveMs).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+      ? new Date(item.lastActiveMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "—";
 
     return (
-      <Pressable style={styles.card} android_ripple={{ color: "#e5e7eb" }}>
+      <Pressable
+        style={({ pressed }) => [styles.card, pressed && { opacity: 0.75 }]}
+        android_ripple={{ color: "#e5e7eb" }}
+      >
         <View style={styles.iconWrap}>
-          <View
-            style={[
-              styles.initialsBg,
-              { backgroundColor: isOnline ? "#74becb" : "#999" },
-            ]}
-          >
-            <Text style={styles.initials}>
-              {getInitials(item.memberUsername)}
-            </Text>
+          <View style={[styles.initialsBg, { backgroundColor: isOnline ? "#74becb" : "#999" }]}>
+            <Text style={styles.initials}>{getInitials(item.memberUsername)}</Text>
           </View>
         </View>
         <View style={{ flex: 1 }}>
           <View style={styles.rowBetween}>
             <Text style={styles.trackerName}>{item.memberUsername}</Text>
-            <View
-              style={[
-                styles.badge,
-                isOnline ? styles.badgeOnline : styles.badgeOffline,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.badgeText,
-                  { color: isOnline ? "#166534" : "#991b1b" },
-                ]}
-              >
+            <View style={[styles.badge, isOnline ? styles.badgeOnline : styles.badgeOffline]}>
+              <Text style={[styles.badgeText, { color: isOnline ? "#166534" : "#991b1b" }]}>
                 {isOnline ? t.onlineStatus : t.offlineStatus}
               </Text>
             </View>
@@ -167,9 +156,7 @@ export default function ManageTrackersScreen() {
             </View>
             <View style={styles.metaRow}>
               <Ionicons name="time" size={14} color="#6b7280" />
-              <Text style={styles.metaText}>
-                {t.lastPing} {lastActiveLabel}
-              </Text>
+              <Text style={styles.metaText}>{t.lastPing} {lastActiveLabel}</Text>
             </View>
           </View>
         </View>
@@ -180,13 +167,42 @@ export default function ManageTrackersScreen() {
     );
   };
 
+  const listEmpty = () => {
+    if (memberError) {
+      return (
+        <View style={styles.centered}>
+          <Ionicons name="cloud-offline-outline" size={48} color={colors.textMuted} />
+          <Text style={styles.errorText}>{t.errorLoadMembers}</Text>
+          <Pressable
+            style={styles.retryBtn}
+            onPress={() => selectedCircle && loadMembers(selectedCircle.familyCircleId)}
+          >
+            <Text style={styles.retryText}>{t.retry}</Text>
+          </Pressable>
+        </View>
+      );
+    }
+    if (circles.length === 0) {
+      return (
+        <View style={styles.centered}>
+          <Text style={{ color: "#6b7280" }}>
+            No family circles found. Create one to start tracking.
+          </Text>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.centered}>
+        <Ionicons name="people-outline" size={48} color={colors.textMuted} />
+        <Text style={styles.emptyText}>{t.noMembersInCircle}</Text>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Pressable
-          onPress={() => router.push("/settings")}
-          style={styles.headerAction}
-        >
+        <Pressable onPress={() => router.push("/settings")} style={styles.headerAction}>
           <Ionicons name="arrow-back" size={22} color="#111827" />
         </Pressable>
         <Text style={styles.headerTitle}>{t.pageTitle}</Text>
@@ -203,24 +219,33 @@ export default function ManageTrackersScreen() {
         </Pressable>
       </View>
 
+      {/* Circle error */}
+      {circleError && !loadingCircles && (
+        <View style={styles.centered}>
+          <Ionicons name="cloud-offline-outline" size={48} color={colors.textMuted} />
+          <Text style={styles.errorText}>{t.errorLoadCircles}</Text>
+          <Pressable style={styles.retryBtn} onPress={loadCircles}>
+            <Text style={styles.retryText}>{t.retry}</Text>
+          </Pressable>
+        </View>
+      )}
+
       {/* Circle selector */}
-      {circles.length > 1 && (
+      {!circleError && circles.length > 1 && (
         <View style={styles.circleSelector}>
           {circles.map((circle) => (
             <Pressable
               key={circle.familyCircleId}
               style={[
                 styles.circleChip,
-                selectedCircle?.familyCircleId === circle.familyCircleId &&
-                  styles.circleChipActive,
+                selectedCircle?.familyCircleId === circle.familyCircleId && styles.circleChipActive,
               ]}
-              onPress={() => setSelectedCircle(circle)}
+              onPress={() => { hapticLight(); setSelectedCircle(circle); }}
             >
               <Text
                 style={[
                   styles.circleChipText,
-                  selectedCircle?.familyCircleId === circle.familyCircleId &&
-                    styles.circleChipTextActive,
+                  selectedCircle?.familyCircleId === circle.familyCircleId && styles.circleChipTextActive,
                 ]}
                 numberOfLines={1}
               >
@@ -231,36 +256,41 @@ export default function ManageTrackersScreen() {
         </View>
       )}
 
-      {loadingMembers ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#74becb" />
-        </View>
-      ) : (
-        <FlatList
-          data={members}
-          keyExtractor={(item) => item.memberId}
-          renderItem={renderMember}
-          contentContainerStyle={{ padding: 16, gap: 12 }}
-          ListEmptyComponent={
-            <View style={styles.centered}>
-              <Text style={{ color: "#6b7280" }}>
-                {circles.length === 0
-                  ? "No family circles found. Create one to start tracking."
-                  : "No members in this circle."}
-              </Text>
-            </View>
-          }
-          ListFooterComponent={
-            <Pressable
-              style={styles.addButton}
-              android_ripple={{ color: "#e0f2f5" }}
-              onPress={() => router.push("/(app)/family-circles/new")}
-            >
-              <Ionicons name="add-circle" size={18} color="#74becb" />
-              <Text style={styles.addButtonText}>{t.addNewTracker}</Text>
-            </Pressable>
-          }
-        />
+      {!circleError && (
+        loadingMembers ? (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" color="#74becb" />
+          </View>
+        ) : (
+          <FlatList
+            data={members}
+            keyExtractor={(item) => item.memberId}
+            renderItem={renderMember}
+            contentContainerStyle={{ padding: 16, gap: 12 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={async () => {
+                  setRefreshing(true);
+                  await loadCircles();
+                  setRefreshing(false);
+                }}
+                tintColor={colors.primary}
+              />
+            }
+            ListEmptyComponent={listEmpty}
+            ListFooterComponent={
+              <Pressable
+                style={styles.addButton}
+                android_ripple={{ color: "#e0f2f5" }}
+                onPress={() => router.push("/(app)/family-circles/new")}
+              >
+                <Ionicons name="add-circle" size={18} color="#74becb" />
+                <Text style={styles.addButtonText}>{t.addNewTracker}</Text>
+              </Pressable>
+            }
+          />
+        )
       )}
     </View>
   );
@@ -302,7 +332,17 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     alignItems: "center",
     justifyContent: "center",
+    gap: 12,
   },
+  emptyText: { fontSize: 15, color: colors.textMuted, textAlign: "center" },
+  errorText: { fontSize: 15, color: colors.textSecondary, textAlign: "center" },
+  retryBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+  },
+  retryText: { color: "#fff", fontWeight: "700", fontSize: 14 },
   card: {
     backgroundColor: "#f9fafb",
     borderRadius: 14,
@@ -337,12 +377,7 @@ const styles = StyleSheet.create({
   },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
   metaText: { color: "#6b7280", fontSize: 12 },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
+  badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
   badgeOnline: { backgroundColor: "#ecfdf3", borderColor: "#bbf7d0" },
   badgeOffline: { backgroundColor: "#fef2f2", borderColor: "#fecaca" },
   badgeText: { fontSize: 12, fontWeight: "600" },

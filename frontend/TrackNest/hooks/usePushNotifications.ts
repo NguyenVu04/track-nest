@@ -57,13 +57,20 @@ export function usePushNotifications(enabled: boolean = true) {
         /* console.log("Notification received in foreground:", _notification) */;
       });
 
+    const EMERGENCY_TYPES = [
+      "EMERGENCY_REQUEST_ASSIGNED",
+      "EMERGENCY_REQUEST_ACCEPTED",
+      "EMERGENCY_REQUEST_REJECTED",
+      "EMERGENCY_REQUEST_CLOSED",
+    ];
+
     // 3. Notification tap / interaction listener (app backgrounded).
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data;
         /* console.log("Notification tapped, data:", data) */;
 
-        if (data?.type === "EMERGENCY_REQUEST_ASSIGNED") {
+        if (data?.type && EMERGENCY_TYPES.includes(data.type as string)) {
           router.push("/(app)/sos");
           return;
         }
@@ -80,7 +87,7 @@ export function usePushNotifications(enabled: boolean = true) {
       if (!response) return;
       const data = response.notification.request.content.data;
 
-      if (data?.type === "EMERGENCY_REQUEST_ASSIGNED") {
+      if (data?.type && EMERGENCY_TYPES.includes(data.type as string)) {
         router.push("/(app)/sos");
         return;
       }

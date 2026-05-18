@@ -99,6 +99,7 @@ export const updateUserLocation = async (
     accuracyMeter: number;
     velocityMps: number;
     timestampMs?: number;
+    timeSpentMs?: number;
   }[],
 ): Promise<UpdateUserLocationResponse.AsObject | null> => {
   const request = new UpdateUserLocationRequest();
@@ -110,6 +111,7 @@ export const updateUserLocation = async (
     userLocation.setAccuracyMeter(loc.accuracyMeter);
     userLocation.setVelocityMps(loc.velocityMps);
     userLocation.setTimestampMs(loc.timestampMs ?? Date.now());
+    userLocation.setTimeSpentMs(loc.timeSpentMs ?? 0);
     return userLocation;
   });
 

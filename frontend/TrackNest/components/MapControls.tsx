@@ -20,12 +20,10 @@ type Props = {
   onZoomOut?: (() => void) | null;
   onMapTypePress?: (() => void) | null;
   onToggleHeatmap?: (() => void) | null;
-  onTogglePOIs?: (() => void) | null;
   onToggleSafeZones?: (() => void) | null;
   style?: object;
   mapType?: MapType;
   showHeatmap?: boolean;
-  showPOIs?: boolean;
   showSafeZones?: boolean;
 };
 
@@ -36,12 +34,10 @@ export default function MapControls({
   onZoomOut,
   onMapTypePress,
   onToggleHeatmap,
-  onTogglePOIs,
   onToggleSafeZones,
   style,
   mapType = "standard",
   showHeatmap = false,
-  showPOIs = true,
   showSafeZones = true,
 }: Props) {
   const tabBarHeight = useBottomTabBarHeight();
@@ -76,7 +72,7 @@ export default function MapControls({
   const mapTypeName = mapTypeNameByType[mapType] ?? t.mapTypeStandard;
 
   const hasGroupedOptions =
-    onMapTypePress || onToggleHeatmap || onTogglePOIs || onToggleSafeZones || onZoomIn || onZoomOut;
+    onMapTypePress || onToggleHeatmap || onToggleSafeZones || onZoomIn || onZoomOut || true;
 
   return (
     <>
@@ -198,38 +194,18 @@ export default function MapControls({
             </Pressable>
           )}
 
-          {onTogglePOIs && (
-            <Pressable style={styles.optionRow} onPress={onTogglePOIs}>
-              <View
-                style={[
-                  styles.optionIconWrap,
-                  { backgroundColor: showPOIs ? "#e0f4f8" : "#f3f4f6" },
-                ]}
-              >
-                <Ionicons
-                  name={showPOIs ? "business" : "business-outline"}
-                  size={22}
-                  color={showPOIs ? "#74becb" : "#757575"}
-                />
-              </View>
-              <View style={styles.optionMeta}>
-                <Text style={styles.optionLabel}>{t.poisLabel}</Text>
-                <Text style={styles.optionDesc}>{t.poisDesc}</Text>
-              </View>
-              <View
-                style={[styles.togglePill, showPOIs && styles.togglePillActive]}
-              >
-                <Text
-                  style={[
-                    styles.toggleText,
-                    showPOIs && styles.toggleTextActive,
-                  ]}
-                >
-                  {showPOIs ? t.on : t.off}
-                </Text>
-              </View>
-            </Pressable>
-          )}
+          <View style={[styles.optionRow, styles.optionRowDisabled]}>
+            <View style={[styles.optionIconWrap, { backgroundColor: "#f3f4f6" }]}>
+              <Ionicons name="business-outline" size={22} color="#c0c0c0" />
+            </View>
+            <View style={styles.optionMeta}>
+              <Text style={[styles.optionLabel, styles.optionLabelDisabled]}>{t.poisLabel}</Text>
+              <Text style={styles.optionDesc}>{t.poisUnavailableDesc}</Text>
+            </View>
+            <View style={styles.togglePill}>
+              <Text style={styles.toggleText}>{t.off}</Text>
+            </View>
+          </View>
 
           {(onZoomIn || onZoomOut) && (
             <View style={styles.optionRow}>
@@ -305,6 +281,12 @@ const styles = StyleSheet.create({
     gap: 14,
     borderTopWidth: 1,
     borderTopColor: "#f3f4f6",
+  },
+  optionRowDisabled: {
+    opacity: 0.5,
+  },
+  optionLabelDisabled: {
+    color: "#9ca3af",
   },
   optionIconWrap: {
     width: 44,

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import type { MissingPerson } from "@/types";
 import { MissingPersonForm } from "@/components/missing-persons/MissingPersonForm";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 import { criminalReportsService } from "@/services/criminalReportsService";
@@ -108,11 +109,20 @@ export default function EditMissingPersonPage() {
   };
 
   return (
-    <MissingPersonForm
-      person={person}
-      onSave={handleSave}
-      onCancel={handleCancel}
-      mode="edit"
-    />
+    <>
+      <Breadcrumbs
+        items={[
+          { label: "Missing Persons", href: "/dashboard/missing-persons" },
+          { label: person.fullName, href: `/dashboard/missing-persons/${person.id}` },
+          { label: "Edit" },
+        ]}
+      />
+      <MissingPersonForm
+        person={person}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        mode="edit"
+      />
+    </>
   );
 }

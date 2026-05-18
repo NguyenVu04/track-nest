@@ -61,7 +61,13 @@ import {
   hasCompletedMapWalkthrough,
   markMapWalkthroughCompleted,
 } from "@/utils/walkthrough";
+import { loadSavedKey, saveKey } from "@/utils/storage";
 import { showToast } from "@/utils";
+
+const MAP_SETTINGS_KEYS = {
+  CRIME_HEATMAP: "map_show_crime_heatmap",
+  SAFE_ZONES: "map_show_safe_zones",
+} as const;
 
 function formatDuration(totalSeconds: number) {
   if (totalSeconds < 60) return `${totalSeconds}s`;
@@ -127,7 +133,6 @@ function MapScreenContent() {
   // ====================
   const [isMapReady, setIsMapReady] = useState(false);
   const [showCrimeHeatmap, setShowCrimeHeatmap] = useState(false);
-  const [showPOIs, setShowPOIs] = useState(true);
   const [showSafeZones, setShowSafeZones] = useState(true);
   const [shouldStartMapTour, setShouldStartMapTour] = useState(false);
   const [visibleRegion, setVisibleRegion] = useState<Region | null>(null);
@@ -162,7 +167,7 @@ function MapScreenContent() {
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const { mapType, setMapType } = useMapContext();
   const { tracking, shareLocation } = useTracking();
-  const { crimeHeatmapPoints, loadCrimeHeatmap, nearbyPOIs, getPOIColor } =
+  const { crimeHeatmapPoints, loadCrimeHeatmap } =
     usePOIAnalytics();
   const { circles, selectedCircle, selectCircle, refreshCircles } =
     useFamilyCircle();
@@ -177,6 +182,33 @@ function MapScreenContent() {
   useEffect(() => {
     startTourRef.current = start;
   }, [start]);
+
+  // Load persisted map layer settings from AsyncStorage on mount
+  useEffect(() => {
+    let isMounted = true;
+    Promise.all([
+      loadSavedKey<boolean>(MAP_SETTINGS_KEYS.CRIME_HEATMAP),
+      loadSavedKey<boolean>(MAP_SETTINGS_KEYS.SAFE_ZONES),
+    ]).then(([savedHeatmap, savedSafeZones]) => {
+      if (!isMounted) return;
+      if (savedHeatmap !== null) setShowCrimeHeatmap(savedHeatmap);
+      if (savedSafeZones !== null) setShowSafeZones(savedSafeZones);
+      hasLoadedSettingsRef.current = true;
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedSettingsRef.current) return;
+    saveKey(MAP_SETTINGS_KEYS.CRIME_HEATMAP, showCrimeHeatmap);
+  }, [showCrimeHeatmap]);
+
+  useEffect(() => {
+    if (!hasLoadedSettingsRef.current) return;
+    saveKey(MAP_SETTINGS_KEYS.SAFE_ZONES, showSafeZones);
+  }, [showSafeZones]);
 
   useFocusEffect(
     useCallback(() => {
@@ -275,6 +307,7 @@ function MapScreenContent() {
   }, [streamedFollowers, circleFollowers]);
 
   // ── Upload user location to server when it changes ──
+  const hasLoadedSettingsRef = useRef(false);
   const hasAnimatedInitialRef = useRef(false);
   const lastUploadedRef = useRef<{ lat: number; lng: number } | null>(null);
   const locationRef2 = useRef(location);
@@ -360,15 +393,18 @@ function MapScreenContent() {
     list.push(...followersToRender);
     return list;
   }, [meItem, followersToRender]);
-  const initialRegion = useMemo(
-    () => ({
-      latitude: location?.latitude || 0,
-      longitude: location?.longitude || 0,
+  // Capture initialRegion once at mount — MapView only reads this prop on first
+  // render, so recomputing it on every location heartbeat wastes work and can
+  // cause MapView to re-evaluate its internal region state.
+  const initialRegionRef = useRef<Region | null>(null);
+  if (!initialRegionRef.current && location) {
+    initialRegionRef.current = {
+      latitude: location.latitude,
+      longitude: location.longitude,
       latitudeDelta: regionDelta,
       longitudeDelta: regionDelta,
-    }),
-    [location, regionDelta],
-  );
+    };
+  }
 
   const checkBeforeCenterMap = useCallback(() => {
     if (location) {
@@ -614,14 +650,13 @@ function MapScreenContent() {
 
         <MapView
           loadingEnabled={true}
-          // cacheEnabled={true}
           moveOnMarkerPress={true}
           showsCompass={false}
           ref={mapRef}
           provider={PROVIDER_GOOGLE}
           mapType={mapType || "standard"}
           style={[StyleSheet.absoluteFillObject]}
-          initialRegion={initialRegion}
+          initialRegion={initialRegionRef.current ?? undefined}
           showsUserLocation={false}
           showsMyLocationButton={false}
           onMapReady={handleMapReady}
@@ -660,21 +695,6 @@ function MapScreenContent() {
               pinColor="#2ecc71"
             />
           ))}
-
-          {/* POI Markers */}
-          {showPOIs &&
-            nearbyPOIs.map((poi) => (
-              <Marker
-                key={`poi-${poi.id}`}
-                coordinate={{
-                  latitude: poi.latitude,
-                  longitude: poi.longitude,
-                }}
-                title={poi.name}
-                description={poi.description || poi.category}
-                pinColor={getPOIColor(poi.category)}
-              />
-            ))}
 
           {/* Crime Heatmap Circles */}
           {showCrimeHeatmap &&
@@ -739,11 +759,9 @@ function MapScreenContent() {
           onZoomOut={null}
           onMapTypePress={handleMapTypeModalPress}
           onToggleHeatmap={() => setShowCrimeHeatmap(!showCrimeHeatmap)}
-          onTogglePOIs={() => setShowPOIs(!showPOIs)}
           onToggleSafeZones={() => setShowSafeZones(!showSafeZones)}
           mapType={mapType}
           showHeatmap={showCrimeHeatmap}
-          showPOIs={showPOIs}
           showSafeZones={showSafeZones}
         />
       </View>

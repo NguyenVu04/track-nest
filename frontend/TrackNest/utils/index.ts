@@ -7,3 +7,4 @@ export * from "./locationTypes";
 export * from "./serviceUrl";
 export * from "./storage";
 export * from "./toast";
+export * from "./haptics";

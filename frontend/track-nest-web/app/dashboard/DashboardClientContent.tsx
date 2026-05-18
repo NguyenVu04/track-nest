@@ -7,6 +7,7 @@ import { Loading } from "@/components/loading/Loading";
 import { Header } from "@/components/layout/Header";
 import { AppSidebar } from "@/components/layout/Sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { useReportPolling } from "@/hooks/useReportPolling";
 import type { UserRole } from "@/types";
 
 const ROLE_ROUTES: Record<string, UserRole[]> = {
@@ -26,6 +27,8 @@ export function DashboardClientContent({
   const { user, logout, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
+  useReportPolling(!!user);
 
   useEffect(() => {
     if (isLoading) return;

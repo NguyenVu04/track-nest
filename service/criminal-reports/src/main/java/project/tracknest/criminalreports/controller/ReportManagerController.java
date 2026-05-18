@@ -114,7 +114,7 @@ public class ReportManagerController {
             @RequestParam(defaultValue = "false") boolean isPublic,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(service.listMissingPersonReports(reporterId, status, title, isPublic, page, Math.min(size, 10)));
+        return ResponseEntity.ok(service.listMissingPersonReports(reporterId, status, title, isPublic, page, Math.min(size, 100)));
     }
 
     @PostMapping(value = "/crime-reports", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -212,7 +212,7 @@ public class ReportManagerController {
             @RequestParam(defaultValue = "false") boolean isPublic,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(service.listCrimeReports(reporterId, minSeverity, maxSeverity, title, isPublic, page, Math.min(size, 10)));
+        return ResponseEntity.ok(service.listCrimeReports(reporterId, minSeverity, maxSeverity, title, isPublic, page, Math.min(size, 100)));
     }
 
     @GetMapping("/crime-reports/nearby")

@@ -3,6 +3,7 @@ import { safeZones as safeZonesLang } from "@/constant/languages";
 import useDeviceLocation from "@/hooks/useDeviceLocation";
 import { useTranslation } from "@/hooks/useTranslation";
 import { emergencyService } from "@/services/emergency";
+import { colors } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -10,6 +11,7 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
@@ -54,12 +56,14 @@ export default function SafeZonesScreen() {
   const mapRef = useRef<MapView>(null);
   const [safeZones, setSafeZones] = useState<SafeZone[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { location } = useDeviceLocation(false);
 
   const loadSafeZones = useCallback(async () => {
     if (!location) return;
     setLoading(true);
+    setError(false);
     try {
       const zones = await emergencyService.getNearestSafeZones({
         lat: location.latitude,
@@ -70,6 +74,7 @@ export default function SafeZonesScreen() {
       setSafeZones(zones);
     } catch (err) {
       console.error("Failed to load safe zones:", err);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -215,9 +220,16 @@ export default function SafeZonesScreen() {
         style={styles.list}
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={loadSafeZones}
+            tintColor="#16a34a"
+          />
+        }
         renderItem={({ item }) => (
           <Pressable
-            style={styles.item}
+            style={({ pressed }) => [styles.item, pressed && { opacity: 0.75 }]}
             onPress={() => handleFocusZone(item.zone)}
             android_ripple={{ color: "#dcfce7" }}
           >
@@ -238,13 +250,25 @@ export default function SafeZonesScreen() {
           </Pressable>
         )}
         ListEmptyComponent={
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>
-              {loading
-                ? t.loading
-                : t.empty}
-            </Text>
-          </View>
+          error ? (
+            <View style={styles.emptyWrap}>
+              <Ionicons name="cloud-offline-outline" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>{t.errorLoad}</Text>
+              <Pressable style={styles.retryBtn} onPress={loadSafeZones}>
+                <Text style={styles.retryText}>{t.retry}</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.emptyWrap}>
+              <Ionicons
+                name="shield-outline"
+                size={48}
+                color="#16a34a"
+                style={{ opacity: 0.5 }}
+              />
+              <Text style={styles.emptyText}>{loading ? t.loading : t.empty}</Text>
+            </View>
+          )
         }
       />
     </SafeAreaView>
@@ -307,6 +331,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 12,
   },
-  emptyWrap: { paddingVertical: 20, alignItems: "center" },
-  emptyText: { color: "#6b7280" },
+  emptyWrap: { paddingVertical: 20, alignItems: "center", gap: 12 },
+  emptyText: { color: "#6b7280", textAlign: "center" },
+  retryBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+  },
+  retryText: { color: "#fff", fontWeight: "700" as const, fontSize: 14 },
 });
