@@ -1,6 +1,9 @@
 // import { CurrentLocationMarker as currentLocationMarkerLang } from "@/constant/languages";
 import useDeviceHeading from "@/hooks/useDeviceHeading";
 // import { useTranslation } from "@/hooks/useTranslation";
+import { colors } from "@/styles/styles";
+import { fontScale, moderateScale } from "@/utils/responsive";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Platform, StyleSheet, Text, View } from "react-native";
 import { MapMarker, Marker } from "react-native-maps";
@@ -10,6 +13,7 @@ type Props = {
   longitude: number;
   speed?: number | null; // speed in m/s
   disabled?: boolean; // when true show subdued grey dot and pause pulse
+  isEmergency?: boolean; // when true show red pulsing emergency marker
   handlePress?: () => void; // optional press handler for the marker
 };
 
@@ -20,6 +24,7 @@ function CurrentLocationMarker({
   longitude,
   speed,
   disabled = false,
+  isEmergency = false,
   handlePress,
 }: Props) {
   // const t = useTranslation(currentLocationMarkerLang);
@@ -104,9 +109,9 @@ function CurrentLocationMarker({
   const animRef = useRef<any>(null);
 
   useEffect(() => {
+    animRef.current?.stop?.();
+
     if (disabled) {
-      // stop animation and set subdued visuals
-      animRef.current?.stop?.();
       opacity.setValue(0.2);
       scale.setValue(0.6);
       return;
@@ -115,16 +120,19 @@ function CurrentLocationMarker({
     scale.setValue(0);
     opacity.setValue(0.6);
 
+    // Emergency mode pulses twice as fast to signal urgency.
+    const duration = isEmergency ? 2000 : 1200;
+
     animRef.current = Animated.loop(
       Animated.parallel([
         Animated.timing(scale, {
           toValue: 1,
-          duration: 1200,
+          duration,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           toValue: 0,
-          duration: 1200,
+          duration,
           useNativeDriver: true,
         }),
       ]),
@@ -132,22 +140,29 @@ function CurrentLocationMarker({
 
     animRef.current.start();
     return () => animRef.current?.stop?.();
-  }, [scale, opacity, disabled]);
+  }, [scale, opacity, disabled, isEmergency]);
 
-  // const pulseScale = scale.interpolate({
-  //   inputRange: [0, 1],
-  //   outputRange: [0.6, 2.2],
-  // });
+  const pulseScale = scale.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.6, 2.2],
+  });
 
-  const outerBorder = disabled ? "#bdbdbd" : "rgba(116,190,203,0.9)";
-  const innerColor = disabled ? "#999" : "#74becb";
-  // const pulseColor = disabled ? "rgba(0,0,0,0)" : "rgba(116,190,203,0.25)";
+  const outerBorder = disabled
+    ? "#bdbdbd"
+    : isEmergency
+      ? "rgba(204,46,29,0.9)"
+      : "rgba(116,190,203,0.9)";
+  const innerColor = disabled
+    ? "#999"
+    : isEmergency
+      ? colors.danger
+      : "#74becb";
 
   return (
     <Marker
       ref={markerRef}
       coordinate={markerCoordinate}
-      tracksViewChanges={tracksViewChanges}
+      tracksViewChanges={true}
       anchor={{ x: 0.5, y: 0.5 }}
       onPress={(e) => {
         e.stopPropagation();
@@ -155,16 +170,18 @@ function CurrentLocationMarker({
       }}
     >
       <View style={localStyles.wrapper}>
-        {/* <Animated.View
+        <Animated.View
           style={[
             localStyles.pulse,
             {
               transform: [{ scale: pulseScale }],
               opacity,
-              backgroundColor: pulseColor,
+              backgroundColor: isEmergency
+                ? "rgba(204,46,29,0.25)"
+                : "rgba(116,190,203,0.25)",
             },
           ]}
-        /> */}
+        />
 
         {heading != null && !disabled && (
           <View
@@ -173,7 +190,14 @@ function CurrentLocationMarker({
               { transform: [{ rotate: `${heading}deg` }] },
             ]}
           >
-            <View style={localStyles.arrowHead} />
+            <View
+              style={[
+                localStyles.arrowHead,
+                {
+                  borderBottomColor: innerColor
+                },
+              ]}
+            />
           </View>
         )}
         <View style={[localStyles.dotOuter, { borderColor: outerBorder }]}>
@@ -181,8 +205,17 @@ function CurrentLocationMarker({
             style={[localStyles.dotInner, { backgroundColor: innerColor }]}
           />
         </View>
+        {isEmergency && !disabled && (
+          <View style={localStyles.emergencyIconWrap}>
+            <Ionicons
+              name="alert-circle"
+              size={moderateScale(12)}
+              color={colors.danger}
+            />
+          </View>
+        )}
         {hasSpeedData && (
-          <View style={localStyles.speedContainer}>
+          <View style={[localStyles.speedContainer, { backgroundColor: innerColor }]}>
             <Text style={localStyles.speedText}>{`${speedKmh} km/h`}</Text>
           </View>
         )}
@@ -191,52 +224,57 @@ function CurrentLocationMarker({
   );
 }
 
+const WRAPPER = moderateScale(56);
+const PULSE = moderateScale(36);
+const DOT_OUTER = moderateScale(22);
+const DOT_INNER = moderateScale(14);
+
 const localStyles = StyleSheet.create({
   wrapper: {
-    width: 60,
-    height: 60,
+    width: WRAPPER,
+    height: WRAPPER,
     alignItems: "center",
     justifyContent: "center",
   },
   pulse: {
     position: "absolute",
-    width: 38,
-    height: 38,
-    borderRadius: 38 / 2,
+    width: PULSE,
+    height: PULSE,
+    borderRadius: PULSE / 2,
     backgroundColor: "rgba(116,190,203,0.25)",
-    top: (1 / 2) * 60 - 19,
-    left: (1 / 2) * 60 - 19,
+    top: WRAPPER / 2 - PULSE / 2,
+    left: WRAPPER / 2 - PULSE / 2,
   },
   headingArrow: {
     position: "absolute",
-    width: 60,
-    height: 40,
+    width: WRAPPER,
+    height: moderateScale(38),
     alignItems: "center",
     justifyContent: "flex-start",
   },
   arrowHead: {
     width: 0,
     height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderBottomWidth: 12,
+    borderLeftWidth: moderateScale(5),
+    borderRightWidth: moderateScale(5),
+    borderBottomWidth: moderateScale(10),
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
     borderBottomColor: "rgba(116,190,203,1)",
   },
   dotOuter: {
-    width: 22,
-    height: 22,
-    borderRadius: 14,
+    width: DOT_OUTER,
+    height: DOT_OUTER,
+    borderRadius: DOT_OUTER / 2,
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
   },
   dotInner: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    width: DOT_INNER,
+    height: DOT_INNER,
+    borderRadius: DOT_INNER / 2,
     backgroundColor: "#74becb",
   },
   speedContainer: {
@@ -249,8 +287,15 @@ const localStyles = StyleSheet.create({
   },
   speedText: {
     color: "#fff",
-    fontSize: 10,
+    fontSize: fontScale(10),
     fontWeight: "600",
+  },
+  emergencyIconWrap: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    borderRadius: moderateScale(8),
   },
 });
 

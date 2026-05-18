@@ -36,7 +36,7 @@ const mockGetMissing = jest.fn();
 const mockGetPhotoUrl = jest.fn();
 jest.mock("@/services/criminalReports", () => ({
   criminalReportsService: {
-    getUserMissingPersonReportById: (...args: any[]) => mockGetMissing(...args),
+    getPublicMissingPersonReportById: (...args: any[]) => mockGetMissing(...args),
     getMissingPersonPhotoUrl: (...args: any[]) => mockGetPhotoUrl(...args),
   },
 }));
@@ -80,6 +80,7 @@ describe("MissingDetailScreen", () => {
     mockGetMissing.mockReturnValue(new Promise(() => {}));
     const { UNSAFE_getByType } = render(<MissingDetailScreen />);
     const { ActivityIndicator } = require("react-native");
+    // missing-detail uses ActivityIndicator directly while loading
     expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
   });
 

@@ -9,6 +9,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY app/            ./app/
+COPY assets/         ./assets/
 COPY components/     ./components/
 COPY contexts/       ./contexts/
 COPY messages/       ./messages/

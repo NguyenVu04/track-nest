@@ -1,4 +1,5 @@
 import { colors, shadows } from "@/styles/styles";
+import { fontScale, moderateScale } from "@/utils/responsive";
 import { useRouter } from "expo-router";
 import {
   Pressable,
@@ -26,11 +27,13 @@ export default function SosFab({ style }: SosFabProps) {
   );
 }
 
+const DIM = moderateScale(50);
+
 const styles = StyleSheet.create({
   button: {
-    width: 55,
-    height: 55,
-    borderRadius: 10,
+    width: DIM,
+    height: DIM,
+    borderRadius: moderateScale(10),
     backgroundColor: colors.danger,
     alignItems: "center",
     justifyContent: "center",
@@ -38,13 +41,13 @@ const styles = StyleSheet.create({
   },
   label: {
     color: "#fff",
-    fontSize: 13,
+    fontSize: fontScale(12),
     fontWeight: "800",
     letterSpacing: 0.5,
   },
   iconStar: {
-    fontSize: 28,
-    fontWeight: 900,
+    fontSize: fontScale(24),
+    fontWeight: "900",
     color: "#fff",
   },
 });

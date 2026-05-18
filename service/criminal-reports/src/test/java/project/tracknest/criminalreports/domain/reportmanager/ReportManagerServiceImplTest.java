@@ -378,7 +378,7 @@ class ReportManagerServiceImplTest {
 
         @Test
         void should_returnReport_whenOwned() {
-            when(crimeReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(crimeReportRepository.findByReporterIdOrUserSubmittedAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(privateCrimeReport()));
 
             CrimeReportResponse resp = service.getCrimeReport(REPORTER_ID, REPORT_ID);
@@ -387,7 +387,7 @@ class ReportManagerServiceImplTest {
 
         @Test
         void should_throw404_whenNotFound() {
-            when(crimeReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(crimeReportRepository.findByReporterIdOrUserSubmittedAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.getCrimeReport(REPORTER_ID, REPORT_ID))
@@ -402,7 +402,7 @@ class ReportManagerServiceImplTest {
 
         @Test
         void should_update_whenPrivate() {
-            when(crimeReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(crimeReportRepository.findByReporterIdOrUserSubmittedAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(privateCrimeReport()));
             when(crimeReportRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -418,7 +418,7 @@ class ReportManagerServiceImplTest {
         void should_throw409_whenAlreadyPublic() {
             CrimeReport pub = privateCrimeReport();
             pub.setPublic(true);
-            when(crimeReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(crimeReportRepository.findByReporterIdOrUserSubmittedAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(pub));
 
             var req = UpdateCrimeReportRequest.builder()
@@ -436,7 +436,7 @@ class ReportManagerServiceImplTest {
 
         @Test
         void should_publish_whenPrivate() {
-            when(crimeReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(crimeReportRepository.findByReporterIdOrUserSubmittedAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(privateCrimeReport()));
             when(crimeReportRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -448,7 +448,7 @@ class ReportManagerServiceImplTest {
         void should_throw409_whenAlreadyPublic() {
             CrimeReport pub = privateCrimeReport();
             pub.setPublic(true);
-            when(crimeReportRepository.findByReporterIdAndId(REPORTER_ID, REPORT_ID))
+            when(crimeReportRepository.findByReporterIdOrUserSubmittedAndId(REPORTER_ID, REPORT_ID))
                     .thenReturn(Optional.of(pub));
 
             assertThatThrownBy(() -> service.publishCrimeReport(REPORTER_ID, REPORT_ID))

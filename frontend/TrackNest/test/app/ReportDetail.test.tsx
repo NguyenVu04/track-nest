@@ -28,6 +28,7 @@ jest.mock("@/components/shared/ChatbotPanel", () => ({
 }));
 jest.mock("@/utils", () => ({
   showToast: jest.fn(),
+  hapticLight: jest.fn(),
   formatRelativeTime: () => "5m",
 }));
 
@@ -35,6 +36,7 @@ const mockGetReport = jest.fn();
 jest.mock("@/services/criminalReports", () => ({
   criminalReportsService: {
     getUserCrimeReportById: (...args: any[]) => mockGetReport(...args),
+    getCrimeReportContent: jest.fn().mockResolvedValue("<p>content</p>"),
   },
 }));
 
@@ -82,7 +84,7 @@ describe("ReportDetailScreen", () => {
   it("shows not found when report is null", async () => {
     mockGetReport.mockRejectedValue(new Error("Not found"));
     const { findByText } = render(<ReportDetailScreen />);
-    await findByText(/not found/i);
+    await findByText(/could not load report/i);
   });
 
   it("renders report content after loading", async () => {
@@ -121,7 +123,7 @@ describe("ReportDetailScreen", () => {
   it("calls router.back() when back icon pressed (not-found state)", async () => {
     mockGetReport.mockRejectedValue(new Error("fail"));
     const { findByText, UNSAFE_getAllByType } = render(<ReportDetailScreen />);
-    await findByText(/not found/i);
+    await findByText(/could not load report/i);
     const backIcon = UNSAFE_getAllByType("Ionicons").find(
       (i: any) => i.props.name === "arrow-back",
     );

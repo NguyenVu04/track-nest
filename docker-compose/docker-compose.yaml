@@ -264,6 +264,7 @@ services:
       - ../database/01-user-tracking-init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ../database/02-user-tracking-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
       - ../database/tables_postgres.sql:/docker-entrypoint-initdb.d/03-quartz.sql
+      - ../database/03-user-tracking-mobile-device-dedup.sql:/docker-entrypoint-initdb.d/04-mobile-device-dedup.sql
     networks:
       - track_nest
     healthcheck:
@@ -308,6 +309,7 @@ services:
       - criminal_reports_postgres_data:/var/lib/postgresql/data
       - ../database/01-criminal-reports-init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ../database/02-criminal-reports-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - ../database/03-criminal-reports-user-submitted.sql:/docker-entrypoint-initdb.d/03-user-submitted.sql
     networks:
       - track_nest
     healthcheck:

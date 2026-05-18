@@ -220,16 +220,6 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
     }
 
     private boolean checkNoActiveEmergencyRequest(UUID targetId) {
-        Optional<EmergencyRequest> existingRequestOpt = emergencyRequestRepository
-                .findByTargetId(targetId);
-
-        if (existingRequestOpt.isPresent()) {
-            EmergencyRequest existingRequest = existingRequestOpt.get();
-
-            return !existingRequest.getStatus().is(EmergencyRequestStatus.Status.PENDING)
-                    && !existingRequest.getStatus().is(EmergencyRequestStatus.Status.ACCEPTED);
-        }
-
-        return true;
+        return emergencyRequestRepository.findActiveByTargetId(targetId).isEmpty();
     }
 }

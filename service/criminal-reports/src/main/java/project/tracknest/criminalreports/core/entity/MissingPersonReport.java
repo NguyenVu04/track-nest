@@ -61,6 +61,9 @@ public class MissingPersonReport {
     @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
 
+    @Column(name = "submitted_by_user", nullable = false, updatable = false)
+    private boolean submittedByUser;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "status_name", nullable = false)
     private MissingPersonReportStatus status;

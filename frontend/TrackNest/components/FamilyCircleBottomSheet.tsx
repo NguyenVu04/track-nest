@@ -1,3 +1,4 @@
+import { screenWidth } from "@/utils/responsive";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import React, { useCallback, useState } from "react";
@@ -907,13 +908,13 @@ const styles = StyleSheet.create({
     color: "#e74c3c",
     fontWeight: "600",
   },
-  // â”€â”€ Generic modals (invite / join) â”€â”€
+  // ── Generic modals (invite / join) ──
   modalContent: {
     backgroundColor: "#fff",
     borderRadius: 16,
     padding: 20,
     width: "100%",
-    maxWidth: 360,
+    maxWidth: Math.min(360, screenWidth * 0.92),
     alignSelf: "center",
     marginHorizontal: 20,
     marginBottom: 40,

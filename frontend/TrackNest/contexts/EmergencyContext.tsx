@@ -1,12 +1,13 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useState,
   ReactNode,
-  useCallback,
 } from "react";
+import { NativeModules } from "react-native";
 import type {
-  EmergencyRequest,
   PostEmergencyRequestResponse,
   SafeZone,
   CreateEmergencyRequestData,
@@ -14,15 +15,19 @@ import type {
 import { emergencyService } from "@/services/emergency";
 import * as Location from "expo-location";
 
+const { NativeLocationModule } = NativeModules;
+
 interface EmergencyContextType {
-  // Emergency Requests (simplified for SOS-only usage)
-  activeEmergency: EmergencyRequest | null;
-  
-  // Actions (only what's needed for SOS screen)
+  /** True when the current user has a PENDING or ACCEPTED emergency request. */
+  isEmergencyActive: boolean;
+  /**
+   * Re-evaluate whether the user has an active emergency by calling
+   * GET /emergency-request-receiver/user/{userId}/emergency-request-allowed.
+   * Call this whenever the map screen gains focus.
+   */
+  refreshActiveEmergencyStatus: (userId: string) => Promise<void>;
   createEmergencyRequest: (targetId: string) => Promise<PostEmergencyRequestResponse>;
-  
-  // Safe Zone actions (for finding nearest safe locations during emergency)
-  getNearestSafeZones: (location?: {lat: number; lng: number}) => Promise<SafeZone[]>;
+  getNearestSafeZones: (location?: { lat: number; lng: number }) => Promise<SafeZone[]>;
 }
 
 const EmergencyContext = createContext<EmergencyContextType | undefined>(undefined);
@@ -39,59 +44,99 @@ interface EmergencyProviderProps {
   children: ReactNode;
 }
 
-export const EmergencyProvider: React.FC<EmergencyProviderProps> = ({
-  children,
-}) => {
-  // Simplified state for SOS-only usage
-  const [activeEmergency, setActiveEmergency] = useState<EmergencyRequest | null>(null);
+export const EmergencyProvider: React.FC<EmergencyProviderProps> = ({ children }) => {
+  const [isEmergencyActive, setIsEmergencyActive] = useState(false);
 
-  // Create emergency request (called only from SOS screen timeout)
-  const createEmergencyRequest = useCallback(async (targetId: string): Promise<PostEmergencyRequestResponse> => {
+  // Sync the native location-service tracking mode whenever emergency state changes.
+  // Wrapped in its own effect so we never call the native module from inside an
+  // async callback where errors would be harder to isolate.
+  useEffect(() => {
     try {
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-
-      const requestData: CreateEmergencyRequestData = {
-        targetId,
-        lastLatitudeDegrees: location.coords.latitude,
-        lastLongitudeDegrees: location.coords.longitude,
-      };
-
-      return await emergencyService.createEmergencyRequest(requestData);
-    } catch (error) {
-      console.error("Failed to create emergency request:", error);
-      throw error;
+      if (
+        NativeLocationModule &&
+        typeof NativeLocationModule.forceTrackingMode === "function"
+      ) {
+        NativeLocationModule.forceTrackingMode(
+          isEmergencyActive ? "NAVIGATION" : "NORMAL",
+        );
+      }
+    } catch {
+      // Native module may not be available in Expo Go / unit tests.
     }
-  }, []);
+  }, [isEmergencyActive]);
 
-  // Get nearest safe zones (for emergency situations)
-  const getNearestSafeZones = useCallback(async (location?: {lat: number; lng: number}): Promise<SafeZone[]> => {
-    try {
-      let queryLocation = location;
-      
-      if (!queryLocation) {
-        // Get current location if not provided
-        const currentLocation = await Location.getCurrentPositionAsync({
+  /**
+   * Ask the backend whether the user is allowed to create a new emergency
+   * request. allowed=false  →  an active (PENDING/ACCEPTED) request exists.
+   */
+  const refreshActiveEmergencyStatus = useCallback(
+    async (userId: string): Promise<void> => {
+      if (!userId) return;
+      try {
+        const result = await emergencyService.checkEmergencyRequestAllowed(userId);
+        setIsEmergencyActive(!result.allowed);
+      } catch {
+        // Silently ignore — network unavailable on boot or background is fine.
+      }
+    },
+    [],
+  );
+
+  const createEmergencyRequest = useCallback(
+    async (targetId: string): Promise<PostEmergencyRequestResponse> => {
+      try {
+        const location = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.High,
         });
-        queryLocation = {
-          lat: currentLocation.coords.latitude,
-          lng: currentLocation.coords.longitude,
+
+        const requestData: CreateEmergencyRequestData = {
+          targetId,
+          lastLatitudeDegrees: location.coords.latitude,
+          lastLongitudeDegrees: location.coords.longitude,
         };
+
+        const result = await emergencyService.createEmergencyRequest(requestData);
+
+        // Optimistically mark emergency as active so the marker updates
+        // immediately, before the next useFocusEffect refresh fires.
+        setIsEmergencyActive(true);
+
+        return result;
+      } catch (error) {
+        console.error("Failed to create emergency request:", error);
+        throw error;
       }
+    },
+    [],
+  );
 
-      const safeZones = await emergencyService.getNearestSafeZones(queryLocation);
-      return safeZones;
-    } catch (error) {
-      console.error("Failed to fetch nearest safe zones:", error);
-      return [];
-    }
-  }, []);
+  const getNearestSafeZones = useCallback(
+    async (location?: { lat: number; lng: number }): Promise<SafeZone[]> => {
+      try {
+        let queryLocation = location;
 
-  // Context value (simplified for SOS-only usage)
+        if (!queryLocation) {
+          const currentLocation = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
+          queryLocation = {
+            lat: currentLocation.coords.latitude,
+            lng: currentLocation.coords.longitude,
+          };
+        }
+
+        return await emergencyService.getNearestSafeZones(queryLocation);
+      } catch (error) {
+        console.error("Failed to fetch nearest safe zones:", error);
+        return [];
+      }
+    },
+    [],
+  );
+
   const contextValue: EmergencyContextType = {
-    activeEmergency,
+    isEmergencyActive,
+    refreshActiveEmergencyStatus,
     createEmergencyRequest,
     getNearestSafeZones,
   };

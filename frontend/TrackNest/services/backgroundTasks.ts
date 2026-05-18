@@ -5,10 +5,15 @@ import {
   BACKGROUND_USER_LOCATION_TASK_NAME,
   CHAT_UNREAD_KEY,
   LOCATION_UPDATE_EMIT_EVENT,
+  NOTIFICATION_RECEIVED_EVENT,
+  NOTIFICATION_UNREAD_KEY,
 } from "@/constant";
 import { uploadPendingLocations } from "@/services/locationUpload";
 import { processBatchLocations } from "@/utils";
-import { scheduleAutoDisappearNotification } from "@/utils/notifications";
+import {
+  scheduleAutoDisappearNotification,
+  scheduleLocationUpdateNotification,
+} from "@/utils/notifications";
 import { subscribeToActivityChanges, getCurrentActivity } from "@/utils/activityDetection";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as BackgroundTask from "expo-background-task";
@@ -58,9 +63,10 @@ TaskManager.defineTask(
         /* console.log(
           `Location processed for upload (queue size: ${queueSize}).`,
         ) */;
-        await scheduleAutoDisappearNotification(
-          "Location Recorded",
-          `Position saved · ${queueSize} update(s) pending upload.`,
+        await scheduleLocationUpdateNotification(
+          latest.latitude,
+          latest.longitude,
+          latest.speed,
         );
         return BackgroundTask.BackgroundTaskResult.Success;
       } catch (err: any) {
@@ -140,7 +146,7 @@ TaskManager.defineTask(
         const next = (parseInt(stored ?? "0", 10) || 0) + 1;
         await AsyncStorage.setItem(CHAT_UNREAD_KEY, String(next));
       } catch (err) {
-        console.error("[BackgroundNotification] failed to update badge:", err);
+        console.error("[BackgroundNotification] failed to update chat badge:", err);
       }
       return;
     }
@@ -152,13 +158,29 @@ TaskManager.defineTask(
       "EMERGENCY_REQUEST_CLOSED",
     ];
     if (notifData?.type && EMERGENCY_TYPES.includes(notifData.type as string)) {
-      // OS auto-displays the notification (FCM includes notification field).
       // Store latest emergency event so the SOS screen can refresh on next open.
       try {
         await AsyncStorage.setItem("LAST_EMERGENCY_NOTIFICATION_TYPE", notifData.type as string);
         await AsyncStorage.setItem("LAST_EMERGENCY_NOTIFICATION_TIME", String(Date.now()));
       } catch (err) {
         console.error("[BackgroundNotification] failed to store emergency notification:", err);
+      }
+      return;
+    }
+
+    // Increment the notification bell badge for tracking and risk notifications.
+    if (
+      notifData?.type === "tracking_notification" ||
+      notifData?.type === "risk_notification"
+    ) {
+      try {
+        const stored = await AsyncStorage.getItem(NOTIFICATION_UNREAD_KEY);
+        const next = (parseInt(stored ?? "0", 10) || 0) + 1;
+        await AsyncStorage.setItem(NOTIFICATION_UNREAD_KEY, String(next));
+        // Wake up any foreground listeners so the bell updates immediately.
+        DeviceEventEmitter.emit(NOTIFICATION_RECEIVED_EVENT, { type: notifData.type });
+      } catch (err) {
+        console.error("[BackgroundNotification] failed to update notification badge:", err);
       }
       return;
     }

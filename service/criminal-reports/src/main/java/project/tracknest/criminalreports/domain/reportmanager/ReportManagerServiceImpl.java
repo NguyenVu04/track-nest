@@ -373,7 +373,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
     }
 
     private CrimeReport findCrimeReportOwned(UUID reporterId, UUID reportId) {
-        return crimeReportRepository.findByReporterIdAndId(reporterId, reportId)
+        return crimeReportRepository.findByReporterIdOrUserSubmittedAndId(reporterId, reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Crime report not found"));
     }
 

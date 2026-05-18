@@ -127,7 +127,7 @@ export function useStreamedFollowers(
           },
           (err) => {
             if (!cancelled) {
-              console.error("Stream error:", err.message);
+              console.error("Family member locations stream error:", err.message);
               setError(err.message);
               setIsStreaming(false);
             }

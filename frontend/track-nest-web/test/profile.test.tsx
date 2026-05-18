@@ -46,7 +46,7 @@ describe("ProfilePage — null user", () => {
 describe("ProfilePage — rendering", () => {
   it("renders the User Profile heading", () => {
     render(<ProfilePage />);
-    expect(screen.getByText("User Profile")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "User Profile" })).toBeInTheDocument();
   });
 
   it("renders the username input as disabled", () => {

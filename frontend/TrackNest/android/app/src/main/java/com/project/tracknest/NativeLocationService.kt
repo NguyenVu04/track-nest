@@ -7,6 +7,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
@@ -87,6 +88,8 @@ class NativeLocationService : Service() {
   private lateinit var prefs: SharedPreferences
   private var trackingMode: TrackingMode = TrackingMode.NORMAL
   private var currentActivity: UserActivity = UserActivity.UNKNOWN
+  // True when JS forced NAVIGATION mode for an emergency (vs auto-detected driving).
+  private var isEmergencyMode = false
 
   // Stay-deduplication state. Mirrors the JS-side computeLocationMerge logic so
   // that the native direct-upload path produces the same (user_id, timestamp) key
@@ -176,6 +179,16 @@ class NativeLocationService : Service() {
     }
   }
 
+  private val forceModeReceiver = object : android.content.BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+      if (intent.action != NativeLocationModule.ACTION_FORCE_MODE) return
+      val mode = intent.getStringExtra(NativeLocationModule.EXTRA_MODE) ?: return
+      isEmergencyMode = mode.uppercase() == "NAVIGATION"
+      val nextMode = if (isEmergencyMode) TrackingMode.NAVIGATION else TrackingMode.NORMAL
+      switchTrackingMode(nextMode)
+    }
+  }
+
   private val activityReceiver = object : android.content.BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
       if (com.google.android.gms.location.ActivityRecognitionResult.hasResult(intent)) {
@@ -204,18 +217,30 @@ class NativeLocationService : Service() {
     prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     ensureChannel()
 
-    val filter = android.content.IntentFilter("com.project.tracknest.ACTIVITY_UPDATE")
+    val activityFilter = android.content.IntentFilter("com.project.tracknest.ACTIVITY_UPDATE")
+    val forceModeFilter = android.content.IntentFilter(NativeLocationModule.ACTION_FORCE_MODE)
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      registerReceiver(activityReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+      registerReceiver(activityReceiver, activityFilter, Context.RECEIVER_NOT_EXPORTED)
+      registerReceiver(forceModeReceiver, forceModeFilter, Context.RECEIVER_NOT_EXPORTED)
     } else {
-      registerReceiver(activityReceiver, filter)
+      registerReceiver(activityReceiver, activityFilter)
+      registerReceiver(forceModeReceiver, forceModeFilter)
     }
 
     startActivityRecognition()
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-    startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification())
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      startForeground(
+        FOREGROUND_NOTIFICATION_ID,
+        buildForegroundNotification(),
+        ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
+      )
+    } else {
+      startForeground(FOREGROUND_NOTIFICATION_ID, buildForegroundNotification())
+    }
     startLocationUpdates(TrackingMode.NORMAL)
     return START_STICKY
   }
@@ -224,6 +249,7 @@ class NativeLocationService : Service() {
     stopLocationUpdates()
     stopActivityRecognition()
     unregisterReceiver(activityReceiver)
+    unregisterReceiver(forceModeReceiver)
     super.onDestroy()
   }
 
@@ -279,6 +305,9 @@ class NativeLocationService : Service() {
 
   private fun switchTrackingMode(nextMode: TrackingMode) {
     if (nextMode == trackingMode) return
+    // Speed-based auto-detection always clears the emergency flag so that a
+    // natural deceleration to NORMAL does not keep showing "Emergency".
+    if (nextMode == TrackingMode.NORMAL) isEmergencyMode = false
     stopLocationUpdates()
     updateForegroundNotification(nextMode)
     when (nextMode) {
@@ -367,9 +396,13 @@ class NativeLocationService : Service() {
   }
 
   private fun buildDrivingNotification(): Notification {
+    val title = if (isEmergencyMode) "Emergency — tracking active"
+                else "Driving mode active"
+    val body = if (isEmergencyMode) "TrackNest is sharing your location with responders"
+               else "TrackNest is tracking your trip — crash detection enabled"
     return NotificationCompat.Builder(this, SERVICE_CHANNEL_ID)
-      .setContentTitle("Driving mode active")
-      .setContentText("TrackNest is tracking your trip — crash detection enabled")
+      .setContentTitle(title)
+      .setContentText(body)
       .setSmallIcon(R.drawable.notification_icon)
       .setOngoing(true)
       .setPriority(NotificationCompat.PRIORITY_LOW)

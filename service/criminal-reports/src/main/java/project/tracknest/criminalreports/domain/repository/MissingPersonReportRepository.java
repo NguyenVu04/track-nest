@@ -22,10 +22,10 @@ public interface MissingPersonReportRepository extends JpaRepository<MissingPers
     @Query("SELECT m FROM MissingPersonReport m WHERE m.reporter.id = :reporterId AND m.id = :id")
     Optional<MissingPersonReport> findByReporterIdAndId(@Param("reporterId") UUID reporterId, @Param("id") UUID id);
 
-        @Query("SELECT m FROM MissingPersonReport m WHERE (m.reporter.id = :ownerId OR m.userId = :ownerId) AND m.id = :id")
-        Optional<MissingPersonReport> findByReporterIdOrUserIdAndId(
-            @Param("ownerId") UUID ownerId,
-            @Param("id") UUID id);
+    @Query("SELECT m FROM MissingPersonReport m WHERE (m.reporter.id = :ownerId OR m.submittedByUser = true) AND m.id = :id")
+    Optional<MissingPersonReport> findByReporterIdOrUserIdAndId(
+        @Param("ownerId") UUID ownerId,
+        @Param("id") UUID id);
     
     @Query("SELECT m FROM MissingPersonReport m WHERE m.status.name = 'PUBLISHED'")
     Page<MissingPersonReport> findAllPublic(Pageable pageable);
@@ -43,7 +43,7 @@ public interface MissingPersonReportRepository extends JpaRepository<MissingPers
     long countByStatus(@Param("status") String status);
 
     @Query("SELECT m FROM MissingPersonReport m WHERE " +
-           "(:reporterId IS NULL OR m.reporter.id = :reporterId) AND " +
+           "(:reporterId IS NULL OR m.reporter.id = :reporterId OR m.submittedByUser = true) AND " +
            "(:status IS NULL OR m.status.name = :status) AND " +
            "(:title IS NULL OR LOWER(m.title) LIKE :title)")
     Page<MissingPersonReport> findByFilters(

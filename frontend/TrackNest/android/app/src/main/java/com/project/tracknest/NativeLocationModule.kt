@@ -21,6 +21,10 @@ class NativeLocationModule(private val reactContext: ReactApplicationContext) :
     const val EVENT_ACTIVITY_CHANGED = "activityChanged"
     const val EVENT_LOCATION_UPDATED = "locationUpdated"
 
+    /** Broadcast action sent from JS to force a specific tracking mode. */
+    const val ACTION_FORCE_MODE = "com.project.tracknest.FORCE_TRACKING_MODE"
+    const val EXTRA_MODE = "mode"
+
     private var instance: NativeLocationModule? = null
 
     fun emitModeChange(mode: String) {
@@ -97,6 +101,22 @@ class NativeLocationModule(private val reactContext: ReactApplicationContext) :
       .putString("jwt_token", token)
       .apply()
     LocationUploadClient.resetChannel()
+  }
+
+  /**
+   * Forces the native location service to switch between NORMAL (60 s) and
+   * NAVIGATION (5 s) tracking modes from JavaScript. Called by EmergencyContext
+   * when an emergency activates or closes. Mode is ignored if the service is
+   * not running — it will start in NORMAL mode as usual when next launched.
+   */
+  @ReactMethod
+  fun forceTrackingMode(mode: String) {
+    val context = reactContext.applicationContext
+    val intent = android.content.Intent(ACTION_FORCE_MODE).apply {
+      setPackage(context.packageName)
+      putExtra(EXTRA_MODE, mode)
+    }
+    context.sendBroadcast(intent)
   }
 
   /**

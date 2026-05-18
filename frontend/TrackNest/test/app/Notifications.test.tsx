@@ -8,9 +8,23 @@ jest.mock("react-native-safe-area-context", () => ({
 }));
 jest.mock("expo-router", () => ({
   useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
+  useFocusEffect: (cb: any) => { cb(); },
 }));
 jest.mock("@/utils", () => ({
   formatTimeAgo: (_ms: number) => "5m ago",
+}));
+jest.mock("@/hooks/useTranslation", () => ({
+  useTranslation: (module: any) => module.English,
+}));
+jest.mock("@/contexts/LanguageContext", () => ({
+  useLanguage: () => ({ language: "English" }),
+}));
+jest.mock("@/contexts/NotificationContext", () => ({
+  useNotificationContext: () => ({
+    markAllRead: jest.fn(),
+    refreshCount: jest.fn().mockResolvedValue(undefined),
+    unreadCount: 0,
+  }),
 }));
 
 const mockFetchAll = jest.fn();

@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Modal,
@@ -11,6 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { AppLoader } from "./Loaders/AppLoader";
 
 import { CircleMembersModal as circleMembersModalLang } from "@/constant/languages";
 import { FamilyCircle } from "@/constant/types";
@@ -180,7 +180,7 @@ export const CircleMembersModal: React.FC<CircleMembersModalProps> = ({
             </View>
             {isLoading ? (
               <View style={styles.empty}>
-                <ActivityIndicator size="large" color="#74becb" />
+                <AppLoader size={100} />
               </View>
             ) : members.length === 0 ? (
               <View style={styles.empty}>

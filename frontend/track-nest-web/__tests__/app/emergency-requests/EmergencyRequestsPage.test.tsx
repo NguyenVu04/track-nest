@@ -45,6 +45,17 @@ jest.mock("@/components/layout/Breadcrumbs", () => ({
   Breadcrumbs: () => <div />,
 }));
 
+// Render DropdownMenu children flat so action items are always queryable
+// without simulating the open/close gesture of the Radix portal.
+jest.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuItem: ({ children, onClick, title, ...rest }: React.ComponentProps<"button">) => (
+    <button onClick={onClick} title={title} {...rest}>{children}</button>
+  ),
+}));
+
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import EmergencyRequestsPage from "@/app/dashboard/emergency-requests/page";
@@ -130,8 +141,11 @@ beforeEach(() => {
   });
 });
 
-const findRow = (id: string) =>
-  screen.getByText(id.substring(0, 8) + "...").closest("tr") as HTMLElement;
+const findRow = (id: string) => {
+  const row = document.querySelector(`[data-request-id="${id}"]`) as HTMLElement;
+  if (!row) throw new Error(`No row found for request id: ${id}`);
+  return row;
+};
 
 describe("EmergencyRequestsPage", () => {
   describe("EMERGENCY-UC-03 — Accept Emergency Request", () => {

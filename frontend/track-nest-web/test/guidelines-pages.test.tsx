@@ -395,7 +395,8 @@ describe("GuidelinesListPage — pagination", () => {
       page: 0,
     });
     render(<GuidelinesListPage />);
-    await waitFor(() => screen.getAllByText("Safety Guidelines"));
+    // Wait for the data to load — "Showing" only appears after the API resolves.
+    await waitFor(() => screen.getByText(/Showing/));
     expect(screen.getByText("1")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
   });

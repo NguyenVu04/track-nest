@@ -1,18 +1,30 @@
 import { BACKGROUND_LOCATION_UPLOAD_TASK_NAME, BACKGROUND_NOTIFICATION_TASK_NAME } from "@/constant";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerBackgroundTaskAsync } from "@/utils";
-import { setupUploadNotificationChannel } from "@/utils/notifications";
+import {
+  setupLocationUpdateNotificationChannel,
+  setupUploadNotificationChannel,
+} from "@/utils/notifications";
 import { hasCompletedIntroWalkthrough } from "@/utils/walkthrough";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import LottieView from "lottie-react-native";
+
+const SPLASH_MIN_MS = 2000;
 
 export default function Index() {
   const { isAuthenticated, isGuestMode, isLoading } = useAuth();
   const [isIntroStateLoading, setIsIntroStateLoading] = useState(true);
   const [hasCompletedIntro, setHasCompletedIntro] = useState(false);
+  const [minDelayDone, setMinDelayDone] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinDelayDone(true), SPLASH_MIN_MS);
+    return () => clearTimeout(timer);
+  }, []);
 
   const requestBackgroundLocationPermission = async () => {
     const { status: foregroundStatus } =
@@ -61,13 +73,21 @@ export default function Index() {
     setupUploadNotificationChannel().catch((err) =>
       console.warn("Failed to set up upload notification channel:", err),
     );
+    setupLocationUpdateNotificationChannel().catch((err) =>
+      console.warn("Failed to set up location update notification channel:", err),
+    );
   }, [hasCompletedIntro, isIntroStateLoading]);
 
-  // Show loading state while checking authentication
-  if (isLoading || isIntroStateLoading) {
+  // Show animation until auth + intro checks finish AND the minimum splash time elapses
+  if (isLoading || isIntroStateLoading || !minDelayDone) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#74becb" />
+      <View style={styles.loader}>
+        <LottieView
+          source={require("@/assets/hummingbird1.json")}
+          autoPlay
+          loop
+          style={styles.lottie}
+        />
       </View>
     );
   }
@@ -83,3 +103,16 @@ export default function Index() {
     <Redirect href="/auth/login" />
   );
 }
+
+const styles = StyleSheet.create({
+  loader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5fafa",
+  },
+  lottie: {
+    width: 200,
+    height: 200,
+  },
+});

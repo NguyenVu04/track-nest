@@ -1,4 +1,5 @@
 import { colors } from "@/styles/styles";
+import { moderateScale } from "@/utils/responsive";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { ViewStyle } from "react-native";
@@ -23,7 +24,7 @@ export default function Fab({
 }: FabProps) {
   const isLarge = size === "large";
   const iconColor = color || (isLarge ? "#fff" : "#333");
-  const dimension = isLarge ? 72 : 44;
+  const dimension = moderateScale(isLarge ? 64 : 40);
 
   return (
     <Button
@@ -45,7 +46,7 @@ export default function Fab({
       {children ?? (
         <Ionicons
           name={icon as any}
-          size={isLarge ? 28 : 20}
+          size={moderateScale(isLarge ? 26 : 18)}
           color={iconColor}
         />
       )}

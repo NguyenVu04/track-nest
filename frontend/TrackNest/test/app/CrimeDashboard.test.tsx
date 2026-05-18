@@ -42,8 +42,8 @@ describe("CrimeDashboardScreen", () => {
   it("shows loading spinner initially", () => {
     mockGetDashboard.mockReturnValue(new Promise(() => {}));
     const { UNSAFE_getByType } = render(<CrimeDashboardScreen />);
-    const { ActivityIndicator } = require("react-native");
-    expect(UNSAFE_getByType(ActivityIndicator)).toBeTruthy();
+    const LottieView = require("lottie-react-native");
+    expect(UNSAFE_getByType(LottieView)).toBeTruthy();
   });
 
   it("renders dashboard data after loading", async () => {

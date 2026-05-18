@@ -1,8 +1,9 @@
-import { ActivityIndicator, Animated, Image, Text, View } from "react-native";
+import { Animated, Image, Text, View } from "react-native";
 
 import { map as mapLang } from "@/constant/languages";
 import { useTranslation } from "@/hooks/useTranslation";
 import { loader } from "@/styles/loader";
+import { AppLoader } from "./AppLoader";
 
 export const MapViewLoader = ({
   fadeAnim,
@@ -26,11 +27,7 @@ export const MapViewLoader = ({
           />
         </View>
         <Text style={loader.loadingTitle}>TrackNest</Text>
-        <ActivityIndicator
-          size="large"
-          color="#74becb"
-          style={loader.loadingSpinner}
-        />
+        <AppLoader size={150} />
         <Text style={loader.loadingText}>{t.loadingMap}</Text>
       </View>
     </Animated.View>

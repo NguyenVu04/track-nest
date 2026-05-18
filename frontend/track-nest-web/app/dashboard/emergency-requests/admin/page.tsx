@@ -210,7 +210,7 @@ export default function AdminEmergencyRequestsPage() {
                   </tr>
                 ) : (
                   filteredRequests.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50/50 transition-colors group cursor-pointer" onClick={() => navigateToRequestDetail(request)}>
+                    <tr key={request.id} data-request-id={request.id} className="hover:bg-gray-50/50 transition-colors group cursor-pointer" onClick={() => navigateToRequestDetail(request)}>
                       <td className="px-8 py-4">
                         <div className="flex items-center gap-3">
                            <div className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-inner">

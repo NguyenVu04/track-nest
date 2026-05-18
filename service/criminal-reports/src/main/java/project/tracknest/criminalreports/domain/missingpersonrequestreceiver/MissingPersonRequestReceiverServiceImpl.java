@@ -73,6 +73,7 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
                 .userId(userId)
                 .reporter(reporter)
                 .status(status)
+                .submittedByUser(true)
                 .createdAt(OffsetDateTime.now())
                 .latitude(latitude)
                 .longitude(longitude)
