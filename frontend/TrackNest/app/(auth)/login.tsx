@@ -6,6 +6,7 @@ import {
   clientId,
 } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
+import { fontScale, moderateScale, scale } from "@/utils/responsive";
 import { Ionicons } from "@expo/vector-icons";
 import {
   exchangeCodeAsync,
@@ -24,6 +25,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { AppLoader } from "@/components/Loaders/AppLoader";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -137,7 +139,7 @@ export default function LoginScreen() {
   if (isCheckingAuth) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#74becb" />
+        <AppLoader size={200} />
       </View>
     );
   }
@@ -149,7 +151,7 @@ export default function LoginScreen() {
           <View style={styles.logoCircle}>
             <Image
               source={require("@/assets/images/android-icon-foreground.png")}
-              style={{ width: 132, height: 132 }}
+              style={{ width: moderateScale(118), height: moderateScale(118) }}
             />
           </View>
           <Text style={styles.appTitle}>{t.appTitle}</Text>
@@ -191,6 +193,8 @@ export default function LoginScreen() {
   );
 }
 
+const LOGO_CIRCLE = moderateScale(90);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -203,50 +207,51 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: scale(24),
   },
   logoContainer: {
     alignItems: "center",
-    marginBottom: 48,
+    marginBottom: scale(40),
   },
   logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: LOGO_CIRCLE,
+    height: LOGO_CIRCLE,
+    borderRadius: LOGO_CIRCLE / 2,
     backgroundColor: "#eff6ff",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: scale(16),
     overflow: "hidden",
   },
   appTitle: {
-    fontSize: 32,
+    fontSize: fontScale(28),
     fontWeight: "800",
     color: "#0f172a",
-    marginBottom: 8,
+    marginBottom: scale(8),
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: fontScale(15),
     color: "#64748b",
   },
   form: {
-    gap: 20,
+    gap: scale(20),
   },
   loginButton: {
     backgroundColor: "#74becb",
-    borderRadius: 12,
-    height: 52,
+    borderRadius: scale(12),
+    height: scale(50),
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
+    marginTop: scale(8),
   },
   loginButtonDisabled: {
     backgroundColor: "#a8d4db",
   },
   loginButtonText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: fontScale(15),
     fontWeight: "700",
   },
   buttonIcon: {
@@ -254,15 +259,15 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: "center",
-    marginTop: 48,
+    marginTop: scale(40),
     gap: 8,
   },
   footerText: {
-    fontSize: 12,
+    fontSize: fontScale(12),
     color: "#9ca3af",
   },
   hintText: {
-    fontSize: 12,
+    fontSize: fontScale(12),
     color: "#6b7280",
     fontStyle: "italic",
   },

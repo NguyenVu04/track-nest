@@ -6,7 +6,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
@@ -14,6 +13,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { AppLoader } from "@/components/Loaders/AppLoader";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function StatCard({
@@ -60,7 +60,7 @@ export default function CrimeDashboardScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.center} edges={["top"]}>
-        <ActivityIndicator size="large" color="#74becb" />
+        <AppLoader size={200} />
       </SafeAreaView>
     );
   }

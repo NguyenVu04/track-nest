@@ -12,7 +12,7 @@ jest.mock("expo-router", () => ({
 }));
 
 jest.mock("@/contexts/ReportsContext", () => ({
-  useReports: jest.fn(),
+  useReports: jest.fn().mockReturnValue({}),
 }));
 
 jest.mock("@/components/Modals/AppModal", () => ({
@@ -93,21 +93,23 @@ jest.mock("@/styles/styles", () => ({
   },
 }));
 
+const mockSubmitMissing = jest.fn().mockResolvedValue({ id: "mp-new" });
+jest.mock("@/services/criminalReports", () => ({
+  criminalReportsService: {
+    submitUserMissingPersonReport: (...args: any[]) => mockSubmitMissing(...args),
+  },
+}));
+
 import React from "react";
 import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 import CreateMissingScreen from "@/app/(app)/create-missing";
-import { useReports } from "@/contexts/ReportsContext";
-
-const mockUseReports = useReports as jest.Mock;
-const mockCreateReport = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockCreateReport.mockResolvedValue({ id: "mp-new" });
-  mockUseReports.mockReturnValue({ createMissingPersonReport: mockCreateReport });
+  mockSubmitMissing.mockResolvedValue({ id: "mp-new" });
 });
 
-/** Fills the 4-step form and arrives at the review step. */
+/** Fills the 5-step form and arrives at the review step. */
 async function fillAllSteps(queries: ReturnType<typeof render>) {
   const { getByPlaceholderText, getByText } = queries;
 
@@ -121,7 +123,10 @@ async function fillAllSteps(queries: ReturnType<typeof render>) {
   fireEvent.changeText(getByPlaceholderText("Physical description"), "Blonde hair, blue eyes");
   await act(async () => { fireEvent.press(getByText("Next")); });
 
-  // Step 3 — contact.
+  // Step 3 — appearance (no required fields, advance directly).
+  await act(async () => { fireEvent.press(getByText("Next")); });
+
+  // Step 4 — contact.
   fireEvent.changeText(getByPlaceholderText("+1 234 567"), "+84 90 000 0000");
   await act(async () => { fireEvent.press(getByText("Next")); });
 }
@@ -154,16 +159,15 @@ describe("CreateMissingScreen — REPORT-UC-00", () => {
 
     await act(async () => { fireEvent.press(q.getByText("Submit")); });
 
-    await waitFor(() => expect(mockCreateReport).toHaveBeenCalledTimes(1));
-    expect(mockCreateReport).toHaveBeenCalledWith(
+    await waitFor(() => expect(mockSubmitMissing).toHaveBeenCalledTimes(1));
+    expect(mockSubmitMissing).toHaveBeenCalledWith(
       expect.objectContaining({
         title: "Missing: Sarah",
         fullName: "Sarah Johnson",
         personalId: "ID-001",
         contactPhone: "+84 90 000 0000",
-        content: "Blonde hair, blue eyes",
+        content: expect.stringContaining("Blonde hair, blue eyes"),
       }),
-      undefined, // no photo
     );
   });
 
@@ -189,12 +193,16 @@ describe("CreateMissingScreen — REPORT-UC-00", () => {
     await fillAllSteps(q);
 
     await act(async () => { fireEvent.press(q.getByText("Submit")); });
-    await waitFor(() => expect(mockShowAlert).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(mockShowAlert).toHaveBeenCalledWith("Success", expect.any(String), "success", expect.any(String), expect.any(Function)),
+    );
 
     // Invoke the OK callback passed to showAlert.
-    const okCallback = mockShowAlert.mock.calls[0][4] as () => void;
-    act(() => { okCallback(); });
-
-    expect(mockRouterBack).toHaveBeenCalledTimes(1);
+    const successCall = mockShowAlert.mock.calls.find((c: any[]) => c[2] === "success");
+    const okCallback = successCall?.[4] as (() => void) | undefined;
+    if (okCallback) {
+      act(() => { okCallback(); });
+      expect(mockRouterBack).toHaveBeenCalledTimes(1);
+    }
   });
 });

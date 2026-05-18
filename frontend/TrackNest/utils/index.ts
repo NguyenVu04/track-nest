@@ -8,3 +8,4 @@ export * from "./serviceUrl";
 export * from "./storage";
 export * from "./toast";
 export * from "./haptics";
+export * from "./responsive";

@@ -3,19 +3,20 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { criminalReportsService } from "@/services/criminalReports";
 import type { DashboardSummaryResponse } from "@/types/criminalReports";
 import { colors, radii, spacing } from "@/styles/styles";
+import { fontScale, isTablet, moderateScale } from "@/utils/responsive";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 
 type DashboardTranslations = ReturnType<typeof useTranslation<typeof dashboardLang>>;
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { AppLoader } from "@/components/Loaders/AppLoader";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // ─── Stat Grid ───────────────────────────────────────────────────────────────
@@ -259,7 +260,7 @@ export default function DashboardScreen() {
     return (
       <SafeAreaView style={styles.screen} edges={["left", "right", "bottom"]}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <AppLoader size={200} />
         </View>
       </SafeAreaView>
     );
@@ -333,15 +334,15 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   scroll: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
   pageTitle: {
-    fontSize: 26,
+    fontSize: fontScale(24),
     fontWeight: "700",
     color: colors.textPrimary,
     marginBottom: 4,
   },
   pageSubtitle: {
-    fontSize: 13,
+    fontSize: fontScale(13),
     color: colors.textSecondary,
-    lineHeight: 19,
+    lineHeight: fontScale(19),
     marginBottom: spacing.lg,
   },
 
@@ -354,7 +355,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    minWidth: "45%",
+    minWidth: isTablet() ? "22%" : "45%",
     backgroundColor: "#fff",
     borderRadius: radii.md,
     padding: spacing.md,
@@ -363,7 +364,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: fontScale(12),
     color: colors.textSecondary,
     fontWeight: "500",
   },
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger,
   },
   statValue: {
-    fontSize: 28,
+    fontSize: fontScale(24),
     fontWeight: "700",
   },
 
@@ -457,10 +458,10 @@ const styles = StyleSheet.create({
     marginVertical: spacing.lg,
   },
   donutOuter: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    borderWidth: 18,
+    width: moderateScale(130),
+    height: moderateScale(130),
+    borderRadius: moderateScale(65),
+    borderWidth: moderateScale(16),
     borderColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
@@ -469,12 +470,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   donutCount: {
-    fontSize: 28,
+    fontSize: fontScale(24),
     fontWeight: "700",
     color: colors.textPrimary,
   },
   donutCountLabel: {
-    fontSize: 11,
+    fontSize: fontScale(11),
     color: colors.textSecondary,
     marginTop: 2,
     textAlign: "center",

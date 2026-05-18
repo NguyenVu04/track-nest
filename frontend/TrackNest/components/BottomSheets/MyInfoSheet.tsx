@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import React from "react";
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors, radii, spacing } from "@/styles/styles";
 
@@ -20,6 +21,7 @@ type MyInfoSheetProps = {
   lastUpdatedLabel: string;
   resolvingAddressLabel: string;
   notAvailableLabel: string;
+  activeNowLabel: string;
   myAddress: string | null;
   speedKmh: number | null;
   timeSpentAtPlace: string | null;
@@ -65,6 +67,7 @@ export default function MyInfoSheet({
   lastUpdatedLabel,
   resolvingAddressLabel,
   notAvailableLabel,
+  activeNowLabel,
   myAddress,
   speedKmh,
   timeSpentAtPlace,
@@ -72,6 +75,7 @@ export default function MyInfoSheet({
   longitude,
   lastUpdatedText,
 }: MyInfoSheetProps) {
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const avatarLetter = title.trim().charAt(0).toUpperCase() || "M";
   const resolvedAddress = myAddress ?? resolvingAddressLabel;
   const speedValue = speedKmh != null ? `${speedKmh}` : notAvailableLabel;
@@ -98,7 +102,7 @@ export default function MyInfoSheet({
       bottomInset={tabBarHeight}
       containerStyle={containerStyle}
     >
-      <BottomSheetView style={styles.sheetContainer}>
+      <BottomSheetView style={[styles.sheetContainer, { paddingBottom: spacing.md + bottomInset }]}>
         <View style={styles.card}>
           <View style={styles.topRow}>
             <View style={styles.avatarFallback}>
@@ -108,7 +112,7 @@ export default function MyInfoSheet({
               <Text style={styles.title}>{title}</Text>
               <View style={styles.statusRow}>
                 <View style={styles.statusDot} />
-                <Text style={styles.statusText}>Active Now</Text>
+                <Text style={styles.statusText}>{activeNowLabel}</Text>
               </View>
             </View>
           </View>

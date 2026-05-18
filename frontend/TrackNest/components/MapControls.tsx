@@ -1,7 +1,9 @@
 import Fab from "@/components/Fab";
 import SosFab from "@/components/SosFab";
 import { MapControls as MapControlsLang } from "@/constant/languages";
+import { useSafeLayout } from "@/hooks/useSafeLayout";
 import { useTranslation } from "@/hooks/useTranslation";
+import { scale } from "@/utils/responsive";
 import { Ionicons } from "@expo/vector-icons";
 import {
   BottomSheetBackdrop,
@@ -41,6 +43,7 @@ export default function MapControls({
   showSafeZones = true,
 }: Props) {
   const tabBarHeight = useBottomTabBarHeight();
+  const { insets } = useSafeLayout();
   const t = useTranslation(MapControlsLang);
 
   const sheetRef = useRef<BottomSheetModal>(null);
@@ -76,7 +79,7 @@ export default function MapControls({
 
   return (
     <>
-      <View style={[styles.fabColumn, style, { bottom: '10%' }]}>
+      <View style={[styles.fabColumn, style, { bottom: tabBarHeight + insets.bottom + scale(12), right: insets.right + scale(12) }]}>
         {hasGroupedOptions && (
           <Fab icon="menu" onPress={() => sheetRef.current?.present()} />
         )}
@@ -243,8 +246,7 @@ export default function MapControls({
 const styles = StyleSheet.create({
   fabColumn: {
     position: "absolute",
-    right: 12,
-    gap: 12,
+    gap: scale(10),
     flexDirection: "column",
     alignItems: "flex-end",
   },

@@ -45,6 +45,7 @@ import { OPEN_GENERAL_INFO_SHEET_EVENT } from "@/constant";
 import { map as mapLang } from "@/constant/languages";
 import { getMockFollowersForCircle } from "@/constant/mockFamilyCircles";
 import { FamilyCircle, Follower, SafeZone } from "@/constant/types";
+import { useEmergency } from "@/contexts/EmergencyContext";
 import { useMapContext } from "@/contexts/MapContext";
 import { usePOIAnalytics } from "@/contexts/POIAnalyticsContext";
 import { useTracking } from "@/contexts/TrackingContext";
@@ -167,6 +168,7 @@ function MapScreenContent() {
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const { mapType, setMapType } = useMapContext();
   const { tracking, shareLocation } = useTracking();
+  const { activeEmergency } = useEmergency();
   const { crimeHeatmapPoints, loadCrimeHeatmap } =
     usePOIAnalytics();
   const { circles, selectedCircle, selectCircle, refreshCircles } =
@@ -374,6 +376,9 @@ function MapScreenContent() {
     return null;
   }, [selectedFollower]);
 
+  // Only re-derive meItem when position changes meaningfully, not on every GPS
+  // heartbeat. Keeping lastActive out of deps prevents generalInfoListData from
+  // getting a new array reference (and thus re-rendering the sheet) on every tick.
   const meItem: Follower | null = useMemo(() => {
     if (!location) return null;
     return {
@@ -382,11 +387,12 @@ function MapScreenContent() {
       longitude: location.longitude,
       name: t.me,
       avatar: undefined,
-      lastActive: Date.now(),
+      lastActive: location.timestamp ?? Date.now(),
       sharingActive: true,
       shareTracking: true,
     };
-  }, [location, t.me]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location?.latitude, location?.longitude, t.me]);
   const generalInfoListData = useMemo(() => {
     const list: Follower[] = [];
     if (meItem) list.push(meItem);
@@ -437,20 +443,19 @@ function MapScreenContent() {
 
   const handleGeneralInfoModalPress = useCallback(() => {
     generalInfoSheetRef.current?.present();
-  }, [generalInfoSheetRef]);
+  }, []);
 
   useEffect(() => {
+    // Reference the ref directly so this effect never needs to re-run.
+    // Re-running would briefly leave zero listeners and could lead to
+    // the event being missed or double-registered.
     const subscription = DeviceEventEmitter.addListener(
       OPEN_GENERAL_INFO_SHEET_EVENT,
-      () => {
-        handleGeneralInfoModalPress();
-      },
+      () => generalInfoSheetRef.current?.present(),
     );
-
-    return () => {
-      subscription.remove();
-    };
-  }, [handleGeneralInfoModalPress]);
+    return () => subscription.remove();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMyInfoModalPress = useCallback(() => {
     myInfoSheetRef.current?.present();
@@ -747,6 +752,7 @@ function MapScreenContent() {
               longitude={location.longitude}
               speed={location.speed}
               disabled={!tracking}
+              isEmergency={!!activeEmergency}
               handlePress={handleMyInfoModalPress}
             />
           ) : null}
@@ -777,14 +783,12 @@ function MapScreenContent() {
         onSosPress={() => router.push("/(app)/sos" as any)}
       />
 
-      {generalInfoListData.length > 0 && (
-        <GeneralFollowerInfoSheet
-          generalInfoSheetRef={generalInfoSheetRef}
-          generalInfoListData={generalInfoListData}
-          generalInfoRenderItem={generalInfoRenderItem}
-          tabBarHeight={tabBarHeight}
-        />
-      )}
+      <GeneralFollowerInfoSheet
+        generalInfoSheetRef={generalInfoSheetRef}
+        generalInfoListData={generalInfoListData}
+        generalInfoRenderItem={generalInfoRenderItem}
+        tabBarHeight={tabBarHeight}
+      />
 
       <MyInfoSheet
         myInfoSheetRef={myInfoSheetRef}
@@ -801,6 +805,7 @@ function MapScreenContent() {
         lastUpdatedLabel={t.infoLastUpdatedLabel}
         resolvingAddressLabel={t.infoResolvingAddress}
         notAvailableLabel={t.notAvailable}
+        activeNowLabel={t.infoActiveNowLabel}
         myAddress={myAddress}
         speedKmh={speedKmh}
         timeSpentAtPlace={timeSpentAtPlace}

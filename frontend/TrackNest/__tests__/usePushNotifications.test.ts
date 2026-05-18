@@ -11,7 +11,7 @@ jest.mock("expo-router", () => ({
 }));
 
 let notificationResponseCallback: ((response: any) => void) | null = null;
-let lastNotificationResponse: any = null;
+let mockLastNotificationResponse: any = null;
 
 jest.mock("expo-notifications", () => ({
   setNotificationHandler: jest.fn(),
@@ -25,7 +25,7 @@ jest.mock("expo-notifications", () => ({
   }),
   addPushTokenListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
   getLastNotificationResponseAsync: jest.fn().mockImplementation(() =>
-    Promise.resolve(lastNotificationResponse),
+    Promise.resolve(mockLastNotificationResponse),
   ),
 }));
 
@@ -36,6 +36,14 @@ jest.mock("@/services/notifier", () => ({
 jest.mock("@/utils/notifications", () => ({
   configureNotificationHandler: jest.fn(),
   registerForPushNotificationsAsync: jest.fn().mockResolvedValue("mock-fcm-token"),
+}));
+
+jest.mock("@/contexts/NotificationContext", () => ({
+  useNotificationContext: () => ({
+    markAllRead: jest.fn(),
+    refreshCount: jest.fn().mockResolvedValue(undefined),
+    unreadCount: 0,
+  }),
 }));
 
 import { renderHook, act } from "@testing-library/react-native";
@@ -54,7 +62,7 @@ const makeNotificationResponse = (type: string) => ({
 beforeEach(() => {
   jest.clearAllMocks();
   notificationResponseCallback = null;
-  lastNotificationResponse = null;
+  mockLastNotificationResponse = null;
 });
 
 describe("usePushNotifications — emergency notification routing (Task 4b)", () => {
@@ -103,7 +111,7 @@ describe("usePushNotifications — emergency notification routing (Task 4b)", ()
   });
 
   it("handles killed-state launch for EMERGENCY_REQUEST_ACCEPTED", async () => {
-    lastNotificationResponse = makeNotificationResponse("EMERGENCY_REQUEST_ACCEPTED");
+    mockLastNotificationResponse = makeNotificationResponse("EMERGENCY_REQUEST_ACCEPTED");
 
     renderHook(() => usePushNotifications(true));
 

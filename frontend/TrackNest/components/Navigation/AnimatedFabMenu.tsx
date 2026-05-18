@@ -1,13 +1,9 @@
+import { useSafeLayout } from "@/hooks/useSafeLayout";
+import { moderateScale } from "@/utils/responsive";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
-import {
-  Animated,
-  Pressable,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { Animated, Pressable, StyleSheet, View } from "react-native";
 
 interface MenuItem {
   id: string;
@@ -33,7 +29,7 @@ const AnimatedFabMenu: React.FC<AnimatedFabMenuProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
-  const { height: screenHeight } = useWindowDimensions();
+  const { insets, height: screenHeight } = useSafeLayout();
 
   const visibleItems = items.filter((item) => !item.hidden);
 
@@ -67,8 +63,13 @@ const AnimatedFabMenu: React.FC<AnimatedFabMenuProps> = ({
     router.push(item.route as any);
   };
 
+  const containerStyle = {
+    bottom: insets.bottom + moderateScale(16),
+    right: insets.right + moderateScale(16),
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, containerStyle]}>
       {/* Menu Items Background */}
       {isOpen && (
         <Animated.View
@@ -140,8 +141,6 @@ const AnimatedFabMenu: React.FC<AnimatedFabMenuProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: 24,
-    right: 24,
     zIndex: 1000,
   },
   menuItemsContainer: {
@@ -166,9 +165,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   menuItemIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: moderateScale(44),
+    height: moderateScale(44),
+    borderRadius: moderateScale(22),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -181,9 +180,9 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   mainFab: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: moderateScale(56),
+    height: moderateScale(56),
+    borderRadius: moderateScale(28),
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",

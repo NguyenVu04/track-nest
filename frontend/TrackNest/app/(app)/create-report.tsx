@@ -6,7 +6,6 @@ import { criminalReportsService } from "@/services/criminalReports";
 import { colors } from "@/styles/styles";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -24,12 +23,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { usePhotoPickerModal } from "@/components/Modals/PhotoPickerModal";
 
 const MAX_IMAGES = 5;
+const TOTAL_STEPS = 4;
+const THUMB_SIZE = 100;
 
 export default function CreateReportScreen() {
   const router = useRouter();
   const t = useTranslation(createReportLang);
   const { modal, showAlert } = useAppModal();
   const { showPhotoPicker, photoPickerModal } = usePhotoPickerModal();
+
+  const [currentStep, setCurrentStep] = useState(1);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState<"Low" | "Medium" | "High">("Medium");
@@ -42,12 +45,15 @@ export default function CreateReportScreen() {
   const [numberOfOffenders, setNumberOfOffenders] = useState(0);
   const [arrested, setArrested] = useState(false);
 
-  const handleAddPhoto = async () => {
-    if (photoUris.length >= MAX_IMAGES) return;
+  const severityDisplayLabel: Record<"Low" | "Medium" | "High", string> = {
+    Low: t.severityLow,
+    Medium: t.severityMedium,
+    High: t.severityHigh,
+  };
 
-    showPhotoPicker((uri) => {
-      setPhotoUris((prev) => [...prev, uri]);
-    }, {
+  const handleAddPhoto = () => {
+    if (photoUris.length >= MAX_IMAGES) return;
+    showPhotoPicker((uri) => setPhotoUris((prev) => [...prev, uri]), {
       mediaTypes: ["images"],
       allowsEditing: false,
       quality: 0.8,
@@ -58,22 +64,34 @@ export default function CreateReportScreen() {
     setPhotoUris((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async () => {
-    if (!title.trim()) {
-      showAlert(t.errorTitle, t.titleRequired, "warning");
-      return;
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    } else {
+      router.back();
     }
-    if (!description.trim()) {
-      showAlert(t.errorTitle, t.descriptionRequired, "warning");
-      return;
-    }
+  };
 
+  const handleNextStep = () => {
+    if (currentStep === 1) {
+      if (!title.trim()) {
+        showAlert(t.errorTitle, t.titleRequired, "warning");
+        return;
+      }
+      if (!description.trim()) {
+        showAlert(t.errorTitle, t.descriptionRequired, "warning");
+        return;
+      }
+    }
+    setCurrentStep(currentStep + 1);
+  };
+
+  const handleSubmit = async () => {
     const severityMap: Record<"Low" | "Medium" | "High", number> = {
       Low: 1,
       Medium: 3,
       High: 5,
     };
-
     setLoading(true);
     try {
       await criminalReportsService.submitUserCrimeReport({
@@ -99,6 +117,264 @@ export default function CreateReportScreen() {
     }
   };
 
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <View style={styles.stepContent}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.titleLabel} *</Text>
+              <TextInput
+                style={styles.inputPill}
+                value={title}
+                onChangeText={setTitle}
+                placeholder={t.titlePlaceholder}
+                placeholderTextColor="#999"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.descriptionLabel} *</Text>
+              <TextInput
+                style={[styles.inputPill, styles.textArea]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder={t.descriptionPlaceholder}
+                placeholderTextColor="#999"
+                multiline
+                numberOfLines={5}
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+        );
+
+      case 2:
+        return (
+          <View style={styles.stepContent}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.severityLabel}</Text>
+              <View style={styles.severityContainer}>
+                {(["Low", "Medium", "High"] as const).map((sev, idx) => {
+                  const isActive = severity === sev;
+                  return (
+                    <Pressable
+                      key={sev}
+                      style={[
+                        styles.severityBtn,
+                        idx === 0 && styles.severityBtnLeft,
+                        idx === 2 && styles.severityBtnRight,
+                        isActive && styles.severityBtnActive,
+                        isActive &&
+                          (sev === "High"
+                            ? styles.sevHighActive
+                            : sev === "Medium"
+                              ? styles.sevMedActive
+                              : styles.sevLowActive),
+                        !isActive &&
+                          (sev === "High"
+                            ? styles.sevHighInactive
+                            : sev === "Medium"
+                              ? styles.sevMedInactive
+                              : styles.sevLowInactive),
+                      ]}
+                      onPress={() => setSeverity(sev)}
+                    >
+                      <Text
+                        style={[
+                          styles.severityText,
+                          isActive && styles.severityTextActive,
+                        ]}
+                      >
+                        {severityDisplayLabel[sev]}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.numberOfVictimsLabel}</Text>
+              <View style={styles.counterRow}>
+                <Pressable
+                  onPress={() =>
+                    setNumberOfVictims(Math.max(0, numberOfVictims - 1))
+                  }
+                >
+                  <Ionicons
+                    name="remove-circle-outline"
+                    size={28}
+                    color={colors.primary}
+                  />
+                </Pressable>
+                <Text style={styles.counterValue}>{numberOfVictims}</Text>
+                <Pressable
+                  onPress={() => setNumberOfVictims(numberOfVictims + 1)}
+                >
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={28}
+                    color={colors.primary}
+                  />
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.numberOfOffendersLabel}</Text>
+              <View style={styles.counterRow}>
+                <Pressable
+                  onPress={() =>
+                    setNumberOfOffenders(Math.max(0, numberOfOffenders - 1))
+                  }
+                >
+                  <Ionicons
+                    name="remove-circle-outline"
+                    size={28}
+                    color={colors.primary}
+                  />
+                </Pressable>
+                <Text style={styles.counterValue}>{numberOfOffenders}</Text>
+                <Pressable
+                  onPress={() => setNumberOfOffenders(numberOfOffenders + 1)}
+                >
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={28}
+                    color={colors.primary}
+                  />
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.arrestedLabel}</Text>
+              <Pressable
+                style={[styles.toggleBtn, arrested && styles.toggleBtnActive]}
+                onPress={() => setArrested(!arrested)}
+              >
+                <Text
+                  style={[
+                    styles.toggleText,
+                    arrested && styles.toggleTextActive,
+                  ]}
+                >
+                  {arrested ? t.yes : t.no}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        );
+
+      case 3:
+        return (
+          <View style={styles.stepContent}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>
+                {t.imagesLabel} ({photoUris.length}/{MAX_IMAGES})
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.imageRow}
+              >
+                {photoUris.length < MAX_IMAGES && (
+                  <Pressable style={styles.addImageBtn} onPress={handleAddPhoto}>
+                    <Ionicons name="camera" size={28} color="#60869a" />
+                    <Text style={styles.addImageText}>{t.addImage}</Text>
+                  </Pressable>
+                )}
+                {photoUris.map((uri, index) => (
+                  <View key={uri} style={styles.thumbWrapper}>
+                    <Image
+                      source={{ uri }}
+                      style={styles.thumb}
+                      contentFit="cover"
+                    />
+                    <Pressable
+                      style={styles.thumbRemove}
+                      onPress={() => handleRemovePhoto(index)}
+                      hitSlop={8}
+                    >
+                      <Ionicons name="close-circle" size={24} color="#fff" />
+                    </Pressable>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>{t.locationLabel}</Text>
+              <Pressable
+                style={styles.locationButton}
+                onPress={() => setShowLocationPicker(true)}
+              >
+                <Ionicons name="map-outline" size={20} color={colors.primary} />
+                <Text style={styles.locationButtonText}>
+                  {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color="#999" />
+              </Pressable>
+            </View>
+          </View>
+        );
+
+      case 4:
+        return (
+          <View style={styles.stepContent}>
+            <Text style={styles.reviewTitle}>{t.reviewTitle}</Text>
+            <View style={styles.reviewCard}>
+              <Text style={styles.reviewRow}>
+                <Text style={styles.reviewLabel}>{t.titleLabel}: </Text>
+                {title}
+              </Text>
+              <Text style={styles.reviewRow}>
+                <Text style={styles.reviewLabel}>{t.descriptionLabel}: </Text>
+                {description.length > 80
+                  ? `${description.substring(0, 80)}…`
+                  : description}
+              </Text>
+              <Text style={styles.reviewRow}>
+                <Text style={styles.reviewLabel}>{t.severityLabel}: </Text>
+                {severityDisplayLabel[severity]}
+              </Text>
+              <Text style={styles.reviewRow}>
+                <Text style={styles.reviewLabel}>
+                  {t.numberOfVictimsLabel}:{" "}
+                </Text>
+                {numberOfVictims}
+              </Text>
+              <Text style={styles.reviewRow}>
+                <Text style={styles.reviewLabel}>
+                  {t.numberOfOffendersLabel}:{" "}
+                </Text>
+                {numberOfOffenders}
+              </Text>
+              <Text style={styles.reviewRow}>
+                <Text style={styles.reviewLabel}>{t.arrestedLabel}: </Text>
+                {arrested ? t.yes : t.no}
+              </Text>
+              <Text style={styles.reviewRow}>
+                <Text style={styles.reviewLabel}>{t.imagesLabel}: </Text>
+                {t.reviewPhotos.replace("{count}", photoUris.length.toString())}
+              </Text>
+              <Text style={styles.reviewRow}>
+                <Text style={styles.reviewLabel}>{t.locationLabel}: </Text>
+                {latitude.toFixed(6)}, {longitude.toFixed(6)}
+              </Text>
+            </View>
+          </View>
+        );
+    }
+  };
+
+  const stepLabels = [
+    t.stepBasicInfo,
+    t.stepDetails,
+    t.stepEvidence,
+    t.stepReview,
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
       {modal}
@@ -111,182 +387,80 @@ export default function CreateReportScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.headerIcon}>
-            <Ionicons name="close" size={26} color="#333" />
+          <Pressable onPress={handleBack} style={styles.headerIcon}>
+            <Ionicons
+              name={currentStep > 1 ? "arrow-back" : "close"}
+              size={26}
+              color="#333"
+            />
           </Pressable>
+          <Text style={styles.stepText}>
+            {t.stepOf
+              .replace("{current}", currentStep.toString())
+              .replace("{total}", TOTAL_STEPS.toString())}
+          </Text>
         </View>
 
-        <Text style={styles.pageTitle}>{t.pageTitle}</Text>
+        <Text style={styles.pageTitle}>{t.stepByStepTitle}</Text>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t.titleLabel}</Text>
-            <TextInput
-              style={styles.inputPill}
-              value={title}
-              onChangeText={setTitle}
-              placeholder={t.titlePlaceholder}
-              placeholderTextColor="#999"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t.descriptionLabel}</Text>
-            <TextInput
-              style={[styles.inputPill, styles.textArea]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder={t.descriptionPlaceholder}
-              placeholderTextColor="#999"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t.severityLabel}</Text>
-            <View style={styles.severityContainer}>
-              {(["Low", "Medium", "High"] as const).map((sev, idx) => {
-                const isActive = severity === sev;
-                return (
-                  <Pressable
-                    key={sev}
-                    style={[
-                      styles.severityBtn,
-                      idx === 0 && styles.severityBtnLeft,
-                      idx === 2 && styles.severityBtnRight,
-                      isActive && styles.severityBtnActive,
-                      isActive &&
-                        (sev === "High"
-                          ? styles.sevHighActive
-                          : sev === "Medium"
-                            ? styles.sevMedActive
-                            : styles.sevLowActive),
-                      !isActive &&
-                        (sev === "High"
-                          ? styles.sevHighInactive
-                          : sev === "Medium"
-                            ? styles.sevMedInactive
-                            : styles.sevLowInactive),
-                    ]}
-                    onPress={() => setSeverity(sev)}
-                  >
-                    <Text
-                      style={[
-                        styles.severityText,
-                        isActive && styles.severityTextActive,
-                      ]}
-                    >
-                      {sev}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              {t.numberOfVictimsLabel || "Number of Victims"}
-            </Text>
-            <View style={styles.counterRow}>
-              <Pressable onPress={() => setNumberOfVictims(Math.max(0, numberOfVictims - 1))}>
-                <Ionicons name="remove-circle-outline" size={28} color={colors.primary} />
-              </Pressable>
-              <Text style={styles.counterValue}>{numberOfVictims}</Text>
-              <Pressable onPress={() => setNumberOfVictims(numberOfVictims + 1)}>
-                <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
-              </Pressable>
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              {t.numberOfOffendersLabel || "Number of Offenders"}
-            </Text>
-            <View style={styles.counterRow}>
-              <Pressable onPress={() => setNumberOfOffenders(Math.max(0, numberOfOffenders - 1))}>
-                <Ionicons name="remove-circle-outline" size={28} color={colors.primary} />
-              </Pressable>
-              <Text style={styles.counterValue}>{numberOfOffenders}</Text>
-              <Pressable onPress={() => setNumberOfOffenders(numberOfOffenders + 1)}>
-                <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
-              </Pressable>
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t.arrestedLabel || "Arrested"}</Text>
-            <Pressable
-              style={[styles.toggleBtn, arrested && styles.toggleBtnActive]}
-              onPress={() => setArrested(!arrested)}
-            >
-              <Text style={[styles.toggleText, arrested && styles.toggleTextActive]}>
-                {arrested ? (t.yes || "Yes") : (t.no || "No")}
-              </Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              {t.imagesLabel} ({photoUris.length}/{MAX_IMAGES})
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.imageRow}
-            >
-              {photoUris.length < MAX_IMAGES && (
-                <Pressable style={styles.addImageBtn} onPress={handleAddPhoto}>
-                  <Ionicons name="camera" size={28} color="#60869a" />
-                  <Text style={styles.addImageText}>{t.addImage}</Text>
-                </Pressable>
-              )}
-              {photoUris.map((uri, index) => (
-                <View key={uri} style={styles.thumbWrapper}>
-                  <Image source={{ uri }} style={styles.thumb} contentFit="cover" />
-                  <Pressable
-                    style={styles.thumbRemove}
-                    onPress={() => handleRemovePhoto(index)}
-                    hitSlop={8}
-                  >
-                    <Ionicons name="close-circle" size={24} color="#fff" />
-                  </Pressable>
+        <View style={styles.stepperContainer}>
+          {stepLabels.map((label, i) => {
+            const step = i + 1;
+            const isActive = step === currentStep;
+            const isCompleted = step < currentStep;
+            return (
+              <View key={step} style={styles.stepWrapper}>
+                <View
+                  style={[
+                    styles.stepBar,
+                    (isActive || isCompleted) && styles.stepBarActive,
+                  ]}
+                >
+                  {(isActive || isCompleted) && (
+                    <Ionicons name="checkmark" size={14} color="#fff" />
+                  )}
                 </View>
-              ))}
-            </ScrollView>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Pressable
-              style={styles.locationButton}
-              onPress={() => setShowLocationPicker(true)}
-            >
-              <View style={styles.locationIconBox}>
-                <Ionicons name="location" size={20} color="#5e8293" />
-              </View>
-              <View style={styles.locationTextContainer}>
-                <Text style={styles.locationTitle}>{t.locationLabel || "Location"}</Text>
-                <Text style={styles.locationCoords}>
-                  {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                <Text
+                  style={[
+                    styles.stepLabel,
+                    (isActive || isCompleted) && styles.stepLabelActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {label}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#999" />
-            </Pressable>
-          </View>
-          <View style={{ height: 20 }} />
+            );
+          })}
+        </View>
+
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {renderStepContent()}
         </ScrollView>
 
         <View style={styles.footer}>
-          <Pressable style={styles.cancelButton} onPress={() => router.back()} disabled={loading}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+          <Pressable
+            style={styles.cancelButton}
+            onPress={() => router.back()}
+            disabled={loading}
+          >
+            <Text style={styles.cancelButtonText}>{t.cancelButton}</Text>
           </Pressable>
-          <Pressable style={styles.nextButton} onPress={handleSubmit} disabled={loading}>
+          <Pressable
+            style={styles.nextButton}
+            onPress={currentStep < TOTAL_STEPS ? handleNextStep : handleSubmit}
+            disabled={loading}
+          >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.nextButtonText}>{t.submit}</Text>
+              <Text style={styles.nextButtonText}>
+                {currentStep < TOTAL_STEPS ? t.nextStep : t.submit}
+              </Text>
             )}
           </Pressable>
         </View>
@@ -312,81 +486,116 @@ export default function CreateReportScreen() {
   );
 }
 
-const THUMB_SIZE = 100;
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5fafa" },
   bgBlob: {
     position: "absolute",
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: "#e0f2f1",
-    top: -100,
-    right: -100,
+    top: -50,
+    right: -50,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: "#d8ecef",
     opacity: 0.6,
   },
   bgBlob2: {
     position: "absolute",
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: "#e0f2f1",
     bottom: 100,
-    left: -50,
-    opacity: 0.4,
+    left: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: "#e6f4f5",
+    opacity: 0.5,
   },
   keyboardView: { flex: 1 },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 16,
   },
   headerIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#fff",
+    width: 40,
+    height: 40,
     justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+  },
+  stepText: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
   },
   pageTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#2d3748",
-    paddingHorizontal: 20,
-    marginBottom: 10,
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#1a1a1a",
+    textAlign: "center",
+    marginBottom: 20,
   },
-  content: { flex: 1 },
-  scrollContent: { padding: 20, paddingBottom: 40 },
-  inputGroup: {
+  stepperContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
     marginBottom: 24,
   },
-  label: {
-    fontSize: 15,
+  stepWrapper: {
+    flex: 1,
+    alignItems: "center",
+    gap: 6,
+  },
+  stepBar: {
+    height: 16,
+    width: "95%",
+    backgroundColor: "#e0e0e0",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  stepBarActive: {
+    backgroundColor: colors.primaryLight,
+  },
+  stepLabel: {
+    fontSize: 11,
+    color: "#999",
+    fontWeight: "500",
+  },
+  stepLabelActive: {
+    color: colors.primaryDark,
     fontWeight: "700",
-    color: "#1a1a1a",
-    marginBottom: 10,
+  },
+  content: { flex: 1 },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+  },
+  stepContent: { flex: 1 },
+  inputGroup: { marginBottom: 20 },
+  inputLabel: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 8,
+    fontWeight: "600",
   },
   inputPill: {
-    backgroundColor: "#f2f6f9",
-    borderRadius: 12,
-    paddingHorizontal: 16,
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    paddingHorizontal: 20,
     paddingVertical: 14,
-    fontSize: 15,
+    fontSize: 16,
     color: "#333",
     borderWidth: 1,
-    borderColor: "#dce4e8",
+    borderColor: "#cce6e5",
+    shadowColor: "#3e8d98",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   textArea: {
-    minHeight: 120,
+    minHeight: 140,
+    borderRadius: 16,
     paddingTop: 16,
   },
   severityContainer: {
@@ -419,14 +628,54 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
-  sevHighActive: { backgroundColor: "#ffe5e5", borderColor: "#ff4d4f", shadowColor: "#ff4d4f" },
-  sevMedActive: { backgroundColor: "#fff5d6", borderColor: "#f39c12", shadowColor: "#f39c12" },
-  sevLowActive: { backgroundColor: "#eefcf1", borderColor: "#27ae60", shadowColor: "#27ae60" },
+  sevHighActive: {
+    backgroundColor: "#ffe5e5",
+    borderColor: "#ff4d4f",
+    shadowColor: "#ff4d4f",
+  },
+  sevMedActive: {
+    backgroundColor: "#fff5d6",
+    borderColor: "#f39c12",
+    shadowColor: "#f39c12",
+  },
+  sevLowActive: {
+    backgroundColor: "#eefcf1",
+    borderColor: "#27ae60",
+    shadowColor: "#27ae60",
+  },
   sevHighInactive: { backgroundColor: "#fff0f0" },
-  sevMedInactive: { backgroundColor: "#f2f6f9" }, // Match default for medium when inactive
+  sevMedInactive: { backgroundColor: "#f2f6f9" },
   sevLowInactive: { backgroundColor: "#f4fbf5" },
   severityText: { fontSize: 15, fontWeight: "500", color: "#555" },
   severityTextActive: { fontWeight: "700", color: "#222" },
+  counterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    paddingVertical: 8,
+  },
+  counterValue: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#333",
+    minWidth: 32,
+    textAlign: "center",
+  },
+  toggleBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    backgroundColor: "#f2f6f9",
+    borderWidth: 1,
+    borderColor: "#dce4e8",
+    alignSelf: "flex-start",
+  },
+  toggleBtnActive: {
+    backgroundColor: "#eefcf1",
+    borderColor: "#27ae60",
+  },
+  toggleText: { fontSize: 15, fontWeight: "600", color: "#555" },
+  toggleTextActive: { color: "#27ae60" },
   imageRow: { flexDirection: "row", gap: 12 },
   addImageBtn: {
     width: THUMB_SIZE,
@@ -460,108 +709,92 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 12,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderWidth: 1,
-    borderColor: "#dce4e8",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
+    borderColor: "#cce6e5",
+    shadowColor: "#3e8d98",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 2,
+    gap: 8,
   },
-  locationIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: "#e6eef2",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 14,
-  },
-  locationTextContainer: {
+  locationButtonText: {
     flex: 1,
-  },
-  locationTitle: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "#1a1a1a",
+    color: "#333",
   },
-  locationCoords: {
-    fontSize: 13,
+  footer: {
+    flexDirection: "row",
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    paddingTop: 10,
+    gap: 16,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    paddingVertical: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#cce6e5",
+  },
+  cancelButtonText: {
     color: "#666",
-    marginTop: 2,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  nextButton: {
+    flex: 1,
+    backgroundColor: colors.primaryLight,
+    borderRadius: 30,
+    paddingVertical: 16,
+    alignItems: "center",
+    shadowColor: colors.primaryLight,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  nextButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  reviewTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 16,
+  },
+  reviewCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#cce6e5",
+    shadowColor: "#3e8d98",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+    gap: 12,
+  },
+  reviewRow: {
+    fontSize: 15,
+    color: "#444",
+  },
+  reviewLabel: {
+    fontWeight: "600",
+    color: "#333",
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(255,255,255,0.7)",
     alignItems: "center",
     justifyContent: "center",
-  },
-  counterRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    paddingVertical: 8,
-  },
-  counterValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#333",
-    minWidth: 32,
-    textAlign: "center",
-  },
-  toggleBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    backgroundColor: "#f2f6f9",
-    borderWidth: 1,
-    borderColor: "#dce4e8",
-    alignSelf: "flex-start",
-  },
-  toggleBtnActive: {
-    backgroundColor: "#eefcf1",
-    borderColor: "#27ae60",
-  },
-  toggleText: { fontSize: 15, fontWeight: "600", color: "#555" },
-  toggleTextActive: { color: "#27ae60" },
-  footer: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 16,
-    backgroundColor: "#f2f6f9",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#4a5568",
-  },
-  nextButton: {
-    flex: 2,
-    paddingVertical: 16,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    shadowColor: colors.primary,
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  nextButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#fff",
   },
 });

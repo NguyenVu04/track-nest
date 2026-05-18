@@ -16,12 +16,21 @@ jest.mock("expo-router", () => ({
 }));
 
 const mockGetGuideline = jest.fn();
+jest.mock("@/hooks/useTranslation", () => ({
+  useTranslation: (module: any) => module.English,
+}));
+jest.mock("@/contexts/LanguageContext", () => ({
+  useLanguage: () => ({ language: "English" }),
+}));
+jest.mock("@/utils", () => ({
+  showToast: jest.fn(),
+}));
 jest.mock("@/services/criminalReports", () => ({
   criminalReportsService: {
     getUserGuidelinesById: (...args: any[]) => mockGetGuideline(...args),
+    getGuidelinesContent: jest.fn().mockResolvedValue("<p>content</p>"),
   },
 }));
-
 jest.mock("@/components/shared/ChatbotPanel", () => ({
   ChatbotPanel: () => null,
 }));
@@ -52,7 +61,8 @@ describe("GuidelineDetailScreen", () => {
     const { getByText } = render(<GuidelineDetailScreen />);
     await waitFor(() => expect(getByText("Safety Guideline")).toBeTruthy());
     expect(getByText("Stay safe at all times.")).toBeTruthy();
-    expect(getByText("Detailed safety content here.")).toBeTruthy();
+    // The `content` field is a MinIO path rendered via WebView (stubbed in tests),
+    // not shown as plain text. Only abstractText is shown as text.
   });
 
   it("shows 'not found' when guideline fetch fails", async () => {

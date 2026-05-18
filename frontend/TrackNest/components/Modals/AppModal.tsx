@@ -1,3 +1,4 @@
+import { scale, screenWidth } from "@/utils/responsive";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
@@ -180,9 +181,9 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: scale(16),
     width: "100%",
-    maxWidth: 360,
+    maxWidth: Math.min(scale(360), screenWidth * 0.92),
     overflow: "hidden",
     shadowColor: "#000",
     shadowOpacity: 0.2,

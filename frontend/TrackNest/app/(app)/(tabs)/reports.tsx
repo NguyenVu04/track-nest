@@ -11,13 +11,13 @@ import {
 } from "@/utils/reportAdapters";
 import { hapticLight } from "@/utils";
 import { colors, radii, spacing } from "@/styles/styles";
+import { fontScale, scale, screenWidth } from "@/utils/responsive";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -30,7 +30,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const SCREEN_WIDTH = screenWidth;
 const TAB_KEYS = ["Crime Reports", "Missing", "Guide"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   cardImageArea: {
-    height: 160,
+    height: scale(148),
     position: "relative",
   },
   cardImagePlaceholder: {
@@ -596,10 +596,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   cardTitle: {
-    fontSize: 15,
+    fontSize: fontScale(14),
     fontWeight: "700",
     color: colors.textPrimary,
-    lineHeight: 20,
+    lineHeight: fontScale(20),
   },
   cardMetaRow: {
     flexDirection: "row",
@@ -607,14 +607,14 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   cardMetaText: {
-    fontSize: 12,
+    fontSize: fontScale(12),
     color: colors.textMuted,
     flex: 1,
   },
   cardDesc: {
-    fontSize: 13,
+    fontSize: fontScale(13),
     color: colors.textSecondary,
-    lineHeight: 18,
+    lineHeight: fontScale(18),
     marginTop: 2,
   },
 
@@ -672,26 +672,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   emptyIllustrationContainer: {
-    width: 160,
-    height: 160,
+    width: scale(150),
+    height: scale(150),
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 10,
   },
   emptyBlob1: {
     position: "absolute",
-    width: 140,
-    height: 120,
+    width: scale(130),
+    height: scale(110),
     backgroundColor: "#d8ecef",
-    borderRadius: 60,
+    borderRadius: scale(60),
     transform: [{ rotate: "-15deg" }],
   },
   emptyBlob2: {
     position: "absolute",
-    width: 100,
-    height: 130,
+    width: scale(95),
+    height: scale(120),
     backgroundColor: "#e8f4f6",
-    borderRadius: 50,
+    borderRadius: scale(50),
     transform: [{ rotate: "30deg" }],
     left: 10,
   },

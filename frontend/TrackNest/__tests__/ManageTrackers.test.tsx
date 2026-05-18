@@ -32,6 +32,7 @@ jest.mock("@/hooks/useTranslation", () => ({
 
 jest.mock("@/utils", () => ({
   showToast: jest.fn(),
+  hapticLight: jest.fn(),
   getInitials: (s: string) => s.slice(0, 2).toUpperCase(),
 }));
 

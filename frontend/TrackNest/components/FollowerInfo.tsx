@@ -1,6 +1,7 @@
 import { FollowerInfo as followerInfoLang } from "@/constant/languages";
 import { Follower } from "@/constant/types";
 import { useTranslation } from "@/hooks/useTranslation";
+import { colors } from "@/styles/styles";
 import { formatAddressFromLatLng, formatRelativeTime } from "@/utils";
 import { useState, useEffect, useCallback } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
@@ -13,10 +14,18 @@ interface FollowerInfoProps {
   onPress?: () => void;
 }
 
+function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .slice(0, 2)
+    .join("");
+}
+
 export const FollowerInfo = ({
   follower,
   width,
-  height,
   standMode,
 }: FollowerInfoProps) => {
   const t = useTranslation(followerInfoLang);
@@ -26,87 +35,77 @@ export const FollowerInfo = ({
   const formatAddress = useCallback(async () => {
     setIsGettingAddress(true);
     try {
-      const address = await formatAddressFromLatLng(
+      const resolved = await formatAddressFromLatLng(
         follower.latitude,
         follower.longitude,
       );
-
-      setAddress(address);
-    } catch (error) {
-      console.error("Error formatting address:", error);
+      setAddress(resolved);
+    } catch {
+      // address stays empty — handled by the no-address fallback below
     } finally {
       setIsGettingAddress(false);
     }
   }, [follower.latitude, follower.longitude]);
 
-  const componentSize = {
-    image: typeof width === "string" ? parseInt(width) : width || 100,
-    addressText:
-      standMode === "compact"
-        ? typeof width === "string"
-          ? parseInt(width)
-          : width || 100
-        : typeof width === "string"
-          ? parseInt(width) * 2
-          : (width || 100) * 2,
-  };
-
   useEffect(() => {
     formatAddress();
   }, [formatAddress]);
 
+  const imageSize = typeof width === "string" ? parseInt(width) : width ?? 100;
+  const addressWidth =
+    standMode === "compact" ? imageSize : imageSize * 2;
+
+  const initials = getInitials(follower.name);
+  const avatarBg = follower.sharingActive ? colors.primary : "#999";
+
   return (
     <View style={styles.container}>
       <Text style={styles.name}>{follower.name}</Text>
+
       <View style={styles.imageContainer}>
-        <Image
-          source={require("@/assets/images/150-0.jpeg")}
-          style={[
-            styles.image,
-            {
-              width: componentSize.image,
-              height: componentSize.image,
-            },
-          ]}
-          resizeMode="cover"
-        />
+        {follower.avatar ? (
+          <Image
+            source={{ uri: follower.avatar }}
+            style={[styles.image, { width: imageSize, height: imageSize }]}
+            resizeMode="cover"
+          />
+        ) : (
+          <View
+            style={[
+              styles.initialsCircle,
+              { width: imageSize, height: imageSize, borderRadius: imageSize / 2, backgroundColor: avatarBg },
+            ]}
+          >
+            <Text style={[styles.initialsText, { fontSize: imageSize * 0.32 }]}>
+              {initials}
+            </Text>
+          </View>
+        )}
+
         <View
           style={[
             styles.activeStatusContainer,
-            {
-              backgroundColor: follower.sharingActive
-                ? "transparent"
-                : "#f0f0f0",
-            },
+            { backgroundColor: follower.sharingActive ? "transparent" : "#f0f0f0" },
           ]}
         >
           {follower.sharingActive ? (
             <View style={styles.activeStatusCircle} />
           ) : (
-            <Text
-              style={[
-                styles.activeStatusText,
-                {
-                  color: "#999999",
-                },
-              ]}
-            >
+            <Text style={styles.activeStatusText}>
               {formatRelativeTime(follower?.lastActive)}
             </Text>
           )}
         </View>
       </View>
+
       <Text
-        style={{
-          maxWidth: componentSize.addressText,
-          textAlign: "center",
-        }}
+        style={{ maxWidth: addressWidth, textAlign: "center" }}
         numberOfLines={2}
         ellipsizeMode="tail"
       >
         {isGettingAddress
           ? t.loading
-          : address?.length > 0
+          : address.length > 0
             ? address
             : t.noAddressAvailable}
       </Text>
@@ -132,6 +131,14 @@ const styles = StyleSheet.create({
   image: {
     borderRadius: 50,
   },
+  initialsCircle: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  initialsText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
   activeStatusContainer: {
     position: "absolute",
     padding: 4,
@@ -143,7 +150,7 @@ const styles = StyleSheet.create({
   activeStatusCircle: {
     width: 20,
     height: 20,
-    borderRadius: "50%",
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: "#fff",
     backgroundColor: "#74becb",
@@ -151,5 +158,6 @@ const styles = StyleSheet.create({
   activeStatusText: {
     fontSize: 14,
     textAlign: "center",
+    color: "#999999",
   },
 });
