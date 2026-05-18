@@ -61,6 +61,9 @@ export type TrackingMode = "NORMAL" | "NAVIGATION";
 // Push notifications — AsyncStorage key for cached FCM token (used for offline-boot retry)
 export const FCM_TOKEN_KEY = "@tracknest/fcm_device_token";
 
+// Notification channel for local location-update confirmations
+export const LOCATION_UPDATE_CHANNEL_ID = "location-updates";
+
 // Notification bell — AsyncStorage key for persisted unread badge count
 export const NOTIFICATION_UNREAD_KEY = "@tracknest/notification_unread_count";
 
