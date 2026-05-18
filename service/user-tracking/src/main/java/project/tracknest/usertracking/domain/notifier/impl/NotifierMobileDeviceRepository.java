@@ -15,6 +15,8 @@ interface NotifierMobileDeviceRepository extends JpaRepository<MobileDevice, UUI
 
     List<MobileDevice> findAllByUserId(UUID userId);
 
+    boolean existsByUserIdAndDeviceToken(UUID userId, String deviceToken);
+
     @Query("""
     SELECT DISTINCT d
     FROM MobileDevice d
