@@ -108,7 +108,7 @@ class EmergencyRequestReceiverServiceImplTest {
                     .lastLongitudeDegrees(106.0)
                     .build();
 
-            when(emergencyRequestRepository.findByTargetId(TARGET_ID)).thenReturn(Optional.empty());
+            when(emergencyRequestRepository.findActiveByTargetId(TARGET_ID)).thenReturn(Optional.empty());
             when(emergencyRequestStatusRepository.findById(EmergencyRequestStatus.Status.PENDING.getValue()))
                     .thenReturn(Optional.of(pendingStatus()));
             when(emergencyServiceRepository.findNearestEmergencyService(10.0, 106.0))
@@ -138,7 +138,7 @@ class EmergencyRequestReceiverServiceImplTest {
                     .targetId(TARGET_ID).lastLatitudeDegrees(10.0).lastLongitudeDegrees(106.0).build();
 
             EmergencyRequest activeRequest = mockRequest(pendingStatus());
-            when(emergencyRequestRepository.findByTargetId(TARGET_ID))
+            when(emergencyRequestRepository.findActiveByTargetId(TARGET_ID))
                     .thenReturn(Optional.of(activeRequest));
 
             assertThrows(ResponseStatusException.class, () -> service.createEmergencyRequest(USER_ID, request));
@@ -153,7 +153,7 @@ class EmergencyRequestReceiverServiceImplTest {
 
             EmergencyRequest acceptedRequest = mockRequest(
                     new EmergencyRequestStatus(EmergencyRequestStatus.Status.ACCEPTED.getValue()));
-            when(emergencyRequestRepository.findByTargetId(TARGET_ID))
+            when(emergencyRequestRepository.findActiveByTargetId(TARGET_ID))
                     .thenReturn(Optional.of(acceptedRequest));
 
             assertThrows(ResponseStatusException.class, () -> service.createEmergencyRequest(USER_ID, request));
@@ -165,7 +165,7 @@ class EmergencyRequestReceiverServiceImplTest {
             PostEmergencyRequestRequest request = PostEmergencyRequestRequest.builder()
                     .targetId(TARGET_ID).lastLatitudeDegrees(10.0).lastLongitudeDegrees(106.0).build();
 
-            when(emergencyRequestRepository.findByTargetId(TARGET_ID)).thenReturn(Optional.empty());
+            when(emergencyRequestRepository.findActiveByTargetId(TARGET_ID)).thenReturn(Optional.empty());
             when(emergencyRequestStatusRepository.findById(any())).thenReturn(Optional.of(pendingStatus()));
             when(emergencyServiceRepository.findNearestEmergencyService(anyDouble(), anyDouble()))
                     .thenReturn(Optional.empty());
@@ -181,7 +181,7 @@ class EmergencyRequestReceiverServiceImplTest {
             PostEmergencyRequestRequest request = PostEmergencyRequestRequest.builder()
                     .targetId(TARGET_ID).lastLatitudeDegrees(10.0).lastLongitudeDegrees(106.0).build();
 
-            when(emergencyRequestRepository.findByTargetId(TARGET_ID)).thenReturn(Optional.empty());
+            when(emergencyRequestRepository.findActiveByTargetId(TARGET_ID)).thenReturn(Optional.empty());
             when(emergencyRequestStatusRepository.findById(any())).thenReturn(Optional.empty());
 
             assertThrows(IllegalStateException.class, () -> service.createEmergencyRequest(USER_ID, request));
@@ -193,7 +193,7 @@ class EmergencyRequestReceiverServiceImplTest {
             PostEmergencyRequestRequest request = PostEmergencyRequestRequest.builder()
                     .targetId(TARGET_ID).lastLatitudeDegrees(10.0).lastLongitudeDegrees(106.0).build();
 
-            when(emergencyRequestRepository.findByTargetId(TARGET_ID)).thenReturn(Optional.empty());
+            when(emergencyRequestRepository.findActiveByTargetId(TARGET_ID)).thenReturn(Optional.empty());
             when(emergencyRequestStatusRepository.findById(any())).thenReturn(Optional.of(pendingStatus()));
             when(emergencyServiceRepository.findNearestEmergencyService(anyDouble(), anyDouble()))
                     .thenReturn(Optional.of(mockEmergencyService()));
@@ -254,7 +254,7 @@ class EmergencyRequestReceiverServiceImplTest {
         @Test
         @DisplayName("should_returnAllowedTrue_whenNoRequestExists")
         void should_returnAllowedTrue_whenNoRequestExists() {
-            when(emergencyRequestRepository.findByTargetId(TARGET_ID)).thenReturn(Optional.empty());
+            when(emergencyRequestRepository.findActiveByTargetId(TARGET_ID)).thenReturn(Optional.empty());
 
             var result = service.checkEmergencyRequestAllowed(USER_ID, TARGET_ID);
 
@@ -266,7 +266,7 @@ class EmergencyRequestReceiverServiceImplTest {
         @DisplayName("should_returnAllowedFalse_whenPendingRequestExists")
         void should_returnAllowedFalse_whenPendingRequestExists() {
             EmergencyRequest pendingRequest = mockRequest(pendingStatus());
-            when(emergencyRequestRepository.findByTargetId(TARGET_ID))
+            when(emergencyRequestRepository.findActiveByTargetId(TARGET_ID))
                     .thenReturn(Optional.of(pendingRequest));
 
             var result = service.checkEmergencyRequestAllowed(USER_ID, TARGET_ID);
@@ -279,7 +279,7 @@ class EmergencyRequestReceiverServiceImplTest {
         void should_returnAllowedFalse_whenAcceptedRequestExists() {
             EmergencyRequest acceptedRequest = mockRequest(
                     new EmergencyRequestStatus(EmergencyRequestStatus.Status.ACCEPTED.getValue()));
-            when(emergencyRequestRepository.findByTargetId(TARGET_ID))
+            when(emergencyRequestRepository.findActiveByTargetId(TARGET_ID))
                     .thenReturn(Optional.of(acceptedRequest));
 
             var result = service.checkEmergencyRequestAllowed(USER_ID, TARGET_ID);
@@ -290,10 +290,10 @@ class EmergencyRequestReceiverServiceImplTest {
         @Test
         @DisplayName("should_returnAllowedTrue_whenClosedRequestExists")
         void should_returnAllowedTrue_whenClosedRequestExists() {
-            EmergencyRequest closedRequest = mockRequest(
-                    new EmergencyRequestStatus(EmergencyRequestStatus.Status.CLOSED.getValue()));
-            when(emergencyRequestRepository.findByTargetId(TARGET_ID))
-                    .thenReturn(Optional.of(closedRequest));
+            // findActiveByTargetId only matches PENDING/ACCEPTED rows, so a closed
+            // request is invisible to this query — the same as having no active request.
+            when(emergencyRequestRepository.findActiveByTargetId(TARGET_ID))
+                    .thenReturn(Optional.empty());
 
             var result = service.checkEmergencyRequestAllowed(USER_ID, TARGET_ID);
 
@@ -303,10 +303,10 @@ class EmergencyRequestReceiverServiceImplTest {
         @Test
         @DisplayName("should_returnAllowedTrue_whenRejectedRequestExists")
         void should_returnAllowedTrue_whenRejectedRequestExists() {
-            EmergencyRequest rejectedRequest = mockRequest(
-                    new EmergencyRequestStatus(EmergencyRequestStatus.Status.REJECTED.getValue()));
-            when(emergencyRequestRepository.findByTargetId(TARGET_ID))
-                    .thenReturn(Optional.of(rejectedRequest));
+            // findActiveByTargetId only matches PENDING/ACCEPTED rows, so a rejected
+            // request is invisible to this query — the same as having no active request.
+            when(emergencyRequestRepository.findActiveByTargetId(TARGET_ID))
+                    .thenReturn(Optional.empty());
 
             var result = service.checkEmergencyRequestAllowed(USER_ID, TARGET_ID);
 
