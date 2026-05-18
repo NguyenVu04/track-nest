@@ -1,7 +1,8 @@
 "use client";
 
-import { Loader2, Radar } from "lucide-react";
+import { Radar } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { LottieLoader } from "./LottieLoader";
 
 interface LoadingProps {
   size?: "sm" | "md" | "lg";
@@ -9,10 +10,10 @@ interface LoadingProps {
   fullScreen?: boolean;
 }
 
-const sizeClasses = {
-  sm: "w-4 h-4",
-  md: "w-7 h-7",
-  lg: "w-10 h-10",
+const lottieSizes = {
+  sm: 60,
+  md: 100,
+  lg: 140,
 };
 
 export function Loading({ size = "md", text, fullScreen = false }: LoadingProps) {
@@ -21,8 +22,8 @@ export function Loading({ size = "md", text, fullScreen = false }: LoadingProps)
   const displayText = text ?? t("loading");
 
   const content = (
-    <div className="flex flex-col items-center justify-center gap-3">
-      <Loader2 className={`${sizeClasses[size]} text-brand-500 animate-spin`} />
+    <div className="flex flex-col items-center justify-center gap-1">
+      <LottieLoader size={lottieSizes[size]} />
       {displayText && <p className="text-sm text-slate-500">{displayText}</p>}
     </div>
   );
@@ -30,7 +31,7 @@ export function Loading({ size = "md", text, fullScreen = false }: LoadingProps)
   if (fullScreen) {
     return (
       <div
-        className="min-h-screen flex flex-col items-center justify-center gap-6"
+        className="min-h-screen flex flex-col items-center justify-center gap-4"
         style={{ background: "linear-gradient(135deg, #0d1e2b 0%, #1a3347 100%)" }}
       >
         <div className="flex items-center gap-3">
@@ -39,10 +40,8 @@ export function Loading({ size = "md", text, fullScreen = false }: LoadingProps)
             {tAuth("appName")}
           </span>
         </div>
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
-          <p className="text-sm text-slate-400">{displayText}</p>
-        </div>
+        <LottieLoader size={160} />
+        <p className="text-sm text-slate-400">{displayText}</p>
       </div>
     );
   }
