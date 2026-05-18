@@ -80,8 +80,22 @@ class NotifierServiceImpl implements NotifierService {
                     .build();
         }
 
+        if (mobileRepository.existsByUserIdAndDeviceToken(userId, token)) {
+            log.info("Mobile device token already registered for user {} — skipping duplicate", userId);
+            return RegisterMobileDeviceResponse
+                    .newBuilder()
+                    .setId("")
+                    .setCreatedAtMs(Instant.now().toEpochMilli())
+                    .setStatus(Status
+                            .newBuilder()
+                            .setCode(Code.OK_VALUE)
+                            .setMessage("Mobile device already registered")
+                            .build())
+                    .build();
+        }
+
         MobileDevice device = MobileDevice.builder()
-                .deviceToken(request.getDeviceToken())
+                .deviceToken(token)
                 .userId(userId)
                 .languageCode(request.getLanguageCode())
                 .platform(request.getPlatform())

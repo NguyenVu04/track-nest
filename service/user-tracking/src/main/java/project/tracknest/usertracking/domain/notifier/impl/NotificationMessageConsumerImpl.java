@@ -71,6 +71,20 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
                         Collectors.mapping(MobileDevice::getDeviceToken, Collectors.toList())));
 
         boolean anyDelivered = false;
+
+        List<String> targetTokens = mobileRepository.findAllByUserId(target.getId())
+                .stream()
+                .map(MobileDevice::getDeviceToken)
+                .toList();
+        if (!targetTokens.isEmpty()) {
+            int targetSent = fcmService.sendToTokensWithData(
+                    targetTokens,
+                    message.title(),
+                    message.content(),
+                    Map.of("type", message.type()));
+            if (targetSent > 0) anyDelivered = true;
+        }
+
         for (User member : familyMembers) {
             List<String> deviceTokens = tokensByMember.getOrDefault(member.getId(), List.of());
             int sent = fcmService.sendToTokensWithData(
