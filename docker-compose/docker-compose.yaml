@@ -264,6 +264,7 @@ services:
       - ../database/01-user-tracking-init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ../database/02-user-tracking-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
       - ../database/tables_postgres.sql:/docker-entrypoint-initdb.d/03-quartz.sql
+      - ../database/03-user-tracking-mobile-device-dedup.sql:/docker-entrypoint-initdb.d/04-mobile-device-dedup.sql
     networks:
       - track_nest
     healthcheck:
