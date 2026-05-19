@@ -27,6 +27,7 @@ jest.mock("@/utils", () => ({
 
 jest.mock("@/utils/notifications", () => ({
   setupUploadNotificationChannel: jest.fn().mockResolvedValue(undefined),
+  setupLocationUpdateNotificationChannel: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock("expo-location", () => ({
