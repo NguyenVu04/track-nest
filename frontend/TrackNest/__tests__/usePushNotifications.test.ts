@@ -24,6 +24,9 @@ jest.mock("expo-notifications", () => ({
     return { remove: jest.fn() };
   }),
   addPushTokenListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+  getLastNotificationResponse: jest.fn().mockImplementation(
+    () => mockLastNotificationResponse,
+  ),
   getLastNotificationResponseAsync: jest.fn().mockImplementation(() =>
     Promise.resolve(mockLastNotificationResponse),
   ),

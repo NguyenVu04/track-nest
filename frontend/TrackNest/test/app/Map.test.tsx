@@ -67,6 +67,8 @@ jest.mock("@/contexts/EmergencyContext", () => ({
     createEmergencyRequest: jest.fn().mockResolvedValue({ id: "e1" }),
     cancelEmergencyRequest: jest.fn().mockResolvedValue(undefined),
     activeRequest: null,
+    isEmergencyActive: false,
+    refreshActiveEmergencyStatus: jest.fn().mockResolvedValue(undefined),
   }),
 }));
 jest.mock("@/contexts/MapContext", () => ({
@@ -124,8 +126,27 @@ jest.mock("@/hooks/useAddressFromLocation", () => ({
 jest.mock("@/hooks/useMapController", () => ({
   useMapController: jest.fn().mockReturnValue({
     mapRef: { current: null },
-    animateToRegion: jest.fn(),
-    animateToUser: jest.fn(),
+    regionDelta: 0.02,
+    centerMap: jest.fn(),
+    resetCenterFlag: jest.fn(),
+    zoom: jest.fn(),
+  }),
+}));
+jest.mock("@/contexts/AuthContext", () => ({
+  useAuth: jest.fn().mockReturnValue({
+    tokens: null,
+    user: { sub: "user-1", username: "testuser" },
+    isAuthenticated: true,
+    isGuestMode: false,
+    canUseApp: true,
+    isLoading: false,
+    saveTokens: jest.fn(),
+    clearTokens: jest.fn(),
+    continueAsGuest: jest.fn(),
+    disableGuestMode: jest.fn(),
+    getValidAccessToken: jest.fn().mockResolvedValue("mock-token"),
+    refreshTokens: jest.fn().mockResolvedValue(null),
+    logout: jest.fn(),
   }),
 }));
 jest.mock("@/hooks/useTranslation", () => ({
