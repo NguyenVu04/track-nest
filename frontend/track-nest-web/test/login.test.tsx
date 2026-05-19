@@ -42,6 +42,10 @@ jest.mock("next/navigation", () => ({
 import LoginPage from "@/app/login/page";
 import { LoginContent } from "@/app/login/LoginContent";
 
+jest.mock("@/components/loading/LottieLoader", () => ({
+  LottieLoader: () => <div data-testid="lottie-loader">LottieLoader Mock</div>,
+}));
+
 beforeEach(() => {
   mockInitKeycloak = jest.fn().mockResolvedValue(false);
   mockLoginWithKeycloak = jest.fn().mockResolvedValue(undefined);
@@ -69,7 +73,7 @@ describe("LoginContent", () => {
   it("shows loading spinner while keycloak initialises", () => {
     mockInitKeycloak = jest.fn().mockImplementation(() => new Promise(() => {}));
     render(<LoginContent />);
-    expect(document.querySelector("svg")).toBeInTheDocument();
+    expect(screen.getByTestId("lottie-loader")).toBeInTheDocument();
   });
 
   it("shows initialising session text while loading", () => {

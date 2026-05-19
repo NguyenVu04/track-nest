@@ -2,6 +2,7 @@ package project.tracknest.emergencyops.core.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import jakarta.validation.constraints.Size;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.Point;
 
@@ -23,12 +24,12 @@ public class EmergencyService {
     private UUID id;
 
     @EqualsAndHashCode.Include
-    @Range(min = 3, max = 255, message = "Username must be between 3 and 255 characters")
+    @Size(min = 3, max = 255, message = "Username must be between 3 and 255 characters")
     @Column(name = "username", nullable = false, updatable = false)
     private String username;
 
     @EqualsAndHashCode.Include
-    @Range(min = 3, max = 25, message = "Phone number must be between 3 and 25 characters")
+    @Size(min = 3, max = 25, message = "Phone number must be between 3 and 25 characters")
     @Column(name = "phone_number", nullable = false, updatable = false)
     private String phoneNumber;
 

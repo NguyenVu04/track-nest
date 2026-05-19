@@ -135,20 +135,20 @@ class ReportManagerServiceImplTest {
     class GetMissingPersonReport {
 
         @Test
-        void should_returnReport_whenOwned() {
-            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
+        void should_returnReport_whenFound() {
+            when(missingPersonReportRepository.findById(REPORT_ID))
                     .thenReturn(Optional.of(pendingReport()));
 
-            MissingPersonReportResponse resp = service.getMissingPersonReport(REPORTER_ID, REPORT_ID);
+            MissingPersonReportResponse resp = service.getMissingPersonReport(REPORT_ID);
             assertThat(resp.getId()).isEqualTo(REPORT_ID);
         }
 
         @Test
         void should_throw404_whenNotFound() {
-            when(missingPersonReportRepository.findByReporterIdOrUserIdAndId(REPORTER_ID, REPORT_ID))
+            when(missingPersonReportRepository.findById(REPORT_ID))
                     .thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.getMissingPersonReport(REPORTER_ID, REPORT_ID))
+            assertThatThrownBy(() -> service.getMissingPersonReport(REPORT_ID))
                     .isInstanceOf(ResponseStatusException.class)
                     .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode())
                             .isEqualTo(HttpStatus.NOT_FOUND));
@@ -377,20 +377,20 @@ class ReportManagerServiceImplTest {
     class GetCrimeReport {
 
         @Test
-        void should_returnReport_whenOwned() {
-            when(crimeReportRepository.findByReporterIdOrUserSubmittedAndId(REPORTER_ID, REPORT_ID))
+        void should_returnReport_whenFound() {
+            when(crimeReportRepository.findById(REPORT_ID))
                     .thenReturn(Optional.of(privateCrimeReport()));
 
-            CrimeReportResponse resp = service.getCrimeReport(REPORTER_ID, REPORT_ID);
+            CrimeReportResponse resp = service.getCrimeReport(REPORT_ID);
             assertThat(resp.getId()).isEqualTo(REPORT_ID);
         }
 
         @Test
         void should_throw404_whenNotFound() {
-            when(crimeReportRepository.findByReporterIdOrUserSubmittedAndId(REPORTER_ID, REPORT_ID))
+            when(crimeReportRepository.findById(REPORT_ID))
                     .thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.getCrimeReport(REPORTER_ID, REPORT_ID))
+            assertThatThrownBy(() -> service.getCrimeReport(REPORT_ID))
                     .isInstanceOf(ResponseStatusException.class)
                     .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode())
                             .isEqualTo(HttpStatus.NOT_FOUND));
