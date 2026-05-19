@@ -120,6 +120,7 @@ export function usePushNotifications(
     const NOTIFICATION_LIST_TYPES = [
       "tracking_notification",
       "risk_notification",
+      "ANOMALY_DETECTED",
     ];
 
     // Foreground FCM listener — chat suppressed (gRPC stream handles those).

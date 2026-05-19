@@ -168,10 +168,11 @@ TaskManager.defineTask(
       return;
     }
 
-    // Increment the notification bell badge for tracking and risk notifications.
+    // Increment the notification bell badge for tracking, risk, and anomaly notifications.
     if (
       notifData?.type === "tracking_notification" ||
-      notifData?.type === "risk_notification"
+      notifData?.type === "risk_notification" ||
+      notifData?.type === "ANOMALY_DETECTED"
     ) {
       try {
         const stored = await AsyncStorage.getItem(NOTIFICATION_UNREAD_KEY);
