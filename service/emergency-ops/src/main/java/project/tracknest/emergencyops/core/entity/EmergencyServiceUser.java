@@ -32,7 +32,7 @@ public class EmergencyServiceUser {
     private OffsetDateTime lastUpdateTime;
 
     @Generated
-    @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", updatable = false)
+    @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", insertable = false, updatable = false)
     private Point geom;
 
     @ManyToOne(fetch = FetchType.LAZY)

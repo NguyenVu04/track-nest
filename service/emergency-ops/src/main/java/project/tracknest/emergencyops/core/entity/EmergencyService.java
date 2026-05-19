@@ -45,6 +45,6 @@ public class EmergencyService {
     private OffsetDateTime updatedAt;
 
     @Generated
-    @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", updatable = false)
+    @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", insertable = false, updatable = false)
     private Point geom;
 }
