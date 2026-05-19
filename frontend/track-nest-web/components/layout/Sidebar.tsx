@@ -81,7 +81,7 @@ export const AppSidebar = memo(function AppSidebar({
         { href: "/dashboard/missing-persons", nameKey: "missingPersons", icon: Users, roles: ["Reporter"] },
         { href: "/dashboard/crime-reports", nameKey: "crimeReports", icon: Shield, roles: ["Reporter"] },
         { href: "/dashboard/guidelines", nameKey: "guidelines", icon: BookOpen, roles: ["Reporter"] },
-        { href: "/dashboard/emergency-requests/my", nameKey: "myEmergencyRequests", icon: Siren, roles: ["Reporter"] },
+        // { href: "/dashboard/emergency-requests/my", nameKey: "myEmergencyRequests", icon: Siren, roles: ["Reporter"] },
       ],
     },
     {
