@@ -192,7 +192,7 @@ function SectionHeader({ label, onMarkAll, markAllLabel }: {
 export default function NotificationsScreen() {
   const router = useRouter();
   const t = useTranslation(notificationsLang);
-  const { markAllRead } = useNotificationContext();
+  const { markAllRead, unreadCount } = useNotificationContext();
   const {
     trackingNotifications,
     riskNotifications,
@@ -232,9 +232,11 @@ export default function NotificationsScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
 
+  // Re-fetch page 1 whenever the badge count bumps so new items appear without
+  // the user needing to leave and re-enter the screen.
   useEffect(() => {
     fetchAll();
-  }, [fetchAll]);
+  }, [fetchAll, unreadCount]);
 
   const goToTab = (index: number) => {
     setTabIndex(index);
