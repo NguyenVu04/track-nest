@@ -56,6 +56,6 @@ danh sách và trạng thái request của mình.
 ## Thứ tự thực hiện
 
 - [x] Viết plan file này
-- [ ] Fix Issue 1 → commit
-- [ ] Fix Issue 2 → commit
-- [ ] Fix Issue 3 → commit
+- [x] Fix Issue 1 → commit `fix(web): wire Broadcast Loc button to update emergency service location`
+- [x] Fix Issue 2 → commit `fix(web): show real-time location on emergency request detail map`
+- [x] Fix Issue 3 → commit `feat(web): add My Emergency Requests page for Reporter role`
