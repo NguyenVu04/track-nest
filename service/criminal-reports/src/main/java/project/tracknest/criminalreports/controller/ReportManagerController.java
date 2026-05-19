@@ -52,14 +52,12 @@ public class ReportManagerController {
     @GetMapping("/missing-person-reports/{reportId}")
     public ResponseEntity<MissingPersonReportResponse> getMissingPersonReport(
             @PathVariable UUID reportId) {
-        UUID userId = SecurityUtils.getCurrentUserId();
-        return ResponseEntity.ok(service.getMissingPersonReport(userId, reportId));
+        return ResponseEntity.ok(service.getMissingPersonReport(reportId));
     }
 
     @GetMapping("/missing-person-reports/{reportId}/photo")
     public ResponseEntity<byte[]> getMissingPersonReportPhoto(@PathVariable UUID reportId) {
-        UUID userId = SecurityUtils.getCurrentUserId();
-        MissingPersonReportResponse report = service.getMissingPersonReport(userId, reportId);
+        MissingPersonReportResponse report = service.getMissingPersonReport(reportId);
         String photo = report.getPhoto();
         if (photo == null || photo.isBlank()) {
             return ResponseEntity.notFound().build();
@@ -176,8 +174,7 @@ public class ReportManagerController {
     @GetMapping("/crime-reports/{reportId}")
     public ResponseEntity<CrimeReportResponse> getCrimeReport(
             @PathVariable UUID reportId) {
-        UUID userId = SecurityUtils.getCurrentUserId();
-        return ResponseEntity.ok(service.getCrimeReport(userId, reportId));
+        return ResponseEntity.ok(service.getCrimeReport(reportId));
     }
 
     @PutMapping("/crime-reports/{reportId}")
@@ -235,8 +232,7 @@ public class ReportManagerController {
     @GetMapping("/guidelines/{documentId}")
     public ResponseEntity<GuidelinesDocumentResponse> getGuidelinesDocument(
             @PathVariable UUID documentId) {
-        UUID userId = SecurityUtils.getCurrentUserId();
-        return ResponseEntity.ok(service.getGuidelinesDocument(userId, documentId));
+        return ResponseEntity.ok(service.getGuidelinesDocument(documentId));
     }
 
     @PutMapping("/guidelines/{documentId}")

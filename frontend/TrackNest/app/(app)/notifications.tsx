@@ -450,8 +450,8 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   notifCardUnread: {
-    backgroundColor: colors.primaryMuted + "60",
-    borderColor: colors.primary + "40",
+    backgroundColor: colors.primaryMuted,
+    borderColor: colors.primary,
   },
   // Left-edge colored strip shown only on unread cards
   unreadStrip: {
