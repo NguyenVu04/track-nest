@@ -151,11 +151,17 @@ export const FollowerBottomSheet = ({
   }, [selectedDay]);
 
   const filteredSorted = useMemo(() => {
-    const dayStart = startOfDay(selectedDay).getTime();
-    const dayEnd = endOfDay(selectedDay).getTime();
-    const from = Math.max(dayStart, fromTime.getTime());
-    const to = Math.min(dayEnd, toTime.getTime());
-    return sorted.filter((e) => e.timestampMs >= from && e.timestampMs <= to);
+    // Always anchor the time boundaries to selectedDay's date so that changing
+    // the selected day never produces from > to while fromTime/toTime are still
+    // carrying the previous day's date (which caused a blank-flash on every day
+    // chip tap before the useEffect had a chance to reset fromTime/toTime).
+    const from = new Date(selectedDay);
+    from.setHours(fromTime.getHours(), fromTime.getMinutes(), 0, 0);
+    const to = new Date(selectedDay);
+    to.setHours(toTime.getHours(), toTime.getMinutes(), 59, 999);
+    return sorted.filter(
+      (e) => e.timestampMs >= from.getTime() && e.timestampMs <= to.getTime(),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationHistory, selectedDay, fromTime, toTime]);
 
