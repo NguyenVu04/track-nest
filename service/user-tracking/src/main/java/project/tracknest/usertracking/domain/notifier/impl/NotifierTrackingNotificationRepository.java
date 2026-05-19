@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface NotifierTrackingNotificationRepository extends JpaRepository<TrackingNotification, UUID> {
+interface NotifierTrackingNotificationRepository extends JpaRepository<TrackingNotification, UUID> {
     @Query("""
         SELECT tn
         FROM TrackingNotification tn

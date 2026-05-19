@@ -15,7 +15,7 @@ interface NotifierMobileDeviceRepository extends JpaRepository<MobileDevice, UUI
 
     List<MobileDevice> findAllByUserId(UUID userId);
 
-    boolean existsByUserIdAndDeviceToken(UUID userId, String deviceToken);
+    Optional<MobileDevice> findByUserIdAndDeviceToken(UUID userId, String deviceToken);
 
     @Query("""
     SELECT DISTINCT d
@@ -31,4 +31,6 @@ interface NotifierMobileDeviceRepository extends JpaRepository<MobileDevice, UUI
 
     @Query("SELECT d FROM MobileDevice d WHERE d.userId IN :userIds")
     List<MobileDevice> findAllByUserIdIn(@Param("userIds") List<UUID> userIds);
+
+    void deleteAllByDeviceTokenIn(List<String> deviceTokens);
 }

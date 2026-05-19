@@ -19,6 +19,7 @@ interface NotifierUserRepository extends JpaRepository<User, UUID> {
                 ON fcm1.id.familyCircleId = fcm2.id.familyCircleId
             WHERE fcm1.id.memberId = u.id
                 AND fcm2.id.memberId = :userId
+                AND fcm1.id.memberId <> :userId
         )
     """)
     List<User> findAllUserFamilyMembers(@Param("userId") UUID userId);

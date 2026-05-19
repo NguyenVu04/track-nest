@@ -17,14 +17,25 @@ public class KafkaTopicConfig {
 
     private final KafkaProperties props;
 
+    private static final List<String> DLT_TOPICS = List.of(
+            "tracking-notification",
+            "risk-notification"
+    );
+
     @Bean
     public List<NewTopic> newTopics() {
         if (props.getTopics() == null || props.getTopics().isEmpty()) {
             return Collections.emptyList();
         }
-        return props.getTopics().values().stream()
-                .map(name -> new NewTopic(
-                        name, props.getPartitions(), props.getReplicationFactor()))
+        List<NewTopic> topics = props.getTopics().values().stream()
+                .map(name -> new NewTopic(name, props.getPartitions(), props.getReplicationFactor()))
                 .collect(Collectors.toList());
+
+        props.getTopics().entrySet().stream()
+                .filter(e -> DLT_TOPICS.contains(e.getKey()))
+                .map(e -> new NewTopic(e.getValue() + ".DLT", props.getPartitions(), props.getReplicationFactor()))
+                .forEach(topics::add);
+
+        return topics;
     }
 }
