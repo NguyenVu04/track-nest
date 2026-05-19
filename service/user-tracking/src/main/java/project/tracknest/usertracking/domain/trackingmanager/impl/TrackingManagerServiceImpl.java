@@ -399,6 +399,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                         .memberId(userId)
                         .build())
                 .isAdmin(false)
+                .role("Member")
                 .build();
 
         familyCircleMemberRepository.save(member);
@@ -624,7 +625,7 @@ class TrackingManagerServiceImpl implements TrackingManagerService {
                                 .getMemberId()
                                 .toString())
                         .setIsAdmin(m.isAdmin())
-                        .setFamilyRole(m.getRole())
+                        .setFamilyRole(m.getRole() != null ? m.getRole() : "")
                         .setMemberUsername(m.getMember()
                                 .getUsername())
                         .setMemberAvatarUrl(m.getMember()
