@@ -101,8 +101,10 @@ class ReportManagerServiceImpl implements ReportManagerService {
 
     @Override
     @Transactional(readOnly = true)
-    public MissingPersonReportResponse getMissingPersonReport(UUID reporterId, UUID reportId) {
-        return mapToMissingPersonReportResponse(findMissingPersonReportOwned(reporterId, reportId));
+    public MissingPersonReportResponse getMissingPersonReport(UUID reportId) {
+        MissingPersonReport report = missingPersonReportRepository.findById(reportId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Missing person report not found"));
+        return mapToMissingPersonReportResponse(report);
     }
 
     @Override
@@ -219,8 +221,10 @@ class ReportManagerServiceImpl implements ReportManagerService {
 
     @Override
     @Transactional(readOnly = true)
-    public CrimeReportResponse getCrimeReport(UUID reporterId, UUID reportId) {
-        return mapToCrimeReportResponse(findCrimeReportOwned(reporterId, reportId));
+    public CrimeReportResponse getCrimeReport(UUID reportId) {
+        CrimeReport report = crimeReportRepository.findById(reportId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Crime report not found"));
+        return mapToCrimeReportResponse(report);
     }
 
     @Override
@@ -312,8 +316,10 @@ class ReportManagerServiceImpl implements ReportManagerService {
 
     @Override
     @Transactional(readOnly = true)
-    public GuidelinesDocumentResponse getGuidelinesDocument(UUID reporterId, UUID documentId) {
-        return mapToGuidelinesDocumentResponse(findGuidelinesDocumentOwned(reporterId, documentId));
+    public GuidelinesDocumentResponse getGuidelinesDocument(UUID documentId) {
+        GuidelinesDocument document = guidelinesDocumentRepository.findById(documentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Guidelines document not found"));
+        return mapToGuidelinesDocumentResponse(document);
     }
 
     @Override

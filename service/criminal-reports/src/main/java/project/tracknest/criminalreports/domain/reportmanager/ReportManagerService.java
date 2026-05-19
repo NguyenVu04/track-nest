@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface ReportManagerService {
     MissingPersonReportResponse createMissingPersonReport(UUID reporterId, CreateMissingPersonReportRequest request);
-    MissingPersonReportResponse getMissingPersonReport(UUID reporterId, UUID reportId);
+    MissingPersonReportResponse getMissingPersonReport(UUID reportId);
     MissingPersonReportResponse updateMissingPersonReport(UUID reporterId, UUID reportId, UpdateMissingPersonReportRequest request);
     void deleteMissingPersonReport(UUID reporterId, UUID reportId);
     MissingPersonReportResponse publishMissingPersonReport(UUID reporterId, UUID reportId);
@@ -18,7 +18,7 @@ public interface ReportManagerService {
     PageResponse<MissingPersonReportResponse> listMissingPersonReports(UUID reporterId, String status, String title, boolean isPublic, int page, int size);
 
     CrimeReportResponse createCrimeReport(UUID reporterId, CreateCrimeReportRequest request);
-    CrimeReportResponse getCrimeReport(UUID reporterId, UUID reportId);
+    CrimeReportResponse getCrimeReport(UUID reportId);
     CrimeReportResponse updateCrimeReport(UUID reporterId, UUID reportId, UpdateCrimeReportRequest request);
     CrimeReportResponse publishCrimeReport(UUID reporterId, UUID reportId);
     void deleteCrimeReport(UUID reporterId, UUID reportId);
@@ -26,7 +26,7 @@ public interface ReportManagerService {
     PageResponse<CrimeReportResponse> listCrimeReportsWithinRadius(double longitude, double latitude, double radius, int page, int size);
 
     GuidelinesDocumentResponse createGuidelinesDocument(UUID reporterId, CreateGuidelinesDocumentRequest request);
-    GuidelinesDocumentResponse getGuidelinesDocument(UUID reporterId, UUID documentId);
+    GuidelinesDocumentResponse getGuidelinesDocument(UUID documentId);
     GuidelinesDocumentResponse updateGuidelinesDocument(UUID reporterId, UUID documentId, UpdateGuidelinesDocumentRequest request);
     GuidelinesDocumentResponse publishGuidelinesDocument(UUID reporterId, UUID documentId);
     void deleteGuidelinesDocument(UUID reporterId, UUID documentId);
