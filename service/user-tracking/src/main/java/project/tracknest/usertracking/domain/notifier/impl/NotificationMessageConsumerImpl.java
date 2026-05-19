@@ -1,10 +1,9 @@
 package project.tracknest.usertracking.domain.notifier.impl;
 
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import project.tracknest.usertracking.configuration.firebase.FcmService;
 import project.tracknest.usertracking.core.datatype.NotificationSentMessage;
 import project.tracknest.usertracking.core.datatype.RiskNotificationMessage;
@@ -16,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -25,9 +23,11 @@ import java.util.stream.Stream;
 class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
     private static final String RISK_NOTIFICATION_TYPE = "RISK";
     private static final String TRACKING_NOTIFICATION_TYPE = "TRACKING";
+    private static final String FCM_DATA_TYPE_KEY = "type";
+    private static final String FCM_DATA_ROUTE_KEY = "route";
 
     private final FcmService fcmService;
-    private final EntityManager entityManager;
+    private final TransactionTemplate transactionTemplate;
     private final NotificationSentMessageProducer notificationSentMessageProducer;
     private final NotifierUserRepository userRepository;
     private final NotifierMobileDeviceRepository mobileRepository;
@@ -35,150 +35,168 @@ class NotificationMessageConsumerImpl implements NotificationMessageConsumer {
     private final NotifierTrackingNotificationRepository trackingNotificationRepository;
     private final NotifierTrackerTrackingNotificationRepository trackerTrackingNotificationRepository;
 
+    private record TrackingSetup(
+            UUID notificationId,
+            List<UUID> memberIds,
+            List<String> targetTokens,
+            List<String> allMemberTokens
+    ) {}
+
+    private record RiskSetup(
+            UUID notificationId,
+            List<String> deviceTokens
+    ) {}
+
     @Override
-    @Transactional
     public void sendTrackingNotification(TrackingNotificationMessage message) {
-        Optional<User> userOpt = userRepository.findById(message.targetId());
-        if (userOpt.isEmpty()) {
-            log.warn("User with id {} not found. Skipping tracking notification.", message.targetId());
-            return;
-        }
-        User target = userOpt.get();
+        // Phase 1 — transaction: save notification record, load family + token data
+        TrackingSetup setup = transactionTemplate.execute(status -> {
+            Optional<User> userOpt = userRepository.findById(message.targetId());
+            if (userOpt.isEmpty()) {
+                log.warn("User with id {} not found. Skipping tracking notification.", message.targetId());
+                return null;
+            }
+            User target = userOpt.get();
 
-        TrackingNotification trackingNotification = TrackingNotification.builder()
-                .target(target)
-                .title(message.title())
-                .content(message.content())
-                .type(message.type())
-                .build();
+            TrackingNotification saved = trackingNotificationRepository.saveAndFlush(
+                    TrackingNotification.builder()
+                            .target(target)
+                            .title(message.title())
+                            .content(message.content())
+                            .type(message.type())
+                            .build());
 
-        TrackingNotification savedTrackingNotification = trackingNotificationRepository
-                .saveAndFlush(trackingNotification);
+            List<User> familyMembers = userRepository.findAllUserFamilyMembers(target.getId());
+            List<UUID> memberIds = familyMembers.stream().map(User::getId).toList();
+            if (memberIds.isEmpty()) {
+                log.warn("No family members found for target user {}. Skipping FCM delivery.", target.getId());
+                return new TrackingSetup(saved.getId(), List.of(), List.of(), List.of());
+            }
 
-        List<User> familyMembers = userRepository
-                .findAllUserFamilyMembers(target.getId());
+            List<String> targetTokens = mobileRepository.findAllByUserId(target.getId())
+                    .stream()
+                    .map(MobileDevice::getDeviceToken)
+                    .distinct()
+                    .toList();
 
-        List<UUID> memberIds = familyMembers.stream().map(User::getId).toList();
-        if (memberIds.isEmpty()) {
-            log.warn("No family members found for target user {}. Skipping tracking notification.", target.getId());
-            return;
-        }
+            List<String> allMemberTokens = mobileRepository.findAllByUserIdIn(memberIds)
+                    .stream()
+                    .map(MobileDevice::getDeviceToken)
+                    .distinct()
+                    .toList();
 
-        Map<UUID, List<String>> tokensByMember = mobileRepository.findAllByUserIdIn(memberIds)
-                .stream()
-                .collect(Collectors.groupingBy(
-                        MobileDevice::getUserId,
-                        Collectors.mapping(MobileDevice::getDeviceToken, Collectors.toList())));
+            return new TrackingSetup(saved.getId(), memberIds, targetTokens, allMemberTokens);
+        });
 
-        boolean anyDelivered = false;
+        if (setup == null || setup.memberIds().isEmpty()) return;
 
-        List<String> targetTokens = mobileRepository.findAllByUserId(target.getId())
-                .stream()
-                .map(MobileDevice::getDeviceToken)
-                .toList();
-        if (!targetTokens.isEmpty()) {
-            int targetSent = fcmService.sendToTokensWithData(
-                    targetTokens,
-                    message.title(),
-                    message.content(),
-                    Map.of("type", message.type(), "route", "/(app)/sos"));
-            if (targetSent > 0) anyDelivered = true;
-        }
+        // Phase 2 — no transaction: FCM (one batched call per audience)
+        FcmService.FcmResult targetResult = setup.targetTokens().isEmpty()
+                ? new FcmService.FcmResult(0, List.of())
+                : fcmService.sendToTokensWithData(
+                        setup.targetTokens(), message.title(), message.content(),
+                        Map.of(FCM_DATA_TYPE_KEY, message.type(), FCM_DATA_ROUTE_KEY, "/(app)/sos"));
 
-        for (User member : familyMembers) {
-            List<String> deviceTokens = tokensByMember.getOrDefault(member.getId(), List.of());
-            int sent = fcmService.sendToTokensWithData(
-                    deviceTokens,
-                    message.title(),
-                    message.content(),
-                    Map.of("type", message.type(), "route", "/(app)/sos"));
-            if (sent > 0) anyDelivered = true;
+        FcmService.FcmResult memberResult = setup.allMemberTokens().isEmpty()
+                ? new FcmService.FcmResult(0, List.of())
+                : fcmService.sendToTokensWithData(
+                        setup.allMemberTokens(), message.title(), message.content(),
+                        Map.of(FCM_DATA_TYPE_KEY, message.type(), FCM_DATA_ROUTE_KEY, "/(app)/sos"));
 
-            TrackerTrackingNotification.TrackerTrackingNotificationId trackerTrackingNotificationId =
-                    TrackerTrackingNotification.TrackerTrackingNotificationId
-                            .builder()
-                            .trackerId(member.getId())
-                            .notificationId(savedTrackingNotification.getId())
-                            .build();
-            TrackerTrackingNotification trackerTrackingNotification = TrackerTrackingNotification
-                    .builder()
-                    .id(trackerTrackingNotificationId)
-                    .build();
-            trackerTrackingNotificationRepository.save(trackerTrackingNotification);
-        }
+        boolean anyDelivered = targetResult.successCount() > 0 || memberResult.successCount() > 0;
+
+        List<String> staleTokens = Stream.concat(
+                targetResult.staleTokens().stream(),
+                memberResult.staleTokens().stream()
+        ).toList();
+
+        // Phase 3 — new transaction: persist tracker links + purge stale tokens
+        transactionTemplate.execute(status -> {
+            purgeStaleTokens(staleTokens);
+            for (UUID memberId : setup.memberIds()) {
+                trackerTrackingNotificationRepository.save(
+                        TrackerTrackingNotification.builder()
+                                .id(TrackerTrackingNotification.TrackerTrackingNotificationId.builder()
+                                        .trackerId(memberId)
+                                        .notificationId(setup.notificationId())
+                                        .build())
+                                .build());
+            }
+            return null;
+        });
 
         if (anyDelivered) {
-            NotificationSentMessage sentMessage = NotificationSentMessage
-                    .builder()
-                    .notificationId(savedTrackingNotification.getId())
+            notificationSentMessageProducer.produce(NotificationSentMessage.builder()
+                    .notificationId(setup.notificationId())
                     .type(TRACKING_NOTIFICATION_TYPE)
                     .sent_at_ms(OffsetDateTime.now().toInstant().toEpochMilli())
-                    .build();
-            notificationSentMessageProducer.produce(sentMessage);
+                    .build());
         } else {
             log.warn("Skipping notification-sent audit for tracking notification {}: no FCM delivery succeeded",
-                    savedTrackingNotification.getId());
+                    setup.notificationId());
         }
     }
 
     @Override
-    @Transactional
     public void sendRiskNotification(RiskNotificationMessage message) {
-        Optional<User> userOpt = userRepository.findById(message.userId());
-        if (userOpt.isEmpty()) {
-            log.warn("User with id {} not found. Skipping risk notification.", message.userId());
-            return;
-        }
+        // Phase 1 — transaction: save notification record + load device tokens
+        RiskSetup setup = transactionTemplate.execute(status -> {
+            Optional<User> userOpt = userRepository.findById(message.userId());
+            if (userOpt.isEmpty()) {
+                log.warn("User with id {} not found. Skipping risk notification.", message.userId());
+                return null;
+            }
 
-        List<String> familyTokens = mobileRepository
-                .findByTargetId(message.userId())
-                .stream()
-                .map(MobileDevice::getDeviceToken)
-                .toList();
+            RiskNotification saved = riskNotificationRepository.saveAndFlush(
+                    RiskNotification.builder()
+                            .type(message.type())
+                            .user(userOpt.get())
+                            .title(message.title())
+                            .content(message.content())
+                            .build());
 
-        List<String> ownTokens = mobileRepository
-                .findAllByUserId(message.userId())
-                .stream()
-                .map(MobileDevice::getDeviceToken)
-                .toList();
+            List<String> familyTokens = mobileRepository.findByTargetId(message.userId())
+                    .stream().map(MobileDevice::getDeviceToken).toList();
+            List<String> ownTokens = mobileRepository.findAllByUserId(message.userId())
+                    .stream().map(MobileDevice::getDeviceToken).toList();
+            List<String> deviceTokens = Stream.concat(familyTokens.stream(), ownTokens.stream())
+                    .distinct().toList();
 
-        List<String> deviceTokens = Stream.concat(familyTokens.stream(), ownTokens.stream())
-                .distinct()
-                .toList();
+            if (deviceTokens.isEmpty()) {
+                log.warn("No devices found for at-risk user {} or their family members.", message.userId());
+            }
 
-        if (deviceTokens.isEmpty()) {
-            log.warn("No devices found for at-risk user {} or their family members. Skipping FCM delivery.", message.userId());
-        }
+            return new RiskSetup(saved.getId(), deviceTokens);
+        });
 
-        int sent = fcmService.sendToTokensWithData(
-                deviceTokens,
-                message.title(),
-                message.content(),
-                Map.of("type", message.type(), "route", "/(app)/notifications"));
+        if (setup == null) return;
 
-        RiskNotification riskNotification = RiskNotification
-                .builder()
-                .type(message.type())
-                .user(userOpt.get())
-                .title(message.title())
-                .content(message.content())
-                .build();
+        // Phase 2 — no transaction: FCM
+        FcmService.FcmResult fcmResult = fcmService.sendToTokensWithData(
+                setup.deviceTokens(), message.title(), message.content(),
+                Map.of(FCM_DATA_TYPE_KEY, message.type(), FCM_DATA_ROUTE_KEY, "/(app)/notifications"));
 
-        RiskNotification savedRiskNotification = riskNotificationRepository
-                .saveAndFlush(riskNotification);
-        entityManager.refresh(savedRiskNotification);
+        // Phase 3 — new transaction: purge stale tokens
+        transactionTemplate.execute(status -> {
+            purgeStaleTokens(fcmResult.staleTokens());
+            return null;
+        });
 
-        if (sent > 0) {
-            NotificationSentMessage sentMessage = NotificationSentMessage
-                    .builder()
+        if (fcmResult.successCount() > 0) {
+            notificationSentMessageProducer.produce(NotificationSentMessage.builder()
                     .type(RISK_NOTIFICATION_TYPE)
-                    .notificationId(savedRiskNotification.getId())
+                    .notificationId(setup.notificationId())
                     .sent_at_ms(OffsetDateTime.now().toInstant().toEpochMilli())
-                    .build();
-            notificationSentMessageProducer.produce(sentMessage);
+                    .build());
         } else {
             log.warn("Skipping notification-sent audit for risk notification {}: no FCM delivery succeeded",
-                    savedRiskNotification.getId());
+                    setup.notificationId());
         }
+    }
+
+    private void purgeStaleTokens(List<String> staleTokens) {
+        if (staleTokens.isEmpty()) return;
+        log.info("Purging {} stale FCM token(s) from DB", staleTokens.size());
+        mobileRepository.deleteAllByDeviceTokenIn(staleTokens);
     }
 }

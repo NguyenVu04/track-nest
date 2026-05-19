@@ -59,11 +59,11 @@ class NotifierServiceImpl implements NotifierService {
                             .build())
                     .build();
         }
-        if (request.getLanguageCode().length() > 10) {
+        if (request.getLanguageCode().length() != 2) {
             return RegisterMobileDeviceResponse.newBuilder()
                     .setStatus(Status.newBuilder()
                             .setCode(Code.INVALID_ARGUMENT_VALUE)
-                            .setMessage("Language code must be at most 10 characters")
+                            .setMessage("Language code must be exactly 2 characters")
                             .build())
                     .build();
         }
@@ -80,12 +80,16 @@ class NotifierServiceImpl implements NotifierService {
                     .build();
         }
 
-        if (mobileRepository.existsByUserIdAndDeviceToken(userId, token)) {
+        Optional<MobileDevice> existing = mobileRepository.findByUserIdAndDeviceToken(userId, token);
+        if (existing.isPresent()) {
+            MobileDevice existingDevice = existing.get();
             log.info("Mobile device token already registered for user {} — skipping duplicate", userId);
             return RegisterMobileDeviceResponse
                     .newBuilder()
-                    .setId("")
-                    .setCreatedAtMs(Instant.now().toEpochMilli())
+                    .setId(existingDevice.getId().toString())
+                    .setCreatedAtMs(existingDevice.getCreatedAt() != null
+                            ? existingDevice.getCreatedAt().toInstant().toEpochMilli()
+                            : Instant.now().toEpochMilli())
                     .setStatus(Status
                             .newBuilder()
                             .setCode(Code.OK_VALUE)
@@ -408,6 +412,15 @@ class NotifierServiceImpl implements NotifierService {
             UUID userId,
             DeleteTrackingNotificationsRequest request
     ) {
+        if (request.getIdsList().isEmpty()) {
+            return DeleteTrackingNotificationsResponse.newBuilder()
+                    .setStatus(Status.newBuilder()
+                            .setCode(Code.INVALID_ARGUMENT_VALUE)
+                            .setMessage("At least one notification ID is required")
+                            .build())
+                    .build();
+        }
+
         List<UUID> notificationIds = request.getIdsList()
                 .stream()
                 .map(UUID::fromString)
@@ -447,6 +460,15 @@ class NotifierServiceImpl implements NotifierService {
             UUID userId,
             DeleteRiskNotificationsRequest request
     ) {
+        if (request.getIdsList().isEmpty()) {
+            return DeleteRiskNotificationsResponse.newBuilder()
+                    .setStatus(Status.newBuilder()
+                            .setCode(Code.INVALID_ARGUMENT_VALUE)
+                            .setMessage("At least one notification ID is required")
+                            .build())
+                    .build();
+        }
+
         List<UUID> notificationIds = request.getIdsList()
                 .stream()
                 .map(UUID::fromString)
@@ -521,6 +543,7 @@ class NotifierServiceImpl implements NotifierService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CountTrackingNotificationsResponse countTrackingNotifications(UUID userId, CountTrackingNotificationsRequest request) {
         int count = trackerNotificationRepository.countById_TrackerId(userId);
 
@@ -535,6 +558,7 @@ class NotifierServiceImpl implements NotifierService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CountRiskNotificationsResponse countRiskNotifications(UUID userId, CountRiskNotificationsRequest request) {
         int count = riskNotificationRepository.countByUser_Id(userId);
 
