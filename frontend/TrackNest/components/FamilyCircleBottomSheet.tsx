@@ -284,7 +284,10 @@ export const FamilyCircleBottomSheet: React.FC<
   const handleJoinCircle = useCallback(async () => {
     if (!joinOtp.trim()) return;
     try {
-      await participateInFamilyCircle(joinOtp.trim());
+      const response = await participateInFamilyCircle(joinOtp.trim());
+      if (response.status?.code !== 0) {
+        throw new Error(response.status?.message || t.joinFailed);
+      }
       setShowJoinModal(false);
       setJoinOtp("");
       await onRefresh?.();
