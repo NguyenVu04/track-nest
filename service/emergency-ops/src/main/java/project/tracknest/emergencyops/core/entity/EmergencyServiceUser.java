@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Generated;
 import org.locationtech.jts.geom.Point;
 
 import java.time.OffsetDateTime;
@@ -31,7 +30,6 @@ public class EmergencyServiceUser {
     @Column(name = "last_update_time", nullable = false)
     private OffsetDateTime lastUpdateTime;
 
-    @Generated
     @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", insertable = false, updatable = false)
     private Point geom;
 

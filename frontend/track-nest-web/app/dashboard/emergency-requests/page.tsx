@@ -216,8 +216,8 @@ export default function EmergencyRequestsPage() {
       async ({ coords }) => {
         try {
           await emergencyOpsService.updateEmergencyServiceLocation({
-            latitude: coords.latitude,
-            longitude: coords.longitude,
+            latitudeDegrees: coords.latitude,
+            longitudeDegrees: coords.longitude,
           });
           toast.success("Location broadcast successfully");
         } catch {

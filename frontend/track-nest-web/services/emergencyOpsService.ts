@@ -74,8 +74,8 @@ export interface EmergencyRequestActionResponse {
 }
 
 export interface UpdateEmergencyServiceLocationRequest {
-  latitude: number;
-  longitude: number;
+  latitudeDegrees: number;
+  longitudeDegrees: number;
 }
 
 export interface EmergencyServiceLocationResponse {
