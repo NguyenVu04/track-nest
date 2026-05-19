@@ -293,6 +293,9 @@ data:
 
                             - match:
                                 prefix: "/criminal-reports/api-docs"
+                            
+                            - match:
+                                prefix: "/criminal-reports/report-viewer"
 
                             - match:
                                 prefix: "/criminal-reports/"
