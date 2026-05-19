@@ -2,6 +2,7 @@ import {
   CHAT_BADGE_CHANGED_EVENT,
   CHAT_UNREAD_KEY,
   FCM_TOKEN_KEY,
+  NOTIFICATION_RECEIVED_EVENT,
 } from "@/constant";
 import { useNotificationContext } from "@/contexts/NotificationContext";
 import { registerMobileDevice } from "@/services/notifier";
@@ -13,7 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import { Router, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
+import { DeviceEventEmitter, Platform } from "react-native";
 
 configureNotificationHandler();
 
@@ -110,14 +111,31 @@ export function usePushNotifications(
       "EMERGENCY_REQUEST_CLOSED",
     ];
 
+    // Tracking and risk notification types that are stored in the backend DB and
+    // appear in the in-app notification list. When these arrive in the foreground
+    // the background task does not run (Android only runs it for data-only FCM
+    // messages, not for messages that also carry a notification field). We
+    // therefore replicate the badge-increment logic here so the bell updates and
+    // the notification list refreshes instantly without a screen-focus trip.
+    const NOTIFICATION_LIST_TYPES = [
+      "tracking_notification",
+      "risk_notification",
+    ];
+
     // Foreground FCM listener — chat suppressed (gRPC stream handles those).
-    // For emergency terminal events, notify the caller so it can clear state
-    // without waiting for the next useFocusEffect cycle.
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notification) => {
         const type = notification.request.content.data?.type as string | undefined;
+
+        // Emergency termination → let the call site refresh emergency status.
         if (type && EMERGENCY_TERMINAL_TYPES.includes(type)) {
           onEmergencyNotification?.(type);
+          return;
+        }
+
+        // Tracking/risk → bump the bell badge and trigger a list refresh.
+        if (type && NOTIFICATION_LIST_TYPES.includes(type)) {
+          DeviceEventEmitter.emit(NOTIFICATION_RECEIVED_EVENT, { type });
         }
       });
 

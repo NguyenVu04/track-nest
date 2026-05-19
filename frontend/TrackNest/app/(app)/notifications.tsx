@@ -215,6 +215,10 @@ export default function NotificationsScreen() {
   // visit those same items will no longer be highlighted.
   useFocusEffect(
     useCallback(() => {
+      // Always refresh the list on focus so items that arrived while the app
+      // was backgrounded (and the JS background task didn't run) are shown
+      // immediately without the user needing to tap the notification.
+      fetchAll();
       markAllRead();
 
       AsyncStorage.getItem(NOTIFICATIONS_LAST_VIEWED_KEY)
@@ -225,7 +229,7 @@ export default function NotificationsScreen() {
           AsyncStorage.setItem(NOTIFICATIONS_LAST_VIEWED_KEY, String(Date.now())).catch(() => {});
         })
         .catch(() => setLastViewedMs(0));
-    }, [markAllRead]),
+    }, [markAllRead, fetchAll]),
   );
 
   const [tabIndex, setTabIndex] = useState(0);
