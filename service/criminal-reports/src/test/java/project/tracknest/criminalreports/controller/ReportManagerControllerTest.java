@@ -124,7 +124,7 @@ class ReportManagerControllerTest {
 
         @Test
         void should_return200_whenFound() throws Exception {
-            when(service.getMissingPersonReport(REPORTER_ID, REPORT_ID)).thenReturn(sampleMissingResponse());
+            when(service.getMissingPersonReport(REPORT_ID)).thenReturn(sampleMissingResponse());
 
             mockMvc.perform(get("/report-manager/missing-person-reports/{id}", REPORT_ID))
                     .andExpect(status().isOk())
@@ -133,7 +133,7 @@ class ReportManagerControllerTest {
 
         @Test
         void should_return404_whenNotFound() throws Exception {
-            when(service.getMissingPersonReport(REPORTER_ID, REPORT_ID))
+            when(service.getMissingPersonReport(REPORT_ID))
                     .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
 
             mockMvc.perform(get("/report-manager/missing-person-reports/{id}", REPORT_ID))
@@ -146,7 +146,7 @@ class ReportManagerControllerTest {
 
         @Test
         void should_return200_withImageBytes_whenPhotoExists() throws Exception {
-            when(service.getMissingPersonReport(REPORTER_ID, REPORT_ID))
+            when(service.getMissingPersonReport(REPORT_ID))
                     .thenReturn(sampleMissingResponseWithPhoto("uuid.png"));
             when(objectStorage.downloadFile(any(), eq("uuid.png")))
                     .thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
@@ -159,7 +159,7 @@ class ReportManagerControllerTest {
 
         @Test
         void should_return404_whenPhotoBlank() throws Exception {
-            when(service.getMissingPersonReport(REPORTER_ID, REPORT_ID))
+            when(service.getMissingPersonReport(REPORT_ID))
                     .thenReturn(sampleMissingResponseWithPhoto(""));
 
             mockMvc.perform(get("/report-manager/missing-person-reports/{id}/photo", REPORT_ID))
@@ -168,7 +168,7 @@ class ReportManagerControllerTest {
 
         @Test
         void should_return404_whenStorageThrows() throws Exception {
-            when(service.getMissingPersonReport(REPORTER_ID, REPORT_ID))
+            when(service.getMissingPersonReport(REPORT_ID))
                     .thenReturn(sampleMissingResponseWithPhoto("uuid.png"));
             when(objectStorage.downloadFile(any(), eq("uuid.png")))
                     .thenThrow(new RuntimeException("Not found in storage"));
@@ -467,7 +467,7 @@ class ReportManagerControllerTest {
 
         @Test
         void should_return200_whenFound() throws Exception {
-            when(service.getCrimeReport(REPORTER_ID, REPORT_ID)).thenReturn(sampleCrimeResponse());
+            when(service.getCrimeReport(REPORT_ID)).thenReturn(sampleCrimeResponse());
 
             mockMvc.perform(get("/report-manager/crime-reports/{id}", REPORT_ID))
                     .andExpect(status().isOk())
@@ -476,7 +476,7 @@ class ReportManagerControllerTest {
 
         @Test
         void should_return404_whenNotFound() throws Exception {
-            when(service.getCrimeReport(REPORTER_ID, REPORT_ID))
+            when(service.getCrimeReport(REPORT_ID))
                     .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
 
             mockMvc.perform(get("/report-manager/crime-reports/{id}", REPORT_ID))
@@ -564,7 +564,7 @@ class ReportManagerControllerTest {
 
         @Test
         void should_return200_whenFound() throws Exception {
-            when(service.getGuidelinesDocument(REPORTER_ID, DOC_ID)).thenReturn(sampleGuidelineResponse());
+            when(service.getGuidelinesDocument(DOC_ID)).thenReturn(sampleGuidelineResponse());
 
             mockMvc.perform(get("/report-manager/guidelines/{id}", DOC_ID))
                     .andExpect(status().isOk())
@@ -573,7 +573,7 @@ class ReportManagerControllerTest {
 
         @Test
         void should_return404_whenNotFound() throws Exception {
-            when(service.getGuidelinesDocument(REPORTER_ID, DOC_ID))
+            when(service.getGuidelinesDocument(DOC_ID))
                     .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
 
             mockMvc.perform(get("/report-manager/guidelines/{id}", DOC_ID))
