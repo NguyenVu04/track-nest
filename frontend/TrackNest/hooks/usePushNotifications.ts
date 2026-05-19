@@ -42,7 +42,10 @@ async function retryWithBackoff(
  * - Handles notification taps (background / killed)
  * - Listens for token refreshes and re-registers
  */
-export function usePushNotifications(enabled: boolean = true) {
+export function usePushNotifications(
+  enabled: boolean = true,
+  onEmergencyNotification?: (type: string) => void,
+) {
   const [fcmToken, setFcmToken] = useState<string | undefined>();
   const notificationListener = useRef<Notifications.EventSubscription>(null);
   const responseListener = useRef<Notifications.EventSubscription>(null);
@@ -101,10 +104,21 @@ export function usePushNotifications(enabled: boolean = true) {
       "EMERGENCY_REQUEST_CLOSED",
     ];
 
+    // Types that signal the emergency is over — clear the marker immediately.
+    const EMERGENCY_TERMINAL_TYPES = [
+      "EMERGENCY_REQUEST_REJECTED",
+      "EMERGENCY_REQUEST_CLOSED",
+    ];
+
     // Foreground FCM listener — chat suppressed (gRPC stream handles those).
+    // For emergency terminal events, notify the caller so it can clear state
+    // without waiting for the next useFocusEffect cycle.
     notificationListener.current =
-      Notifications.addNotificationReceivedListener((_notification) => {
-        /* console.log("Notification received in foreground:", _notification) */
+      Notifications.addNotificationReceivedListener((notification) => {
+        const type = notification.request.content.data?.type as string | undefined;
+        if (type && EMERGENCY_TERMINAL_TYPES.includes(type)) {
+          onEmergencyNotification?.(type);
+        }
       });
 
     // Notification tap / interaction listener (app backgrounded).
@@ -174,7 +188,7 @@ export function usePushNotifications(enabled: boolean = true) {
       responseListener.current?.remove();
       tokenRefreshListener.current?.remove();
     };
-  }, [enabled, router, refreshCount]);
+  }, [enabled, router, refreshCount, onEmergencyNotification]);
 
   return { fcmToken };
 }
