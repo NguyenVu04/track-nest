@@ -89,6 +89,9 @@ kube-prometheus-stack:
     adminUser: admin
     # adminPassword: set via values-secrets.yaml
 
+    service:
+      type: LoadBalancer
+
     resources:
       requests:
         cpu: "50m"
