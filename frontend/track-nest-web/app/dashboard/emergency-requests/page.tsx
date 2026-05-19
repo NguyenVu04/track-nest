@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  CheckCircle, 
-  XCircle, 
-  ClipboardCheck, 
-  Search, 
+import {
+  CheckCircle,
+  XCircle,
+  ClipboardCheck,
+  Search,
   Eye,
   Target,
   ClipboardList,
@@ -15,7 +15,8 @@ import {
   Phone,
   MapPin as MapPinIcon,
   Maximize2,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
@@ -46,6 +47,7 @@ export default function EmergencyRequestsPage() {
   const [trackingRequest, setTrackingRequest] = useState<EmergencyRequestResponse | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [completionNote, setCompletionNote] = useState("");
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -202,6 +204,33 @@ export default function EmergencyRequestsPage() {
       toast.error(t("toastCloseError"));
       console.error(error);
     }
+  };
+
+  const handleBroadcastLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    setIsBroadcasting(true);
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          await emergencyOpsService.updateEmergencyServiceLocation({
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          });
+          toast.success("Location broadcast successfully");
+        } catch {
+          toast.error("Failed to broadcast location");
+        } finally {
+          setIsBroadcasting(false);
+        }
+      },
+      () => {
+        toast.error("Unable to retrieve your location");
+        setIsBroadcasting(false);
+      },
+    );
   };
 
   const mapMarkers = filteredRequests.filter(r => r.status === "PENDING" || r.status === "ACCEPTED").map(r => ({
@@ -409,9 +438,19 @@ export default function EmergencyRequestsPage() {
                    <Phone className="w-5 h-5 text-teal-600" />
                    <span className="text-xs font-bold text-gray-700">Call Local 911</span>
                 </button>
-                <button className="flex flex-col items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 py-4 rounded-2xl transition-colors">
-                   <MapPinIcon className="w-5 h-5 text-teal-600" />
-                   <span className="text-xs font-bold text-gray-700">Broadcast Loc</span>
+                <button
+                  onClick={handleBroadcastLocation}
+                  disabled={isBroadcasting}
+                  className="flex flex-col items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 py-4 rounded-2xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isBroadcasting ? (
+                    <Loader2 className="w-5 h-5 text-teal-600 animate-spin" />
+                  ) : (
+                    <MapPinIcon className="w-5 h-5 text-teal-600" />
+                  )}
+                  <span className="text-xs font-bold text-gray-700">
+                    {isBroadcasting ? "Broadcasting..." : "Broadcast Loc"}
+                  </span>
                 </button>
              </div>
           </div>
