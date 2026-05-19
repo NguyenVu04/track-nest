@@ -198,6 +198,7 @@ function EmergencyRequestDetailContent() {
   useEffect(() => {
     if (!realtimeLocation || !request) return;
     if (realtimeLocation.userId !== request.targetId) return;
+    if (!Number.isFinite(realtimeLocation.latitude) || !Number.isFinite(realtimeLocation.longitude)) return;
     setLocalLocation((prev) =>
       !prev || realtimeLocation.timestamp > prev.updatedAt
         ? {

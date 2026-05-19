@@ -108,9 +108,9 @@ export function EmergencyRequestRealtimeProvider({
               const body = JSON.parse(message.body);
               setRealtimeLocation({
                 userId: body.userId ?? "",
-                latitude: body.latitude,
-                longitude: body.longitude,
-                timestamp: body.timestamp ?? Date.now(),
+                latitude: body.latitudeDeg,
+                longitude: body.longitudeDeg,
+                timestamp: body.timestampMs ?? Date.now(),
               });
             } catch {
               console.error("Failed to parse location message");
