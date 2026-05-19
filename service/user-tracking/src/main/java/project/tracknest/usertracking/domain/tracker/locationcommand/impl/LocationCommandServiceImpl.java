@@ -64,7 +64,6 @@ class LocationCommandServiceImpl implements LocationCommandService {
                             .userId(userId)
                             .timestamp(timestamp)
                             .build())
-                    .user(user)
                     .build();
 
             locationRepository.save(location);
