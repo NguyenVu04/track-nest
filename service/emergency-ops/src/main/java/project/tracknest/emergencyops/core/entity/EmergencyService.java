@@ -2,7 +2,6 @@ package project.tracknest.emergencyops.core.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Generated;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.Point;
 
@@ -44,7 +43,6 @@ public class EmergencyService {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
-    @Generated
-    @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", updatable = false)
+    @Column(name = "geom", columnDefinition = "GEOMETRY(POINT, 4326)", insertable = false, updatable = false)
     private Point geom;
 }

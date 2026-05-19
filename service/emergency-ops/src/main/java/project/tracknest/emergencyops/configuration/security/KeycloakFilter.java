@@ -19,6 +19,7 @@ import project.tracknest.emergencyops.core.datatype.KeycloakUserDetails;
 import project.tracknest.emergencyops.core.entity.EmergencyService;
 
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -98,6 +99,7 @@ public class KeycloakFilter extends OncePerRequestFilter {
                                 .id(decoded.getUserId())
                                 .username(decoded.getUsername())
                                 .phoneNumber(decoded.getPhoneNumber())
+                                .updatedAt(OffsetDateTime.now())
                                 .build();
                         serviceRepository.save(service);
                     } else {

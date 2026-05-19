@@ -354,10 +354,11 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
         EmergencyService service = serviceOpt.get();
         service.setLongitude(request.getLongitudeDegrees());
         service.setLatitude(request.getLatitudeDegrees());
+        service.setUpdatedAt(OffsetDateTime.now());
 
         emergencyServiceRepository.save(service);
 
-        long updatedAtMs = OffsetDateTime.now()
+        long updatedAtMs = service.getUpdatedAt()
                 .toInstant()
                 .toEpochMilli();
 
