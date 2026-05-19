@@ -187,7 +187,7 @@ function EmergencyRequestDetailContent() {
     };
 
     poll();
-    const id = setInterval(poll, 15_000);
+    const id = setInterval(poll, 5000);
     return () => {
       cancelled = true;
       clearInterval(id);
@@ -234,7 +234,7 @@ function EmergencyRequestDetailContent() {
 
   // A location is considered "live" when we have received an update within the
   // last 60 s (from either polling or a WebSocket push) for an active request.
-  const LIVE_THRESHOLD_MS = 60_000;
+  const LIVE_THRESHOLD_MS = 60000;
   const isActive = request.status === "PENDING" || request.status === "ACCEPTED";
   const isLive =
     isActive &&
