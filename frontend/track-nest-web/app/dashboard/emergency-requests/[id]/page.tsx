@@ -24,7 +24,7 @@ import { useEmergencyRequestRealtime } from "@/contexts/EmergencyRequestRealtime
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { MapView } from "@/components/shared/MapView";
-import { EmergencyRequestResponse } from "@/services/emergencyOpsService";
+import { emergencyOpsService, EmergencyRequestResponse } from "@/services/emergencyOpsService";
 import { useTranslations } from "next-intl";
 
 function formatDateTime(value?: number) {
@@ -125,6 +125,13 @@ function EmergencyRequestDetailContent() {
   const [request, setRequest] = useState<EmergencyRequestResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Best known location for the target — merged from polling + WebSocket push.
+  const [localLocation, setLocalLocation] = useState<{
+    lat: number;
+    lng: number;
+    updatedAt: number;
+  } | null>(null);
+
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!user || !params.id) {
@@ -151,6 +158,57 @@ function EmergencyRequestDetailContent() {
   }, [params.id, user]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  // Seed localLocation from the emergency-ops targets endpoint and keep it
+  // fresh via polling every 15 s. This ensures the map shows a real position
+  // even when the target is stationary (no Kafka events → no WebSocket push).
+  useEffect(() => {
+    if (!request) return;
+    const isActive = request.status === "PENDING" || request.status === "ACCEPTED";
+    const isEs = user?.role?.includes("Emergency Service");
+    if (!isActive || !isEs) return;
+
+    let cancelled = false;
+
+    const poll = async () => {
+      try {
+        const res = await emergencyOpsService.getEmergencyServiceTargets(0, 100);
+        if (cancelled) return;
+        const found = res.items.find((t) => t.userId === request.targetId);
+        if (!found) return;
+        const ts = new Date(found.lastUpdateTime).getTime();
+        setLocalLocation((prev) =>
+          !prev || ts > prev.updatedAt
+            ? { lat: found.lastLatitude, lng: found.lastLongitude, updatedAt: ts }
+            : prev,
+        );
+      } catch {
+        // Silently swallow — WebSocket updates remain the primary channel.
+      }
+    };
+
+    poll();
+    const id = setInterval(poll, 15_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [request?.id, request?.status, user?.role]);
+
+  // Sync WebSocket pushes into localLocation whenever they arrive for this target.
+  useEffect(() => {
+    if (!realtimeLocation || !request) return;
+    if (realtimeLocation.userId !== request.targetId) return;
+    setLocalLocation((prev) =>
+      !prev || realtimeLocation.timestamp > prev.updatedAt
+        ? {
+            lat: realtimeLocation.latitude,
+            lng: realtimeLocation.longitude,
+            updatedAt: realtimeLocation.timestamp,
+          }
+        : prev,
+    );
+  }, [realtimeLocation, request?.targetId]);
+
   if (!user) return null;
   if (isLoading) return <Loading fullScreen />;
 
@@ -174,12 +232,17 @@ function EmergencyRequestDetailContent() {
 
   const shortId = request.id.substring(0, 8).toUpperCase();
 
+  // A location is considered "live" when we have received an update within the
+  // last 60 s (from either polling or a WebSocket push) for an active request.
+  const LIVE_THRESHOLD_MS = 60_000;
+  const isActive = request.status === "PENDING" || request.status === "ACCEPTED";
   const isLive =
-    (request.status === "PENDING" || request.status === "ACCEPTED") &&
-    realtimeLocation?.userId === request.targetId;
+    isActive &&
+    localLocation !== null &&
+    Date.now() - localLocation.updatedAt < LIVE_THRESHOLD_MS;
 
-  const markerLat = isLive ? realtimeLocation!.latitude : request.targetLastLatitude;
-  const markerLng = isLive ? realtimeLocation!.longitude : request.targetLastLongitude;
+  const markerLat = localLocation?.lat ?? request.targetLastLatitude;
+  const markerLng = localLocation?.lng ?? request.targetLastLongitude;
 
   return (
     <div className="max-w-[1200px] mx-auto pb-12">
@@ -267,7 +330,11 @@ function EmergencyRequestDetailContent() {
                    {Math.abs(markerLng).toFixed(4)}° {markerLng >= 0 ? 'E' : 'W'}
                  </div>
                  <div className="text-xs text-gray-500 font-medium mt-1.5">
-                   {isLive ? "Live — updating in real-time" : `Last updated ${timeAgo(request.openedAt)}`}
+                   {isLive
+                     ? `Live — updated ${timeAgo(localLocation!.updatedAt)}`
+                     : localLocation
+                       ? `Last updated ${timeAgo(localLocation.updatedAt)}`
+                       : `Last updated ${timeAgo(request.openedAt)}`}
                  </div>
                </div>
             </div>
