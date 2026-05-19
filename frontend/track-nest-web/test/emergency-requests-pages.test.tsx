@@ -331,29 +331,29 @@ describe("EmergencyRequestDetailPage — with sessionStorage data", () => {
     render(<EmergencyRequestDetailPage />);
     await waitFor(() =>
       expect(
-        screen.getByText("Emergency Request Detail"),
+        screen.getByText("Emergency Request: REQ-1"),
       ).toBeInTheDocument(),
     );
   });
 
   it("renders sender and target profile cards", async () => {
     render(<EmergencyRequestDetailPage />);
-    await waitFor(() => screen.getByText("Emergency Request Detail"));
-    expect(screen.getByText("Sender profile")).toBeInTheDocument();
-    expect(screen.getByText("Target profile")).toBeInTheDocument();
+    await waitFor(() => screen.getByText("Emergency Request: REQ-1"));
+    expect(screen.getByText("SENDER")).toBeInTheDocument();
+    expect(screen.getByText("TARGET")).toBeInTheDocument();
   });
 
   it("renders map view for location", async () => {
     render(<EmergencyRequestDetailPage />);
-    await waitFor(() => screen.getByText("Emergency Request Detail"));
+    await waitFor(() => screen.getByText("Emergency Request: REQ-1"));
     expect(screen.getByTestId("map-view")).toBeInTheDocument();
   });
 
   it("navigates back to list when Back button clicked", async () => {
     render(<EmergencyRequestDetailPage />);
-    await waitFor(() => screen.getByText("Emergency Request Detail"));
-    const backBtns = screen.getAllByText("Back");
-    fireEvent.click(backBtns[0]);
+    await waitFor(() => screen.getByText("Emergency Request: REQ-1"));
+    const backBtn = screen.getByText("Emergency Hub");
+    fireEvent.click(backBtn);
     expect(mockPush).toHaveBeenCalledWith("/dashboard/emergency-requests");
   });
 });
