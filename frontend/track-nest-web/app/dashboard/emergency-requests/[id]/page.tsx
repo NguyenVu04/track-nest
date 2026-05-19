@@ -20,6 +20,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmergencyRequestRealtime } from "@/contexts/EmergencyRequestRealtimeContext";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { MapView } from "@/components/shared/MapView";
@@ -113,6 +114,7 @@ function EmergencyRequestDetailContent() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { realtimeLocation } = useEmergencyRequestRealtime();
   const backHref = searchParams.get("from") === "admin"
     ? "/dashboard/emergency-requests/admin"
     : "/dashboard/emergency-requests";
@@ -172,6 +174,13 @@ function EmergencyRequestDetailContent() {
 
   const shortId = request.id.substring(0, 8).toUpperCase();
 
+  const isLive =
+    (request.status === "PENDING" || request.status === "ACCEPTED") &&
+    realtimeLocation?.userId === request.targetId;
+
+  const markerLat = isLive ? realtimeLocation!.latitude : request.targetLastLatitude;
+  const markerLng = isLive ? realtimeLocation!.longitude : request.targetLastLongitude;
+
   return (
     <div className="max-w-[1200px] mx-auto pb-12">
       {/* Custom Breadcrumb matching mockup style somewhat */}
@@ -219,9 +228,15 @@ function EmergencyRequestDetailContent() {
               <div className="flex items-center gap-2 text-gray-900 font-bold tracking-tight">
                 <MapPin className="w-5 h-5 text-brand-600" />
                 Real-Time Incident Location
+                {isLive && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-[10px] font-bold tracking-wider uppercase">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    LIVE
+                  </span>
+                )}
               </div>
-              <a 
-                href={`https://www.google.com/maps/search/?api=1&query=${request.targetLastLatitude},${request.targetLastLongitude}`} 
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${markerLat},${markerLng}`}
                 target="_blank" rel="noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-brand-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-brand-300 transition-all shadow-sm"
               >
@@ -229,28 +244,31 @@ function EmergencyRequestDetailContent() {
                 Open in Maps
               </a>
             </div>
-            
+
             <div className="relative flex-grow rounded-2xl overflow-hidden border border-gray-100 min-h-[360px] bg-gray-50">
                <div className="absolute inset-0">
                  <MapView
-                    center={[request.targetLastLatitude, request.targetLastLongitude]}
+                    center={[markerLat, markerLng]}
                     markers={[
                       {
-                        position: [request.targetLastLatitude, request.targetLastLongitude],
+                        position: [markerLat, markerLng],
                         label: "Target location",
                       },
                     ]}
                     height="100%"
                   />
                </div>
-               
+
                {/* Floating Coordinates Overlay */}
                <div className="absolute bottom-5 left-5 z-[400] bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-100/80 min-w-[200px]">
                  <div className="text-[10px] font-bold tracking-widest text-brand-600 mb-1.5 uppercase">Coordinates</div>
                  <div className="font-bold text-gray-900 mb-1 text-sm">
-                   {Math.abs(request.targetLastLatitude).toFixed(4)}° {request.targetLastLatitude >= 0 ? 'N' : 'S'}, {Math.abs(request.targetLastLongitude).toFixed(4)}° {request.targetLastLongitude >= 0 ? 'E' : 'W'}
+                   {Math.abs(markerLat).toFixed(4)}° {markerLat >= 0 ? 'N' : 'S'},{" "}
+                   {Math.abs(markerLng).toFixed(4)}° {markerLng >= 0 ? 'E' : 'W'}
                  </div>
-                 <div className="text-xs text-gray-500 font-medium mt-1.5">Last updated {timeAgo(request.openedAt)}</div>
+                 <div className="text-xs text-gray-500 font-medium mt-1.5">
+                   {isLive ? "Live — updating in real-time" : `Last updated ${timeAgo(request.openedAt)}`}
+                 </div>
                </div>
             </div>
           </div>

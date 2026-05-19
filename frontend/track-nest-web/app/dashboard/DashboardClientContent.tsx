@@ -11,12 +11,13 @@ import { useReportPolling } from "@/hooks/useReportPolling";
 import type { UserRole } from "@/types";
 
 const ROLE_ROUTES: Record<string, UserRole[]> = {
-  "/dashboard/missing-persons":    ["Reporter"],
-  "/dashboard/crime-reports":      ["Reporter"],
-  "/dashboard/guidelines":         ["Reporter"],
-  "/dashboard/emergency-requests": ["Emergency Service", "Admin"],
-  "/dashboard/safe-zones":         ["Emergency Service"],
-  "/dashboard/accounts":           ["Admin"],
+  "/dashboard/missing-persons":          ["Reporter"],
+  "/dashboard/crime-reports":            ["Reporter"],
+  "/dashboard/guidelines":               ["Reporter"],
+  "/dashboard/emergency-requests/my":    ["Reporter"],
+  "/dashboard/emergency-requests":       ["Emergency Service", "Admin"],
+  "/dashboard/safe-zones":               ["Emergency Service"],
+  "/dashboard/accounts":                 ["Admin"],
 };
 
 export function DashboardClientContent({

@@ -72,7 +72,7 @@ export default function GuidelineDetailPage() {
           title: response.title,
           abstractText: response.abstractText,
           content: contentValue,
-          contentDocId: response.id, // Using response.id as documentId for chatbot
+          contentDocId: response.content, // Using response.id as documentId for chatbot
           createdAt: response.createdAt,
           reporterId: response.reporterId,
           isPublic: response.isPublic,
