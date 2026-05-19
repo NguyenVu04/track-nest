@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import project.tracknest.usertracking.configuration.firebase.FcmService;
 import project.tracknest.usertracking.core.entity.MobileDevice;
 
-import java.util.Set;
-
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -66,8 +64,8 @@ public class ServerRedisMessagePublisher {
                 return;
             }
 
-            int sent = fcmService.sendToTokens(tokens, FAMILY_MESSAGE_NOTIFICATION_TITLE, FAMILY_MESSAGE_NOTIFICATION_BODY);
-            if (sent <= 0) {
+            FcmService.FcmResult result = fcmService.sendToTokens(tokens, FAMILY_MESSAGE_NOTIFICATION_TITLE, FAMILY_MESSAGE_NOTIFICATION_BODY);
+            if (result.successCount() <= 0) {
                 log.warn("FCM fallback for offline user {} failed to deliver to any device", userId);
             }
             log.info("Sent FCM fallback notification to {} device(s) for offline user {}", tokens.size(), userId);

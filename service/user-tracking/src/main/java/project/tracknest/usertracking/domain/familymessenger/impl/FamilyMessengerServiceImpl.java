@@ -202,10 +202,10 @@ class FamilyMessengerServiceImpl implements FamilyMessengerService {
                 "circleId", circleId.toString()
         );
 
-        int sent = fcmService.sendToTokensWithData(tokens, senderName, content, data);
+        FcmService.FcmResult result = fcmService.sendToTokensWithData(tokens, senderName, content, data);
         log.info("[TEST] FCM family-message notification: sent={} tokens={} circleId={}",
-                sent, tokens.size(), circleId);
-        return sent;
+                result.successCount(), tokens.size(), circleId);
+        return result.successCount();
     }
 
     /**
@@ -241,7 +241,7 @@ class FamilyMessengerServiceImpl implements FamilyMessengerService {
                 "circleId", circleId.toString()
         );
 
-        int sent = fcmService.sendToTokensWithData(tokens, senderUsername, event.getContent(), data);
-        log.info("FCM chat notification: sent={} tokens={} circleId={}", sent, tokens.size(), circleId);
+        FcmService.FcmResult result = fcmService.sendToTokensWithData(tokens, senderUsername, event.getContent(), data);
+        log.info("FCM chat notification: sent={} tokens={} circleId={}", result.successCount(), tokens.size(), circleId);
     }
 }
