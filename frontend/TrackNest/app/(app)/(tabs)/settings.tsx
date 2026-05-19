@@ -459,6 +459,17 @@ export default function SettingsScreen() {
             onPress={() => setVoiceEnabled(!voiceSettings.enabled)}
             switchValue={voiceSettings.enabled}
             onSwitchChange={setVoiceEnabled}
+          />
+          <SettingRow
+            icon="cloud-upload-outline"
+            title={t.uploadPendingTitle}
+            subtitle={
+              isManualUploading
+                ? t.uploadPendingInProgressSubtitle
+                : t.uploadPendingSubtitle
+            }
+            onPress={handleManualUpload}
+            disabled={isManualUploading}
             isLast
           />
         </SectionCard>

@@ -49,6 +49,7 @@ export default function RootLayout() {
   const familyPressLockRef = useRef(false);
 
   const handleFamilyPress = useCallback(() => {
+    console.log("Family button pressed");
     if (familyPressLockRef.current) return;
     familyPressLockRef.current = true;
     setTimeout(() => {
