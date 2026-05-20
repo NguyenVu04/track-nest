@@ -560,7 +560,7 @@ class NotifierServiceImpl implements NotifierService {
     @Override
     @Transactional(readOnly = true)
     public CountRiskNotificationsResponse countRiskNotifications(UUID userId, CountRiskNotificationsRequest request) {
-        int count = riskNotificationRepository.countByUser_Id(userId);
+        int count = (int) riskNotificationRepository.countForUserAndFamilyCircle(userId);
 
         return CountRiskNotificationsResponse
                 .newBuilder()
