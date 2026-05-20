@@ -7,9 +7,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotification, type NotificationType } from "@/contexts/NotificationContext";
 import { authService } from "@/services/authService";
 
-const WS_URL =
-  process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_WS_URL ??
-  "http://localhost:8800/criminal-reports/ws";
+function resolveWsUrl(): string {
+  const base =
+    process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_WS_URL ??
+    "http://localhost:8800/criminal-reports/ws";
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    return base.replace(/^http:/, "https:");
+  }
+  return base;
+}
 
 interface ReportEvent {
   eventType: "CREATED" | "PUBLISHED" | "DELETED";
@@ -54,9 +60,10 @@ export function ReportRealtimeProvider({ children }: { children: ReactNode }) {
     const token = authService.getAccessToken();
     if (!token) return;
 
+    const wsUrl = resolveWsUrl();
     const client = new Client({
       webSocketFactory: () =>
-        new SockJS(`${WS_URL}?access_token=${encodeURIComponent(token)}`),
+        new SockJS(`${wsUrl}?access_token=${encodeURIComponent(token)}`),
       reconnectDelay: 5000,
     });
 
