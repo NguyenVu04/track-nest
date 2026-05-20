@@ -63,13 +63,13 @@ export const FollowerInfo = ({
       <Text style={styles.name}>{follower.name}</Text>
 
       <View style={styles.imageContainer}>
-        {follower.avatar ? (
+        {/* {follower.avatar ? (
           <Image
             source={{ uri: follower.avatar }}
             style={[styles.image, { width: imageSize, height: imageSize }]}
             resizeMode="cover"
           />
-        ) : (
+        ) : ( */}
           <View
             style={[
               styles.initialsCircle,
@@ -80,7 +80,7 @@ export const FollowerInfo = ({
               {initials}
             </Text>
           </View>
-        )}
+        {/* )} */}
 
         <View
           style={[
