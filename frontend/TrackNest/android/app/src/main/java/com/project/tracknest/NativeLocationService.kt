@@ -286,6 +286,8 @@ class NativeLocationService : Service() {
 
   private fun maybeAdjustTrackingMode(speedMetersPerSecond: Double) {
     if (speedMetersPerSecond < 0) return
+    // Emergency mode is locked by JS — never auto-downgrade while it's active.
+    if (isEmergencyMode) return
 
     val speedKmh = speedMetersPerSecond * 3.6
 
@@ -396,9 +398,9 @@ class NativeLocationService : Service() {
   }
 
   private fun buildDrivingNotification(): Notification {
-    val title = if (isEmergencyMode) "Emergency — tracking active"
+    val title = if (isEmergencyMode) "Emergency — help is on the way"
                 else "Driving mode active"
-    val body = if (isEmergencyMode) "TrackNest is sharing your location with responders"
+    val body = if (isEmergencyMode) "Emergency services are tracking your location. Stay safe."
                else "TrackNest is tracking your trip — crash detection enabled"
     return NotificationCompat.Builder(this, SERVICE_CHANNEL_ID)
       .setContentTitle(title)

@@ -11,7 +11,6 @@ type FollowerInfoSheetProps = {
   address: string | null;
   onChatPress: () => void;
   onCallPress: () => void;
-  onSosPress: () => void;
 };
 
 const FollowerInfoSheet = ({
@@ -23,7 +22,6 @@ const FollowerInfoSheet = ({
   address,
   onChatPress,
   onCallPress,
-  onSosPress,
 }: FollowerInfoSheetProps) => {
   const handleSheetChanges = (index: number) => {};
 
@@ -35,13 +33,12 @@ const FollowerInfoSheet = ({
       bottomInset={tabBarHeight}
       containerStyle={{ bottom: tabBarHeight }}
     >
-      <FollowerBottomSheet 
-        follower={selectedFollower} 
+      <FollowerBottomSheet
+        follower={selectedFollower}
         speedKmh={speedKmh}
         address={address}
         onChatPress={onChatPress}
         onCallPress={onCallPress}
-        onSosPress={onSosPress}
       />
     </BottomSheetModal>
   );

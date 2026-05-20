@@ -2,6 +2,7 @@ import {
   CHAT_BADGE_CHANGED_EVENT,
   CHAT_UNREAD_KEY,
   FCM_TOKEN_KEY,
+  NOTIFICATION_RECEIVED_EVENT,
 } from "@/constant";
 import { useNotificationContext } from "@/contexts/NotificationContext";
 import { registerMobileDevice } from "@/services/notifier";
@@ -13,7 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import { Router, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
+import { DeviceEventEmitter, Platform } from "react-native";
 
 configureNotificationHandler();
 
@@ -42,7 +43,10 @@ async function retryWithBackoff(
  * - Handles notification taps (background / killed)
  * - Listens for token refreshes and re-registers
  */
-export function usePushNotifications(enabled: boolean = true) {
+export function usePushNotifications(
+  enabled: boolean = true,
+  onEmergencyNotification?: (type: string) => void,
+) {
   const [fcmToken, setFcmToken] = useState<string | undefined>();
   const notificationListener = useRef<Notifications.EventSubscription>(null);
   const responseListener = useRef<Notifications.EventSubscription>(null);
@@ -101,10 +105,39 @@ export function usePushNotifications(enabled: boolean = true) {
       "EMERGENCY_REQUEST_CLOSED",
     ];
 
+    // Types that signal the emergency is over — clear the marker immediately.
+    const EMERGENCY_TERMINAL_TYPES = [
+      "EMERGENCY_REQUEST_REJECTED",
+      "EMERGENCY_REQUEST_CLOSED",
+    ];
+
+    // FCM data `type` values that are stored in the backend DB and appear in the
+    // in-app notification list.  When these arrive in the foreground the background
+    // task does not run (Android skips it for notification-field messages), so we
+    // replicate the badge-increment here to refresh the bell and list instantly.
+    // Keep in sync with the type constants in the user-tracking service:
+    //   AnomalyDetectorHandlerImpl  → "ANOMALY_DETECTED"
+    //   DisconnectInactiveUsersJob  → "USER_DISCONNECTED"
+    const NOTIFICATION_LIST_TYPES = [
+      "ANOMALY_DETECTED",
+      "USER_DISCONNECTED",
+    ];
+
     // Foreground FCM listener — chat suppressed (gRPC stream handles those).
     notificationListener.current =
-      Notifications.addNotificationReceivedListener((_notification) => {
-        /* console.log("Notification received in foreground:", _notification) */
+      Notifications.addNotificationReceivedListener((notification) => {
+        const type = notification.request.content.data?.type as string | undefined;
+
+        // Emergency termination → let the call site refresh emergency status.
+        if (type && EMERGENCY_TERMINAL_TYPES.includes(type)) {
+          onEmergencyNotification?.(type);
+          return;
+        }
+
+        // Tracking/risk → bump the bell badge and trigger a list refresh.
+        if (type && NOTIFICATION_LIST_TYPES.includes(type)) {
+          DeviceEventEmitter.emit(NOTIFICATION_RECEIVED_EVENT, { type });
+        }
       });
 
     // Notification tap / interaction listener (app backgrounded).
@@ -174,7 +207,7 @@ export function usePushNotifications(enabled: boolean = true) {
       responseListener.current?.remove();
       tokenRefreshListener.current?.remove();
     };
-  }, [enabled, router, refreshCount]);
+  }, [enabled, router, refreshCount, onEmergencyNotification]);
 
   return { fcmToken };
 }

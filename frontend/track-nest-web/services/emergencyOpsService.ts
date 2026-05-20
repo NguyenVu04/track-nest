@@ -86,10 +86,17 @@ export interface EmergencyServiceLocationResponse {
 }
 
 export interface EmergencyServiceTargetsResponse {
-  userId: string;
-  lastLatitude: number;
-  lastLongitude: number;
-  lastUpdateTime: string;
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  avatarUrl: string;
+  lastLatitudeDegrees: number;
+  lastLongitudeDegrees: number;
+  /** Milliseconds since epoch — already a number, no parsing needed. */
+  lastUpdateTimeMs: number;
 }
 
 export interface RequestCountResponse {

@@ -18,8 +18,14 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import { WebView } from "react-native-webview";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
+
+// Injected JS measures the document height and posts it back so the WebView
+// expands to fit its content without an internal scrollbar inside ScrollView.
+const HEIGHT_SCRIPT =
+  "window.ReactNativeWebView.postMessage(String(document.documentElement.scrollHeight)); true;";
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
@@ -29,6 +35,9 @@ export default function MissingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [person, setPerson] = useState<MissingPersonReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const [htmlContent, setHtmlContent] = useState<string | null>(null);
+  const [webViewHeight, setWebViewHeight] = useState(200);
+  const [webViewError, setWebViewError] = useState(false);
 
   useEffect(() => {
     const loadPerson = async () => {
@@ -39,6 +48,15 @@ export default function MissingDetailScreen() {
           ? await criminalReportsService.getMissingPersonPhotoUrl(data.id)
           : undefined;
         setPerson({ ...data, photo: resolvedPhoto });
+
+        // Fetch the HTML body from MinIO — the content field is a MinIO object
+        // name, not human-readable text, mirroring the guideline-detail pattern.
+        try {
+          const html = await criminalReportsService.getMissingPersonContent(id);
+          setHtmlContent(html);
+        } catch {
+          // Falls back to plain-text description below.
+        }
       } catch (err) {
         console.error("Failed to load missing person:", err);
       } finally {
@@ -310,6 +328,34 @@ export default function MissingDetailScreen() {
             )}
           </View>
         )}
+
+        {/* ── Report Content ── */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="document-text-outline" size={16} color={colors.primary} />
+            <Text style={styles.sectionTitle}>{t.reportContent ?? "Report Details"}</Text>
+          </View>
+          <View style={styles.contentBody}>
+            {htmlContent && !webViewError ? (
+              <WebView
+                source={{ html: htmlContent, baseUrl: "" }}
+                style={[styles.webView, { height: webViewHeight }]}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+                injectedJavaScript={HEIGHT_SCRIPT}
+                onMessage={(e) => {
+                  const h = Number(e.nativeEvent.data);
+                  if (h > 0) setWebViewHeight(h);
+                }}
+                onError={() => setWebViewError(true)}
+              />
+            ) : (
+              <Text style={styles.contentText}>
+                {person.content ?? t.noContent ?? "No detailed description available."}
+              </Text>
+            )}
+          </View>
+        </View>
 
         {/* ── Action Buttons ── */}
         <View style={styles.actionRow}>
@@ -594,6 +640,19 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.textPrimary,
     flexShrink: 1,
+  },
+
+  // Report Content
+  contentBody: {
+    padding: spacing.md,
+  },
+  webView: {
+    width: "100%",
+  },
+  contentText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 22,
   },
 
   // Action Buttons

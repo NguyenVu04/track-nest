@@ -13,6 +13,7 @@ import type {
   CreateEmergencyRequestData,
 } from "@/types/emergency";
 import { emergencyService } from "@/services/emergency";
+import { requestPermissionsAndStart } from "@/utils/backgroundLocation";
 import * as Location from "expo-location";
 
 const { NativeLocationModule } = NativeModules;
@@ -48,21 +49,29 @@ export const EmergencyProvider: React.FC<EmergencyProviderProps> = ({ children }
   const [isEmergencyActive, setIsEmergencyActive] = useState(false);
 
   // Sync the native location-service tracking mode whenever emergency state changes.
-  // Wrapped in its own effect so we never call the native module from inside an
-  // async callback where errors would be harder to isolate.
   useEffect(() => {
-    try {
-      if (
-        NativeLocationModule &&
-        typeof NativeLocationModule.forceTrackingMode === "function"
-      ) {
-        NativeLocationModule.forceTrackingMode(
-          isEmergencyActive ? "NAVIGATION" : "NORMAL",
-        );
+    const syncMode = async () => {
+      try {
+        if (isEmergencyActive) {
+          // Guarantee the native foreground service is running before sending the
+          // mode broadcast. If Android killed it while the app was backgrounded
+          // the broadcast would be silently lost, leaving the user in emergency
+          // without NAVIGATION-interval tracking or crash detection active.
+          await requestPermissionsAndStart();
+        }
+        if (
+          NativeLocationModule &&
+          typeof NativeLocationModule.forceTrackingMode === "function"
+        ) {
+          NativeLocationModule.forceTrackingMode(
+            isEmergencyActive ? "NAVIGATION" : "NORMAL",
+          );
+        }
+      } catch {
+        // Native module may not be available in Expo Go / unit tests.
       }
-    } catch {
-      // Native module may not be available in Expo Go / unit tests.
-    }
+    };
+    syncMode();
   }, [isEmergencyActive]);
 
   /**

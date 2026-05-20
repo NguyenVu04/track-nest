@@ -1,5 +1,6 @@
 import { settings as settingsLang } from "@/constant/languages";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmergency } from "@/contexts/EmergencyContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useChatStream } from "@/hooks/useChatStream";
 import { useLocationNotification } from "@/hooks/useLocationNotification";
@@ -22,17 +23,20 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 global.fetch = global.fetch || fetch;
 
 export default function AppLayout() {
-  const { isAuthenticated, isGuestMode, isLoading } = useAuth();
+  const { isAuthenticated, isGuestMode, isLoading, user } = useAuth();
   const { voiceSettings } = useSettings();
+  const { refreshActiveEmergencyStatus } = useEmergency();
   const router = useRouter();
   const t = useTranslation(settingsLang);
   const promptOpenRef = useRef(false);
   const guestLoginSheetRef = useRef<BottomSheetModal>(null);
 
-  usePushNotifications(isAuthenticated);
+  usePushNotifications(isAuthenticated, () => {
+    if (user?.id) refreshActiveEmergencyStatus(user.id);
+  });
   useChatStream(isAuthenticated);
   useVoiceSosActivation((isAuthenticated || __DEV__) && voiceSettings.enabled);
-  useLocationNotification();
+  // useLocationNotification();
 
   useEffect(() => {
     if (!isGuestMode || isAuthenticated || isLoading) {

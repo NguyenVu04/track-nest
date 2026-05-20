@@ -192,7 +192,7 @@ function SectionHeader({ label, onMarkAll, markAllLabel }: {
 export default function NotificationsScreen() {
   const router = useRouter();
   const t = useTranslation(notificationsLang);
-  const { markAllRead } = useNotificationContext();
+  const { markAllRead, unreadCount } = useNotificationContext();
   const {
     trackingNotifications,
     riskNotifications,
@@ -215,6 +215,10 @@ export default function NotificationsScreen() {
   // visit those same items will no longer be highlighted.
   useFocusEffect(
     useCallback(() => {
+      // Always refresh the list on focus so items that arrived while the app
+      // was backgrounded (and the JS background task didn't run) are shown
+      // immediately without the user needing to tap the notification.
+      fetchAll();
       markAllRead();
 
       AsyncStorage.getItem(NOTIFICATIONS_LAST_VIEWED_KEY)
@@ -225,16 +229,18 @@ export default function NotificationsScreen() {
           AsyncStorage.setItem(NOTIFICATIONS_LAST_VIEWED_KEY, String(Date.now())).catch(() => {});
         })
         .catch(() => setLastViewedMs(0));
-    }, [markAllRead]),
+    }, [markAllRead, fetchAll]),
   );
 
   const [tabIndex, setTabIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
 
+  // Re-fetch page 1 whenever the badge count bumps so new items appear without
+  // the user needing to leave and re-enter the screen.
   useEffect(() => {
     fetchAll();
-  }, [fetchAll]);
+  }, [fetchAll, unreadCount]);
 
   const goToTab = (index: number) => {
     setTabIndex(index);

@@ -28,6 +28,7 @@ export type Guide = {
   title: string;
   category: string;
   content: string;
+  abstractText?: string;
   icon?: string;
 };
 
@@ -104,6 +105,7 @@ function adaptGuidelinesToGuide(guidelines: GuidelinesDocument): Guide {
     title: guidelines.title,
     category: guidelines.isPublic ? "Published" : "Draft",
     content: guidelines.content,
+    abstractText: guidelines.abstractText,
   };
 }
 

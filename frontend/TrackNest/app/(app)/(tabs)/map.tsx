@@ -792,7 +792,6 @@ function MapScreenContent() {
         address={selectedFollowerAddress}
         onChatPress={() => router.push("/(app)/family-chat" as any)}
         onCallPress={() => {}}
-        onSosPress={() => router.push("/(app)/sos" as any)}
       />
 
       <GeneralFollowerInfoSheet
