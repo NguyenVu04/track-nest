@@ -10,9 +10,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
+import project.tracknest.emergencyops.configuration.cache.ServerRedisMessagePublisher;
 import project.tracknest.emergencyops.configuration.security.KeycloakService;
 import project.tracknest.emergencyops.configuration.security.datatype.KeycloakUserProfile;
+import project.tracknest.emergencyops.core.datatype.EmergencyStatusMessage;
 import project.tracknest.emergencyops.core.datatype.TrackingNotificationMessage;
 import project.tracknest.emergencyops.core.entity.EmergencyRequest;
 import project.tracknest.emergencyops.core.entity.EmergencyRequestStatus;
@@ -47,13 +50,18 @@ class EmergencyRequestManagerServiceImplTest {
     private KeycloakService keycloakService;
     @Mock
     private KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
+    @Mock
+    private ServerRedisMessagePublisher redisPublisher;
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
 
     @InjectMocks
     private EmergencyRequestManagerServiceImpl service;
 
     @BeforeEach
-    void injectTopicValue() {
+    void injectFieldValues() {
         ReflectionTestUtils.setField(service, "TRACKING_NOTIFICATION_TOPIC", "tracking-notification");
+        ReflectionTestUtils.setField(service, "EMERGENCY_REQUEST_STATUS_QUEUE", "/queue/emergency-request-status");
     }
 
     private static final UUID SERVICE_ID = UUID.randomUUID();
@@ -241,6 +249,27 @@ class EmergencyRequestManagerServiceImplTest {
             assertThrows(IllegalStateException.class,
                     () -> service.acceptEmergencyRequest(SERVICE_ID, REQUEST_ID));
         }
+
+        @Test
+        @DisplayName("should_publishRedisStatusToSender_whenRequestAccepted")
+        void should_publishRedisStatusToSender_whenRequestAccepted() {
+            EmergencyRequest req = mockRequest(status(EmergencyRequestStatus.Status.PENDING));
+            when(emergencyRequestRepository.findByIdAndEmergencyService_Id(REQUEST_ID, SERVICE_ID))
+                    .thenReturn(Optional.of(req));
+            when(emergencyRequestStatusRepository.findById(EmergencyRequestStatus.Status.ACCEPTED.getValue()))
+                    .thenReturn(Optional.of(status(EmergencyRequestStatus.Status.ACCEPTED)));
+            when(emergencyRequestRepository.save(any())).thenReturn(req);
+            when(emergencyServiceUserRepository.save(any())).thenReturn(new EmergencyServiceUser());
+
+            service.acceptEmergencyRequest(SERVICE_ID, REQUEST_ID);
+
+            verify(redisPublisher).publishMessage(
+                    argThat(msg ->
+                            "receiveEmergencyStatusMessage".equals(msg.getMethod())
+                            && SENDER_ID.equals(msg.getReceiverId())),
+                    eq(SENDER_ID)
+            );
+        }
     }
 
     @Nested
@@ -316,6 +345,26 @@ class EmergencyRequestManagerServiceImplTest {
 
             assertThrows(IllegalStateException.class,
                     () -> service.rejectEmergencyRequest(SERVICE_ID, REQUEST_ID));
+        }
+
+        @Test
+        @DisplayName("should_publishRedisStatusToSender_whenRequestRejected")
+        void should_publishRedisStatusToSender_whenRequestRejected() {
+            EmergencyRequest req = mockRequest(status(EmergencyRequestStatus.Status.PENDING));
+            when(emergencyRequestRepository.findByIdAndEmergencyService_Id(REQUEST_ID, SERVICE_ID))
+                    .thenReturn(Optional.of(req));
+            when(emergencyRequestStatusRepository.findById(EmergencyRequestStatus.Status.REJECTED.getValue()))
+                    .thenReturn(Optional.of(status(EmergencyRequestStatus.Status.REJECTED)));
+            when(emergencyRequestRepository.save(any())).thenReturn(req);
+
+            service.rejectEmergencyRequest(SERVICE_ID, REQUEST_ID);
+
+            verify(redisPublisher).publishMessage(
+                    argThat(msg ->
+                            "receiveEmergencyStatusMessage".equals(msg.getMethod())
+                            && SENDER_ID.equals(msg.getReceiverId())),
+                    eq(SENDER_ID)
+            );
         }
     }
 
@@ -438,6 +487,28 @@ class EmergencyRequestManagerServiceImplTest {
             assertThrows(IllegalStateException.class,
                     () -> service.closeEmergencyRequest(SERVICE_ID, REQUEST_ID));
         }
+
+        @Test
+        @DisplayName("should_publishRedisStatusToSender_whenRequestClosed")
+        void should_publishRedisStatusToSender_whenRequestClosed() {
+            EmergencyRequest req = mockRequest(status(EmergencyRequestStatus.Status.ACCEPTED));
+            when(emergencyRequestRepository.findByIdAndEmergencyService_Id(REQUEST_ID, SERVICE_ID))
+                    .thenReturn(Optional.of(req));
+            when(emergencyRequestStatusRepository.findById(EmergencyRequestStatus.Status.CLOSED.getValue()))
+                    .thenReturn(Optional.of(status(EmergencyRequestStatus.Status.CLOSED)));
+            when(emergencyRequestRepository.save(any())).thenReturn(req);
+            when(emergencyServiceUserRepository.findByEmergencyService_IdAndUserId(any(), any()))
+                    .thenReturn(Optional.empty());
+
+            service.closeEmergencyRequest(SERVICE_ID, REQUEST_ID);
+
+            verify(redisPublisher).publishMessage(
+                    argThat(msg ->
+                            "receiveEmergencyStatusMessage".equals(msg.getMethod())
+                            && SENDER_ID.equals(msg.getReceiverId())),
+                    eq(SENDER_ID)
+            );
+        }
     }
 
     @Nested
@@ -515,6 +586,58 @@ class EmergencyRequestManagerServiceImplTest {
 
             assertThrows(IllegalArgumentException.class,
                     () -> service.getEmergencyServiceLocation(SERVICE_ID));
+        }
+    }
+
+    // ── receiveEmergencyStatusMessage ─────────────────────────────────────────
+
+    @Nested
+    @DisplayName("receiveEmergencyStatusMessage")
+    class ReceiveEmergencyStatusMessageTests {
+
+        @Test
+        @DisplayName("should_forwardAcceptedStatusViaStompToSender")
+        void should_forwardAcceptedStatusViaStompToSender() {
+            EmergencyStatusMessage msg = new EmergencyStatusMessage(REQUEST_ID.toString(), "ACCEPTED", null);
+
+            service.receiveEmergencyStatusMessage(SENDER_ID, msg);
+
+            verify(messagingTemplate).convertAndSendToUser(
+                    SENDER_ID.toString(),
+                    "/queue/emergency-request-status",
+                    msg
+            );
+        }
+
+        @Test
+        @DisplayName("should_forwardRejectedStatusViaStompToSender")
+        void should_forwardRejectedStatusViaStompToSender() {
+            EmergencyStatusMessage msg = new EmergencyStatusMessage(REQUEST_ID.toString(), "REJECTED", null);
+
+            service.receiveEmergencyStatusMessage(SENDER_ID, msg);
+
+            verify(messagingTemplate).convertAndSendToUser(
+                    SENDER_ID.toString(),
+                    "/queue/emergency-request-status",
+                    msg
+            );
+        }
+
+        @Test
+        @DisplayName("should_forwardClosedStatusViaStompToSender_withClosedAtMs")
+        void should_forwardClosedStatusViaStompToSender_withClosedAtMs() {
+            long closedAtMs = System.currentTimeMillis();
+            EmergencyStatusMessage msg = new EmergencyStatusMessage(REQUEST_ID.toString(), "CLOSED", closedAtMs);
+
+            service.receiveEmergencyStatusMessage(SENDER_ID, msg);
+
+            verify(messagingTemplate).convertAndSendToUser(
+                    eq(SENDER_ID.toString()),
+                    eq("/queue/emergency-request-status"),
+                    argThat(m -> m instanceof EmergencyStatusMessage esm
+                            && "CLOSED".equals(esm.status())
+                            && closedAtMs == esm.closedAtMs())
+            );
         }
     }
 }
