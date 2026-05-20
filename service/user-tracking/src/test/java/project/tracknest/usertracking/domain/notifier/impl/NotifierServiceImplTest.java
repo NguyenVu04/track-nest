@@ -376,6 +376,42 @@ class NotifierServiceImplTest {
 
             assertEquals(1, res.getRiskNotificationsCount());
         }
+
+        /**
+         * Simulates the expanded JPQL returning a notification that belongs to a
+         * family-circle member (different user ID). The service must include it in
+         * the response without filtering it out.
+         */
+        @Test
+        void should_includeFamilyCircleMemberNotification_inFirstPage() {
+            UUID familyMemberId = UUID.fromString("dddddddd-dddd-4ddd-8ddd-dddddddddddd");
+            User familyMember = User.builder()
+                    .id(familyMemberId)
+                    .username("familymember")
+                    .connected(true)
+                    .lastActive(OffsetDateTime.now(ZoneOffset.UTC))
+                    .build();
+            RiskNotification memberNotif = RiskNotification.builder()
+                    .id(UUID.randomUUID())
+                    .user(familyMember)
+                    .title("Family member at risk")
+                    .content("Unusual activity detected near family member")
+                    .type("RISK")
+                    .createdAt(OffsetDateTime.now(ZoneOffset.UTC))
+                    .build();
+
+            // Repository returns both own + family-circle notification (expanded query)
+            Slice<RiskNotification> slice = new SliceImpl<>(
+                    List.of(buildRiskNotif(), memberNotif), PageRequest.ofSize(32), false);
+            when(riskNotificationRepository.findFirstPageByUserId(eq(USER_ID), any())).thenReturn(slice);
+
+            ListRiskNotificationsRequest req = ListRiskNotificationsRequest.newBuilder().build();
+            ListRiskNotificationsResponse res = service.listRiskNotifications(USER_ID, req);
+
+            assertEquals(2, res.getRiskNotificationsCount());
+            assertEquals("familymember", res.getRiskNotifications(1).getMemberUsername());
+            assertTrue(res.getNextPageToken().isBlank());
+        }
     }
 
     // ── deleteTrackingNotification ────────────────────────────────────────────
@@ -569,12 +605,24 @@ class NotifierServiceImplTest {
 
         @Test
         void should_returnCorrectCount() {
-            when(riskNotificationRepository.countByUser_Id(USER_ID)).thenReturn(3);
+            // countForUserAndFamilyCircle returns long; count covers own + family-circle notifications
+            when(riskNotificationRepository.countForUserAndFamilyCircle(USER_ID)).thenReturn(3L);
 
             CountRiskNotificationsRequest req = CountRiskNotificationsRequest.newBuilder().build();
             CountRiskNotificationsResponse res = service.countRiskNotifications(USER_ID, req);
 
             assertEquals(3, res.getTotalCount());
+            assertEquals(Code.OK_VALUE, res.getStatus().getCode());
+        }
+
+        @Test
+        void should_returnZero_whenNoNotifications() {
+            when(riskNotificationRepository.countForUserAndFamilyCircle(USER_ID)).thenReturn(0L);
+
+            CountRiskNotificationsRequest req = CountRiskNotificationsRequest.newBuilder().build();
+            CountRiskNotificationsResponse res = service.countRiskNotifications(USER_ID, req);
+
+            assertEquals(0, res.getTotalCount());
             assertEquals(Code.OK_VALUE, res.getStatus().getCode());
         }
     }
