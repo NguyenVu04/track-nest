@@ -8,6 +8,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { FamilyMemberLocation } from "@/proto/tracker_pb";
 import { listFamilyMemberLocationHistory } from "@/services/tracker";
 import { Ionicons } from "@expo/vector-icons";
+import { useEmergency } from "@/contexts/EmergencyContext";
 import {
   BottomSheetModal,
   BottomSheetScrollView,
@@ -20,7 +21,6 @@ import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
-  Button,
   Modal,
   Platform,
   Pressable,
@@ -82,18 +82,18 @@ export const FollowerBottomSheet = ({
   address,
   onChatPress,
   onCallPress,
-  onSosPress,
 }: {
   follower: Follower | null;
   speedKmh?: number | null;
   address?: string | null;
   onChatPress?: () => void;
   onCallPress?: () => void;
-  onSosPress?: () => void;
 }) => {
   const t = useTranslation(followerBottomSheetLang);
   const router = useRouter();
   const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
+  const { createEmergencyRequest } = useEmergency();
+  const [sosPending, setSosPending] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const filterSheetRef = useRef<BottomSheetModal>(null);
   const hasFetchedHistoryRef = useRef(false);
@@ -245,6 +245,31 @@ export const FollowerBottomSheet = ({
   const activity = getActivityState(speedKmh);
   const battery = follower.batteryLevel;
 
+  const handleSosPress = () => {
+    Alert.alert(
+      t.sosConfirmTitle,
+      t.sosConfirmMessage.replace("{{name}}", follower.name),
+      [
+        { text: t.sosCancel, style: "cancel" },
+        {
+          text: t.sosConfirm,
+          style: "destructive",
+          onPress: async () => {
+            setSosPending(true);
+            try {
+              await createEmergencyRequest(follower.id);
+              Alert.alert(t.sosSentSuccess);
+            } catch {
+              Alert.alert(t.sosSentError);
+            } finally {
+              setSosPending(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <BottomSheetView style={[styles.sheetContainer, { paddingBottom: bottomInset || 8 }]}>
       <View style={styles.card}>
@@ -324,21 +349,32 @@ export const FollowerBottomSheet = ({
           </View>
         </View>
 
-        <Button
-          color={colors.warn}
-          title={t.reportMissing}
-          onPress={() => {
-            router.push({
-              pathname: "/(app)/create-missing",
-              params: {
-                initialName: follower.name,
-                initialLat: follower.latitude.toString(),
-                initialLng: follower.longitude.toString(),
-                initialAvatar: follower.avatar || "",
-              },
-            });
-          }}
-        />
+        <View style={styles.bottomBtnRow}>
+          <Pressable
+            style={[styles.bottomBtn, styles.reportMissingBtn]}
+            onPress={() =>
+              router.push({
+                pathname: "/(app)/create-missing",
+                params: {
+                  initialName: follower.name,
+                  initialLat: follower.latitude.toString(),
+                  initialLng: follower.longitude.toString(),
+                  initialAvatar: follower.avatar || "",
+                },
+              })
+            }
+          >
+            <Text style={styles.reportMissingBtnText}>{t.reportMissing}</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.bottomBtn, styles.sosBtn, sosPending && styles.sosBtnDisabled]}
+            onPress={handleSosPress}
+            disabled={sosPending}
+          >
+            <Text style={styles.sosBtnText}>{sosPending ? "..." : t.sos}</Text>
+          </Pressable>
+        </View>
       </View>
 
       <Modal
@@ -691,13 +727,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderLight,
   },
-  sosBtn: {
-    width: 52,
-    minHeight: 52,
+  bottomBtnRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  bottomBtn: {
+    flex: 1,
+    paddingVertical: 12,
     borderRadius: radii.md,
-    backgroundColor: colors.danger,
     alignItems: "center",
     justifyContent: "center",
+  },
+  reportMissingBtn: {
+    backgroundColor: colors.warn,
+  },
+  reportMissingBtnText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  sosBtn: {
+    backgroundColor: colors.danger,
+  },
+  sosBtnDisabled: {
+    opacity: 0.5,
   },
   sosBtnText: {
     color: "#fff",
