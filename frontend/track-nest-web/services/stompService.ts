@@ -2,12 +2,18 @@ import { Client, type IMessage, type StompSubscription } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
 function resolveWsUrl(): string {
+  // Priority order:
+  //   1. Explicit WS env var (NEXT_PUBLIC_EMERGENCY_OPS_WS_URL)
+  //   2. Derive /ws from the REST API env var (NEXT_PUBLIC_EMERGENCY_OPS_API_URL)
+  //      — both share the same Envoy host so this is always correct in production.
+  //   3. Local-dev fallback (localhost:8800)
+  // Browsers block http:// SockJS connections from https:// pages (mixed content),
+  // so upgrade http: → https: whenever the page itself is on HTTPS.
   const base =
     process.env.NEXT_PUBLIC_EMERGENCY_OPS_WS_URL ||
-    "http://localhost:8800/emergency-ops/ws";
-  // Browsers block http:// SockJS connections from https:// pages (mixed content).
-  // Upgrade the URL protocol automatically so the same env var works for both
-  // dev (HTTP) and production (HTTPS).
+    (process.env.NEXT_PUBLIC_EMERGENCY_OPS_API_URL
+      ? `${process.env.NEXT_PUBLIC_EMERGENCY_OPS_API_URL.replace(/\/$/, "")}/ws`
+      : "http://localhost:8800/emergency-ops/ws");
   if (typeof window !== "undefined" && window.location.protocol === "https:") {
     return base.replace(/^http:/, "https:");
   }

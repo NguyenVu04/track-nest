@@ -8,9 +8,16 @@ import { useNotification, type NotificationType } from "@/contexts/NotificationC
 import { authService } from "@/services/authService";
 
 function resolveWsUrl(): string {
+  // Priority order:
+  //   1. Explicit WS env var (NEXT_PUBLIC_CRIMINAL_REPORTS_WS_URL)
+  //   2. Derive /ws from the REST API env var (NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL)
+  //      — both share the same Envoy host so this is always correct in production.
+  //   3. Local-dev fallback (localhost:8800)
   const base =
     process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_WS_URL ??
-    "http://localhost:8800/criminal-reports/ws";
+    (process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL
+      ? `${process.env.NEXT_PUBLIC_CRIMINAL_REPORTS_API_URL.replace(/\/$/, "")}/ws`
+      : "http://localhost:8800/criminal-reports/ws");
   if (typeof window !== "undefined" && window.location.protocol === "https:") {
     return base.replace(/^http:/, "https:");
   }
