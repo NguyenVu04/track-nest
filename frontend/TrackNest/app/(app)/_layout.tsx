@@ -36,7 +36,7 @@ export default function AppLayout() {
   });
   useChatStream(isAuthenticated);
   useVoiceSosActivation((isAuthenticated || __DEV__) && voiceSettings.enabled);
-  useLocationNotification();
+  // useLocationNotification();
 
   useEffect(() => {
     if (!isGuestMode || isAuthenticated || isLoading) {

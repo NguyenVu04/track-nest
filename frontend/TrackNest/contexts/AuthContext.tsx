@@ -57,6 +57,7 @@ export interface AuthUser {
   email?: string;
   emailVerified?: boolean;
   raw?: Record<string, unknown>;
+  id?: string;
 }
 
 interface AuthContextType {
@@ -130,6 +131,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         emailVerified:
           (claims.email_verified as boolean | undefined) ?? undefined,
         raw: claims,
+        id: (claims.sub as string | undefined) ?? undefined,
       };
     },
     [],
