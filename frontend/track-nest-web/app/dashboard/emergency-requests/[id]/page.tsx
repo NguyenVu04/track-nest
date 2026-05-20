@@ -173,12 +173,12 @@ function EmergencyRequestDetailContent() {
       try {
         const res = await emergencyOpsService.getEmergencyServiceTargets(0, 100);
         if (cancelled) return;
-        const found = res.items.find((t) => t.userId === request.targetId);
+        const found = res.items.find((t) => t.id === request.targetId);
         if (!found) return;
-        const ts = new Date(found.lastUpdateTime).getTime();
+        const ts = found.lastUpdateTimeMs;
         setLocalLocation((prev) =>
           !prev || ts > prev.updatedAt
-            ? { lat: found.lastLatitude, lng: found.lastLongitude, updatedAt: ts }
+            ? { lat: found.lastLatitudeDegrees, lng: found.lastLongitudeDegrees, updatedAt: ts }
             : prev,
         );
       } catch {

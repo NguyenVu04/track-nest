@@ -13,10 +13,19 @@ import java.util.Optional;
 import java.util.UUID;
 
 interface NotifierRiskNotificationRepository extends JpaRepository<RiskNotification, UUID> {
+
+    // Returns risk notifications for userId AND all members that share a family circle with userId.
     @Query("""
         SELECT rn
         FROM RiskNotification rn
         WHERE rn.user.id = :userId
+           OR rn.user.id IN (
+               SELECT DISTINCT fcm2.id.memberId
+               FROM FamilyCircleMember fcm1, FamilyCircleMember fcm2
+               WHERE fcm1.id.memberId = :userId
+                 AND fcm2.id.familyCircleId = fcm1.id.familyCircleId
+                 AND fcm2.id.memberId <> :userId
+           )
         ORDER BY rn.createdAt DESC, rn.id DESC
     """)
     Slice<RiskNotification> findFirstPageByUserId(
@@ -27,11 +36,20 @@ interface NotifierRiskNotificationRepository extends JpaRepository<RiskNotificat
     @Query("""
         SELECT rn
         FROM RiskNotification rn
-        WHERE rn.user.id = :userId
-          AND (
-                rn.createdAt < :lastCreatedAt
-                OR (rn.createdAt = :lastCreatedAt AND rn.id < :lastId)
-          )
+        WHERE (
+            rn.user.id = :userId
+            OR rn.user.id IN (
+                SELECT DISTINCT fcm2.id.memberId
+                FROM FamilyCircleMember fcm1, FamilyCircleMember fcm2
+                WHERE fcm1.id.memberId = :userId
+                  AND fcm2.id.familyCircleId = fcm1.id.familyCircleId
+                  AND fcm2.id.memberId <> :userId
+            )
+        )
+        AND (
+            rn.createdAt < :lastCreatedAt
+            OR (rn.createdAt = :lastCreatedAt AND rn.id < :lastId)
+        )
         ORDER BY rn.createdAt DESC, rn.id DESC
     """)
     Slice<RiskNotification> findNextPageByUserId(
@@ -41,6 +59,19 @@ interface NotifierRiskNotificationRepository extends JpaRepository<RiskNotificat
             Pageable pageable
     );
 
+    @Query("""
+        SELECT COUNT(DISTINCT rn.id)
+        FROM RiskNotification rn
+        WHERE rn.user.id = :userId
+           OR rn.user.id IN (
+               SELECT DISTINCT fcm2.id.memberId
+               FROM FamilyCircleMember fcm1, FamilyCircleMember fcm2
+               WHERE fcm1.id.memberId = :userId
+                 AND fcm2.id.familyCircleId = fcm1.id.familyCircleId
+                 AND fcm2.id.memberId <> :userId
+           )
+    """)
+    long countForUserAndFamilyCircle(@Param("userId") UUID userId);
 
     Optional<RiskNotification> findByIdAndUserId(UUID id, UUID userId);
 
@@ -55,6 +86,4 @@ interface NotifierRiskNotificationRepository extends JpaRepository<RiskNotificat
             @Param("notificationIds") List<UUID> notificationIds,
             @Param("userId") UUID userId
     );
-
-    int countByUser_Id(UUID userId);
 }

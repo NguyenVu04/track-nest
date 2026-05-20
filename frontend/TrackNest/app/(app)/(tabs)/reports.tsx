@@ -178,7 +178,9 @@ function GuideCard({
             {categoryLabel}: {item.category}
           </Text>
         </View>
-        <Text style={styles.cardDesc} numberOfLines={2}>{item.content}</Text>
+        {item.abstractText ? (
+          <Text style={styles.cardDesc} numberOfLines={2}>{item.abstractText}</Text>
+        ) : null}
       </View>
     </Pressable>
   );
