@@ -111,16 +111,16 @@ export function usePushNotifications(
       "EMERGENCY_REQUEST_CLOSED",
     ];
 
-    // Tracking and risk notification types that are stored in the backend DB and
-    // appear in the in-app notification list. When these arrive in the foreground
-    // the background task does not run (Android only runs it for data-only FCM
-    // messages, not for messages that also carry a notification field). We
-    // therefore replicate the badge-increment logic here so the bell updates and
-    // the notification list refreshes instantly without a screen-focus trip.
+    // FCM data `type` values that are stored in the backend DB and appear in the
+    // in-app notification list.  When these arrive in the foreground the background
+    // task does not run (Android skips it for notification-field messages), so we
+    // replicate the badge-increment here to refresh the bell and list instantly.
+    // Keep in sync with the type constants in the user-tracking service:
+    //   AnomalyDetectorHandlerImpl  → "ANOMALY_DETECTED"
+    //   DisconnectInactiveUsersJob  → "USER_DISCONNECTED"
     const NOTIFICATION_LIST_TYPES = [
-      "tracking_notification",
-      "risk_notification",
       "ANOMALY_DETECTED",
+      "USER_DISCONNECTED",
     ];
 
     // Foreground FCM listener — chat suppressed (gRPC stream handles those).
