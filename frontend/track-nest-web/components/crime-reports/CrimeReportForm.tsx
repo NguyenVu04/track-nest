@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   Save,
@@ -61,16 +63,21 @@ const RichTextEditor = dynamic(
 
 const MAX_PHOTOS = 5;
 
-type FormErrors = Partial<
-  Record<"title" | "date" | "time" | "numberOfVictims" | "numberOfOffenders", string>
->;
+type FormValues = {
+  title: string;
+  severity: number;
+  date: string;
+  time: string;
+  numberOfVictims: number;
+  numberOfOffenders: number;
+  arrested: boolean;
+  content: string;
+};
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return <p className="mt-1.5 ml-1 text-sm text-red-500">{message}</p>;
 }
-
-// ---------------------------------------------------------------------------
 
 interface CrimeReportFormProps {
   report: CrimeReport | null;
@@ -92,31 +99,46 @@ export function CrimeReportForm({
     () =>
       z.object({
         title: z.string().min(1, t("validation.titleRequired")),
+        severity: z.number(),
         date: z.string().min(1, t("validation.dateRequired")),
         time: z.string().min(1, t("validation.timeRequired")),
         numberOfVictims: z.number().min(0, t("validation.victimsNonNegative")),
-        numberOfOffenders: z.number().min(0, t("validation.offendersNonNegative")),
+        numberOfOffenders: z
+          .number()
+          .min(0, t("validation.offendersNonNegative")),
+        arrested: z.boolean(),
+        content: z.string(),
       }),
     [t],
   );
 
-  const [formData, setFormData] = useState<Partial<CrimeReport>>(
-    report || {
-      title: "",
-      content: "",
-      severity: 3,
-      date: new Date().toISOString().slice(0, 10),
-      longitude: 106.7009,
-      latitude: 10.7769,
-      numberOfVictims: 0,
-      numberOfOffenders: 0,
-      arrested: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      reporterId: "",
-      isPublic: false,
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: report?.title ?? "",
+      severity: report?.severity ?? 3,
+      date: report?.date
+        ? new Date(report.date).toISOString().slice(0, 10)
+        : new Date().toISOString().slice(0, 10),
+      time: report?.date
+        ? new Date(report.date).toTimeString().slice(0, 5)
+        : new Date().toTimeString().slice(0, 5),
+      numberOfVictims: report?.numberOfVictims ?? 0,
+      numberOfOffenders: report?.numberOfOffenders ?? 0,
+      arrested: report?.arrested ?? false,
+      content: report?.content ?? "",
     },
-  );
+  });
+
+  const watchedSeverity = watch("severity");
+  const watchedArrested = watch("arrested");
 
   const [existingPhotos, setExistingPhotos] = useState<string[]>(
     report?.photos ?? [],
@@ -128,27 +150,18 @@ export function CrimeReportForm({
 
   const [showReview, setShowReview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  // Snapshot of validated data — passed to the confirm step
+  const [submittedData, setSubmittedData] = useState<FormValues | null>(null);
 
-  // Split date into date and time for UI
-  const [time, setTime] = useState(() => {
-    if (report?.date) {
-      return new Date(report.date).toTimeString().slice(0, 5);
-    }
-    return new Date().toTimeString().slice(0, 5);
-  });
+  // Location kept outside react-hook-form (controlled by map widget)
+  const [latitude, setLatitude] = useState(report?.latitude ?? 10.7769);
+  const [longitude, setLongitude] = useState(report?.longitude ?? 106.7009);
 
   useEffect(() => {
     return () => {
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [previewUrls]);
-
-  const clearError = (field: keyof FormErrors) => {
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
 
   const totalPhotos = existingPhotos.length + selectedFiles.length;
 
@@ -179,74 +192,32 @@ export function CrimeReportForm({
     setPreviewUrls((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const buildReport = (uploadedPhotoUrls: string[]): CrimeReport => {
-    const combinedDate = new Date(formData.date!);
-    const [hours, minutes] = time.split(":").map(Number);
-    combinedDate.setHours(hours, minutes);
-
-    return {
-      id: report?.id || Date.now().toString(),
-      title: formData.title!,
-      content: formData.content!,
-      contentDocId: report?.contentDocId ?? "",
-      severity: formData.severity!,
-      date: combinedDate.toISOString(),
-      longitude: formData.longitude!,
-      latitude: formData.latitude!,
-      numberOfVictims: formData.numberOfVictims!,
-      numberOfOffenders: formData.numberOfOffenders!,
-      arrested: formData.arrested!,
-      photos: [...existingPhotos, ...uploadedPhotoUrls],
-      createdAt: formData.createdAt!,
-      updatedAt: new Date().toISOString(),
-      reporterId: formData.reporterId!,
-      isPublic: formData.isPublic!,
-    };
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const result = formSchema.safeParse({
-      title: formData.title ?? "",
-      date: formData.date ?? "",
-      time,
-      numberOfVictims: formData.numberOfVictims ?? 0,
-      numberOfOffenders: formData.numberOfOffenders ?? 0,
-    });
-
-    if (!result.success) {
-      const fieldErrors: FormErrors = {};
-      for (const issue of result.error.issues) {
-        const field = issue.path[0] as keyof FormErrors;
-        if (!fieldErrors[field]) fieldErrors[field] = issue.message;
-      }
-      setErrors(fieldErrors);
-      return;
-    }
-
-    setErrors({});
+  // Step 1: validate via react-hook-form, then open review modal
+  const onValidate = handleSubmit((data) => {
+    setSubmittedData(data);
     setShowReview(true);
-  };
+  });
 
+  // Step 2: confirmed — do the actual API call
   const handleConfirmSubmit = async () => {
+    if (!submittedData) return;
     setIsSubmitting(true);
     try {
-      if (mode === "create") {
-        const combinedDate = new Date(formData.date!);
-        const [hours, minutes] = time.split(":").map(Number);
-        combinedDate.setHours(hours, minutes);
+      const combinedDate = new Date(submittedData.date);
+      const [hours, minutes] = submittedData.time.split(":").map(Number);
+      combinedDate.setHours(hours, minutes);
 
+      if (mode === "create") {
         const response = await criminalReportsService.submitCrimeReport({
-          title: formData.title!,
-          content: formData.content || "",
-          severity: formData.severity!,
+          title: submittedData.title,
+          content: submittedData.content,
+          severity: submittedData.severity as CrimeSeverity,
           date: combinedDate.toISOString().slice(0, 10),
-          longitude: formData.longitude!,
-          latitude: formData.latitude!,
-          numberOfVictims: formData.numberOfVictims!,
-          numberOfOffenders: formData.numberOfOffenders!,
-          arrested: formData.arrested!,
+          longitude,
+          latitude,
+          numberOfVictims: submittedData.numberOfVictims,
+          numberOfOffenders: submittedData.numberOfOffenders,
+          arrested: submittedData.arrested,
           photos: selectedFiles.length > 0 ? selectedFiles : undefined,
         });
 
@@ -256,15 +227,21 @@ export function CrimeReportForm({
           content: response.content,
           contentDocId: "",
           severity: response.severity,
-          date: response.date ? String(response.date) : combinedDate.toISOString(),
+          date: response.date
+            ? String(response.date)
+            : combinedDate.toISOString(),
           longitude: response.longitude,
           latitude: response.latitude,
           numberOfVictims: response.numberOfVictims,
           numberOfOffenders: response.numberOfOffenders,
           arrested: response.arrested,
           photos: response.photos ?? [],
-          createdAt: response.createdAt ? String(response.createdAt) : new Date().toISOString(),
-          updatedAt: response.updatedAt ? String(response.updatedAt) : new Date().toISOString(),
+          createdAt: response.createdAt
+            ? String(response.createdAt)
+            : new Date().toISOString(),
+          updatedAt: response.updatedAt
+            ? String(response.updatedAt)
+            : new Date().toISOString(),
           reporterId: response.reporterId ?? "",
           isPublic: response.isPublic,
         });
@@ -278,14 +255,32 @@ export function CrimeReportForm({
           }
           setIsUploading(false);
         }
-        const newReport = buildReport(uploadedUrls);
-        await onSave(newReport);
+
+        await onSave({
+          id: report?.id || Date.now().toString(),
+          title: submittedData.title,
+          content: submittedData.content,
+          contentDocId: report?.contentDocId ?? "",
+          severity: submittedData.severity as CrimeSeverity,
+          date: combinedDate.toISOString(),
+          longitude,
+          latitude,
+          numberOfVictims: submittedData.numberOfVictims,
+          numberOfOffenders: submittedData.numberOfOffenders,
+          arrested: submittedData.arrested,
+          photos: [...existingPhotos, ...uploadedUrls],
+          createdAt: report?.createdAt ?? new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          reporterId: report?.reporterId ?? "",
+          isPublic: report?.isPublic ?? false,
+        });
       }
+
       setShowReview(false);
     } catch {
       setIsUploading(false);
       toast.error(
-        "Failed to upload photos or submit the report. Please try again.",
+        mode === "create" ? t("toastCreateError") : t("toastUpdateError"),
       );
     } finally {
       setIsSubmitting(false);
@@ -320,12 +315,10 @@ export function CrimeReportForm({
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
           {mode === "create" ? t("formNewTitle") : t("formEditTitle")}
         </h1>
-        <p className="text-gray-500 mt-2 text-lg">
-          {t("formDescription")}
-        </p>
+        <p className="text-gray-500 mt-2 text-lg">{t("formDescription")}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8" noValidate>
+      <form onSubmit={onValidate} className="space-y-8" noValidate>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left Column: Incident Details */}
           <div className="lg:col-span-2 space-y-8">
@@ -357,18 +350,16 @@ export function CrimeReportForm({
                     id="title"
                     type="text"
                     autoComplete="off"
-                    value={formData.title}
-                    onChange={(e) => {
-                      setFormData({ ...formData, title: e.target.value });
-                      clearError("title");
-                    }}
                     placeholder={t("placeholderTitle")}
+                    {...register("title")}
                     className={cn(
                       "w-full px-5 py-4 bg-gray-50 border rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all placeholder:text-gray-400",
-                      errors.title ? "border-red-300 bg-red-50/30" : "border-gray-200",
+                      errors.title
+                        ? "border-red-300 bg-red-50/30"
+                        : "border-gray-200",
                     )}
                   />
-                  <FieldError message={errors.title} />
+                  <FieldError message={errors.title?.message} />
                 </div>
 
                 {/* Severity Level */}
@@ -381,15 +372,10 @@ export function CrimeReportForm({
                       <button
                         key={opt.value}
                         type="button"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            severity: opt.value as CrimeSeverity,
-                          })
-                        }
+                        onClick={() => setValue("severity", opt.value)}
                         className={cn(
                           "py-4 px-4 rounded-2xl border-2 font-bold transition-all text-center",
-                          formData.severity === opt.value
+                          watchedSeverity === opt.value
                             ? opt.active
                             : "border-gray-100 bg-gray-50 text-gray-400 " +
                                 opt.color,
@@ -415,18 +401,16 @@ export function CrimeReportForm({
                       <input
                         id="date"
                         type="date"
-                        value={formData.date?.slice(0, 10)}
-                        onChange={(e) => {
-                          setFormData({ ...formData, date: e.target.value });
-                          clearError("date");
-                        }}
+                        {...register("date")}
                         className={cn(
                           "w-full pl-14 pr-5 py-4 bg-gray-50 border rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all",
-                          errors.date ? "border-red-300 bg-red-50/30" : "border-gray-200",
+                          errors.date
+                            ? "border-red-300 bg-red-50/30"
+                            : "border-gray-200",
                         )}
                       />
                     </div>
-                    <FieldError message={errors.date} />
+                    <FieldError message={errors.date?.message} />
                   </div>
                   <div>
                     <label
@@ -440,18 +424,16 @@ export function CrimeReportForm({
                       <input
                         id="time"
                         type="time"
-                        value={time}
-                        onChange={(e) => {
-                          setTime(e.target.value);
-                          clearError("time");
-                        }}
+                        {...register("time")}
                         className={cn(
                           "w-full pl-14 pr-5 py-4 bg-gray-50 border rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all",
-                          errors.time ? "border-red-300 bg-red-50/30" : "border-gray-200",
+                          errors.time
+                            ? "border-red-300 bg-red-50/30"
+                            : "border-gray-200",
                         )}
                       />
                     </div>
-                    <FieldError message={errors.time} />
+                    <FieldError message={errors.time?.message} />
                   </div>
                 </div>
 
@@ -473,21 +455,16 @@ export function CrimeReportForm({
                         inputMode="numeric"
                         min="0"
                         step="1"
-                        value={formData.numberOfVictims}
-                        onChange={(e) => {
-                          setFormData({
-                            ...formData,
-                            numberOfVictims: parseInt(e.target.value) || 0,
-                          });
-                          clearError("numberOfVictims");
-                        }}
+                        {...register("numberOfVictims", { valueAsNumber: true })}
                         className={cn(
                           "w-full pl-11 pr-4 py-3 bg-gray-50 border rounded-xl focus:border-brand-400 focus:bg-white outline-none transition-all text-sm",
-                          errors.numberOfVictims ? "border-red-300 bg-red-50/30" : "border-gray-100",
+                          errors.numberOfVictims
+                            ? "border-red-300 bg-red-50/30"
+                            : "border-gray-100",
                         )}
                       />
                     </div>
-                    <FieldError message={errors.numberOfVictims} />
+                    <FieldError message={errors.numberOfVictims?.message} />
                   </div>
 
                   {/* Number of Offenders */}
@@ -506,21 +483,18 @@ export function CrimeReportForm({
                         inputMode="numeric"
                         min="0"
                         step="1"
-                        value={formData.numberOfOffenders}
-                        onChange={(e) => {
-                          setFormData({
-                            ...formData,
-                            numberOfOffenders: parseInt(e.target.value) || 0,
-                          });
-                          clearError("numberOfOffenders");
-                        }}
+                        {...register("numberOfOffenders", {
+                          valueAsNumber: true,
+                        })}
                         className={cn(
                           "w-full pl-11 pr-4 py-3 bg-gray-50 border rounded-xl focus:border-brand-400 focus:bg-white outline-none transition-all text-sm",
-                          errors.numberOfOffenders ? "border-red-300 bg-red-50/30" : "border-gray-100",
+                          errors.numberOfOffenders
+                            ? "border-red-300 bg-red-50/30"
+                            : "border-gray-100",
                         )}
                       />
                     </div>
-                    <FieldError message={errors.numberOfOffenders} />
+                    <FieldError message={errors.numberOfOffenders?.message} />
                   </div>
 
                   {/* Arrested Toggle */}
@@ -531,25 +505,22 @@ export function CrimeReportForm({
                       </label>
                       <button
                         type="button"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            arrested: !formData.arrested,
-                          })
-                        }
+                        onClick={() => setValue("arrested", !watchedArrested)}
                         className={cn(
                           "w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border font-bold transition-all text-sm",
-                          formData.arrested
+                          watchedArrested
                             ? "bg-green-50 border-green-200 text-green-600"
                             : "bg-gray-50 border-gray-100 text-gray-400",
                         )}
                       >
-                        {formData.arrested ? (
+                        {watchedArrested ? (
                           <ShieldCheck className="w-4 h-4" />
                         ) : (
                           <AlertTriangle className="w-4 h-4" />
                         )}
-                        {formData.arrested ? t("formArrestedYes") : t("formArrestedNo")}
+                        {watchedArrested
+                          ? t("formArrestedYes")
+                          : t("formArrestedNo")}
                       </button>
                     </div>
                   </div>
@@ -561,12 +532,16 @@ export function CrimeReportForm({
                     {t("formContent")}
                   </label>
                   <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white">
-                    <RichTextEditor
-                      value={formData.content || ""}
-                      onChange={(html) =>
-                        setFormData({ ...formData, content: html })
-                      }
-                      placeholder={t("placeholderContent")}
+                    <Controller
+                      name="content"
+                      control={control}
+                      render={({ field }) => (
+                        <RichTextEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder={t("placeholderContent")}
+                        />
+                      )}
                     />
                   </div>
                 </div>
@@ -595,19 +570,12 @@ export function CrimeReportForm({
                 <div className="space-y-6">
                   <div className="relative rounded-lg overflow-hidden border border-gray-100 bg-gray-50 shadow-inner group">
                     <LocationPicker
-                      position={[
-                        formData.latitude || 10.7769,
-                        formData.longitude || 106.7009,
-                      ]}
-                      onPositionChange={(pos) =>
-                        setFormData({
-                          ...formData,
-                          latitude: pos[0],
-                          longitude: pos[1],
-                        })
-                      }
+                      position={[latitude, longitude]}
+                      onPositionChange={(pos) => {
+                        setLatitude(pos[0]);
+                        setLongitude(pos[1]);
+                      }}
                     />
-
                     <div className="absolute top-4 right-4 z-20">
                       <div className="bg-white/90 backdrop-blur-sm p-2 rounded-xl shadow-sm border border-white/20">
                         <MapPin className="w-5 h-5 text-brand-500" />
@@ -626,8 +594,7 @@ export function CrimeReportForm({
                         {t("locationCurrentPlacement")}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                        {formData.latitude?.toFixed(5)},{" "}
-                        {formData.longitude?.toFixed(5)}
+                        {latitude.toFixed(5)}, {longitude.toFixed(5)}
                       </p>
                       <p className="text-[10px] text-brand-600 font-bold mt-1 uppercase tracking-wider">
                         {t("locationVerified")}
@@ -781,7 +748,7 @@ export function CrimeReportForm({
       </form>
 
       {/* Review Modal */}
-      {showReview && (
+      {showReview && submittedData && (
         <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden border border-white/20">
             <div className="sticky top-0 bg-white/80 backdrop-blur-md z-10 flex items-center justify-between p-8 border-b border-gray-100">
@@ -808,7 +775,7 @@ export function CrimeReportForm({
                     {t("formTitle")}
                   </p>
                   <p className="text-lg font-bold text-gray-900 leading-tight">
-                    {formData.title}
+                    {submittedData.title}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -819,9 +786,9 @@ export function CrimeReportForm({
                     <div
                       className={cn(
                         "w-2 h-2 rounded-full",
-                        formData.severity === 1
+                        submittedData.severity === 1
                           ? "bg-green-500"
-                          : formData.severity === 3
+                          : submittedData.severity === 3
                             ? "bg-orange-500"
                             : "bg-red-500",
                       )}
@@ -829,7 +796,7 @@ export function CrimeReportForm({
                     <span className="text-sm font-bold text-gray-700">
                       {
                         severityOptions.find(
-                          (o) => o.value === formData.severity,
+                          (o) => o.value === submittedData.severity,
                         )?.label
                       }
                     </span>
@@ -845,7 +812,7 @@ export function CrimeReportForm({
                       {t("reviewDate")}
                     </p>
                     <p className="text-sm font-bold text-gray-900">
-                      {formData.date}
+                      {submittedData.date}
                     </p>
                   </div>
                 </div>
@@ -855,7 +822,9 @@ export function CrimeReportForm({
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                       {t("reviewTime")}
                     </p>
-                    <p className="text-sm font-bold text-gray-900">{time}</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {submittedData.time}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -868,7 +837,7 @@ export function CrimeReportForm({
                   className="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-gray-600 prose prose-sm max-w-none prose-brand"
                   dangerouslySetInnerHTML={{
                     __html:
-                      formData.content ||
+                      submittedData.content ||
                       `<p class='italic text-gray-400'>${t("reviewNoDescription")}</p>`,
                   }}
                 />
