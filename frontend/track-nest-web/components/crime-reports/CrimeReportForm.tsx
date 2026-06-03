@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { z } from "zod";
 import {
@@ -61,24 +61,9 @@ const RichTextEditor = dynamic(
 
 const MAX_PHOTOS = 5;
 
-// ---------------------------------------------------------------------------
-// Validation schema — defined outside component so it is stable across renders.
-// Severity, arrested, content, and location are not validated here because
-// the UI prevents invalid states for them (buttons default to valid values).
-// ---------------------------------------------------------------------------
-const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  date: z.string().min(1, "Date is required"),
-  time: z.string().min(1, "Time is required"),
-  numberOfVictims: z
-    .number()
-    .min(0, "Number of victims cannot be negative"),
-  numberOfOffenders: z
-    .number()
-    .min(0, "Number of offenders cannot be negative"),
-});
-
-type FormErrors = Partial<Record<keyof z.infer<typeof formSchema>, string>>;
+type FormErrors = Partial<
+  Record<"title" | "date" | "time" | "numberOfVictims" | "numberOfOffenders", string>
+>;
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
@@ -102,6 +87,18 @@ export function CrimeReportForm({
 }: CrimeReportFormProps) {
   const t = useTranslations("crimeReports");
   const tCommon = useTranslations("common");
+
+  const formSchema = useMemo(
+    () =>
+      z.object({
+        title: z.string().min(1, t("validation.titleRequired")),
+        date: z.string().min(1, t("validation.dateRequired")),
+        time: z.string().min(1, t("validation.timeRequired")),
+        numberOfVictims: z.number().min(0, t("validation.victimsNonNegative")),
+        numberOfOffenders: z.number().min(0, t("validation.offendersNonNegative")),
+      }),
+    [t],
+  );
 
   const [formData, setFormData] = useState<Partial<CrimeReport>>(
     report || {
@@ -161,7 +158,7 @@ export function CrimeReportForm({
     const toAdd = files.slice(0, remaining);
     if (toAdd.length < files.length) {
       toast.warning(
-        `Maximum ${MAX_PHOTOS} photos allowed. Only ${toAdd.length} photo(s) were added.`,
+        t("photoLimitWarning", { max: MAX_PHOTOS, added: toAdd.length }),
       );
     }
     setSelectedFiles((prev) => [...prev, ...toAdd]);
@@ -324,8 +321,7 @@ export function CrimeReportForm({
           {mode === "create" ? t("formNewTitle") : t("formEditTitle")}
         </h1>
         <p className="text-gray-500 mt-2 text-lg">
-          Provide detailed information to alert your family circles and local
-          authorities.
+          {t("formDescription")}
         </p>
       </div>
 
@@ -340,10 +336,10 @@ export function CrimeReportForm({
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-800">
-                    Incident Details
+                    {t("sectionIncidentDetails")}
                   </h2>
                   <p className="text-sm text-gray-400 font-medium">
-                    BASIC INFORMATION
+                    {t("sectionIncidentDetailsSub")}
                   </p>
                 </div>
               </div>
@@ -366,7 +362,7 @@ export function CrimeReportForm({
                       setFormData({ ...formData, title: e.target.value });
                       clearError("title");
                     }}
-                    placeholder="e.g., Suspicious activity near the park"
+                    placeholder={t("placeholderTitle")}
                     className={cn(
                       "w-full px-5 py-4 bg-gray-50 border rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all placeholder:text-gray-400",
                       errors.title ? "border-red-300 bg-red-50/30" : "border-gray-200",
@@ -437,7 +433,7 @@ export function CrimeReportForm({
                       htmlFor="time"
                       className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1"
                     >
-                      Time <span className="text-red-400">*</span>
+                      {t("formTime")} <span className="text-red-400">*</span>
                     </label>
                     <div className="relative group">
                       <Clock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-brand-500 transition-colors pointer-events-none" />
@@ -553,7 +549,7 @@ export function CrimeReportForm({
                         ) : (
                           <AlertTriangle className="w-4 h-4" />
                         )}
-                        {formData.arrested ? "Offender Arrested" : "Not Arrested"}
+                        {formData.arrested ? t("formArrestedYes") : t("formArrestedNo")}
                       </button>
                     </div>
                   </div>
@@ -587,10 +583,10 @@ export function CrimeReportForm({
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-800">
-                    Incident Location
+                    {t("sectionLocation")}
                   </h2>
                   <p className="text-sm text-gray-400 font-medium">
-                    MAP PLACEMENT
+                    {t("sectionLocationSub")}
                   </p>
                 </div>
               </div>
@@ -627,14 +623,14 @@ export function CrimeReportForm({
                     </div>
                     <div>
                       <p className="text-sm font-bold text-gray-900">
-                        Current Placement
+                        {t("locationCurrentPlacement")}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
                         {formData.latitude?.toFixed(5)},{" "}
                         {formData.longitude?.toFixed(5)}
                       </p>
                       <p className="text-[10px] text-brand-600 font-bold mt-1 uppercase tracking-wider">
-                        Coordinates verified
+                        {t("locationVerified")}
                       </p>
                     </div>
                   </div>
@@ -643,8 +639,7 @@ export function CrimeReportForm({
                 <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex gap-3 items-start">
                   <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
                   <p className="text-[11px] text-amber-700 leading-normal">
-                    Note: You cannot change the location after submitting.
-                    Please ensure the pin is placed accurately.
+                    {t("locationLockNote")}
                   </p>
                 </div>
               </div>
@@ -661,10 +656,10 @@ export function CrimeReportForm({
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-gray-800">
-                      Media Evidence
+                      {t("sectionMedia")}
                     </h2>
                     <p className="text-sm text-gray-400 font-medium uppercase tracking-tight">
-                      Photos and Videos
+                      {t("sectionMediaSub")}
                     </p>
                   </div>
                 </div>
@@ -685,7 +680,7 @@ export function CrimeReportForm({
                     <Upload className="w-6 h-6" />
                   </div>
                   <span className="text-sm font-bold tracking-tight">
-                    Add Media
+                    {t("addMedia")}
                   </span>
                   <input
                     ref={fileInputRef}
@@ -773,12 +768,12 @@ export function CrimeReportForm({
             ) : mode === "create" ? (
               <>
                 <CheckCircle2 className="w-5 h-5" />
-                Submit Report
+                {t("submitReport")}
               </>
             ) : (
               <>
                 <Save className="w-5 h-5" />
-                Update Report
+                {t("updateReport")}
               </>
             )}
           </button>
@@ -858,7 +853,7 @@ export function CrimeReportForm({
                   <Clock className="w-5 h-5 text-brand-500" />
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                      Time
+                      {t("reviewTime")}
                     </p>
                     <p className="text-sm font-bold text-gray-900">{time}</p>
                   </div>
@@ -874,7 +869,7 @@ export function CrimeReportForm({
                   dangerouslySetInnerHTML={{
                     __html:
                       formData.content ||
-                      "<p class='italic text-gray-400'>No description provided.</p>",
+                      `<p class='italic text-gray-400'>${t("reviewNoDescription")}</p>`,
                   }}
                 />
               </div>
@@ -882,7 +877,7 @@ export function CrimeReportForm({
               {totalPhotos > 0 && (
                 <div className="space-y-4">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    Media Evidence ({totalPhotos})
+                    {t("reviewMediaCount", { count: totalPhotos })}
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {[...existingPhotos, ...previewUrls].map((url, idx) => (
@@ -920,7 +915,7 @@ export function CrimeReportForm({
                 {isUploading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Uploading Assets...
+                    {t("uploadingAssets")}
                   </>
                 ) : isSubmitting ? (
                   tCommon("submitting")
