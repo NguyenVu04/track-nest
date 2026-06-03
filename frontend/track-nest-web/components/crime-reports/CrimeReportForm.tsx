@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { z } from "zod";
 import {
   Save,
   X,
@@ -11,7 +12,6 @@ import {
   Info,
   Calendar,
   Clock,
-  ChevronRight,
   AlertTriangle,
   ShieldCheck,
   UserPlus,
@@ -61,6 +61,32 @@ const RichTextEditor = dynamic(
 
 const MAX_PHOTOS = 5;
 
+// ---------------------------------------------------------------------------
+// Validation schema — defined outside component so it is stable across renders.
+// Severity, arrested, content, and location are not validated here because
+// the UI prevents invalid states for them (buttons default to valid values).
+// ---------------------------------------------------------------------------
+const formSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  date: z.string().min(1, "Date is required"),
+  time: z.string().min(1, "Time is required"),
+  numberOfVictims: z
+    .number()
+    .min(0, "Number of victims cannot be negative"),
+  numberOfOffenders: z
+    .number()
+    .min(0, "Number of offenders cannot be negative"),
+});
+
+type FormErrors = Partial<Record<keyof z.infer<typeof formSchema>, string>>;
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="mt-1.5 ml-1 text-sm text-red-500">{message}</p>;
+}
+
+// ---------------------------------------------------------------------------
+
 interface CrimeReportFormProps {
   report: CrimeReport | null;
   onSave: (report: CrimeReport) => Promise<void> | void;
@@ -105,6 +131,7 @@ export function CrimeReportForm({
 
   const [showReview, setShowReview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   // Split date into date and time for UI
   const [time, setTime] = useState(() => {
@@ -119,6 +146,12 @@ export function CrimeReportForm({
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [previewUrls]);
+
+  const clearError = (field: keyof FormErrors) => {
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
 
   const totalPhotos = existingPhotos.length + selectedFiles.length;
 
@@ -150,7 +183,6 @@ export function CrimeReportForm({
   };
 
   const buildReport = (uploadedPhotoUrls: string[]): CrimeReport => {
-    // Combine date and time
     const combinedDate = new Date(formData.date!);
     const [hours, minutes] = time.split(":").map(Number);
     combinedDate.setHours(hours, minutes);
@@ -177,6 +209,26 @@ export function CrimeReportForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const result = formSchema.safeParse({
+      title: formData.title ?? "",
+      date: formData.date ?? "",
+      time,
+      numberOfVictims: formData.numberOfVictims ?? 0,
+      numberOfOffenders: formData.numberOfOffenders ?? 0,
+    });
+
+    if (!result.success) {
+      const fieldErrors: FormErrors = {};
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as keyof FormErrors;
+        if (!fieldErrors[field]) fieldErrors[field] = issue.message;
+      }
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setErrors({});
     setShowReview(true);
   };
 
@@ -269,7 +321,7 @@ export function CrimeReportForm({
       {/* Page Header */}
       <div className="mb-10">
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          {mode === "create" ? "Report an Incident" : "Edit Incident Report"}
+          {mode === "create" ? t("formNewTitle") : t("formEditTitle")}
         </h1>
         <p className="text-gray-500 mt-2 text-lg">
           Provide detailed information to alert your family circles and local
@@ -277,7 +329,7 @@ export function CrimeReportForm({
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-8" noValidate>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left Column: Incident Details */}
           <div className="lg:col-span-2 space-y-8">
@@ -303,25 +355,30 @@ export function CrimeReportForm({
                     htmlFor="title"
                     className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1"
                   >
-                    Report Title <span className="text-red-400">*</span>
+                    {t("formTitle")} <span className="text-red-400">*</span>
                   </label>
                   <input
                     id="title"
                     type="text"
+                    autoComplete="off"
                     value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, title: e.target.value });
+                      clearError("title");
+                    }}
                     placeholder="e.g., Suspicious activity near the park"
-                    className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all placeholder:text-gray-400"
-                    required
+                    className={cn(
+                      "w-full px-5 py-4 bg-gray-50 border rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all placeholder:text-gray-400",
+                      errors.title ? "border-red-300 bg-red-50/30" : "border-gray-200",
+                    )}
                   />
+                  <FieldError message={errors.title} />
                 </div>
 
                 {/* Severity Level */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-3 ml-1">
-                    Severity Level <span className="text-red-400">*</span>
+                    {t("formSeverity")} <span className="text-red-400">*</span>
                   </label>
                   <div className="grid grid-cols-3 gap-4">
                     {severityOptions.map((opt) => (
@@ -355,21 +412,25 @@ export function CrimeReportForm({
                       htmlFor="date"
                       className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1"
                     >
-                      Date <span className="text-red-400">*</span>
+                      {t("formDate")} <span className="text-red-400">*</span>
                     </label>
                     <div className="relative group">
-                      <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
+                      <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-brand-500 transition-colors pointer-events-none" />
                       <input
                         id="date"
                         type="date"
                         value={formData.date?.slice(0, 10)}
-                        onChange={(e) =>
-                          setFormData({ ...formData, date: e.target.value })
-                        }
-                        className="w-full pl-14 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all"
-                        required
+                        onChange={(e) => {
+                          setFormData({ ...formData, date: e.target.value });
+                          clearError("date");
+                        }}
+                        className={cn(
+                          "w-full pl-14 pr-5 py-4 bg-gray-50 border rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all",
+                          errors.date ? "border-red-300 bg-red-50/30" : "border-gray-200",
+                        )}
                       />
                     </div>
+                    <FieldError message={errors.date} />
                   </div>
                   <div>
                     <label
@@ -379,91 +440,129 @@ export function CrimeReportForm({
                       Time <span className="text-red-400">*</span>
                     </label>
                     <div className="relative group">
-                      <Clock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
+                      <Clock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-brand-500 transition-colors pointer-events-none" />
                       <input
                         id="time"
                         type="time"
                         value={time}
-                        onChange={(e) => setTime(e.target.value)}
-                        className="w-full pl-14 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all"
-                        required
+                        onChange={(e) => {
+                          setTime(e.target.value);
+                          clearError("time");
+                        }}
+                        className={cn(
+                          "w-full pl-14 pr-5 py-4 bg-gray-50 border rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all",
+                          errors.time ? "border-red-300 bg-red-50/30" : "border-gray-200",
+                        )}
                       />
                     </div>
+                    <FieldError message={errors.time} />
                   </div>
                 </div>
 
                 {/* Additional Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Number of Victims */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1">
-                      Victims
+                    <label
+                      htmlFor="numberOfVictims"
+                      className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1"
+                    >
+                      {t("formVictims")}
                     </label>
                     <div className="relative group">
-                      <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                       <input
+                        id="numberOfVictims"
                         type="number"
+                        inputMode="numeric"
                         min="0"
+                        step="1"
                         value={formData.numberOfVictims}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setFormData({
                             ...formData,
                             numberOfVictims: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-brand-400 focus:bg-white outline-none transition-all text-sm"
+                          });
+                          clearError("numberOfVictims");
+                        }}
+                        className={cn(
+                          "w-full pl-11 pr-4 py-3 bg-gray-50 border rounded-xl focus:border-brand-400 focus:bg-white outline-none transition-all text-sm",
+                          errors.numberOfVictims ? "border-red-300 bg-red-50/30" : "border-gray-100",
+                        )}
                       />
                     </div>
+                    <FieldError message={errors.numberOfVictims} />
                   </div>
+
+                  {/* Number of Offenders */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1">
-                      Offenders
+                    <label
+                      htmlFor="numberOfOffenders"
+                      className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1"
+                    >
+                      {t("formOffenders")}
                     </label>
                     <div className="relative group">
-                      <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                       <input
+                        id="numberOfOffenders"
                         type="number"
+                        inputMode="numeric"
                         min="0"
+                        step="1"
                         value={formData.numberOfOffenders}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setFormData({
                             ...formData,
                             numberOfOffenders: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-brand-400 focus:bg-white outline-none transition-all text-sm"
+                          });
+                          clearError("numberOfOffenders");
+                        }}
+                        className={cn(
+                          "w-full pl-11 pr-4 py-3 bg-gray-50 border rounded-xl focus:border-brand-400 focus:bg-white outline-none transition-all text-sm",
+                          errors.numberOfOffenders ? "border-red-300 bg-red-50/30" : "border-gray-100",
+                        )}
                       />
                     </div>
+                    <FieldError message={errors.numberOfOffenders} />
                   </div>
+
+                  {/* Arrested Toggle */}
                   <div className="flex items-end">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setFormData({
-                          ...formData,
-                          arrested: !formData.arrested,
-                        })
-                      }
-                      className={cn(
-                        "w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border font-bold transition-all text-sm",
-                        formData.arrested
-                          ? "bg-green-50 border-green-200 text-green-600"
-                          : "bg-gray-50 border-gray-100 text-gray-400",
-                      )}
-                    >
-                      {formData.arrested ? (
-                        <ShieldCheck className="w-4 h-4" />
-                      ) : (
-                        <AlertTriangle className="w-4 h-4" />
-                      )}
-                      {formData.arrested ? "Offender Arrested" : "Not Arrested"}
-                    </button>
+                    <div className="w-full">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1">
+                        {t("formArrested")}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            arrested: !formData.arrested,
+                          })
+                        }
+                        className={cn(
+                          "w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border font-bold transition-all text-sm",
+                          formData.arrested
+                            ? "bg-green-50 border-green-200 text-green-600"
+                            : "bg-gray-50 border-gray-100 text-gray-400",
+                        )}
+                      >
+                        {formData.arrested ? (
+                          <ShieldCheck className="w-4 h-4" />
+                        ) : (
+                          <AlertTriangle className="w-4 h-4" />
+                        )}
+                        {formData.arrested ? "Offender Arrested" : "Not Arrested"}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Description */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1">
-                    Detailed Description
+                    {t("formContent")}
                   </label>
                   <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white">
                     <RichTextEditor
@@ -471,7 +570,7 @@ export function CrimeReportForm({
                       onChange={(html) =>
                         setFormData({ ...formData, content: html })
                       }
-                      placeholder="Describe what happened, who was involved, and any other relevant details..."
+                      placeholder={t("placeholderContent")}
                     />
                   </div>
                 </div>
@@ -513,7 +612,6 @@ export function CrimeReportForm({
                       }
                     />
 
-                    {/* Visual Overlay like in the image */}
                     <div className="absolute top-4 right-4 z-20">
                       <div className="bg-white/90 backdrop-blur-sm p-2 rounded-xl shadow-sm border border-white/20">
                         <MapPin className="w-5 h-5 text-brand-500" />
@@ -663,7 +761,7 @@ export function CrimeReportForm({
             onClick={onCancel}
             className="w-full sm:w-auto px-10 py-4 text-gray-500 font-bold hover:text-gray-700 transition-colors"
           >
-            Cancel
+            {tCommon("cancel")}
           </button>
           <button
             type="submit"
@@ -697,7 +795,7 @@ export function CrimeReportForm({
                   <CheckCircle2 className="w-6 h-6 text-brand-500" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900">
-                  Review Report
+                  {t("reviewTitle")}
                 </h3>
               </div>
               <button
@@ -712,7 +810,7 @@ export function CrimeReportForm({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    Title
+                    {t("formTitle")}
                   </p>
                   <p className="text-lg font-bold text-gray-900 leading-tight">
                     {formData.title}
@@ -720,7 +818,7 @@ export function CrimeReportForm({
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    Severity
+                    {t("reviewSeverity")}
                   </p>
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-gray-100 border border-gray-200">
                     <div
@@ -749,7 +847,7 @@ export function CrimeReportForm({
                   <Calendar className="w-5 h-5 text-brand-500" />
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                      Date
+                      {t("reviewDate")}
                     </p>
                     <p className="text-sm font-bold text-gray-900">
                       {formData.date}
@@ -769,14 +867,14 @@ export function CrimeReportForm({
 
               <div className="space-y-3">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  Description
+                  {t("formContent")}
                 </p>
                 <div
                   className="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-gray-600 prose prose-sm max-w-none prose-brand"
                   dangerouslySetInnerHTML={{
                     __html:
                       formData.content ||
-                      "<p className='italic text-gray-400'>No description provided.</p>",
+                      "<p class='italic text-gray-400'>No description provided.</p>",
                   }}
                 />
               </div>
@@ -812,7 +910,7 @@ export function CrimeReportForm({
                 className="w-full sm:w-auto px-8 py-3 text-gray-500 font-bold hover:text-gray-700 transition-colors disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                Back to Edit
+                {t("backToEdit")}
               </button>
               <button
                 onClick={handleConfirmSubmit}
@@ -825,11 +923,11 @@ export function CrimeReportForm({
                     Uploading Assets...
                   </>
                 ) : isSubmitting ? (
-                  "Submitting..."
+                  tCommon("submitting")
                 ) : (
                   <>
                     <Save className="w-5 h-5" />
-                    Confirm & Publish
+                    {t("confirmSubmit")}
                   </>
                 )}
               </button>
