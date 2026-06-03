@@ -1,18 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import {
-  Globe,
-  MessageSquare,
-  Bell,
-  ChevronLeft,
-  Save,
-  Send,
-  ShieldCheck,
-  ChevronDown,
-} from "lucide-react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Globe, Save, Send, ShieldCheck, ChevronLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
@@ -31,13 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
@@ -57,20 +44,44 @@ const RichTextEditor = dynamic(
   },
 );
 
+const formSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  category: z.string(),
+  abstractText: z.string(),
+  content: z.string(),
+  isPublic: z.boolean(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="mt-1.5 ml-1 text-sm text-red-500">{message}</p>;
+}
+
 export default function CreateGuidelinePage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState({
-    title: "",
-    category: "general",
-    abstractText: "",
-    content: "",
-    isPublic: false,
-    allowComments: true,
-    notifyCircle: true,
+  const {
+    register,
+    control,
+    handleSubmit,
+    setError,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      category: "general",
+      abstractText: "",
+      content: "",
+      isPublic: false,
+    },
   });
+
+  const watchedIsPublic = watch("isPublic");
 
   if (!user) {
     return (
@@ -97,19 +108,40 @@ export default function CreateGuidelinePage() {
     );
   }
 
-  const handlePublish = async () => {
-    if (!formData.title || !formData.abstractText || !formData.content) {
-      toast.error("Please fill in all required fields");
-      return;
+  const onSaveDraft = async (data: FormValues) => {
+    try {
+      await criminalReportsService.createGuidelinesDocument({
+        title: data.title,
+        abstractText: data.abstractText,
+        content: data.content,
+        isPublic: false,
+      });
+      toast.success("Guideline saved as draft");
+      router.push("/dashboard/guidelines");
+    } catch (error) {
+      toast.error("Failed to save guideline");
+      console.error(error);
     }
+  };
 
-    setIsSubmitting(true);
+  const onPublish = async (data: FormValues) => {
+    let hasError = false;
+    if (!data.abstractText.trim()) {
+      setError("abstractText", { message: "Abstract is required to publish" });
+      hasError = true;
+    }
+    if (!data.content) {
+      setError("content", { message: "Content is required to publish" });
+      hasError = true;
+    }
+    if (hasError) return;
+
     try {
       const request: CreateGuidelinesDocumentRequest = {
-        title: formData.title,
-        abstractText: formData.abstractText,
-        content: formData.content,
-        isPublic: formData.isPublic,
+        title: data.title,
+        abstractText: data.abstractText,
+        content: data.content,
+        isPublic: data.isPublic,
       };
       const created =
         await criminalReportsService.createGuidelinesDocument(request);
@@ -119,33 +151,6 @@ export default function CreateGuidelinePage() {
     } catch (error) {
       toast.error("Failed to publish guideline");
       console.error(error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSaveDraft = async () => {
-    if (!formData.title) {
-      toast.error("A title is required to save a draft");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const request: CreateGuidelinesDocumentRequest = {
-        title: formData.title,
-        abstractText: formData.abstractText,
-        content: formData.content,
-        isPublic: false, // Drafts are not public
-      };
-      await criminalReportsService.createGuidelinesDocument(request);
-      toast.success("Guideline saved as draft");
-      router.push("/dashboard/guidelines");
-    } catch (error) {
-      toast.error("Failed to save guideline");
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -182,13 +187,12 @@ export default function CreateGuidelinePage() {
                   </Label>
                   <Input
                     id="title"
+                    type="text"
                     placeholder="e.g., Extreme Weather Protocol"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
+                    {...register("title")}
                     className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold"
                   />
+                  <FieldError message={errors.title?.message} />
                 </div>
                 <div className="space-y-3">
                   <Label
@@ -197,45 +201,49 @@ export default function CreateGuidelinePage() {
                   >
                     Category
                   </Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(val) =>
-                      setFormData({ ...formData, category: val })
-                    }
-                  >
-                    <SelectTrigger
-                      id="category"
-                      className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all font-bold"
-                    >
-                      <SelectValue placeholder="Select category..." />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
-                      <SelectItem
-                        value="general"
-                        className="rounded-xl py-3 font-bold"
+                  <Controller
+                    name="category"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
                       >
-                        General Safety
-                      </SelectItem>
-                      <SelectItem
-                        value="emergency"
-                        className="rounded-xl py-3 font-bold"
-                      >
-                        Emergency Response
-                      </SelectItem>
-                      <SelectItem
-                        value="medical"
-                        className="rounded-xl py-3 font-bold"
-                      >
-                        Medical Protocol
-                      </SelectItem>
-                      <SelectItem
-                        value="family"
-                        className="rounded-xl py-3 font-bold"
-                      >
-                        Family Circle
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                        <SelectTrigger
+                          id="category"
+                          className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all font-bold"
+                        >
+                          <SelectValue placeholder="Select category..." />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
+                          <SelectItem
+                            value="general"
+                            className="rounded-xl py-3 font-bold"
+                          >
+                            General Safety
+                          </SelectItem>
+                          <SelectItem
+                            value="emergency"
+                            className="rounded-xl py-3 font-bold"
+                          >
+                            Emergency Response
+                          </SelectItem>
+                          <SelectItem
+                            value="medical"
+                            className="rounded-xl py-3 font-bold"
+                          >
+                            Medical Protocol
+                          </SelectItem>
+                          <SelectItem
+                            value="family"
+                            className="rounded-xl py-3 font-bold"
+                          >
+                            Family Circle
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
               </div>
 
@@ -250,12 +258,10 @@ export default function CreateGuidelinePage() {
                 <Textarea
                   id="abstractText"
                   placeholder="Brief summary of the guideline's purpose..."
-                  value={formData.abstractText}
-                  onChange={(e) =>
-                    setFormData({ ...formData, abstractText: e.target.value })
-                  }
+                  {...register("abstractText")}
                   className="min-h-[120px] px-6 py-4 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-base font-medium resize-none"
                 />
+                <FieldError message={errors.abstractText?.message} />
               </div>
 
               {/* Row 3: Full Content */}
@@ -267,15 +273,20 @@ export default function CreateGuidelinePage() {
                   Full Content
                 </Label>
                 <div className="rounded-3xl overflow-hidden border border-gray-100 bg-white ring-offset-background focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-500 transition-all">
-                  <RichTextEditor
-                    value={formData.content}
-                    onChange={(html) =>
-                      setFormData({ ...formData, content: html })
-                    }
-                    placeholder="Start typing the full procedure here..."
-                    height={400}
+                  <Controller
+                    name="content"
+                    control={control}
+                    render={({ field }) => (
+                      <RichTextEditor
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Start typing the full procedure here..."
+                        height={400}
+                      />
+                    )}
                   />
                 </div>
+                <FieldError message={errors.content?.message} />
               </div>
 
               {/* Publishing Settings Section */}
@@ -290,7 +301,7 @@ export default function CreateGuidelinePage() {
                 </div>
 
                 <div className="space-y-4">
-                  {/* Setting 1: Make Public */}
+                  {/* Setting: Make Public */}
                   <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-50 shadow-sm transition-all hover:shadow-md">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
@@ -298,20 +309,25 @@ export default function CreateGuidelinePage() {
                       </div>
                       <div>
                         <p className="font-black text-gray-900">
-                          Visibility: {formData.isPublic ? "Public" : "Draft"}
+                          Visibility:{" "}
+                          {watchedIsPublic ? "Public" : "Draft"}
                         </p>
                         <p className="text-xs font-medium text-gray-500">
-                          {formData.isPublic
+                          {watchedIsPublic
                             ? "This guideline will be visible to everyone on TrackNest."
                             : "Draft"}
                         </p>
                       </div>
                     </div>
-                    <Switch
-                      checked={formData.isPublic}
-                      onCheckedChange={(val) =>
-                        setFormData({ ...formData, isPublic: val })
-                      }
+                    <Controller
+                      name="isPublic"
+                      control={control}
+                      render={({ field }) => (
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      )}
                     />
                   </div>
                 </div>
@@ -330,8 +346,8 @@ export default function CreateGuidelinePage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={handleSaveDraft}
-                  disabled={isSubmitting || formData.isPublic}
+                  onClick={handleSubmit(onSaveDraft)}
+                  disabled={isSubmitting || watchedIsPublic}
                   className="px-8 py-6 rounded-2xl bg-gray-100 text-gray-900 font-bold hover:bg-gray-200 transition-all w-full sm:w-auto"
                 >
                   <Save className="w-5 h-5 mr-2" />
@@ -339,8 +355,8 @@ export default function CreateGuidelinePage() {
                 </Button>
                 <Button
                   type="button"
-                  onClick={handlePublish}
-                  disabled={isSubmitting || !formData.isPublic}
+                  onClick={handleSubmit(onPublish)}
+                  disabled={isSubmitting || !watchedIsPublic}
                   className="px-10 py-6 rounded-2xl bg-brand-400 text-white font-black shadow-xl shadow-brand-400/20 hover:bg-brand-500 hover:-translate-y-0.5 transition-all w-full sm:w-auto"
                 >
                   {isSubmitting ? "Publishing..." : "Publish"}
