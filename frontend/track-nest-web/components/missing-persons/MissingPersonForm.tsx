@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -92,7 +98,7 @@ interface MissingPersonFormProps {
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return <p className="text-sm text-red-500 mt-1 ml-1">{message}</p>;
+  return <p className="mt-1.5 ml-1 text-sm text-red-500">{message}</p>;
 }
 
 export function MissingPersonForm({
@@ -416,7 +422,10 @@ export function MissingPersonForm({
                     autoComplete="name"
                     placeholder={t("placeholderFullName")}
                     {...register("fullName")}
-                    className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold"
+                    className={cn(
+                      "h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold",
+                      errors.fullName && "border-red-300 bg-red-50/30",
+                    )}
                   />
                   <FieldError message={errors.fullName?.message} />
                 </div>
@@ -438,7 +447,10 @@ export function MissingPersonForm({
                       inputMode="numeric"
                       placeholder={t("formAge")}
                       {...register("age")}
-                      className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold"
+                      className={cn(
+                        "h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold",
+                        errors.age && "border-red-300 bg-red-50/30",
+                      )}
                     />
                     <FieldError message={errors.age?.message} />
                   </div>
@@ -454,7 +466,10 @@ export function MissingPersonForm({
                           value={field.value}
                           onValueChange={field.onChange}
                         >
-                          <SelectTrigger className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold">
+                          <SelectTrigger className={cn(
+                              "h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold",
+                              errors.gender && "border-red-300 bg-red-50/30",
+                            )}>
                             <SelectValue placeholder={t("placeholderGender")} />
                           </SelectTrigger>
                           <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
@@ -492,7 +507,10 @@ export function MissingPersonForm({
                     autoComplete="off"
                     placeholder={t("placeholderId")}
                     {...register("personalId")}
-                    className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold"
+                    className={cn(
+                      "h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold",
+                      errors.personalId && "border-red-300 bg-red-50/30",
+                    )}
                   />
                   <FieldError message={errors.personalId?.message} />
                 </div>
@@ -586,7 +604,10 @@ export function MissingPersonForm({
                     inputMode="decimal"
                     placeholder={t("placeholderHeight")}
                     {...register("height")}
-                    className="h-12 px-5 rounded-xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                    className={cn(
+                      "h-12 px-5 rounded-xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold",
+                      errors.height && "border-red-300 bg-red-50/30",
+                    )}
                   />
                   <FieldError message={errors.height?.message} />
                 </div>
@@ -605,7 +626,10 @@ export function MissingPersonForm({
                     inputMode="decimal"
                     placeholder={t("placeholderWeight")}
                     {...register("weight")}
-                    className="h-12 px-5 rounded-xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                    className={cn(
+                      "h-12 px-5 rounded-xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold",
+                      errors.weight && "border-red-300 bg-red-50/30",
+                    )}
                   />
                   <FieldError message={errors.weight?.message} />
                 </div>
@@ -689,7 +713,10 @@ export function MissingPersonForm({
                       id="date"
                       type="date"
                       {...register("date")}
-                      className="h-14 pl-12 pr-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                      className={cn(
+                        "h-14 pl-12 pr-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold",
+                        errors.date && "border-red-300 bg-red-50/30",
+                      )}
                     />
                   </div>
                   <FieldError message={errors.date?.message} />
@@ -743,7 +770,10 @@ export function MissingPersonForm({
                     inputMode="tel"
                     placeholder={t("placeholderPhone")}
                     {...register("contactPhone")}
-                    className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                    className={cn(
+                      "h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold",
+                      errors.contactPhone && "border-red-300 bg-red-50/30",
+                    )}
                   />
                   <FieldError message={errors.contactPhone?.message} />
                 </div>
@@ -762,7 +792,10 @@ export function MissingPersonForm({
                     inputMode="email"
                     placeholder={t("placeholderEmail")}
                     {...register("contactEmail")}
-                    className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
+                    className={cn(
+                      "h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold",
+                      errors.contactEmail && "border-red-300 bg-red-50/30",
+                    )}
                   />
                   <FieldError message={errors.contactEmail?.message} />
                 </div>
