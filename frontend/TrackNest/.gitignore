@@ -48,3 +48,4 @@ app-example
 
 /.github
 coverage/
+test-results/
