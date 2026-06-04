@@ -80,11 +80,15 @@ export default function SafeZonesPage() {
     register: registerZone,
     handleSubmit: handleZoneSubmit,
     reset: resetZoneForm,
+    watch: watchZone,
     formState: { errors: zoneErrors },
   } = useForm<SafeZoneFormValues>({
     resolver: zodResolver(safeZoneSchema),
     defaultValues: { name: "", radius: "500" },
   });
+
+  const watchedName = watchZone("name");
+  const watchedRadius = watchZone("radius");
 
   const [zones, setZones] = useState<SafeZone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -498,6 +502,7 @@ export default function SafeZonesPage() {
                   <Button variant="ghost" onClick={() => setIsCreating(false)} className="flex-1 h-12 rounded-xl font-bold">{tCommon("cancel")}</Button>
                   <Button
                     onClick={handleZoneSubmit(handleCreate)}
+                    disabled={!watchedName?.trim() || !watchedRadius?.trim()}
                     className="flex-1 h-12 rounded-xl bg-brand-700 text-white font-black"
                   >
                     {tCommon("confirm")}
