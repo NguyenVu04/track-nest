@@ -34,7 +34,7 @@ import {
   SafeZoneResponse,
 } from "@/services/emergencyOpsService";
 import { Loading } from "@/components/loading/Loading";
-import { useTranslations } from "next-intl";
+import { useTranslations, useFormatter } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,6 +48,7 @@ export default function SafeZonesPage() {
   const { user } = useAuth();
   const t = useTranslations("safeZones");
   const tCommon = useTranslations("common");
+  const format = useFormatter();
 
   const [zones, setZones] = useState<SafeZone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,7 +91,7 @@ export default function SafeZonesPage() {
         setZones(mappedZones);
       } catch (error) {
         console.error("Error fetching safe zones:", error);
-        toast.error(t("toastLoadError") || "Failed to load safe zones");
+        toast.error(t("toastLoadError"));
       } finally {
         setIsLoading(false);
       }
@@ -189,7 +190,7 @@ export default function SafeZonesPage() {
   const handleCreate = async () => {
     try {
       if (!selectedLocation) {
-        toast.error("Please choose a location on the map");
+        toast.error(t("toastNoLocation"));
         return;
       }
       const [latitude, longitude] = selectedLocation;
@@ -235,21 +236,21 @@ export default function SafeZonesPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      <Breadcrumbs items={[{ label: "Safe Zone Management" }]} />
+      <Breadcrumbs items={[{ label: t("pageHeading") }]} />
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="max-w-2xl">
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Safe Zone Management</h1>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">{t("pageHeading")}</h1>
           <p className="text-gray-500 font-medium leading-relaxed">
-            Manage geofenced areas. You&apos;ll receive alerts when family members enter or leave these designated safe zones.
+            {t("pageSubtitle")}
           </p>
         </div>
-        <Button 
+        <Button
           onClick={openCreateModal}
           className="rounded-2xl h-14 px-8 bg-brand-700 text-white hover:bg-brand-800 font-black shadow-xl shadow-brand-700/20 transition-all hover:-translate-y-1"
         >
           <Plus className="w-5 h-5 mr-3" />
-          Create New Zone
+          {t("createZone")}
         </Button>
       </div>
 
@@ -271,7 +272,7 @@ export default function SafeZonesPage() {
             <div className="absolute top-8 left-8">
               <Badge className="bg-white text-brand-700 border-none rounded-xl px-4 py-2.5 font-black uppercase text-[10px] tracking-widest flex items-center gap-3 shadow-2xl">
                 <div className="w-2 h-2 rounded-full bg-brand-600 animate-pulse" />
-                {zones.length} Active Zones
+                {t("activeZones", { count: zones.length })}
               </Badge>
             </div>
 
@@ -293,7 +294,7 @@ export default function SafeZonesPage() {
           <Card className="rounded-[2.5rem] border-none shadow-2xl shadow-gray-200/50 min-h-[600px]">
             <CardContent className="p-10">
               <div className="flex items-center justify-between mb-10">
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Configured Zones</h2>
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">{t("configuredZones")}</h2>
                 <div className="flex items-center gap-3">
                   <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl hover:bg-gray-50">
                     <Filter className="w-5 h-5 text-gray-400" />
@@ -308,7 +309,7 @@ export default function SafeZonesPage() {
               <div className="relative mb-8">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input 
-                  placeholder="Search by zone name..." 
+                  placeholder={t("searchByName")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-14 pl-12 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
@@ -336,7 +337,7 @@ export default function SafeZonesPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            title="delete"
+                            title={tCommon("delete")}
                             onClick={(e) => { e.stopPropagation(); setConfirmDelete(zone); }}
                             className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl"
                           >
@@ -349,10 +350,10 @@ export default function SafeZonesPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <Badge variant="secondary" className="bg-gray-100 text-gray-500 border-none rounded-lg px-3 py-1 font-black text-[10px] uppercase">
-                            Radius: {zone.radius}m
+                            {t("badgeRadius", { radius: zone.radius })}
                           </Badge>
                           <Badge variant="secondary" className="bg-gray-100 text-gray-500 border-none rounded-lg px-3 py-1 font-black text-[10px] uppercase">
-                            Created: {new Date(zone.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            {t("badgeCreated", { date: format.dateTime(new Date(zone.createdAt), { month: "short", day: "numeric" }) })}
                           </Badge>
                         </div>
                       </div>
@@ -379,7 +380,7 @@ export default function SafeZonesPage() {
                 />
                 <div className="absolute top-6 left-6 z-10">
                   <Badge className="bg-white/90 backdrop-blur-md text-brand-700 px-4 py-2 rounded-xl font-bold border-none shadow-lg">
-                    Click to pin center location
+                    {t("mapPinHint")}
                   </Badge>
                 </div>
               </div>
@@ -399,7 +400,7 @@ export default function SafeZonesPage() {
                       value={locationInput}
                       onChange={(e) => setLocationInput(e.target.value)}
                       onFocus={() => locationSuggestions.length > 0 && setShowLocationSuggestions(true)}
-                      placeholder="Search for a location…"
+                      placeholder={t("locationSearchPlaceholder")}
                       className="w-full h-12 pl-10 pr-10 rounded-xl bg-gray-50 border-none text-sm font-bold focus:outline-none focus:ring-2 focus:ring-brand-500"
                     />
                     {locationInput && (
@@ -438,16 +439,16 @@ export default function SafeZonesPage() {
 
                 <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Zone Name</label>
-                    <Input 
-                      placeholder="e.g. Family Home"
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("formZoneName")}</label>
+                    <Input
+                      placeholder={t("formZoneNamePlaceholder")}
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       className="h-12 px-5 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand-500 font-bold"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Zone Radius (Meters)</label>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("formZoneRadius")}</label>
                     <Input 
                       type="number"
                       placeholder="500"
@@ -461,10 +462,10 @@ export default function SafeZonesPage() {
                       <div className="p-2 bg-white rounded-lg">
                         <Navigation className="w-4 h-4 text-brand-600" />
                       </div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pin Coordinates</p>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t("pinCoordinates")}</p>
                     </div>
                     <p className="text-sm font-black text-gray-900">
-                      {selectedLocation ? `${selectedLocation[0].toFixed(6)}, ${selectedLocation[1].toFixed(6)}` : "Not selected yet"}
+                      {selectedLocation ? `${selectedLocation[0].toFixed(6)}, ${selectedLocation[1].toFixed(6)}` : t("notSelectedYet")}
                     </p>
                   </div>
                 </div>
