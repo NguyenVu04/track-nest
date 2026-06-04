@@ -1,18 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import {
-  Globe,
-  MessageSquare,
-  Bell,
-  ChevronLeft,
-  Save,
-  Send,
-  ShieldCheck,
-  ChevronDown,
-} from "lucide-react";
+import { useMemo } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Globe, Save, Send, ShieldCheck, ChevronLeft } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
@@ -31,13 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { PageTransition } from "@/components/animations/PageTransition";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
@@ -57,20 +46,57 @@ const RichTextEditor = dynamic(
   },
 );
 
+type FormValues = {
+  title: string;
+  category: string;
+  abstractText: string;
+  content: string;
+  isPublic: boolean;
+};
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="mt-1.5 ml-1 text-sm text-red-500">{message}</p>;
+}
+
 export default function CreateGuidelinePage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const t = useTranslations("guidelines");
+  const tCommon = useTranslations("common");
+  const tNav = useTranslations("nav");
 
-  const [formData, setFormData] = useState({
-    title: "",
-    category: "general",
-    abstractText: "",
-    content: "",
-    isPublic: false,
-    allowComments: true,
-    notifyCircle: true,
+  const formSchema = useMemo(
+    () =>
+      z.object({
+        title: z.string().min(1, t("validation.titleRequired")),
+        category: z.string(),
+        abstractText: z.string(),
+        content: z.string(),
+        isPublic: z.boolean(),
+      }),
+    [t],
+  );
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    setError,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      category: "general",
+      abstractText: "",
+      content: "",
+      isPublic: false,
+    },
   });
+
+  const watchedIsPublic = watch("isPublic");
 
   if (!user) {
     return (
@@ -79,11 +105,10 @@ export default function CreateGuidelinePage() {
           <ShieldCheck className="w-8 h-8" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Unauthorized Access
+          {t("unauthorizedTitle")}
         </h2>
         <p className="text-gray-500 mb-8 max-w-md">
-          You do not have the required permissions to create guidelines. Please
-          contact your administrator if you believe this is an error.
+          {t("unauthorizedMessage")}
         </p>
         <Button
           onClick={() => router.back()}
@@ -91,61 +116,55 @@ export default function CreateGuidelinePage() {
           className="rounded-xl"
         >
           <ChevronLeft className="w-4 h-4 mr-2" />
-          Go Back
+          {tCommon("back")}
         </Button>
       </div>
     );
   }
 
-  const handlePublish = async () => {
-    if (!formData.title || !formData.abstractText || !formData.content) {
-      toast.error("Please fill in all required fields");
-      return;
+  const onSaveDraft = async (data: FormValues) => {
+    try {
+      await criminalReportsService.createGuidelinesDocument({
+        title: data.title,
+        abstractText: data.abstractText,
+        content: data.content,
+        isPublic: false,
+      });
+      toast.success(t("toastDraftSaved"));
+      router.push("/dashboard/guidelines");
+    } catch (error) {
+      toast.error(t("toastSaveError"));
+      console.error(error);
     }
+  };
 
-    setIsSubmitting(true);
+  const onPublish = async (data: FormValues) => {
+    let hasError = false;
+    if (!data.abstractText.trim()) {
+      setError("abstractText", { message: t("validation.abstractRequired") });
+      hasError = true;
+    }
+    if (!data.content) {
+      setError("content", { message: t("validation.contentRequired") });
+      hasError = true;
+    }
+    if (hasError) return;
+
     try {
       const request: CreateGuidelinesDocumentRequest = {
-        title: formData.title,
-        abstractText: formData.abstractText,
-        content: formData.content,
-        isPublic: formData.isPublic,
+        title: data.title,
+        abstractText: data.abstractText,
+        content: data.content,
+        isPublic: data.isPublic,
       };
       const created =
         await criminalReportsService.createGuidelinesDocument(request);
       await criminalReportsService.publishGuidelinesDocument(created.id);
-      toast.success("Guideline published successfully");
+      toast.success(t("toastPublished"));
       router.push("/dashboard/guidelines");
     } catch (error) {
-      toast.error("Failed to publish guideline");
+      toast.error(t("toastPublishError"));
       console.error(error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSaveDraft = async () => {
-    if (!formData.title) {
-      toast.error("A title is required to save a draft");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const request: CreateGuidelinesDocumentRequest = {
-        title: formData.title,
-        abstractText: formData.abstractText,
-        content: formData.content,
-        isPublic: false, // Drafts are not public
-      };
-      await criminalReportsService.createGuidelinesDocument(request);
-      toast.success("Guideline saved as draft");
-      router.push("/dashboard/guidelines");
-    } catch (error) {
-      toast.error("Failed to save guideline");
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -154,17 +173,17 @@ export default function CreateGuidelinePage() {
       <div className="max-w-5xl mx-auto pb-20">
         <Breadcrumbs
           items={[
-            { label: "Guidelines", href: "/dashboard/guidelines" },
-            { label: "Create New" },
+            { label: tNav("guidelines"), href: "/dashboard/guidelines" },
+            { label: t("breadcrumbCreateNew") },
           ]}
         />
 
         <div className="mb-8 mt-4">
           <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">
-            Create New Guideline
+            {t("createHeading")}
           </h1>
           <p className="text-gray-500 text-lg font-medium">
-            Draft and publish standard operating procedures for your circles.
+            {t("createSubtitle")}
           </p>
         </div>
 
@@ -178,64 +197,67 @@ export default function CreateGuidelinePage() {
                     htmlFor="title"
                     className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1"
                   >
-                    Guideline Title
+                    {t("formGuidelineTitle")}
                   </Label>
                   <Input
                     id="title"
-                    placeholder="e.g., Extreme Weather Protocol"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
+                    type="text"
+                    placeholder={t("titlePlaceholder")}
+                    {...register("title")}
                     className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-lg font-bold"
                   />
+                  <FieldError message={errors.title?.message} />
                 </div>
                 <div className="space-y-3">
                   <Label
                     htmlFor="category"
                     className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1"
                   >
-                    Category
+                    {t("formCategory")}
                   </Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(val) =>
-                      setFormData({ ...formData, category: val })
-                    }
-                  >
-                    <SelectTrigger
-                      id="category"
-                      className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all font-bold"
-                    >
-                      <SelectValue placeholder="Select category..." />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
-                      <SelectItem
-                        value="general"
-                        className="rounded-xl py-3 font-bold"
+                  <Controller
+                    name="category"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
                       >
-                        General Safety
-                      </SelectItem>
-                      <SelectItem
-                        value="emergency"
-                        className="rounded-xl py-3 font-bold"
-                      >
-                        Emergency Response
-                      </SelectItem>
-                      <SelectItem
-                        value="medical"
-                        className="rounded-xl py-3 font-bold"
-                      >
-                        Medical Protocol
-                      </SelectItem>
-                      <SelectItem
-                        value="family"
-                        className="rounded-xl py-3 font-bold"
-                      >
-                        Family Circle
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                        <SelectTrigger
+                          id="category"
+                          className="h-14 px-6 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all font-bold"
+                        >
+                          <SelectValue placeholder={t("formCategory")} />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-gray-100 shadow-xl">
+                          <SelectItem
+                            value="general"
+                            className="rounded-xl py-3 font-bold"
+                          >
+                            {t("catGeneralSafety")}
+                          </SelectItem>
+                          <SelectItem
+                            value="emergency"
+                            className="rounded-xl py-3 font-bold"
+                          >
+                            {t("catEmergencyResponse")}
+                          </SelectItem>
+                          <SelectItem
+                            value="medical"
+                            className="rounded-xl py-3 font-bold"
+                          >
+                            {t("catMedical")}
+                          </SelectItem>
+                          <SelectItem
+                            value="family"
+                            className="rounded-xl py-3 font-bold"
+                          >
+                            {t("catFamily")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
               </div>
 
@@ -245,17 +267,15 @@ export default function CreateGuidelinePage() {
                   htmlFor="abstractText"
                   className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1"
                 >
-                  Short Abstract
+                  {t("formAbstract")}
                 </Label>
                 <Textarea
                   id="abstractText"
-                  placeholder="Brief summary of the guideline's purpose..."
-                  value={formData.abstractText}
-                  onChange={(e) =>
-                    setFormData({ ...formData, abstractText: e.target.value })
-                  }
+                  placeholder={t("abstractPlaceholder")}
+                  {...register("abstractText")}
                   className="min-h-[120px] px-6 py-4 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-brand-500/20 focus:border-brand-500 transition-all text-base font-medium resize-none"
                 />
+                <FieldError message={errors.abstractText?.message} />
               </div>
 
               {/* Row 3: Full Content */}
@@ -264,18 +284,23 @@ export default function CreateGuidelinePage() {
                   htmlFor="content"
                   className="text-sm font-black text-gray-400 uppercase tracking-widest ml-1"
                 >
-                  Full Content
+                  {t("formFullContent")}
                 </Label>
                 <div className="rounded-3xl overflow-hidden border border-gray-100 bg-white ring-offset-background focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-500 transition-all">
-                  <RichTextEditor
-                    value={formData.content}
-                    onChange={(html) =>
-                      setFormData({ ...formData, content: html })
-                    }
-                    placeholder="Start typing the full procedure here..."
-                    height={400}
+                  <Controller
+                    name="content"
+                    control={control}
+                    render={({ field }) => (
+                      <RichTextEditor
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder={t("contentFullPlaceholder")}
+                        height={400}
+                      />
+                    )}
                   />
                 </div>
+                <FieldError message={errors.content?.message} />
               </div>
 
               {/* Publishing Settings Section */}
@@ -285,12 +310,12 @@ export default function CreateGuidelinePage() {
                     <Send className="w-4 h-4" />
                   </div>
                   <h3 className="text-xl font-black text-gray-900">
-                    Publishing Settings
+                    {t("publishingSettings")}
                   </h3>
                 </div>
 
                 <div className="space-y-4">
-                  {/* Setting 1: Make Public */}
+                  {/* Setting: Make Public */}
                   <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-50 shadow-sm transition-all hover:shadow-md">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
@@ -298,20 +323,28 @@ export default function CreateGuidelinePage() {
                       </div>
                       <div>
                         <p className="font-black text-gray-900">
-                          Visibility: {formData.isPublic ? "Public" : "Draft"}
+                          {t("visibilityStatus", {
+                            status: watchedIsPublic
+                              ? t("visibilityPublic")
+                              : t("visibilityDraft"),
+                          })}
                         </p>
                         <p className="text-xs font-medium text-gray-500">
-                          {formData.isPublic
-                            ? "This guideline will be visible to everyone on TrackNest."
-                            : "Draft"}
+                          {watchedIsPublic
+                            ? t("visibilityPublicDesc")
+                            : t("visibilityDraftDesc")}
                         </p>
                       </div>
                     </div>
-                    <Switch
-                      checked={formData.isPublic}
-                      onCheckedChange={(val) =>
-                        setFormData({ ...formData, isPublic: val })
-                      }
+                    <Controller
+                      name="isPublic"
+                      control={control}
+                      render={({ field }) => (
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      )}
                     />
                   </div>
                 </div>
@@ -325,25 +358,25 @@ export default function CreateGuidelinePage() {
                   onClick={() => router.back()}
                   className="px-8 py-6 rounded-2xl text-gray-500 font-bold hover:bg-gray-100 transition-all w-full sm:w-auto"
                 >
-                  Cancel
+                  {tCommon("cancel")}
                 </Button>
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={handleSaveDraft}
-                  disabled={isSubmitting || formData.isPublic}
+                  onClick={handleSubmit(onSaveDraft)}
+                  disabled={isSubmitting || watchedIsPublic}
                   className="px-8 py-6 rounded-2xl bg-gray-100 text-gray-900 font-bold hover:bg-gray-200 transition-all w-full sm:w-auto"
                 >
                   <Save className="w-5 h-5 mr-2" />
-                  {isSubmitting ? "Saving..." : "Save as Draft"}
+                  {isSubmitting ? tCommon("saving") : t("saveDraftButton")}
                 </Button>
                 <Button
                   type="button"
-                  onClick={handlePublish}
-                  disabled={isSubmitting || !formData.isPublic}
+                  onClick={handleSubmit(onPublish)}
+                  disabled={isSubmitting || !watchedIsPublic}
                   className="px-10 py-6 rounded-2xl bg-brand-400 text-white font-black shadow-xl shadow-brand-400/20 hover:bg-brand-500 hover:-translate-y-0.5 transition-all w-full sm:w-auto"
                 >
-                  {isSubmitting ? "Publishing..." : "Publish"}
+                  {isSubmitting ? t("publishing") : tCommon("publish")}
                 </Button>
               </div>
             </CardContent>
