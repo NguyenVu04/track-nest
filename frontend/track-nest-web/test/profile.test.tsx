@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import type { User } from "@/types";
 
@@ -28,11 +28,6 @@ const ProfilePage = require("@/app/dashboard/profile/page").default as React.Com
 
 beforeEach(() => {
   mockUser = { ...baseUser };
-  jest.useFakeTimers();
-});
-
-afterEach(() => {
-  jest.useRealTimers();
 });
 
 describe("ProfilePage — null user", () => {
@@ -46,7 +41,8 @@ describe("ProfilePage — null user", () => {
 describe("ProfilePage — rendering", () => {
   it("renders the User Profile heading", () => {
     render(<ProfilePage />);
-    expect(screen.getByRole("heading", { name: "User Profile" })).toBeInTheDocument();
+    // useTranslations mock returns the key: t("pageTitle") → "pageTitle"
+    expect(screen.getByRole("heading", { name: "pageTitle" })).toBeInTheDocument();
   });
 
   it("renders the username input as disabled", () => {
@@ -73,29 +69,30 @@ describe("ProfilePage — rendering", () => {
 
   it("renders Update Profile and Update Password buttons", () => {
     render(<ProfilePage />);
-    expect(screen.getByText("Update Profile")).toBeInTheDocument();
-    expect(screen.getByText("Update Password")).toBeInTheDocument();
+    // t("updateProfile") → "updateProfile", t("updatePassword") → "updatePassword"
+    expect(screen.getByText("updateProfile")).toBeInTheDocument();
+    expect(screen.getByText("updatePassword")).toBeInTheDocument();
   });
 });
 
 describe("ProfilePage — update profile", () => {
-  it("shows success message after submitting profile form", () => {
+  it("calls toast.success after submitting profile form", async () => {
+    const { toast } = require("sonner");
     render(<ProfilePage />);
-    const form = screen.getByText("Update Profile").closest("form")!;
+    const form = screen.getByText("updateProfile").closest("form")!;
     fireEvent.submit(form);
-    expect(
-      screen.getByText("Profile updated successfully!"),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("toastProfileUpdated"),
+    );
   });
 
-  it("clears success message after 3 seconds", () => {
+  it("preserves form field values after profile update", async () => {
+    const { toast } = require("sonner");
     render(<ProfilePage />);
-    fireEvent.submit(screen.getByText("Update Profile").closest("form")!);
-    expect(screen.getByText("Profile updated successfully!")).toBeInTheDocument();
-    act(() => jest.advanceTimersByTime(3000));
-    expect(
-      screen.queryByText("Profile updated successfully!"),
-    ).not.toBeInTheDocument();
+    fireEvent.submit(screen.getByText("updateProfile").closest("form")!);
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    expect(screen.getByDisplayValue("Jane Doe")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("jane@example.com")).toBeInTheDocument();
   });
 
   it("allows editing fullName", () => {
@@ -114,48 +111,57 @@ describe("ProfilePage — update profile", () => {
 });
 
 describe("ProfilePage — update password", () => {
-  it("shows success message when passwords match", () => {
+  it("calls toast.success when passwords match", async () => {
+    const { toast } = require("sonner");
     render(<ProfilePage />);
-    fireEvent.change(screen.getByLabelText("Current Password"), {
-      target: { value: "old123" },
+    // Labels use t("labelXxx") → key string e.g. "labelCurrentPassword"
+    fireEvent.change(screen.getByLabelText("labelCurrentPassword"), {
+      target: { value: "oldpass123" },
     });
-    fireEvent.change(screen.getByLabelText("New Password"), {
-      target: { value: "new456" },
+    fireEvent.change(screen.getByLabelText("labelNewPassword"), {
+      target: { value: "newpass123" },
     });
-    fireEvent.change(screen.getByLabelText("Confirm New Password"), {
-      target: { value: "new456" },
+    fireEvent.change(screen.getByLabelText("labelConfirmPassword"), {
+      target: { value: "newpass123" },
     });
-    fireEvent.submit(screen.getByText("Update Password").closest("form")!);
-    expect(
-      screen.getByText("Password updated successfully!"),
-    ).toBeInTheDocument();
+    fireEvent.submit(screen.getByText("updatePassword").closest("form")!);
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("toastPasswordUpdated"),
+    );
   });
 
-  it("clears password fields after successful update", () => {
+  it("clears password fields after successful update", async () => {
     render(<ProfilePage />);
-    const currentPwInput = screen.getByLabelText("Current Password");
-    const newPwInput = screen.getByLabelText("New Password");
-    const confirmPwInput = screen.getByLabelText("Confirm New Password");
-    fireEvent.change(currentPwInput, { target: { value: "old123" } });
-    fireEvent.change(newPwInput, { target: { value: "new456" } });
-    fireEvent.change(confirmPwInput, { target: { value: "new456" } });
-    fireEvent.submit(screen.getByText("Update Password").closest("form")!);
-    expect(currentPwInput).toHaveValue("");
-    expect(newPwInput).toHaveValue("");
-    expect(confirmPwInput).toHaveValue("");
+    const currentPwInput = screen.getByLabelText("labelCurrentPassword");
+    const newPwInput = screen.getByLabelText("labelNewPassword");
+    const confirmPwInput = screen.getByLabelText("labelConfirmPassword");
+    fireEvent.change(currentPwInput, { target: { value: "oldpass123" } });
+    fireEvent.change(newPwInput, { target: { value: "newpass123" } });
+    fireEvent.change(confirmPwInput, { target: { value: "newpass123" } });
+    fireEvent.submit(screen.getByText("updatePassword").closest("form")!);
+    await waitFor(() => {
+      expect(currentPwInput).toHaveValue("");
+      expect(newPwInput).toHaveValue("");
+      expect(confirmPwInput).toHaveValue("");
+    });
   });
 
-  it("calls alert when passwords do not match", () => {
-    const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => {});
+  it("shows validation error when passwords do not match", async () => {
     render(<ProfilePage />);
-    fireEvent.change(screen.getByLabelText("New Password"), {
-      target: { value: "abc" },
+    fireEvent.change(screen.getByLabelText("labelCurrentPassword"), {
+      target: { value: "oldpass123" },
     });
-    fireEvent.change(screen.getByLabelText("Confirm New Password"), {
-      target: { value: "xyz" },
+    fireEvent.change(screen.getByLabelText("labelNewPassword"), {
+      target: { value: "newpass123" },
     });
-    fireEvent.submit(screen.getByText("Update Password").closest("form")!);
-    expect(alertSpy).toHaveBeenCalledWith("Passwords do not match!");
-    alertSpy.mockRestore();
+    fireEvent.change(screen.getByLabelText("labelConfirmPassword"), {
+      target: { value: "different1" },
+    });
+    fireEvent.submit(screen.getByText("updatePassword").closest("form")!);
+    await waitFor(() =>
+      expect(
+        screen.getByText("validation.confirmPasswordMatch"),
+      ).toBeInTheDocument(),
+    );
   });
 });
