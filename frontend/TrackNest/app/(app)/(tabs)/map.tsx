@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import MapView, {
   Circle,
+  Heatmap,
   MapType,
   Marker,
   PROVIDER_GOOGLE,
@@ -713,33 +714,23 @@ function MapScreenContent() {
             />
           ))}
 
-          {/* Crime Heatmap Circles */}
-          {showCrimeHeatmap &&
-            crimeHeatmapPoints.map((crime) => (
-              <Circle
-                key={`crime-${crime.id}`}
-                center={{
-                  latitude: crime.latitude,
-                  longitude: crime.longitude,
-                }}
-                radius={100 + crime.severity * 30}
-                strokeColor={
-                  crime.severity >= 4
-                    ? "#e74c3c"
-                    : crime.severity >= 2
-                      ? "#f39c12"
-                      : "#27ae60"
-                }
-                fillColor={
-                  crime.severity >= 4
-                    ? "rgba(231, 76, 60, 0.3)"
-                    : crime.severity >= 2
-                      ? "rgba(243, 156, 18, 0.2)"
-                      : "rgba(39, 174, 96, 0.15)"
-                }
-                strokeWidth={2}
-              />
-            ))}
+          {/* Crime Heatmap */}
+          {showCrimeHeatmap && crimeHeatmapPoints.length > 0 && (
+            <Heatmap
+              points={crimeHeatmapPoints.map((p) => ({
+                latitude: p.latitude,
+                longitude: p.longitude,
+                weight: p.severity,
+              }))}
+              radius={40}
+              opacity={0.75}
+              gradient={{
+                colors: ["#27ae60", "#f1c40f", "#e67e22", "#e74c3c"],
+                startPoints: [0.1, 0.45, 0.7, 0.9],
+                colorMapSize: 256,
+              }}
+            />
+          )}
 
           {followersToRender && followersToRender.length > 0
             ? followersToRender.map((f) => (
