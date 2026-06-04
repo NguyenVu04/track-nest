@@ -399,7 +399,12 @@
     "toastDeleteError": "Error deleting safe zone",
     "toastLoadError": "Failed to load safe zones",
     "toastNoLocation": "Please choose a location on the map",
-    "accessDeniedMessage": "You need Emergency Service role to manage safe zones."
+    "accessDeniedMessage": "You need Emergency Service role to manage safe zones.",
+    "validation": {
+      "nameRequired": "Zone name is required",
+      "radiusPositive": "Radius must be greater than 0",
+      "radiusMax": "Radius cannot exceed 50,000 meters"
+    }
   },
   "emergencyRequests": {
     "pageTitle": "Emergency Requests",
@@ -548,6 +553,15 @@
     "labelConfirmPassword": "Confirm New Password",
     "updatePassword": "Update Password",
     "toastProfileUpdated": "Profile updated successfully!",
-    "toastPasswordUpdated": "Password updated successfully!"
+    "toastPasswordUpdated": "Password updated successfully!",
+    "toastProfileError": "Failed to update profile",
+    "toastPasswordError": "Failed to update password",
+    "validation": {
+      "fullNameMin": "Full name must be at least 2 characters",
+      "emailInvalid": "Invalid email address",
+      "currentPasswordRequired": "Current password is required",
+      "newPasswordMin": "New password must be at least 8 characters",
+      "confirmPasswordMatch": "Passwords do not match"
+    }
   }
 }

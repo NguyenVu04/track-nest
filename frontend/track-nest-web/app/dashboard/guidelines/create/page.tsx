@@ -56,7 +56,7 @@ type FormValues = {
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return <p className="mt-1.5 ml-1 text-sm text-red-500">{message}</p>;
+  return <p className="mt-1.5 ml-1 text-sm text-red-500 font-medium">{message}</p>;
 }
 
 export default function CreateGuidelinePage() {
@@ -68,13 +68,22 @@ export default function CreateGuidelinePage() {
 
   const formSchema = useMemo(
     () =>
-      z.object({
-        title: z.string().min(1, t("validation.titleRequired")),
-        category: z.string(),
-        abstractText: z.string(),
-        content: z.string(),
-        isPublic: z.boolean(),
-      }),
+      z
+        .object({
+          title: z.string().min(1, t("validation.titleRequired")),
+          category: z.string(),
+          abstractText: z.string(),
+          content: z.string(),
+          isPublic: z.boolean(),
+        })
+        .refine((data) => !data.isPublic || data.abstractText.trim().length > 0, {
+          message: t("validation.abstractRequired"),
+          path: ["abstractText"],
+        })
+        .refine((data) => !data.isPublic || data.content.trim().length > 0, {
+          message: t("validation.contentRequired"),
+          path: ["content"],
+        }),
     [t],
   );
 
@@ -82,7 +91,6 @@ export default function CreateGuidelinePage() {
     register,
     control,
     handleSubmit,
-    setError,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
@@ -139,17 +147,6 @@ export default function CreateGuidelinePage() {
   };
 
   const onPublish = async (data: FormValues) => {
-    let hasError = false;
-    if (!data.abstractText.trim()) {
-      setError("abstractText", { message: t("validation.abstractRequired") });
-      hasError = true;
-    }
-    if (!data.content) {
-      setError("content", { message: t("validation.contentRequired") });
-      hasError = true;
-    }
-    if (hasError) return;
-
     try {
       const request: CreateGuidelinesDocumentRequest = {
         title: data.title,

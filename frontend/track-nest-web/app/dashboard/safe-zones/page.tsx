@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Plus,
   Trash2,
@@ -42,6 +45,16 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/components/ui/utils";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
+type SafeZoneFormValues = {
+  name: string;
+  radius: string;
+};
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="mt-1.5 ml-1 text-sm text-red-500 font-medium">{message}</p>;
+}
+
 const DEFAULT_CENTER: [number, number] = [10.8231, 106.6297];
 
 export default function SafeZonesPage() {
@@ -49,6 +62,29 @@ export default function SafeZonesPage() {
   const t = useTranslations("safeZones");
   const tCommon = useTranslations("common");
   const format = useFormatter();
+
+  const safeZoneSchema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(1, t("validation.nameRequired")),
+        radius: z
+          .string()
+          .min(1, t("validation.radiusPositive"))
+          .refine((v) => Number.isFinite(parseFloat(v)) && parseFloat(v) > 0, t("validation.radiusPositive"))
+          .refine((v) => parseFloat(v) <= 50000, t("validation.radiusMax")),
+      }),
+    [t],
+  );
+
+  const {
+    register: registerZone,
+    handleSubmit: handleZoneSubmit,
+    reset: resetZoneForm,
+    formState: { errors: zoneErrors },
+  } = useForm<SafeZoneFormValues>({
+    resolver: zodResolver(safeZoneSchema),
+    defaultValues: { name: "", radius: "500" },
+  });
 
   const [zones, setZones] = useState<SafeZone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,12 +100,6 @@ export default function SafeZonesPage() {
   const [debouncedLocationInput] = useDebounce(locationInput, 300);
   const locationSearchRef = useRef<HTMLDivElement>(null);
   const skipReverseRef = useRef(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    type: "Police Station",
-    address: "",
-    radius: "500",
-  });
 
   useEffect(() => {
     const fetchZones = async () => {
@@ -178,37 +208,32 @@ export default function SafeZonesPage() {
     setLocationSuggestions([]);
     setShowLocationSuggestions(false);
     skipReverseRef.current = true;
-    setFormData({
-      name: "",
-      type: "Police Station",
-      address: "",
-      radius: "500",
-    });
+    resetZoneForm({ name: "", radius: "500" });
     setIsCreating(true);
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (data: SafeZoneFormValues) => {
+    if (!selectedLocation) {
+      toast.error(t("toastNoLocation"));
+      return;
+    }
     try {
-      if (!selectedLocation) {
-        toast.error(t("toastNoLocation"));
-        return;
-      }
       const [latitude, longitude] = selectedLocation;
       const request: CreateSafeZoneRequest = {
-        name: formData.name,
+        name: data.name,
         longitudeDegrees: longitude,
         latitudeDegrees: latitude,
-        radiusMeters: parseFloat(formData.radius),
+        radiusMeters: parseFloat(data.radius),
       };
       const response: CreateSafeZoneResponse = await emergencyOpsService.createSafeZone(request);
       const newZone: SafeZone = {
         id: response.id,
-        name: formData.name,
-        type: formData.type as SafeZone["type"],
-        address: formData.address,
+        name: data.name,
+        type: "Other",
+        address: "",
         longitude,
         latitude,
-        radius: parseFloat(formData.radius),
+        radius: parseFloat(data.radius),
         createdAt: new Date(response.createdAtMs).toISOString(),
       };
       setZones((prev) => [newZone, ...prev]);
@@ -442,20 +467,20 @@ export default function SafeZonesPage() {
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("formZoneName")}</label>
                     <Input
                       placeholder={t("formZoneNamePlaceholder")}
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      {...registerZone("name")}
                       className="h-12 px-5 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand-500 font-bold"
                     />
+                    <FieldError message={zoneErrors.name?.message} />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("formZoneRadius")}</label>
-                    <Input 
+                    <Input
                       type="number"
                       placeholder="500"
-                      value={formData.radius}
-                      onChange={(e) => setFormData({...formData, radius: e.target.value})}
+                      {...registerZone("radius")}
                       className="h-12 px-5 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand-500 font-bold"
                     />
+                    <FieldError message={zoneErrors.radius?.message} />
                   </div>
                   <div className="p-5 bg-brand-50 rounded-2xl border border-brand-100 mt-4">
                     <div className="flex items-center gap-3 mb-2">
@@ -472,8 +497,7 @@ export default function SafeZonesPage() {
                 <div className="flex gap-4 pt-8 mt-auto border-t border-gray-50">
                   <Button variant="ghost" onClick={() => setIsCreating(false)} className="flex-1 h-12 rounded-xl font-bold">{tCommon("cancel")}</Button>
                   <Button
-                    onClick={handleCreate}
-                    disabled={!formData.name || !selectedLocation || !formData.radius}
+                    onClick={handleZoneSubmit(handleCreate)}
                     className="flex-1 h-12 rounded-xl bg-brand-700 text-white font-black"
                   >
                     {tCommon("confirm")}
