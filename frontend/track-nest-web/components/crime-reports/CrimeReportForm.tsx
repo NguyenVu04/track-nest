@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Save,
   X,
@@ -11,7 +14,6 @@ import {
   Info,
   Calendar,
   Clock,
-  ChevronRight,
   AlertTriangle,
   ShieldCheck,
   UserPlus,
@@ -61,6 +63,22 @@ const RichTextEditor = dynamic(
 
 const MAX_PHOTOS = 5;
 
+type FormValues = {
+  title: string;
+  severity: number;
+  date: string;
+  time: string;
+  numberOfVictims: number;
+  numberOfOffenders: number;
+  arrested: boolean;
+  content: string;
+};
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="mt-1.5 ml-1 text-sm text-red-500">{message}</p>;
+}
+
 interface CrimeReportFormProps {
   report: CrimeReport | null;
   onSave: (report: CrimeReport) => Promise<void> | void;
@@ -77,23 +95,50 @@ export function CrimeReportForm({
   const t = useTranslations("crimeReports");
   const tCommon = useTranslations("common");
 
-  const [formData, setFormData] = useState<Partial<CrimeReport>>(
-    report || {
-      title: "",
-      content: "",
-      severity: 3,
-      date: new Date().toISOString().slice(0, 10),
-      longitude: 106.7009,
-      latitude: 10.7769,
-      numberOfVictims: 0,
-      numberOfOffenders: 0,
-      arrested: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      reporterId: "",
-      isPublic: false,
-    },
+  const formSchema = useMemo(
+    () =>
+      z.object({
+        title: z.string().min(1, t("validation.titleRequired")),
+        severity: z.number(),
+        date: z.string().min(1, t("validation.dateRequired")),
+        time: z.string().min(1, t("validation.timeRequired")),
+        numberOfVictims: z.number().min(0, t("validation.victimsNonNegative")),
+        numberOfOffenders: z
+          .number()
+          .min(0, t("validation.offendersNonNegative")),
+        arrested: z.boolean(),
+        content: z.string(),
+      }),
+    [t],
   );
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: report?.title ?? "",
+      severity: report?.severity ?? 3,
+      date: report?.date
+        ? new Date(report.date).toISOString().slice(0, 10)
+        : new Date().toISOString().slice(0, 10),
+      time: report?.date
+        ? new Date(report.date).toTimeString().slice(0, 5)
+        : new Date().toTimeString().slice(0, 5),
+      numberOfVictims: report?.numberOfVictims ?? 0,
+      numberOfOffenders: report?.numberOfOffenders ?? 0,
+      arrested: report?.arrested ?? false,
+      content: report?.content ?? "",
+    },
+  });
+
+  const watchedSeverity = watch("severity");
+  const watchedArrested = watch("arrested");
 
   const [existingPhotos, setExistingPhotos] = useState<string[]>(
     report?.photos ?? [],
@@ -105,14 +150,12 @@ export function CrimeReportForm({
 
   const [showReview, setShowReview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Snapshot of validated data — passed to the confirm step
+  const [submittedData, setSubmittedData] = useState<FormValues | null>(null);
 
-  // Split date into date and time for UI
-  const [time, setTime] = useState(() => {
-    if (report?.date) {
-      return new Date(report.date).toTimeString().slice(0, 5);
-    }
-    return new Date().toTimeString().slice(0, 5);
-  });
+  // Location kept outside react-hook-form (controlled by map widget)
+  const [latitude, setLatitude] = useState(report?.latitude ?? 10.7769);
+  const [longitude, setLongitude] = useState(report?.longitude ?? 106.7009);
 
   useEffect(() => {
     return () => {
@@ -128,7 +171,7 @@ export function CrimeReportForm({
     const toAdd = files.slice(0, remaining);
     if (toAdd.length < files.length) {
       toast.warning(
-        `Maximum ${MAX_PHOTOS} photos allowed. Only ${toAdd.length} photo(s) were added.`,
+        t("photoLimitWarning", { max: MAX_PHOTOS, added: toAdd.length }),
       );
     }
     setSelectedFiles((prev) => [...prev, ...toAdd]);
@@ -149,55 +192,32 @@ export function CrimeReportForm({
     setPreviewUrls((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const buildReport = (uploadedPhotoUrls: string[]): CrimeReport => {
-    // Combine date and time
-    const combinedDate = new Date(formData.date!);
-    const [hours, minutes] = time.split(":").map(Number);
-    combinedDate.setHours(hours, minutes);
-
-    return {
-      id: report?.id || Date.now().toString(),
-      title: formData.title!,
-      content: formData.content!,
-      contentDocId: report?.contentDocId ?? "",
-      severity: formData.severity!,
-      date: combinedDate.toISOString(),
-      longitude: formData.longitude!,
-      latitude: formData.latitude!,
-      numberOfVictims: formData.numberOfVictims!,
-      numberOfOffenders: formData.numberOfOffenders!,
-      arrested: formData.arrested!,
-      photos: [...existingPhotos, ...uploadedPhotoUrls],
-      createdAt: formData.createdAt!,
-      updatedAt: new Date().toISOString(),
-      reporterId: formData.reporterId!,
-      isPublic: formData.isPublic!,
-    };
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Step 1: validate via react-hook-form, then open review modal
+  const onValidate = handleSubmit((data) => {
+    setSubmittedData(data);
     setShowReview(true);
-  };
+  });
 
+  // Step 2: confirmed — do the actual API call
   const handleConfirmSubmit = async () => {
+    if (!submittedData) return;
     setIsSubmitting(true);
     try {
-      if (mode === "create") {
-        const combinedDate = new Date(formData.date!);
-        const [hours, minutes] = time.split(":").map(Number);
-        combinedDate.setHours(hours, minutes);
+      const combinedDate = new Date(submittedData.date);
+      const [hours, minutes] = submittedData.time.split(":").map(Number);
+      combinedDate.setHours(hours, minutes);
 
+      if (mode === "create") {
         const response = await criminalReportsService.submitCrimeReport({
-          title: formData.title!,
-          content: formData.content || "",
-          severity: formData.severity!,
+          title: submittedData.title,
+          content: submittedData.content,
+          severity: submittedData.severity as CrimeSeverity,
           date: combinedDate.toISOString().slice(0, 10),
-          longitude: formData.longitude!,
-          latitude: formData.latitude!,
-          numberOfVictims: formData.numberOfVictims!,
-          numberOfOffenders: formData.numberOfOffenders!,
-          arrested: formData.arrested!,
+          longitude,
+          latitude,
+          numberOfVictims: submittedData.numberOfVictims,
+          numberOfOffenders: submittedData.numberOfOffenders,
+          arrested: submittedData.arrested,
           photos: selectedFiles.length > 0 ? selectedFiles : undefined,
         });
 
@@ -207,15 +227,21 @@ export function CrimeReportForm({
           content: response.content,
           contentDocId: "",
           severity: response.severity,
-          date: response.date ? String(response.date) : combinedDate.toISOString(),
+          date: response.date
+            ? String(response.date)
+            : combinedDate.toISOString(),
           longitude: response.longitude,
           latitude: response.latitude,
           numberOfVictims: response.numberOfVictims,
           numberOfOffenders: response.numberOfOffenders,
           arrested: response.arrested,
           photos: response.photos ?? [],
-          createdAt: response.createdAt ? String(response.createdAt) : new Date().toISOString(),
-          updatedAt: response.updatedAt ? String(response.updatedAt) : new Date().toISOString(),
+          createdAt: response.createdAt
+            ? String(response.createdAt)
+            : new Date().toISOString(),
+          updatedAt: response.updatedAt
+            ? String(response.updatedAt)
+            : new Date().toISOString(),
           reporterId: response.reporterId ?? "",
           isPublic: response.isPublic,
         });
@@ -229,14 +255,32 @@ export function CrimeReportForm({
           }
           setIsUploading(false);
         }
-        const newReport = buildReport(uploadedUrls);
-        await onSave(newReport);
+
+        await onSave({
+          id: report?.id || Date.now().toString(),
+          title: submittedData.title,
+          content: submittedData.content,
+          contentDocId: report?.contentDocId ?? "",
+          severity: submittedData.severity as CrimeSeverity,
+          date: combinedDate.toISOString(),
+          longitude,
+          latitude,
+          numberOfVictims: submittedData.numberOfVictims,
+          numberOfOffenders: submittedData.numberOfOffenders,
+          arrested: submittedData.arrested,
+          photos: [...existingPhotos, ...uploadedUrls],
+          createdAt: report?.createdAt ?? new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          reporterId: report?.reporterId ?? "",
+          isPublic: report?.isPublic ?? false,
+        });
       }
+
       setShowReview(false);
     } catch {
       setIsUploading(false);
       toast.error(
-        "Failed to upload photos or submit the report. Please try again.",
+        mode === "create" ? t("toastCreateError") : t("toastUpdateError"),
       );
     } finally {
       setIsSubmitting(false);
@@ -269,15 +313,12 @@ export function CrimeReportForm({
       {/* Page Header */}
       <div className="mb-10">
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          {mode === "create" ? "Report an Incident" : "Edit Incident Report"}
+          {mode === "create" ? t("formNewTitle") : t("formEditTitle")}
         </h1>
-        <p className="text-gray-500 mt-2 text-lg">
-          Provide detailed information to alert your family circles and local
-          authorities.
-        </p>
+        <p className="text-gray-500 mt-2 text-lg">{t("formDescription")}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={onValidate} className="space-y-8" noValidate>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left Column: Incident Details */}
           <div className="lg:col-span-2 space-y-8">
@@ -288,10 +329,10 @@ export function CrimeReportForm({
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-800">
-                    Incident Details
+                    {t("sectionIncidentDetails")}
                   </h2>
                   <p className="text-sm text-gray-400 font-medium">
-                    BASIC INFORMATION
+                    {t("sectionIncidentDetailsSub")}
                   </p>
                 </div>
               </div>
@@ -303,40 +344,38 @@ export function CrimeReportForm({
                     htmlFor="title"
                     className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1"
                   >
-                    Report Title <span className="text-red-400">*</span>
+                    {t("formTitle")} <span className="text-red-400">*</span>
                   </label>
                   <input
                     id="title"
                     type="text"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    placeholder="e.g., Suspicious activity near the park"
-                    className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all placeholder:text-gray-400"
-                    required
+                    autoComplete="off"
+                    placeholder={t("placeholderTitle")}
+                    {...register("title")}
+                    className={cn(
+                      "w-full px-5 py-4 bg-gray-50 border rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all placeholder:text-gray-400",
+                      errors.title
+                        ? "border-red-300 bg-red-50/30"
+                        : "border-gray-200",
+                    )}
                   />
+                  <FieldError message={errors.title?.message} />
                 </div>
 
                 {/* Severity Level */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-3 ml-1">
-                    Severity Level <span className="text-red-400">*</span>
+                    {t("formSeverity")} <span className="text-red-400">*</span>
                   </label>
                   <div className="grid grid-cols-3 gap-4">
                     {severityOptions.map((opt) => (
                       <button
                         key={opt.value}
                         type="button"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            severity: opt.value as CrimeSeverity,
-                          })
-                        }
+                        onClick={() => setValue("severity", opt.value)}
                         className={cn(
                           "py-4 px-4 rounded-2xl border-2 font-bold transition-all text-center",
-                          formData.severity === opt.value
+                          watchedSeverity === opt.value
                             ? opt.active
                             : "border-gray-100 bg-gray-50 text-gray-400 " +
                                 opt.color,
@@ -355,123 +394,154 @@ export function CrimeReportForm({
                       htmlFor="date"
                       className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1"
                     >
-                      Date <span className="text-red-400">*</span>
+                      {t("formDate")} <span className="text-red-400">*</span>
                     </label>
                     <div className="relative group">
-                      <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
+                      <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-brand-500 transition-colors pointer-events-none" />
                       <input
                         id="date"
                         type="date"
-                        value={formData.date?.slice(0, 10)}
-                        onChange={(e) =>
-                          setFormData({ ...formData, date: e.target.value })
-                        }
-                        className="w-full pl-14 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all"
-                        required
+                        {...register("date")}
+                        className={cn(
+                          "w-full pl-14 pr-5 py-4 bg-gray-50 border rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all",
+                          errors.date
+                            ? "border-red-300 bg-red-50/30"
+                            : "border-gray-200",
+                        )}
                       />
                     </div>
+                    <FieldError message={errors.date?.message} />
                   </div>
                   <div>
                     <label
                       htmlFor="time"
                       className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1"
                     >
-                      Time <span className="text-red-400">*</span>
+                      {t("formTime")} <span className="text-red-400">*</span>
                     </label>
                     <div className="relative group">
-                      <Clock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
+                      <Clock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-brand-500 transition-colors pointer-events-none" />
                       <input
                         id="time"
                         type="time"
-                        value={time}
-                        onChange={(e) => setTime(e.target.value)}
-                        className="w-full pl-14 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all"
-                        required
+                        {...register("time")}
+                        className={cn(
+                          "w-full pl-14 pr-5 py-4 bg-gray-50 border rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-400 focus:bg-white text-gray-900 outline-none transition-all",
+                          errors.time
+                            ? "border-red-300 bg-red-50/30"
+                            : "border-gray-200",
+                        )}
                       />
                     </div>
+                    <FieldError message={errors.time?.message} />
                   </div>
                 </div>
 
                 {/* Additional Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Number of Victims */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1">
-                      Victims
-                    </label>
-                    <div className="relative group">
-                      <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.numberOfVictims}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            numberOfVictims: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-brand-400 focus:bg-white outline-none transition-all text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1">
-                      Offenders
-                    </label>
-                    <div className="relative group">
-                      <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.numberOfOffenders}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            numberOfOffenders: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-brand-400 focus:bg-white outline-none transition-all text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setFormData({
-                          ...formData,
-                          arrested: !formData.arrested,
-                        })
-                      }
-                      className={cn(
-                        "w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border font-bold transition-all text-sm",
-                        formData.arrested
-                          ? "bg-green-50 border-green-200 text-green-600"
-                          : "bg-gray-50 border-gray-100 text-gray-400",
-                      )}
+                    <label
+                      htmlFor="numberOfVictims"
+                      className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1"
                     >
-                      {formData.arrested ? (
-                        <ShieldCheck className="w-4 h-4" />
-                      ) : (
-                        <AlertTriangle className="w-4 h-4" />
-                      )}
-                      {formData.arrested ? "Offender Arrested" : "Not Arrested"}
-                    </button>
+                      {t("formVictims")}
+                    </label>
+                    <div className="relative group">
+                      <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        id="numberOfVictims"
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        step="1"
+                        {...register("numberOfVictims", { valueAsNumber: true })}
+                        className={cn(
+                          "w-full pl-11 pr-4 py-3 bg-gray-50 border rounded-xl focus:border-brand-400 focus:bg-white outline-none transition-all text-sm",
+                          errors.numberOfVictims
+                            ? "border-red-300 bg-red-50/30"
+                            : "border-gray-100",
+                        )}
+                      />
+                    </div>
+                    <FieldError message={errors.numberOfVictims?.message} />
+                  </div>
+
+                  {/* Number of Offenders */}
+                  <div>
+                    <label
+                      htmlFor="numberOfOffenders"
+                      className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1"
+                    >
+                      {t("formOffenders")}
+                    </label>
+                    <div className="relative group">
+                      <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        id="numberOfOffenders"
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        step="1"
+                        {...register("numberOfOffenders", {
+                          valueAsNumber: true,
+                        })}
+                        className={cn(
+                          "w-full pl-11 pr-4 py-3 bg-gray-50 border rounded-xl focus:border-brand-400 focus:bg-white outline-none transition-all text-sm",
+                          errors.numberOfOffenders
+                            ? "border-red-300 bg-red-50/30"
+                            : "border-gray-100",
+                        )}
+                      />
+                    </div>
+                    <FieldError message={errors.numberOfOffenders?.message} />
+                  </div>
+
+                  {/* Arrested Toggle */}
+                  <div className="flex items-end">
+                    <div className="w-full">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1">
+                        {t("formArrested")}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setValue("arrested", !watchedArrested)}
+                        className={cn(
+                          "w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border font-bold transition-all text-sm",
+                          watchedArrested
+                            ? "bg-green-50 border-green-200 text-green-600"
+                            : "bg-gray-50 border-gray-100 text-gray-400",
+                        )}
+                      >
+                        {watchedArrested ? (
+                          <ShieldCheck className="w-4 h-4" />
+                        ) : (
+                          <AlertTriangle className="w-4 h-4" />
+                        )}
+                        {watchedArrested
+                          ? t("formArrestedYes")
+                          : t("formArrestedNo")}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Description */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2.5 ml-1">
-                    Detailed Description
+                    {t("formContent")}
                   </label>
                   <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white">
-                    <RichTextEditor
-                      value={formData.content || ""}
-                      onChange={(html) =>
-                        setFormData({ ...formData, content: html })
-                      }
-                      placeholder="Describe what happened, who was involved, and any other relevant details..."
+                    <Controller
+                      name="content"
+                      control={control}
+                      render={({ field }) => (
+                        <RichTextEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder={t("placeholderContent")}
+                        />
+                      )}
                     />
                   </div>
                 </div>
@@ -488,10 +558,10 @@ export function CrimeReportForm({
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-800">
-                    Incident Location
+                    {t("sectionLocation")}
                   </h2>
                   <p className="text-sm text-gray-400 font-medium">
-                    MAP PLACEMENT
+                    {t("sectionLocationSub")}
                   </p>
                 </div>
               </div>
@@ -500,20 +570,12 @@ export function CrimeReportForm({
                 <div className="space-y-6">
                   <div className="relative rounded-lg overflow-hidden border border-gray-100 bg-gray-50 shadow-inner group">
                     <LocationPicker
-                      position={[
-                        formData.latitude || 10.7769,
-                        formData.longitude || 106.7009,
-                      ]}
-                      onPositionChange={(pos) =>
-                        setFormData({
-                          ...formData,
-                          latitude: pos[0],
-                          longitude: pos[1],
-                        })
-                      }
+                      position={[latitude, longitude]}
+                      onPositionChange={(pos) => {
+                        setLatitude(pos[0]);
+                        setLongitude(pos[1]);
+                      }}
                     />
-
-                    {/* Visual Overlay like in the image */}
                     <div className="absolute top-4 right-4 z-20">
                       <div className="bg-white/90 backdrop-blur-sm p-2 rounded-xl shadow-sm border border-white/20">
                         <MapPin className="w-5 h-5 text-brand-500" />
@@ -529,14 +591,13 @@ export function CrimeReportForm({
                     </div>
                     <div>
                       <p className="text-sm font-bold text-gray-900">
-                        Current Placement
+                        {t("locationCurrentPlacement")}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                        {formData.latitude?.toFixed(5)},{" "}
-                        {formData.longitude?.toFixed(5)}
+                        {latitude.toFixed(5)}, {longitude.toFixed(5)}
                       </p>
                       <p className="text-[10px] text-brand-600 font-bold mt-1 uppercase tracking-wider">
-                        Coordinates verified
+                        {t("locationVerified")}
                       </p>
                     </div>
                   </div>
@@ -545,8 +606,7 @@ export function CrimeReportForm({
                 <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex gap-3 items-start">
                   <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
                   <p className="text-[11px] text-amber-700 leading-normal">
-                    Note: You cannot change the location after submitting.
-                    Please ensure the pin is placed accurately.
+                    {t("locationLockNote")}
                   </p>
                 </div>
               </div>
@@ -563,10 +623,10 @@ export function CrimeReportForm({
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-gray-800">
-                      Media Evidence
+                      {t("sectionMedia")}
                     </h2>
                     <p className="text-sm text-gray-400 font-medium uppercase tracking-tight">
-                      Photos and Videos
+                      {t("sectionMediaSub")}
                     </p>
                   </div>
                 </div>
@@ -587,7 +647,7 @@ export function CrimeReportForm({
                     <Upload className="w-6 h-6" />
                   </div>
                   <span className="text-sm font-bold tracking-tight">
-                    Add Media
+                    {t("addMedia")}
                   </span>
                   <input
                     ref={fileInputRef}
@@ -663,7 +723,7 @@ export function CrimeReportForm({
             onClick={onCancel}
             className="w-full sm:w-auto px-10 py-4 text-gray-500 font-bold hover:text-gray-700 transition-colors"
           >
-            Cancel
+            {tCommon("cancel")}
           </button>
           <button
             type="submit"
@@ -675,12 +735,12 @@ export function CrimeReportForm({
             ) : mode === "create" ? (
               <>
                 <CheckCircle2 className="w-5 h-5" />
-                Submit Report
+                {t("submitReport")}
               </>
             ) : (
               <>
                 <Save className="w-5 h-5" />
-                Update Report
+                {t("updateReport")}
               </>
             )}
           </button>
@@ -688,7 +748,7 @@ export function CrimeReportForm({
       </form>
 
       {/* Review Modal */}
-      {showReview && (
+      {showReview && submittedData && (
         <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden border border-white/20">
             <div className="sticky top-0 bg-white/80 backdrop-blur-md z-10 flex items-center justify-between p-8 border-b border-gray-100">
@@ -697,7 +757,7 @@ export function CrimeReportForm({
                   <CheckCircle2 className="w-6 h-6 text-brand-500" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900">
-                  Review Report
+                  {t("reviewTitle")}
                 </h3>
               </div>
               <button
@@ -712,23 +772,23 @@ export function CrimeReportForm({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    Title
+                    {t("formTitle")}
                   </p>
                   <p className="text-lg font-bold text-gray-900 leading-tight">
-                    {formData.title}
+                    {submittedData.title}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    Severity
+                    {t("reviewSeverity")}
                   </p>
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-gray-100 border border-gray-200">
                     <div
                       className={cn(
                         "w-2 h-2 rounded-full",
-                        formData.severity === 1
+                        submittedData.severity === 1
                           ? "bg-green-500"
-                          : formData.severity === 3
+                          : submittedData.severity === 3
                             ? "bg-orange-500"
                             : "bg-red-500",
                       )}
@@ -736,7 +796,7 @@ export function CrimeReportForm({
                     <span className="text-sm font-bold text-gray-700">
                       {
                         severityOptions.find(
-                          (o) => o.value === formData.severity,
+                          (o) => o.value === submittedData.severity,
                         )?.label
                       }
                     </span>
@@ -749,10 +809,10 @@ export function CrimeReportForm({
                   <Calendar className="w-5 h-5 text-brand-500" />
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                      Date
+                      {t("reviewDate")}
                     </p>
                     <p className="text-sm font-bold text-gray-900">
-                      {formData.date}
+                      {submittedData.date}
                     </p>
                   </div>
                 </div>
@@ -760,23 +820,25 @@ export function CrimeReportForm({
                   <Clock className="w-5 h-5 text-brand-500" />
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                      Time
+                      {t("reviewTime")}
                     </p>
-                    <p className="text-sm font-bold text-gray-900">{time}</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {submittedData.time}
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  Description
+                  {t("formContent")}
                 </p>
                 <div
                   className="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-gray-600 prose prose-sm max-w-none prose-brand"
                   dangerouslySetInnerHTML={{
                     __html:
-                      formData.content ||
-                      "<p className='italic text-gray-400'>No description provided.</p>",
+                      submittedData.content ||
+                      `<p class='italic text-gray-400'>${t("reviewNoDescription")}</p>`,
                   }}
                 />
               </div>
@@ -784,7 +846,7 @@ export function CrimeReportForm({
               {totalPhotos > 0 && (
                 <div className="space-y-4">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    Media Evidence ({totalPhotos})
+                    {t("reviewMediaCount", { count: totalPhotos })}
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {[...existingPhotos, ...previewUrls].map((url, idx) => (
@@ -812,7 +874,7 @@ export function CrimeReportForm({
                 className="w-full sm:w-auto px-8 py-3 text-gray-500 font-bold hover:text-gray-700 transition-colors disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                Back to Edit
+                {t("backToEdit")}
               </button>
               <button
                 onClick={handleConfirmSubmit}
@@ -822,14 +884,14 @@ export function CrimeReportForm({
                 {isUploading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Uploading Assets...
+                    {t("uploadingAssets")}
                   </>
                 ) : isSubmitting ? (
-                  "Submitting..."
+                  tCommon("submitting")
                 ) : (
                   <>
                     <Save className="w-5 h-5" />
-                    Confirm & Publish
+                    {t("confirmSubmit")}
                   </>
                 )}
               </button>
