@@ -1,18 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { 
-  Plus, 
-  Trash2, 
-  Search, 
-  MapPin, 
-  Home, 
-  School, 
-  Shield, 
-  Filter, 
-  Navigation, 
-  Settings2
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Plus,
+  Trash2,
+  Search,
+  MapPin,
+  Home,
+  School,
+  Shield,
+  Filter,
+  Navigation,
+  Settings2,
+  Loader2,
+  X,
 } from "lucide-react";
+import { useDebounce } from "use-debounce";
+import {
+  searchLocations,
+  reverseGeocode,
+  GeocodingResult,
+} from "@/utils/geocoding";
 import { useAuth } from "@/contexts/AuthContext";
 import type { SafeZone } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
@@ -26,7 +37,7 @@ import {
   SafeZoneResponse,
 } from "@/services/emergencyOpsService";
 import { Loading } from "@/components/loading/Loading";
-import { useTranslations } from "next-intl";
+import { useTranslations, useFormatter } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,12 +45,50 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/components/ui/utils";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
+type SafeZoneFormValues = {
+  name: string;
+  radius: string;
+};
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="mt-1.5 ml-1 text-sm text-red-500 font-medium">{message}</p>;
+}
+
 const DEFAULT_CENTER: [number, number] = [10.8231, 106.6297];
 
 export default function SafeZonesPage() {
   const { user } = useAuth();
   const t = useTranslations("safeZones");
   const tCommon = useTranslations("common");
+  const format = useFormatter();
+
+  const safeZoneSchema = useMemo(
+    () =>
+      z.object({
+        name: z.string().min(1, t("validation.nameRequired")),
+        radius: z
+          .string()
+          .min(1, t("validation.radiusPositive"))
+          .refine((v) => Number.isFinite(parseFloat(v)) && parseFloat(v) > 0, t("validation.radiusPositive"))
+          .refine((v) => parseFloat(v) <= 50000, t("validation.radiusMax")),
+      }),
+    [t],
+  );
+
+  const {
+    register: registerZone,
+    handleSubmit: handleZoneSubmit,
+    reset: resetZoneForm,
+    watch: watchZone,
+    formState: { errors: zoneErrors },
+  } = useForm<SafeZoneFormValues>({
+    resolver: zodResolver(safeZoneSchema),
+    defaultValues: { name: "", radius: "500" },
+  });
+
+  const watchedName = watchZone("name");
+  const watchedRadius = watchZone("radius");
 
   const [zones, setZones] = useState<SafeZone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,12 +97,13 @@ export default function SafeZonesPage() {
   const [confirmDelete, setConfirmDelete] = useState<SafeZone | null>(null);
   const [selectedZone, setSelectedZone] = useState<SafeZone | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    type: "Police Station",
-    address: "",
-    radius: "500",
-  });
+  const [locationInput, setLocationInput] = useState("");
+  const [locationSuggestions, setLocationSuggestions] = useState<GeocodingResult[]>([]);
+  const [isLocationSearching, setIsLocationSearching] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [debouncedLocationInput] = useDebounce(locationInput, 300);
+  const locationSearchRef = useRef<HTMLDivElement>(null);
+  const skipReverseRef = useRef(false);
 
   useEffect(() => {
     const fetchZones = async () => {
@@ -75,7 +125,7 @@ export default function SafeZonesPage() {
         setZones(mappedZones);
       } catch (error) {
         console.error("Error fetching safe zones:", error);
-        toast.error(t("toastLoadError") || "Failed to load safe zones");
+        toast.error(t("toastLoadError"));
       } finally {
         setIsLoading(false);
       }
@@ -83,6 +133,67 @@ export default function SafeZonesPage() {
 
     fetchZones();
   }, [user, t]);
+
+  // Hide location suggestions when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        locationSearchRef.current &&
+        !locationSearchRef.current.contains(e.target as Node)
+      ) {
+        setShowLocationSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Forward geocoding for location search
+  useEffect(() => {
+    if (debouncedLocationInput.trim().length < 3) {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+      return;
+    }
+    let cancelled = false;
+    setIsLocationSearching(true);
+    searchLocations(debouncedLocationInput).then((results) => {
+      if (cancelled) return;
+      setLocationSuggestions(results);
+      setShowLocationSuggestions(results.length > 0);
+      setIsLocationSearching(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedLocationInput]);
+
+  // Reverse geocode when selectedLocation changes via map click or drag
+  useEffect(() => {
+    if (!selectedLocation) return;
+    if (skipReverseRef.current) {
+      skipReverseRef.current = false;
+      return;
+    }
+    let cancelled = false;
+    reverseGeocode(selectedLocation[0], selectedLocation[1]).then((label) => {
+      if (cancelled || label === null) return;
+      setLocationInput(label);
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLocation]);
+
+  const handleLocationSuggestionSelect = useCallback((result: GeocodingResult) => {
+    skipReverseRef.current = true;
+    setLocationInput(result.label);
+    setLocationSuggestions([]);
+    setShowLocationSuggestions(false);
+    setSelectedLocation([result.lat, result.lng]);
+  }, []);
 
   const filteredZones = zones.filter((z) =>
     z.name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -97,37 +208,36 @@ export default function SafeZonesPage() {
 
   const openCreateModal = () => {
     setSelectedLocation(DEFAULT_CENTER);
-    setFormData({
-      name: "",
-      type: "Police Station",
-      address: "",
-      radius: "500",
-    });
+    setLocationInput("");
+    setLocationSuggestions([]);
+    setShowLocationSuggestions(false);
+    skipReverseRef.current = true;
+    resetZoneForm({ name: "", radius: "500" });
     setIsCreating(true);
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (data: SafeZoneFormValues) => {
+    if (!selectedLocation) {
+      toast.error(t("toastNoLocation"));
+      return;
+    }
     try {
-      if (!selectedLocation) {
-        toast.error("Please choose a location on the map");
-        return;
-      }
       const [latitude, longitude] = selectedLocation;
       const request: CreateSafeZoneRequest = {
-        name: formData.name,
+        name: data.name,
         longitudeDegrees: longitude,
         latitudeDegrees: latitude,
-        radiusMeters: parseFloat(formData.radius),
+        radiusMeters: parseFloat(data.radius),
       };
       const response: CreateSafeZoneResponse = await emergencyOpsService.createSafeZone(request);
       const newZone: SafeZone = {
         id: response.id,
-        name: formData.name,
-        type: formData.type as SafeZone["type"],
-        address: formData.address,
+        name: data.name,
+        type: "Other",
+        address: "",
         longitude,
         latitude,
-        radius: parseFloat(formData.radius),
+        radius: parseFloat(data.radius),
         createdAt: new Date(response.createdAtMs).toISOString(),
       };
       setZones((prev) => [newZone, ...prev]);
@@ -155,21 +265,21 @@ export default function SafeZonesPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      <Breadcrumbs items={[{ label: "Safe Zone Management" }]} />
+      <Breadcrumbs items={[{ label: t("pageHeading") }]} />
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="max-w-2xl">
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Safe Zone Management</h1>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">{t("pageHeading")}</h1>
           <p className="text-gray-500 font-medium leading-relaxed">
-            Manage geofenced areas. You&apos;ll receive alerts when family members enter or leave these designated safe zones.
+            {t("pageSubtitle")}
           </p>
         </div>
-        <Button 
+        <Button
           onClick={openCreateModal}
           className="rounded-2xl h-14 px-8 bg-brand-700 text-white hover:bg-brand-800 font-black shadow-xl shadow-brand-700/20 transition-all hover:-translate-y-1"
         >
           <Plus className="w-5 h-5 mr-3" />
-          Create New Zone
+          {t("createZone")}
         </Button>
       </div>
 
@@ -191,7 +301,7 @@ export default function SafeZonesPage() {
             <div className="absolute top-8 left-8">
               <Badge className="bg-white text-brand-700 border-none rounded-xl px-4 py-2.5 font-black uppercase text-[10px] tracking-widest flex items-center gap-3 shadow-2xl">
                 <div className="w-2 h-2 rounded-full bg-brand-600 animate-pulse" />
-                {zones.length} Active Zones
+                {t("activeZones", { count: zones.length })}
               </Badge>
             </div>
 
@@ -213,7 +323,7 @@ export default function SafeZonesPage() {
           <Card className="rounded-[2.5rem] border-none shadow-2xl shadow-gray-200/50 min-h-[600px]">
             <CardContent className="p-10">
               <div className="flex items-center justify-between mb-10">
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Configured Zones</h2>
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">{t("configuredZones")}</h2>
                 <div className="flex items-center gap-3">
                   <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl hover:bg-gray-50">
                     <Filter className="w-5 h-5 text-gray-400" />
@@ -228,7 +338,7 @@ export default function SafeZonesPage() {
               <div className="relative mb-8">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input 
-                  placeholder="Search by zone name..." 
+                  placeholder={t("searchByName")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-14 pl-12 rounded-2xl bg-gray-50/50 border-gray-100 focus:bg-white text-base font-bold"
@@ -256,7 +366,7 @@ export default function SafeZonesPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            title="delete"
+                            title={tCommon("delete")}
                             onClick={(e) => { e.stopPropagation(); setConfirmDelete(zone); }}
                             className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl"
                           >
@@ -269,10 +379,10 @@ export default function SafeZonesPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <Badge variant="secondary" className="bg-gray-100 text-gray-500 border-none rounded-lg px-3 py-1 font-black text-[10px] uppercase">
-                            Radius: {zone.radius}m
+                            {t("badgeRadius", { radius: zone.radius })}
                           </Badge>
                           <Badge variant="secondary" className="bg-gray-100 text-gray-500 border-none rounded-lg px-3 py-1 font-black text-[10px] uppercase">
-                            Created: {new Date(zone.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            {t("badgeCreated", { date: format.dateTime(new Date(zone.createdAt), { month: "short", day: "numeric" }) })}
                           </Badge>
                         </div>
                       </div>
@@ -295,52 +405,104 @@ export default function SafeZonesPage() {
                   center={selectedLocation ?? DEFAULT_CENTER}
                   markers={selectedLocation ? [{ position: selectedLocation, label: "New Zone Center" }] : []}
                   onMapClick={(pos) => setSelectedLocation(pos)}
+                  onMarkerDragEnd={(pos) => setSelectedLocation(pos)}
                 />
                 <div className="absolute top-6 left-6 z-10">
                   <Badge className="bg-white/90 backdrop-blur-md text-brand-700 px-4 py-2 rounded-xl font-bold border-none shadow-lg">
-                    Click to pin center location
+                    {t("mapPinHint")}
                   </Badge>
                 </div>
               </div>
               <div className="lg:w-2/5 p-10 flex flex-col bg-white">
-                <h3 className="text-2xl font-black text-gray-900 mb-8">{t("modalTitle")}</h3>
+                <h3 className="text-2xl font-black text-gray-900 mb-6">{t("modalTitle")}</h3>
+
+                {/* Location search — outside scrollable area so dropdown isn't clipped */}
+                <div ref={locationSearchRef} className="relative mb-6">
+                  <div className="relative flex items-center">
+                    {isLocationSearching ? (
+                      <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+                    ) : (
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    )}
+                    <input
+                      type="text"
+                      value={locationInput}
+                      onChange={(e) => setLocationInput(e.target.value)}
+                      onFocus={() => locationSuggestions.length > 0 && setShowLocationSuggestions(true)}
+                      placeholder={t("locationSearchPlaceholder")}
+                      className="w-full h-12 pl-10 pr-10 rounded-xl bg-gray-50 border-none text-sm font-bold focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                    {locationInput && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLocationInput("");
+                          setLocationSuggestions([]);
+                          setShowLocationSuggestions(false);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  {showLocationSuggestions && locationSuggestions.length > 0 && (
+                    <ul className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl z-[60] max-h-52 overflow-y-auto">
+                      {locationSuggestions.map((s, i) => (
+                        <li key={i}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleLocationSuggestionSelect(s);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 truncate"
+                          >
+                            {s.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
                 <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Zone Name</label>
-                    <Input 
-                      placeholder="e.g. Family Home"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("formZoneName")}</label>
+                    <Input
+                      placeholder={t("formZoneNamePlaceholder")}
+                      {...registerZone("name")}
                       className="h-12 px-5 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand-500 font-bold"
                     />
+                    <FieldError message={zoneErrors.name?.message} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Zone Radius (Meters)</label>
-                    <Input 
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("formZoneRadius")}</label>
+                    <Input
                       type="number"
                       placeholder="500"
-                      value={formData.radius}
-                      onChange={(e) => setFormData({...formData, radius: e.target.value})}
+                      {...registerZone("radius")}
                       className="h-12 px-5 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand-500 font-bold"
                     />
+                    <FieldError message={zoneErrors.radius?.message} />
                   </div>
                   <div className="p-5 bg-brand-50 rounded-2xl border border-brand-100 mt-4">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="p-2 bg-white rounded-lg">
                         <Navigation className="w-4 h-4 text-brand-600" />
                       </div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pin Coordinates</p>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t("pinCoordinates")}</p>
                     </div>
                     <p className="text-sm font-black text-gray-900">
-                      {selectedLocation ? `${selectedLocation[0].toFixed(6)}, ${selectedLocation[1].toFixed(6)}` : "Not selected yet"}
+                      {selectedLocation ? `${selectedLocation[0].toFixed(6)}, ${selectedLocation[1].toFixed(6)}` : t("notSelectedYet")}
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-4 pt-8 mt-auto border-t border-gray-50">
                   <Button variant="ghost" onClick={() => setIsCreating(false)} className="flex-1 h-12 rounded-xl font-bold">{tCommon("cancel")}</Button>
                   <Button
-                    onClick={handleCreate}
-                    disabled={!formData.name || !selectedLocation || !formData.radius}
+                    onClick={handleZoneSubmit(handleCreate)}
+                    disabled={!watchedName?.trim() || !watchedRadius?.trim()}
                     className="flex-1 h-12 rounded-xl bg-brand-700 text-white font-black"
                   >
                     {tCommon("confirm")}

@@ -6,6 +6,11 @@ const createJestConfig = nextJest({ dir: './' })
 const config: Config = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  reporters: [
+    'default',
+    ['jest-junit', { outputDirectory: 'test-results', outputName: 'junit.xml' }],
+    '<rootDir>/reporters/failedTestsReporter.js',
+  ],
   collectCoverage: true,
   coverageProvider: 'v8',
   coverageDirectory: 'coverage',

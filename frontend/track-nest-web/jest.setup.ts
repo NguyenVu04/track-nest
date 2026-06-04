@@ -11,8 +11,14 @@ jest.mock("next-intl", () => {
   const React = jest.requireActual("react") as typeof import("react");
   const stableT = (key: string, vars?: Record<string, unknown>): string =>
     vars ? `${key}:${JSON.stringify(vars)}` : key;
+  const stableFormatter = {
+    dateTime: (_value: Date | number | string, _opts?: object) => "Jan 1",
+    number: (value: number) => String(value),
+    list: (items: string[]) => items.join(", "),
+  };
   return {
     useTranslations: () => stableT,
+    useFormatter: () => stableFormatter,
     useLocale: () => "en",
     NextIntlClientProvider: ({ children }: { children: React.ReactNode }) =>
       React.createElement(React.Fragment, null, children),

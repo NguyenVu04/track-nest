@@ -47,6 +47,7 @@ interface MapViewProps {
   heatmapData?: [number, number, number][]; // [lat, lng, intensity]
   height?: string;
   onMapClick?: (position: [number, number]) => void;
+  onMarkerDragEnd?: (position: [number, number]) => void;
 }
 
 // Component to handle map bounds fitting
@@ -94,6 +95,7 @@ export function MapView({
   heatmapData = [],
   height = "100%",
   onMapClick,
+  onMarkerDragEnd,
 }: MapViewProps) {
   return (
     <MapContainer
@@ -109,7 +111,22 @@ export function MapView({
 
       {/* Markers */}
       {markers.map((marker, index) => (
-        <Marker key={index} position={marker.position} icon={defaultIcon}>
+        <Marker
+          key={index}
+          position={marker.position}
+          icon={defaultIcon}
+          draggable={!!onMarkerDragEnd}
+          eventHandlers={
+            onMarkerDragEnd
+              ? {
+                  dragend(e) {
+                    const { lat, lng } = e.target.getLatLng();
+                    onMarkerDragEnd([lat, lng]);
+                  },
+                }
+              : undefined
+          }
+        >
           <Popup>{marker.popup || marker.label}</Popup>
         </Marker>
       ))}

@@ -159,7 +159,7 @@ describe("SafeZonesPage", () => {
       );
 
       // Open modal.
-      await user.click(screen.getByRole("button", { name: /Create New Zone/i }));
+      await user.click(screen.getByRole("button", { name: "createZone" }));
 
       // Modal title from translation mock.
       expect(screen.getByText("modalTitle")).toBeInTheDocument();
@@ -169,7 +169,8 @@ describe("SafeZonesPage", () => {
         .getByText("modalTitle")
         .closest("div.bg-white") as HTMLElement;
       const textboxes = within(modal).getAllByRole("textbox");
-      const [nameInput] = textboxes;
+      // textboxes[0] = location search input, textboxes[1] = zone name input
+      const nameInput = textboxes[1];
       await user.type(nameInput, "New North Station");
 
       // Pick a location through the stubbed MapView.
@@ -199,7 +200,7 @@ describe("SafeZonesPage", () => {
         expect(screen.getByText("Central Police Station")).toBeInTheDocument(),
       );
 
-      await user.click(screen.getByRole("button", { name: /Create New Zone/i }));
+      await user.click(screen.getByRole("button", { name: "createZone" }));
 
       const modal = screen
         .getByText("modalTitle")
@@ -211,7 +212,8 @@ describe("SafeZonesPage", () => {
 
       // Note: SafeZonesPage seeds `selectedLocation` to DEFAULT_CENTER on open,
       // so location is already set. Typing a name should be enough to enable.
-      const nameInput = within(modal).getAllByRole("textbox")[0];
+      // textboxes[0] = location search, textboxes[1] = zone name input
+      const nameInput = within(modal).getAllByRole("textbox")[1];
       await user.type(nameInput, "X");
       expect(confirmBtn).toBeEnabled();
 

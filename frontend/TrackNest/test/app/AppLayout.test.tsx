@@ -48,6 +48,15 @@ jest.mock("@/contexts/SettingsContext", () => ({
   }),
 }));
 
+jest.mock("@/contexts/EmergencyContext", () => ({
+  useEmergency: jest.fn().mockReturnValue({
+    isEmergencyActive: false,
+    refreshActiveEmergencyStatus: jest.fn().mockResolvedValue(undefined),
+    createEmergencyRequest: jest.fn().mockResolvedValue({}),
+    getNearestSafeZones: jest.fn().mockResolvedValue([]),
+  }),
+}));
+
 jest.mock("@/hooks/usePushNotifications", () => ({
   usePushNotifications: jest.fn(),
 }));
