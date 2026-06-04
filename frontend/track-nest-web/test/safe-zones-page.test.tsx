@@ -143,7 +143,7 @@ describe("SafeZonesPage — loaded state", () => {
   it("renders page title", async () => {
     render(<SafeZonesPage />);
     await waitFor(() =>
-      expect(screen.getByText("Safe Zone Management")).toBeInTheDocument(),
+      expect(screen.getByText("pageHeading")).toBeInTheDocument(),
     );
   });
 
@@ -157,7 +157,7 @@ describe("SafeZonesPage — loaded state", () => {
   it("renders Configured Zones heading", async () => {
     render(<SafeZonesPage />);
     await waitFor(() =>
-      expect(screen.getByText("Configured Zones")).toBeInTheDocument(),
+      expect(screen.getByText("configuredZones")).toBeInTheDocument(),
     );
   });
 
@@ -171,7 +171,7 @@ describe("SafeZonesPage — loaded state", () => {
   it("renders add zone button", async () => {
     render(<SafeZonesPage />);
     await waitFor(() =>
-      expect(screen.getByText("Create New Zone")).toBeInTheDocument(),
+      expect(screen.getByText("createZone")).toBeInTheDocument(),
     );
   });
 
@@ -185,14 +185,14 @@ describe("SafeZonesPage — loaded state", () => {
   it("renders zone radius", async () => {
     render(<SafeZonesPage />);
     await waitFor(() =>
-      expect(screen.getByText(/Radius: 500m/i)).toBeInTheDocument(),
+      expect(screen.getByText(/badgeRadius/)).toBeInTheDocument(),
     );
   });
 
   it("filters zones by search query", async () => {
     render(<SafeZonesPage />);
     await waitFor(() => screen.getByText("Police Station A"));
-    const searchInput = screen.getByPlaceholderText("Search by zone name...");
+    const searchInput = screen.getByPlaceholderText("searchByName");
     fireEvent.change(searchInput, { target: { value: "nonexistent" } });
     await waitFor(() =>
       expect(screen.queryByText("Police Station A")).not.toBeInTheDocument(),
@@ -249,8 +249,8 @@ describe("SafeZonesPage — delete zone", () => {
 describe("SafeZonesPage — create zone", () => {
   it("opens create modal when Add Zone button clicked", async () => {
     render(<SafeZonesPage />);
-    await waitFor(() => screen.getByText("Create New Zone"));
-    fireEvent.click(screen.getByText("Create New Zone"));
+    await waitFor(() => screen.getByText("createZone"));
+    fireEvent.click(screen.getByText("createZone"));
     await waitFor(() =>
       expect(screen.getByText("modalTitle")).toBeInTheDocument(),
     );
@@ -258,8 +258,8 @@ describe("SafeZonesPage — create zone", () => {
 
   it("closes create modal when Cancel clicked", async () => {
     render(<SafeZonesPage />);
-    await waitFor(() => screen.getByText("Create New Zone"));
-    fireEvent.click(screen.getByText("Create New Zone"));
+    await waitFor(() => screen.getByText("createZone"));
+    fireEvent.click(screen.getByText("createZone"));
     await waitFor(() => screen.getByText("modalTitle"));
     fireEvent.click(screen.getByText("cancel"));
     await waitFor(() =>
@@ -271,17 +271,14 @@ describe("SafeZonesPage — create zone", () => {
 
   it("creates a zone when form is filled and confirmed", async () => {
     render(<SafeZonesPage />);
-    await waitFor(() => screen.getByText("Create New Zone"));
-    fireEvent.click(screen.getByText("Create New Zone"));
+    await waitFor(() => screen.getByText("createZone"));
+    fireEvent.click(screen.getByText("createZone"));
     await waitFor(() => screen.getByText("modalTitle"));
 
-    // Fill in zone name — modal adds inputs after the main search input,
-    // so the second textbox is the name field.
-    const allTextInputs = screen.queryAllByRole("textbox");
-    const nameInput = allTextInputs.length > 1 ? allTextInputs[1] : allTextInputs[0];
-    if (nameInput) {
-      fireEvent.change(nameInput, { target: { value: "New Zone" } });
-    }
+    // Fill in zone name — modal has location search first, then zone name input.
+    // Use placeholder to target the name input directly.
+    const nameInput = screen.getByPlaceholderText("formZoneNamePlaceholder");
+    fireEvent.change(nameInput, { target: { value: "New Zone" } });
 
     // Click map to set location
     fireEvent.click(screen.getByTestId("map-click-btn"));
