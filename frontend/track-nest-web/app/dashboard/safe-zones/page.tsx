@@ -1,18 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { 
-  Plus, 
-  Trash2, 
-  Search, 
-  MapPin, 
-  Home, 
-  School, 
-  Shield, 
-  Filter, 
-  Navigation, 
-  Settings2
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  Plus,
+  Trash2,
+  Search,
+  MapPin,
+  Home,
+  School,
+  Shield,
+  Filter,
+  Navigation,
+  Settings2,
+  Loader2,
+  X,
 } from "lucide-react";
+import { useDebounce } from "use-debounce";
+import {
+  searchLocations,
+  reverseGeocode,
+  GeocodingResult,
+} from "@/utils/geocoding";
 import { useAuth } from "@/contexts/AuthContext";
 import type { SafeZone } from "@/types";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
@@ -48,6 +56,13 @@ export default function SafeZonesPage() {
   const [confirmDelete, setConfirmDelete] = useState<SafeZone | null>(null);
   const [selectedZone, setSelectedZone] = useState<SafeZone | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
+  const [locationInput, setLocationInput] = useState("");
+  const [locationSuggestions, setLocationSuggestions] = useState<GeocodingResult[]>([]);
+  const [isLocationSearching, setIsLocationSearching] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [debouncedLocationInput] = useDebounce(locationInput, 300);
+  const locationSearchRef = useRef<HTMLDivElement>(null);
+  const skipReverseRef = useRef(false);
   const [formData, setFormData] = useState({
     name: "",
     type: "Police Station",
@@ -84,6 +99,67 @@ export default function SafeZonesPage() {
     fetchZones();
   }, [user, t]);
 
+  // Hide location suggestions when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        locationSearchRef.current &&
+        !locationSearchRef.current.contains(e.target as Node)
+      ) {
+        setShowLocationSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Forward geocoding for location search
+  useEffect(() => {
+    if (debouncedLocationInput.trim().length < 3) {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+      return;
+    }
+    let cancelled = false;
+    setIsLocationSearching(true);
+    searchLocations(debouncedLocationInput).then((results) => {
+      if (cancelled) return;
+      setLocationSuggestions(results);
+      setShowLocationSuggestions(results.length > 0);
+      setIsLocationSearching(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedLocationInput]);
+
+  // Reverse geocode when selectedLocation changes via map click or drag
+  useEffect(() => {
+    if (!selectedLocation) return;
+    if (skipReverseRef.current) {
+      skipReverseRef.current = false;
+      return;
+    }
+    let cancelled = false;
+    reverseGeocode(selectedLocation[0], selectedLocation[1]).then((label) => {
+      if (cancelled || label === null) return;
+      setLocationInput(label);
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLocation]);
+
+  const handleLocationSuggestionSelect = useCallback((result: GeocodingResult) => {
+    skipReverseRef.current = true;
+    setLocationInput(result.label);
+    setLocationSuggestions([]);
+    setShowLocationSuggestions(false);
+    setSelectedLocation([result.lat, result.lng]);
+  }, []);
+
   const filteredZones = zones.filter((z) =>
     z.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -97,6 +173,10 @@ export default function SafeZonesPage() {
 
   const openCreateModal = () => {
     setSelectedLocation(DEFAULT_CENTER);
+    setLocationInput("");
+    setLocationSuggestions([]);
+    setShowLocationSuggestions(false);
+    skipReverseRef.current = true;
     setFormData({
       name: "",
       type: "Police Station",
@@ -295,6 +375,7 @@ export default function SafeZonesPage() {
                   center={selectedLocation ?? DEFAULT_CENTER}
                   markers={selectedLocation ? [{ position: selectedLocation, label: "New Zone Center" }] : []}
                   onMapClick={(pos) => setSelectedLocation(pos)}
+                  onMarkerDragEnd={(pos) => setSelectedLocation(pos)}
                 />
                 <div className="absolute top-6 left-6 z-10">
                   <Badge className="bg-white/90 backdrop-blur-md text-brand-700 px-4 py-2 rounded-xl font-bold border-none shadow-lg">
@@ -303,7 +384,58 @@ export default function SafeZonesPage() {
                 </div>
               </div>
               <div className="lg:w-2/5 p-10 flex flex-col bg-white">
-                <h3 className="text-2xl font-black text-gray-900 mb-8">{t("modalTitle")}</h3>
+                <h3 className="text-2xl font-black text-gray-900 mb-6">{t("modalTitle")}</h3>
+
+                {/* Location search — outside scrollable area so dropdown isn't clipped */}
+                <div ref={locationSearchRef} className="relative mb-6">
+                  <div className="relative flex items-center">
+                    {isLocationSearching ? (
+                      <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+                    ) : (
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    )}
+                    <input
+                      type="text"
+                      value={locationInput}
+                      onChange={(e) => setLocationInput(e.target.value)}
+                      onFocus={() => locationSuggestions.length > 0 && setShowLocationSuggestions(true)}
+                      placeholder="Search for a location…"
+                      className="w-full h-12 pl-10 pr-10 rounded-xl bg-gray-50 border-none text-sm font-bold focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                    {locationInput && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLocationInput("");
+                          setLocationSuggestions([]);
+                          setShowLocationSuggestions(false);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  {showLocationSuggestions && locationSuggestions.length > 0 && (
+                    <ul className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl z-[60] max-h-52 overflow-y-auto">
+                      {locationSuggestions.map((s, i) => (
+                        <li key={i}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleLocationSuggestionSelect(s);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 truncate"
+                          >
+                            {s.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
                 <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Zone Name</label>
