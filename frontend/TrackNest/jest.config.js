@@ -17,6 +17,10 @@ module.exports = {
     '^@tamagui/.*': '<rootDir>/__mocks__/tamagui.js',
     'tamagui\\.config': '<rootDir>/__mocks__/tamagui-config.js',
   },
+  reporters: [
+    'default',
+    '<rootDir>/reporters/failedTestsReporter.js',
+  ],
   collectCoverage: true,
   coverageReporters: ['lcov', 'text'],
   coverageDirectory: 'coverage',
