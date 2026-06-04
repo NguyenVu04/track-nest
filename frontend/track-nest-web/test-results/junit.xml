@@ -1,0 +1,791 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="370" failures="0" errors="0" time="46.857">
+  <testsuite name="RootLayout" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:13" time="13.698" tests="2">
+    <testcase classname="RootLayout renders children" name="RootLayout renders children" time="0.076">
+    </testcase>
+    <testcase classname="RootLayout renders without crashing" name="RootLayout renders without crashing" time="0.008">
+    </testcase>
+  </testsuite>
+  <testsuite name="CrimeReportList" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:13" time="14.583" tests="9">
+    <testcase classname="CrimeReportList REPORT-UC-09 — Publish Crime Report renders the publish action only when the report is not yet public" name="CrimeReportList REPORT-UC-09 — Publish Crime Report renders the publish action only when the report is not yet public" time="0.111">
+    </testcase>
+    <testcase classname="CrimeReportList REPORT-UC-09 — Publish Crime Report hides the publish action once a report is public" name="CrimeReportList REPORT-UC-09 — Publish Crime Report hides the publish action once a report is public" time="0.015">
+    </testcase>
+    <testcase classname="CrimeReportList REPORT-UC-09 — Publish Crime Report calls onPublish with the report id after the reporter confirms" name="CrimeReportList REPORT-UC-09 — Publish Crime Report calls onPublish with the report id after the reporter confirms" time="0.208">
+    </testcase>
+    <testcase classname="CrimeReportList REPORT-UC-09 — Publish Crime Report does NOT call onPublish if the reporter cancels" name="CrimeReportList REPORT-UC-09 — Publish Crime Report does NOT call onPublish if the reporter cancels" time="0.275">
+    </testcase>
+    <testcase classname="CrimeReportList REPORT-UC-10 — Delete Crime Report calls onDelete with the report id when the reporter confirms" name="CrimeReportList REPORT-UC-10 — Delete Crime Report calls onDelete with the report id when the reporter confirms" time="0.142">
+    </testcase>
+    <testcase classname="CrimeReportList REPORT-UC-10 — Delete Crime Report does NOT call onDelete if the reporter cancels" name="CrimeReportList REPORT-UC-10 — Delete Crime Report does NOT call onDelete if the reporter cancels" time="0.219">
+    </testcase>
+    <testcase classname="CrimeReportList Role gating hides publish AND delete for an Emergency Service viewer" name="CrimeReportList Role gating hides publish AND delete for an Emergency Service viewer" time="0.006">
+    </testcase>
+    <testcase classname="CrimeReportList View detail invokes onViewDetail with the row&apos;s report when clicking the eye icon" name="CrimeReportList View detail invokes onViewDetail with the row&apos;s report when clicking the eye icon" time="0.091">
+    </testcase>
+    <testcase classname="CrimeReportList Empty state renders the empty state when there are no reports" name="CrimeReportList Empty state renders the empty state when there are no reports" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="SafeZonesPage — null user" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:27" time="1.79" tests="18">
+    <testcase classname="SafeZonesPage — null user returns null when user is null" name="SafeZonesPage — null user returns null when user is null" time="0.039">
+    </testcase>
+    <testcase classname="SafeZonesPage — loading state shows fullscreen loader while fetching" name="SafeZonesPage — loading state shows fullscreen loader while fetching" time="0.016">
+    </testcase>
+    <testcase classname="SafeZonesPage — loaded state renders page title" name="SafeZonesPage — loaded state renders page title" time="0.084">
+    </testcase>
+    <testcase classname="SafeZonesPage — loaded state renders zone name in table" name="SafeZonesPage — loaded state renders zone name in table" time="0.031">
+    </testcase>
+    <testcase classname="SafeZonesPage — loaded state renders Configured Zones heading" name="SafeZonesPage — loaded state renders Configured Zones heading" time="0.035">
+    </testcase>
+    <testcase classname="SafeZonesPage — loaded state renders map view" name="SafeZonesPage — loaded state renders map view" time="0.031">
+    </testcase>
+    <testcase classname="SafeZonesPage — loaded state renders add zone button" name="SafeZonesPage — loaded state renders add zone button" time="0.042">
+    </testcase>
+    <testcase classname="SafeZonesPage — loaded state renders coordinates of the zone" name="SafeZonesPage — loaded state renders coordinates of the zone" time="0.037">
+    </testcase>
+    <testcase classname="SafeZonesPage — loaded state renders zone radius" name="SafeZonesPage — loaded state renders zone radius" time="0.016">
+    </testcase>
+    <testcase classname="SafeZonesPage — loaded state filters zones by search query" name="SafeZonesPage — loaded state filters zones by search query" time="0.047">
+    </testcase>
+    <testcase classname="SafeZonesPage — loaded state shows error toast when getSafeZones fails" name="SafeZonesPage — loaded state shows error toast when getSafeZones fails" time="0.045">
+    </testcase>
+    <testcase classname="SafeZonesPage — zone selection highlights zone when card clicked" name="SafeZonesPage — zone selection highlights zone when card clicked" time="0.042">
+    </testcase>
+    <testcase classname="SafeZonesPage — delete zone opens confirm modal when delete button clicked" name="SafeZonesPage — delete zone opens confirm modal when delete button clicked" time="0.049">
+    </testcase>
+    <testcase classname="SafeZonesPage — delete zone calls deleteSafeZone and removes zone when confirmed" name="SafeZonesPage — delete zone calls deleteSafeZone and removes zone when confirmed" time="0.065">
+    </testcase>
+    <testcase classname="SafeZonesPage — delete zone cancels confirm modal when cancel clicked" name="SafeZonesPage — delete zone cancels confirm modal when cancel clicked" time="0.051">
+    </testcase>
+    <testcase classname="SafeZonesPage — create zone opens create modal when Add Zone button clicked" name="SafeZonesPage — create zone opens create modal when Add Zone button clicked" time="0.077">
+    </testcase>
+    <testcase classname="SafeZonesPage — create zone closes create modal when Cancel clicked" name="SafeZonesPage — create zone closes create modal when Cancel clicked" time="0.087">
+    </testcase>
+    <testcase classname="SafeZonesPage — create zone creates a zone when form is filled and confirmed" name="SafeZonesPage — create zone creates a zone when form is filled and confirmed" time="0.118">
+    </testcase>
+  </testsuite>
+  <testsuite name="SafeZonesPage" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:13" time="15.69" tests="4">
+    <testcase classname="SafeZonesPage EMERGENCY-UC-05 — Remove Safe Zone calls deleteSafeZone with the row id when the user confirms" name="SafeZonesPage EMERGENCY-UC-05 — Remove Safe Zone calls deleteSafeZone with the row id when the user confirms" time="0.407">
+    </testcase>
+    <testcase classname="SafeZonesPage EMERGENCY-UC-05 — Remove Safe Zone does NOT call deleteSafeZone when the user cancels" name="SafeZonesPage EMERGENCY-UC-05 — Remove Safe Zone does NOT call deleteSafeZone when the user cancels" time="0.301">
+    </testcase>
+    <testcase classname="SafeZonesPage EMERGENCY-UC-06 — Add Safe Zone submits a new safe zone with name + chosen coordinates + radius" name="SafeZonesPage EMERGENCY-UC-06 — Add Safe Zone submits a new safe zone with name + chosen coordinates + radius" time="0.904">
+    </testcase>
+    <testcase classname="SafeZonesPage EMERGENCY-UC-06 — Add Safe Zone disables the confirm button when name or radius is empty" name="SafeZonesPage EMERGENCY-UC-06 — Add Safe Zone disables the confirm button when name or radius is empty" time="0.326">
+    </testcase>
+  </testsuite>
+  <testsuite name="GuidelineDashboard" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:13" time="15.86" tests="4">
+    <testcase classname="GuidelineDashboard REPORT-UC-05 — Publish Guideline Document submits a new guideline through the service when the form is filled" name="GuidelineDashboard REPORT-UC-05 — Publish Guideline Document submits a new guideline through the service when the form is filled" time="1.681">
+    </testcase>
+    <testcase classname="GuidelineDashboard REPORT-UC-05 — Publish Guideline Document hides the New Guideline button for users without management permission" name="GuidelineDashboard REPORT-UC-05 — Publish Guideline Document hides the New Guideline button for users without management permission" time="0.054">
+    </testcase>
+    <testcase classname="GuidelineDashboard REPORT-UC-06 — Delete Guideline Document calls the delete + cleanup endpoints after the reporter confirms" name="GuidelineDashboard REPORT-UC-06 — Delete Guideline Document calls the delete + cleanup endpoints after the reporter confirms" time="0.378">
+    </testcase>
+    <testcase classname="GuidelineDashboard REPORT-UC-06 — Delete Guideline Document does NOT call delete services when the reporter cancels" name="GuidelineDashboard REPORT-UC-06 — Delete Guideline Document does NOT call delete services when the reporter cancels" time="0.219">
+    </testcase>
+  </testsuite>
+  <testsuite name="EmergencyRequestsPage" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:13" time="16.53" tests="5">
+    <testcase classname="EmergencyRequestsPage EMERGENCY-UC-03 — Accept Emergency Request calls acceptEmergencyRequest and updates the row to ACCEPTED" name="EmergencyRequestsPage EMERGENCY-UC-03 — Accept Emergency Request calls acceptEmergencyRequest and updates the row to ACCEPTED" time="0.327">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage EMERGENCY-UC-02 — Reject Emergency Request requires a non-empty reason before submit" name="EmergencyRequestsPage EMERGENCY-UC-02 — Reject Emergency Request requires a non-empty reason before submit" time="0.321">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage EMERGENCY-UC-02 — Reject Emergency Request submits the rejection and updates the row to REJECTED when a reason is provided" name="EmergencyRequestsPage EMERGENCY-UC-02 — Reject Emergency Request submits the rejection and updates the row to REJECTED when a reason is provided" time="0.853">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage EMERGENCY-UC-04 — Complete (Close) Emergency Request requires a completion note before allowing close" name="EmergencyRequestsPage EMERGENCY-UC-04 — Complete (Close) Emergency Request requires a completion note before allowing close" time="0.296">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage EMERGENCY-UC-04 — Complete (Close) Emergency Request calls closeEmergencyRequest and marks the row CLOSED on submit" name="EmergencyRequestsPage EMERGENCY-UC-04 — Complete (Close) Emergency Request calls closeEmergencyRequest and marks the row CLOSED on submit" time="1.173">
+    </testcase>
+  </testsuite>
+  <testsuite name="AdminEmergencyRequestsPage — null user" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:13" time="17.506" tests="15">
+    <testcase classname="AdminEmergencyRequestsPage — null user returns null when user is null" name="AdminEmergencyRequestsPage — null user returns null when user is null" time="0.114">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — loading state shows loader while fetching" name="AdminEmergencyRequestsPage — loading state shows loader while fetching" time="0.027">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — role guard shows access denied for non-Admin user" name="AdminEmergencyRequestsPage — role guard shows access denied for non-Admin user" time="0.044">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — role guard renders table for Admin user" name="AdminEmergencyRequestsPage — role guard renders table for Admin user" time="0.364">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — loaded state renders sender name" name="AdminEmergencyRequestsPage — loaded state renders sender name" time="0.137">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — loaded state renders assigned service username" name="AdminEmergencyRequestsPage — loaded state renders assigned service username" time="0.147">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — loaded state renders breadcrumbs" name="AdminEmergencyRequestsPage — loaded state renders breadcrumbs" time="0.107">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — loaded state does NOT render Accept or Reject buttons (admin view is read-only)" name="AdminEmergencyRequestsPage — loaded state does NOT render Accept or Reject buttons (admin view is read-only)" time="0.096">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — loaded state calls getAllEmergencyRequests on mount" name="AdminEmergencyRequestsPage — loaded state calls getAllEmergencyRequests on mount" time="0.01">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — search filter renders search input" name="AdminEmergencyRequestsPage — search filter renders search input" time="0.049">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — search filter filters rows client-side by request ID prefix" name="AdminEmergencyRequestsPage — search filter filters rows client-side by request ID prefix" time="0.141">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — status filter calls getAllEmergencyRequests with status when filter changes" name="AdminEmergencyRequestsPage — status filter calls getAllEmergencyRequests with status when filter changes" time="0.121">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — navigation navigates to detail page with ?from=admin when row is clicked" name="AdminEmergencyRequestsPage — navigation navigates to detail page with ?from=admin when row is clicked" time="0.059">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — navigation stores request data in sessionStorage when navigating to detail" name="AdminEmergencyRequestsPage — navigation stores request data in sessionStorage when navigating to detail" time="0.059">
+    </testcase>
+    <testcase classname="AdminEmergencyRequestsPage — empty state shows no results message when list is empty" name="AdminEmergencyRequestsPage — empty state shows no results message when list is empty" time="0.059">
+    </testcase>
+  </testsuite>
+  <testsuite name="LoginPage" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:30" time="2.179" tests="13">
+    <testcase classname="LoginPage renders without crashing" name="LoginPage renders without crashing" time="0.052">
+    </testcase>
+    <testcase classname="LoginPage renders something in the container" name="LoginPage renders something in the container" time="0.007">
+    </testcase>
+    <testcase classname="LoginContent shows loading spinner while keycloak initialises" name="LoginContent shows loading spinner while keycloak initialises" time="0.013">
+    </testcase>
+    <testcase classname="LoginContent shows initialising session text while loading" name="LoginContent shows initialising session text while loading" time="0.02">
+    </testcase>
+    <testcase classname="LoginContent shows app name after keycloak init returns unauthenticated" name="LoginContent shows app name after keycloak init returns unauthenticated" time="0.035">
+    </testcase>
+    <testcase classname="LoginContent renders sign-in button after init" name="LoginContent renders sign-in button after init" time="0.018">
+    </testcase>
+    <testcase classname="LoginContent renders tagline text after init" name="LoginContent renders tagline text after init" time="0.033">
+    </testcase>
+    <testcase classname="LoginContent renders three feature pills after init" name="LoginContent renders three feature pills after init" time="0.07">
+    </testcase>
+    <testcase classname="LoginContent renders securedBy text after init" name="LoginContent renders securedBy text after init" time="0.018">
+    </testcase>
+    <testcase classname="LoginContent redirects to dashboard when already authenticated via context" name="LoginContent redirects to dashboard when already authenticated via context" time="0.029">
+    </testcase>
+    <testcase classname="LoginContent redirects to dashboard when keycloak init returns authenticated" name="LoginContent redirects to dashboard when keycloak init returns authenticated" time="0.032">
+    </testcase>
+    <testcase classname="LoginContent calls loginWithKeycloak when sign-in button is clicked" name="LoginContent calls loginWithKeycloak when sign-in button is clicked" time="0.026">
+    </testcase>
+    <testcase classname="LoginContent shows error toast when keycloak redirect fails" name="LoginContent shows error toast when keycloak redirect fails" time="0.11">
+    </testcase>
+  </testsuite>
+  <testsuite name="EmergencyRequestsPage — null user" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:29" time="3.218" tests="22">
+    <testcase classname="EmergencyRequestsPage — null user returns null when user is not set" name="EmergencyRequestsPage — null user returns null when user is not set" time="0.041">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — loading state shows loader while fetching" name="EmergencyRequestsPage — loading state shows loader while fetching" time="0.013">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — loaded state renders the table with request row" name="EmergencyRequestsPage — loaded state renders the table with request row" time="0.116">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — loaded state renders sender full name" name="EmergencyRequestsPage — loaded state renders sender full name" time="0.108">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — loaded state renders breadcrumbs" name="EmergencyRequestsPage — loaded state renders breadcrumbs" time="0.086">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — loaded state renders search input" name="EmergencyRequestsPage — loaded state renders search input" time="0.058">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — loaded state renders status filter combobox" name="EmergencyRequestsPage — loaded state renders status filter combobox" time="0.19">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — loaded state shows accept and reject buttons for PENDING requests (Emergency Service role)" name="EmergencyRequestsPage — loaded state shows accept and reject buttons for PENDING requests (Emergency Service role)" time="0.048">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — loaded state calls acceptEmergencyRequest when accept button clicked" name="EmergencyRequestsPage — loaded state calls acceptEmergencyRequest when accept button clicked" time="0.07">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — loaded state opens reject modal when reject button clicked" name="EmergencyRequestsPage — loaded state opens reject modal when reject button clicked" time="0.089">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — loaded state navigates to detail page when row is clicked" name="EmergencyRequestsPage — loaded state navigates to detail page when row is clicked" time="0.079">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — loaded state shows toast error when fetch fails" name="EmergencyRequestsPage — loaded state shows toast error when fetch fails" time="0.063">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — role guard shows access denied for non-Emergency-Service user" name="EmergencyRequestsPage — role guard shows access denied for non-Emergency-Service user" time="0.017">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — reject flow cancels reject modal when cancel clicked" name="EmergencyRequestsPage — reject flow cancels reject modal when cancel clicked" time="0.11">
+    </testcase>
+    <testcase classname="EmergencyRequestsPage — reject flow calls rejectEmergencyRequest when reason is provided and confirmed" name="EmergencyRequestsPage — reject flow calls rejectEmergencyRequest when reason is provided and confirmed" time="0.158">
+    </testcase>
+    <testcase classname="EmergencyRequestDetailPage — null user returns null when user is not set" name="EmergencyRequestDetailPage — null user returns null when user is not set" time="0.015">
+    </testcase>
+    <testcase classname="EmergencyRequestDetailPage — no sessionStorage data shows Request not found when no sessionStorage data" name="EmergencyRequestDetailPage — no sessionStorage data shows Request not found when no sessionStorage data" time="0.026">
+    </testcase>
+    <testcase classname="EmergencyRequestDetailPage — no sessionStorage data renders back-to-list button when not found" name="EmergencyRequestDetailPage — no sessionStorage data renders back-to-list button when not found" time="0.015">
+    </testcase>
+    <testcase classname="EmergencyRequestDetailPage — with sessionStorage data renders the request detail" name="EmergencyRequestDetailPage — with sessionStorage data renders the request detail" time="0.049">
+    </testcase>
+    <testcase classname="EmergencyRequestDetailPage — with sessionStorage data renders sender and target profile cards" name="EmergencyRequestDetailPage — with sessionStorage data renders sender and target profile cards" time="0.047">
+    </testcase>
+    <testcase classname="EmergencyRequestDetailPage — with sessionStorage data renders map view for location" name="EmergencyRequestDetailPage — with sessionStorage data renders map view for location" time="0.061">
+    </testcase>
+    <testcase classname="EmergencyRequestDetailPage — with sessionStorage data navigates back to list when Back button clicked" name="EmergencyRequestDetailPage — with sessionStorage data navigates back to list when Back button clicked" time="0.048">
+    </testcase>
+  </testsuite>
+  <testsuite name="MissingPersonList" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:29" time="3.374" tests="8">
+    <testcase classname="MissingPersonList REPORT-UC-01 — Publish Missing Person Report opens the confirm dialog and calls onPublish when a Reporter confirms" name="MissingPersonList REPORT-UC-01 — Publish Missing Person Report opens the confirm dialog and calls onPublish when a Reporter confirms" time="0.529">
+    </testcase>
+    <testcase classname="MissingPersonList REPORT-UC-01 — Publish Missing Person Report does not call onPublish when the user cancels the confirm dialog" name="MissingPersonList REPORT-UC-01 — Publish Missing Person Report does not call onPublish when the user cancels the confirm dialog" time="0.305">
+    </testcase>
+    <testcase classname="MissingPersonList REPORT-UC-01 — Publish Missing Person Report hides the publish action when the report is no longer PENDING" name="MissingPersonList REPORT-UC-01 — Publish Missing Person Report hides the publish action when the report is no longer PENDING" time="0.017">
+    </testcase>
+    <testcase classname="MissingPersonList REPORT-UC-01 — Publish Missing Person Report hides the publish action for a non-Reporter / non-User role (e.g. Emergency Service)" name="MissingPersonList REPORT-UC-01 — Publish Missing Person Report hides the publish action for a non-Reporter / non-User role (e.g. Emergency Service)" time="0.016">
+    </testcase>
+    <testcase classname="MissingPersonList REPORT-UC-02 — Delete Missing Person Report opens the confirm dialog and calls onDelete when a Reporter confirms" name="MissingPersonList REPORT-UC-02 — Delete Missing Person Report opens the confirm dialog and calls onDelete when a Reporter confirms" time="0.21">
+    </testcase>
+    <testcase classname="MissingPersonList REPORT-UC-02 — Delete Missing Person Report does not call onDelete when the user cancels" name="MissingPersonList REPORT-UC-02 — Delete Missing Person Report does not call onDelete when the user cancels" time="0.282">
+    </testcase>
+    <testcase classname="MissingPersonList Empty state renders the empty state when there are no persons" name="MissingPersonList Empty state renders the empty state when there are no persons" time="0.01">
+    </testcase>
+    <testcase classname="MissingPersonList View detail invokes onViewDetail with the row&apos;s person" name="MissingPersonList View detail invokes onViewDetail with the row&apos;s person" time="0.111">
+    </testcase>
+  </testsuite>
+  <testsuite name="ConfirmModal (foundational)" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:31" time="2.039" tests="3">
+    <testcase classname="ConfirmModal (foundational) renders the title, message, and confirm/cancel buttons" name="ConfirmModal (foundational) renders the title, message, and confirm/cancel buttons" time="0.158">
+    </testcase>
+    <testcase classname="ConfirmModal (foundational) invokes onConfirm exactly once when the confirm button is clicked" name="ConfirmModal (foundational) invokes onConfirm exactly once when the confirm button is clicked" time="0.096">
+    </testcase>
+    <testcase classname="ConfirmModal (foundational) invokes onCancel when the Cancel button is clicked" name="ConfirmModal (foundational) invokes onCancel when the Cancel button is clicked" time="0.093">
+    </testcase>
+  </testsuite>
+  <testsuite name="CrimeReportsPage — null user" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:13" time="20.522" tests="33">
+    <testcase classname="CrimeReportsPage — null user returns null when user is not authenticated" name="CrimeReportsPage — null user returns null when user is not authenticated" time="0.034">
+    </testcase>
+    <testcase classname="CrimeReportsPage — loading state shows fullscreen loader initially" name="CrimeReportsPage — loading state shows fullscreen loader initially" time="0.084">
+    </testcase>
+    <testcase classname="CrimeReportsPage — loaded state renders CrimeReportList after loading" name="CrimeReportsPage — loaded state renders CrimeReportList after loading" time="0.466">
+    </testcase>
+    <testcase classname="CrimeReportsPage — loaded state renders report title after loading" name="CrimeReportsPage — loaded state renders report title after loading" time="0.501">
+    </testcase>
+    <testcase classname="CrimeReportsPage — loaded state renders breadcrumbs" name="CrimeReportsPage — loaded state renders breadcrumbs" time="0.037">
+    </testcase>
+    <testcase classname="CrimeReportsPage — loaded state navigates to detail page when view detail is clicked" name="CrimeReportsPage — loaded state navigates to detail page when view detail is clicked" time="0.478">
+    </testcase>
+    <testcase classname="CrimeReportsPage — loaded state navigates to create page when Create Report button clicked" name="CrimeReportsPage — loaded state navigates to create page when Create Report button clicked" time="0.452">
+    </testcase>
+    <testcase classname="CrimeReportsPage — loaded state shows heatmap view when Heatmap button clicked" name="CrimeReportsPage — loaded state shows heatmap view when Heatmap button clicked" time="0.557">
+    </testcase>
+    <testcase classname="CrimeReportsPage — loaded state returns to list from heatmap view" name="CrimeReportsPage — loaded state returns to list from heatmap view" time="0.469">
+    </testcase>
+    <testcase classname="CrimeReportsPage — loaded state calls publishCrimeReport when publish is triggered" name="CrimeReportsPage — loaded state calls publishCrimeReport when publish is triggered" time="0.484">
+    </testcase>
+    <testcase classname="CrimeReportsPage — loaded state calls deleteCrimeReport when delete is triggered" name="CrimeReportsPage — loaded state calls deleteCrimeReport when delete is triggered" time="0.47">
+    </testcase>
+    <testcase classname="CrimeReportsPage — loaded state shows toast error when listCrimeReports fails" name="CrimeReportsPage — loaded state shows toast error when listCrimeReports fails" time="0.458">
+    </testcase>
+    <testcase classname="CrimeReportDetailPage — null user returns null when user is not set" name="CrimeReportDetailPage — null user returns null when user is not set" time="0.005">
+    </testcase>
+    <testcase classname="CrimeReportDetailPage — loading state shows loader while fetching" name="CrimeReportDetailPage — loading state shows loader while fetching" time="0.007">
+    </testcase>
+    <testcase classname="CrimeReportDetailPage — loaded state renders CrimeReportDetail after loading" name="CrimeReportDetailPage — loaded state renders CrimeReportDetail after loading" time="0.045">
+    </testcase>
+    <testcase classname="CrimeReportDetailPage — loaded state renders report title in detail" name="CrimeReportDetailPage — loaded state renders report title in detail" time="0.034">
+    </testcase>
+    <testcase classname="CrimeReportDetailPage — loaded state calls router.back when back button is clicked" name="CrimeReportDetailPage — loaded state calls router.back when back button is clicked" time="0.032">
+    </testcase>
+    <testcase classname="CrimeReportDetailPage — loaded state navigates to edit page when edit is clicked" name="CrimeReportDetailPage — loaded state navigates to edit page when edit is clicked" time="0.03">
+    </testcase>
+    <testcase classname="CrimeReportDetailPage — loaded state calls publishCrimeReport when publish is triggered" name="CrimeReportDetailPage — loaded state calls publishCrimeReport when publish is triggered" time="0.049">
+    </testcase>
+    <testcase classname="CrimeReportDetailPage — loaded state calls deleteCrimeReport and navigates when delete is triggered" name="CrimeReportDetailPage — loaded state calls deleteCrimeReport and navigates when delete is triggered" time="0.089">
+    </testcase>
+    <testcase classname="CrimeReportDetailPage — loaded state shows Not Found when getCrimeReport fails" name="CrimeReportDetailPage — loaded state shows Not Found when getCrimeReport fails" time="0.076">
+    </testcase>
+    <testcase classname="CreateCrimeReportPage — null user shows Unauthorized when user is null" name="CreateCrimeReportPage — null user shows Unauthorized when user is null" time="0.01">
+    </testcase>
+    <testcase classname="CreateCrimeReportPage — null user renders go-back button when unauthorized" name="CreateCrimeReportPage — null user renders go-back button when unauthorized" time="0.007">
+    </testcase>
+    <testcase classname="CreateCrimeReportPage — null user calls router.back when go-back clicked" name="CreateCrimeReportPage — null user calls router.back when go-back clicked" time="0.006">
+    </testcase>
+    <testcase classname="CreateCrimeReportPage — authenticated renders CrimeReportForm in create mode" name="CreateCrimeReportPage — authenticated renders CrimeReportForm in create mode" time="0.006">
+    </testcase>
+    <testcase classname="CreateCrimeReportPage — authenticated navigates to crime-reports list on save" name="CreateCrimeReportPage — authenticated navigates to crime-reports list on save" time="0.014">
+    </testcase>
+    <testcase classname="CreateCrimeReportPage — authenticated calls router.back on cancel" name="CreateCrimeReportPage — authenticated calls router.back on cancel" time="0.011">
+    </testcase>
+    <testcase classname="EditCrimeReportPage — null user returns null when user is null" name="EditCrimeReportPage — null user returns null when user is null" time="0.007">
+    </testcase>
+    <testcase classname="EditCrimeReportPage — loading state shows loader while fetching report" name="EditCrimeReportPage — loading state shows loader while fetching report" time="0.005">
+    </testcase>
+    <testcase classname="EditCrimeReportPage — loaded state renders CrimeReportForm in edit mode" name="EditCrimeReportPage — loaded state renders CrimeReportForm in edit mode" time="0.039">
+    </testcase>
+    <testcase classname="EditCrimeReportPage — loaded state calls updateCrimeReport and navigates on save" name="EditCrimeReportPage — loaded state calls updateCrimeReport and navigates on save" time="0.11">
+    </testcase>
+    <testcase classname="EditCrimeReportPage — loaded state calls router.back on cancel" name="EditCrimeReportPage — loaded state calls router.back on cancel" time="0.045">
+    </testcase>
+    <testcase classname="EditCrimeReportPage — loaded state shows Not Found when getCrimeReport fails" name="EditCrimeReportPage — loaded state shows Not Found when getCrimeReport fails" time="0.028">
+    </testcase>
+  </testsuite>
+  <testsuite name="DashboardPage" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:32" time="1.51" tests="3">
+    <testcase classname="DashboardPage renders without crashing" name="DashboardPage renders without crashing" time="0.137">
+    </testcase>
+    <testcase classname="DashboardPage renders the page wrapper div" name="DashboardPage renders the page wrapper div" time="0.012">
+    </testcase>
+    <testcase classname="DashboardPage renders DashboardSummary" name="DashboardPage renders DashboardSummary" time="0.014">
+    </testcase>
+  </testsuite>
+  <testsuite name="MissingPersonsPage — null user" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:28" time="6.327" tests="31">
+    <testcase classname="MissingPersonsPage — null user returns null when user is null" name="MissingPersonsPage — null user returns null when user is null" time="0.022">
+    </testcase>
+    <testcase classname="MissingPersonsPage — loading state shows fullscreen loader while fetching" name="MissingPersonsPage — loading state shows fullscreen loader while fetching" time="0.069">
+    </testcase>
+    <testcase classname="MissingPersonsPage — loaded state renders MissingPersonList after loading" name="MissingPersonsPage — loaded state renders MissingPersonList after loading" time="0.475">
+    </testcase>
+    <testcase classname="MissingPersonsPage — loaded state renders person full name" name="MissingPersonsPage — loaded state renders person full name" time="0.52">
+    </testcase>
+    <testcase classname="MissingPersonsPage — loaded state renders breadcrumbs" name="MissingPersonsPage — loaded state renders breadcrumbs" time="0.022">
+    </testcase>
+    <testcase classname="MissingPersonsPage — loaded state navigates to detail page when view clicked" name="MissingPersonsPage — loaded state navigates to detail page when view clicked" time="0.474">
+    </testcase>
+    <testcase classname="MissingPersonsPage — loaded state navigates to create page when New Report clicked" name="MissingPersonsPage — loaded state navigates to create page when New Report clicked" time="0.032">
+    </testcase>
+    <testcase classname="MissingPersonsPage — loaded state calls publishMissingPersonReport and addNotification on publish" name="MissingPersonsPage — loaded state calls publishMissingPersonReport and addNotification on publish" time="0.578">
+    </testcase>
+    <testcase classname="MissingPersonsPage — loaded state calls deleteMissingPersonReport and addNotification on delete" name="MissingPersonsPage — loaded state calls deleteMissingPersonReport and addNotification on delete" time="0.554">
+    </testcase>
+    <testcase classname="MissingPersonsPage — loaded state shows toast error when listMissingPersonReports fails" name="MissingPersonsPage — loaded state shows toast error when listMissingPersonReports fails" time="0.438">
+    </testcase>
+    <testcase classname="MissingPersonDetailPage — null user returns null when user is null" name="MissingPersonDetailPage — null user returns null when user is null" time="0.006">
+    </testcase>
+    <testcase classname="MissingPersonDetailPage — loading state shows loader while fetching" name="MissingPersonDetailPage — loading state shows loader while fetching" time="0.004">
+    </testcase>
+    <testcase classname="MissingPersonDetailPage — loaded state renders MissingPersonDetail after loading" name="MissingPersonDetailPage — loaded state renders MissingPersonDetail after loading" time="0.031">
+    </testcase>
+    <testcase classname="MissingPersonDetailPage — loaded state renders person full name in detail" name="MissingPersonDetailPage — loaded state renders person full name in detail" time="0.034">
+    </testcase>
+    <testcase classname="MissingPersonDetailPage — loaded state calls router.back when back clicked" name="MissingPersonDetailPage — loaded state calls router.back when back clicked" time="0.034">
+    </testcase>
+    <testcase classname="MissingPersonDetailPage — loaded state navigates to edit page when edit clicked" name="MissingPersonDetailPage — loaded state navigates to edit page when edit clicked" time="0.032">
+    </testcase>
+    <testcase classname="MissingPersonDetailPage — loaded state calls publishMissingPersonReport and addNotification when publish triggered" name="MissingPersonDetailPage — loaded state calls publishMissingPersonReport and addNotification when publish triggered" time="0.098">
+    </testcase>
+    <testcase classname="MissingPersonDetailPage — loaded state calls deleteMissingPersonReport and navigates when delete triggered" name="MissingPersonDetailPage — loaded state calls deleteMissingPersonReport and navigates when delete triggered" time="0.115">
+    </testcase>
+    <testcase classname="MissingPersonDetailPage — loaded state shows Not Found when getMissingPersonReport fails" name="MissingPersonDetailPage — loaded state shows Not Found when getMissingPersonReport fails" time="0.076">
+    </testcase>
+    <testcase classname="CreateMissingPersonPage — null user shows Unauthorized when user is null" name="CreateMissingPersonPage — null user shows Unauthorized when user is null" time="0.006">
+    </testcase>
+    <testcase classname="CreateMissingPersonPage — null user renders go-back button when unauthorized" name="CreateMissingPersonPage — null user renders go-back button when unauthorized" time="0.008">
+    </testcase>
+    <testcase classname="CreateMissingPersonPage — null user calls router.back on go-back click" name="CreateMissingPersonPage — null user calls router.back on go-back click" time="0.011">
+    </testcase>
+    <testcase classname="CreateMissingPersonPage — authenticated renders MissingPersonForm in create mode" name="CreateMissingPersonPage — authenticated renders MissingPersonForm in create mode" time="0.009">
+    </testcase>
+    <testcase classname="CreateMissingPersonPage — authenticated navigates to list after save" name="CreateMissingPersonPage — authenticated navigates to list after save" time="0.006">
+    </testcase>
+    <testcase classname="CreateMissingPersonPage — authenticated calls router.back on cancel" name="CreateMissingPersonPage — authenticated calls router.back on cancel" time="0.016">
+    </testcase>
+    <testcase classname="EditMissingPersonPage — null user returns null when user is null" name="EditMissingPersonPage — null user returns null when user is null" time="0.006">
+    </testcase>
+    <testcase classname="EditMissingPersonPage — loading state shows loader while fetching" name="EditMissingPersonPage — loading state shows loader while fetching" time="0.011">
+    </testcase>
+    <testcase classname="EditMissingPersonPage — loaded state renders MissingPersonForm in edit mode" name="EditMissingPersonPage — loaded state renders MissingPersonForm in edit mode" time="0.019">
+    </testcase>
+    <testcase classname="EditMissingPersonPage — loaded state navigates to detail page after save" name="EditMissingPersonPage — loaded state navigates to detail page after save" time="0.03">
+    </testcase>
+    <testcase classname="EditMissingPersonPage — loaded state calls router.back on cancel" name="EditMissingPersonPage — loaded state calls router.back on cancel" time="0.034">
+    </testcase>
+    <testcase classname="EditMissingPersonPage — loaded state shows Not Found when getMissingPersonReport fails" name="EditMissingPersonPage — loaded state shows Not Found when getMissingPersonReport fails" time="0.133">
+    </testcase>
+  </testsuite>
+  <testsuite name="EmergencyRequestRealtimeContext (Task 4c)" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:32" time="2.1" tests="4">
+    <testcase classname="EmergencyRequestRealtimeContext (Task 4c) provides initial refresh=0 and realtimeLocation=null" name="EmergencyRequestRealtimeContext (Task 4c) provides initial refresh=0 and realtimeLocation=null" time="0.047">
+    </testcase>
+    <testcase classname="EmergencyRequestRealtimeContext (Task 4c) throws when useEmergencyRequestRealtime is used outside provider" name="EmergencyRequestRealtimeContext (Task 4c) throws when useEmergencyRequestRealtime is used outside provider" time="0.072">
+    </testcase>
+    <testcase classname="EmergencyRequestRealtimeContext (Task 4c) exposes realtimeLocation with correct shape (type check)" name="EmergencyRequestRealtimeContext (Task 4c) exposes realtimeLocation with correct shape (type check)" time="0.023">
+    </testcase>
+    <testcase classname="EmergencyRequestRealtimeContext (Task 4c) does not connect STOMP when user is null (not authenticated)" name="EmergencyRequestRealtimeContext (Task 4c) does not connect STOMP when user is null (not authenticated)" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="DashboardLayout — loading state" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:32" time="2.396" tests="14">
+    <testcase classname="DashboardLayout — loading state renders fullscreen loader when isLoading is true" name="DashboardLayout — loading state renders fullscreen loader when isLoading is true" time="0.789">
+    </testcase>
+    <testcase classname="DashboardLayout — loading state does not render children while loading" name="DashboardLayout — loading state does not render children while loading" time="0.006">
+    </testcase>
+    <testcase classname="DashboardLayout — unauthenticated returns null (nothing rendered) when not authenticated" name="DashboardLayout — unauthenticated returns null (nothing rendered) when not authenticated" time="0.005">
+    </testcase>
+    <testcase classname="DashboardLayout — unauthenticated redirects to /login when not authenticated" name="DashboardLayout — unauthenticated redirects to /login when not authenticated" time="0.005">
+    </testcase>
+    <testcase classname="DashboardLayout — authenticated renders sidebar" name="DashboardLayout — authenticated renders sidebar" time="0.014">
+    </testcase>
+    <testcase classname="DashboardLayout — authenticated renders header with user name" name="DashboardLayout — authenticated renders header with user name" time="0.021">
+    </testcase>
+    <testcase classname="DashboardLayout — authenticated renders children" name="DashboardLayout — authenticated renders children" time="0.013">
+    </testcase>
+    <testcase classname="DashboardLayout — authenticated renders SidebarProvider" name="DashboardLayout — authenticated renders SidebarProvider" time="0.011">
+    </testcase>
+    <testcase classname="DashboardLayout — role-based routing replaces route when Reporter accesses an admin-only page" name="DashboardLayout — role-based routing replaces route when Reporter accesses an admin-only page" time="0.014">
+    </testcase>
+    <testcase classname="DashboardLayout — role-based routing does not replace route when Reporter accesses allowed page" name="DashboardLayout — role-based routing does not replace route when Reporter accesses allowed page" time="0.032">
+    </testcase>
+    <testcase classname="DashboardLayout — role-based routing does not replace route for base /dashboard path" name="DashboardLayout — role-based routing does not replace route for base /dashboard path" time="0.014">
+    </testcase>
+    <testcase classname="DashboardLayout — role-based routing Emergency Service can access emergency-requests" name="DashboardLayout — role-based routing Emergency Service can access emergency-requests" time="0.019">
+    </testcase>
+    <testcase classname="DashboardLayout — role-based routing Reporter cannot access emergency-requests" name="DashboardLayout — role-based routing Reporter cannot access emergency-requests" time="0.012">
+    </testcase>
+    <testcase classname="DashboardLayout — logout calls logout and redirects to /login on logout click" name="DashboardLayout — logout calls logout and redirects to /login on logout click" time="0.028">
+    </testcase>
+  </testsuite>
+  <testsuite name="AccountsPage — null user" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:33" time="2.32" tests="20">
+    <testcase classname="AccountsPage — null user shows Access Denied when user is null" name="AccountsPage — null user shows Access Denied when user is null" time="0.051">
+    </testcase>
+    <testcase classname="AccountsPage — null user shows go-to-dashboard button on access denied" name="AccountsPage — null user shows go-to-dashboard button on access denied" time="0.006">
+    </testcase>
+    <testcase classname="AccountsPage — null user navigates to dashboard when denied button clicked" name="AccountsPage — null user navigates to dashboard when denied button clicked" time="0.01">
+    </testcase>
+    <testcase classname="AccountsPage — authenticated renders Account Management heading" name="AccountsPage — authenticated renders Account Management heading" time="0.126">
+    </testcase>
+    <testcase classname="AccountsPage — authenticated renders 0 total accounts initially" name="AccountsPage — authenticated renders 0 total accounts initially" time="0.02">
+    </testcase>
+    <testcase classname="AccountsPage — authenticated renders search input" name="AccountsPage — authenticated renders search input" time="0.019">
+    </testcase>
+    <testcase classname="AccountsPage — authenticated renders role filter select" name="AccountsPage — authenticated renders role filter select" time="0.009">
+    </testcase>
+    <testcase classname="AccountsPage — authenticated renders status filter select" name="AccountsPage — authenticated renders status filter select" time="0.023">
+    </testcase>
+    <testcase classname="AccountsPage — authenticated shows No accounts found when list is empty" name="AccountsPage — authenticated shows No accounts found when list is empty" time="0.016">
+    </testcase>
+    <testcase classname="AccountsPage — authenticated updates search query on input change" name="AccountsPage — authenticated updates search query on input change" time="0.025">
+    </testcase>
+    <testcase classname="AccountsPage — authenticated updates role filter on select change" name="AccountsPage — authenticated updates role filter on select change" time="0.026">
+    </testcase>
+    <testcase classname="AccountsPage — authenticated updates status filter on select change" name="AccountsPage — authenticated updates status filter on select change" time="0.026">
+    </testcase>
+    <testcase classname="AccountsPage — authenticated renders table headers" name="AccountsPage — authenticated renders table headers" time="0.026">
+    </testcase>
+    <testcase classname="AccountDetailPage — null user shows Access Denied when user is null" name="AccountDetailPage — null user shows Access Denied when user is null" time="0.008">
+    </testcase>
+    <testcase classname="AccountDetailPage — null user shows go-to-dashboard button on denied" name="AccountDetailPage — null user shows go-to-dashboard button on denied" time="0.006">
+    </testcase>
+    <testcase classname="AccountDetailPage — null user navigates to dashboard when button clicked" name="AccountDetailPage — null user navigates to dashboard when button clicked" time="0.003">
+    </testcase>
+    <testcase classname="AccountDetailPage — account not found shows Account Not Found when users state is empty" name="AccountDetailPage — account not found shows Account Not Found when users state is empty" time="0.001">
+    </testcase>
+    <testcase classname="AccountDetailPage — account not found renders go back button" name="AccountDetailPage — account not found renders go back button" time="0.001">
+    </testcase>
+    <testcase classname="AccountDetailPage — account not found calls router.back when go back button clicked" name="AccountDetailPage — account not found calls router.back when go back button clicked" time="0.004">
+    </testcase>
+    <testcase classname="AccountDetailPage — renders detail with pre-populated account shows Account Not Found state (stub implementation)" name="AccountDetailPage — renders detail with pre-populated account shows Account Not Found state (stub implementation)" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="MissingPersonForm" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:13" time="22.194" tests="14">
+    <testcase classname="MissingPersonForm FORM-UC-03 — Create missing person report renders the create-mode heading and submit button" name="MissingPersonForm FORM-UC-03 — Create missing person report renders the create-mode heading and submit button" time="0.615">
+    </testcase>
+    <testcase classname="MissingPersonForm FORM-UC-03 — Create missing person report shows all required-field validation errors when submitting an empty form" name="MissingPersonForm FORM-UC-03 — Create missing person report shows all required-field validation errors when submitting an empty form" time="0.303">
+    </testcase>
+    <testcase classname="MissingPersonForm FORM-UC-03 — Create missing person report shows ageRange error when age is 0 (below minimum)" name="MissingPersonForm FORM-UC-03 — Create missing person report shows ageRange error when age is 0 (below minimum)" time="0.228">
+    </testcase>
+    <testcase classname="MissingPersonForm FORM-UC-03 — Create missing person report shows ageRange error when age exceeds 120" name="MissingPersonForm FORM-UC-03 — Create missing person report shows ageRange error when age exceeds 120" time="0.195">
+    </testcase>
+    <testcase classname="MissingPersonForm FORM-UC-03 — Create missing person report calls submitMissingPersonReport and invokes onSave with the API response on valid submit" name="MissingPersonForm FORM-UC-03 — Create missing person report calls submitMissingPersonReport and invokes onSave with the API response on valid submit" time="1.239">
+    </testcase>
+    <testcase classname="MissingPersonForm FORM-UC-03 — Create missing person report shows a toast error and does not call onSave when the service rejects" name="MissingPersonForm FORM-UC-03 — Create missing person report shows a toast error and does not call onSave when the service rejects" time="1.219">
+    </testcase>
+    <testcase classname="MissingPersonForm FORM-UC-04 — Edit missing person report renders the edit-mode heading and pre-fills persisted text fields" name="MissingPersonForm FORM-UC-04 — Edit missing person report renders the edit-mode heading and pre-fills persisted text fields" time="0.067">
+    </testcase>
+    <testcase classname="MissingPersonForm FORM-UC-04 — Edit missing person report calls updateMissingPersonReport and invokes onSave on valid submit" name="MissingPersonForm FORM-UC-04 — Edit missing person report calls updateMissingPersonReport and invokes onSave on valid submit" time="0.294">
+    </testcase>
+    <testcase classname="MissingPersonForm FORM-UC-04 — Edit missing person report shows a toast error and does not call onSave when the update service rejects" name="MissingPersonForm FORM-UC-04 — Edit missing person report shows a toast error and does not call onSave when the update service rejects" time="0.245">
+    </testcase>
+    <testcase classname="MissingPersonForm Navigation calls onCancel when the Back button is clicked" name="MissingPersonForm Navigation calls onCancel when the Back button is clicked" time="0.212">
+    </testcase>
+    <testcase classname="MissingPersonForm Navigation calls onCancel when the Cancel button is clicked" name="MissingPersonForm Navigation calls onCancel when the Cancel button is clicked" time="0.239">
+    </testcase>
+    <testcase classname="MissingPersonForm Optional field validation shows heightPositive error for a non-positive height value" name="MissingPersonForm Optional field validation shows heightPositive error for a non-positive height value" time="0.329">
+    </testcase>
+    <testcase classname="MissingPersonForm Optional field validation shows weightPositive error for a non-positive weight value" name="MissingPersonForm Optional field validation shows weightPositive error for a non-positive weight value" time="0.253">
+    </testcase>
+    <testcase classname="MissingPersonForm Optional field validation shows emailInvalid error for a malformed email address" name="MissingPersonForm Optional field validation shows emailInvalid error for a malformed email address" time="0.478">
+    </testcase>
+  </testsuite>
+  <testsuite name="Providers" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:34" time="1.868" tests="3">
+    <testcase classname="Providers renders children" name="Providers renders children" time="0.049">
+    </testcase>
+    <testcase classname="Providers renders multiple children" name="Providers renders multiple children" time="0.008">
+    </testcase>
+    <testcase classname="Providers does not render extra markup around children" name="Providers does not render extra markup around children" time="0.008">
+    </testcase>
+  </testsuite>
+  <testsuite name="ProfilePage — null user" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:34" time="2.247" tests="14">
+    <testcase classname="ProfilePage — null user returns null when user is not set" name="ProfilePage — null user returns null when user is not set" time="0.027">
+    </testcase>
+    <testcase classname="ProfilePage — rendering renders the User Profile heading" name="ProfilePage — rendering renders the User Profile heading" time="0.267">
+    </testcase>
+    <testcase classname="ProfilePage — rendering renders the username input as disabled" name="ProfilePage — rendering renders the username input as disabled" time="0.036">
+    </testcase>
+    <testcase classname="ProfilePage — rendering renders the fullName input with user value" name="ProfilePage — rendering renders the fullName input with user value" time="0.019">
+    </testcase>
+    <testcase classname="ProfilePage — rendering renders the email input with user value" name="ProfilePage — rendering renders the email input with user value" time="0.023">
+    </testcase>
+    <testcase classname="ProfilePage — rendering renders the role input as disabled" name="ProfilePage — rendering renders the role input as disabled" time="0.02">
+    </testcase>
+    <testcase classname="ProfilePage — rendering renders Update Profile and Update Password buttons" name="ProfilePage — rendering renders Update Profile and Update Password buttons" time="0.022">
+    </testcase>
+    <testcase classname="ProfilePage — update profile shows success message after submitting profile form" name="ProfilePage — update profile shows success message after submitting profile form" time="0.044">
+    </testcase>
+    <testcase classname="ProfilePage — update profile clears success message after 3 seconds" name="ProfilePage — update profile clears success message after 3 seconds" time="0.042">
+    </testcase>
+    <testcase classname="ProfilePage — update profile allows editing fullName" name="ProfilePage — update profile allows editing fullName" time="0.03">
+    </testcase>
+    <testcase classname="ProfilePage — update profile allows editing email" name="ProfilePage — update profile allows editing email" time="0.025">
+    </testcase>
+    <testcase classname="ProfilePage — update password shows success message when passwords match" name="ProfilePage — update password shows success message when passwords match" time="0.059">
+    </testcase>
+    <testcase classname="ProfilePage — update password clears password fields after successful update" name="ProfilePage — update password clears password fields after successful update" time="0.043">
+    </testcase>
+    <testcase classname="ProfilePage — update password calls alert when passwords do not match" name="ProfilePage — update password calls alert when passwords do not match" time="0.05">
+    </testcase>
+  </testsuite>
+  <testsuite name="CreateGuidelinePage" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:13" time="23.204" tests="14">
+    <testcase classname="CreateGuidelinePage PAGE-UC-01 — Unauthenticated user renders the unauthorized screen instead of the form" name="CreateGuidelinePage PAGE-UC-01 — Unauthenticated user renders the unauthorized screen instead of the form" time="0.145">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-01 — Unauthenticated user calls router.back() when the Back button is clicked" name="CreateGuidelinePage PAGE-UC-01 — Unauthenticated user calls router.back() when the Back button is clicked" time="0.333">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-02 — Form layout for authenticated user renders the page heading and key form fields" name="CreateGuidelinePage PAGE-UC-02 — Form layout for authenticated user renders the page heading and key form fields" time="0.111">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-02 — Form layout for authenticated user Save as Draft button is enabled and Publish button is disabled by default" name="CreateGuidelinePage PAGE-UC-02 — Form layout for authenticated user Save as Draft button is enabled and Publish button is disabled by default" time="0.228">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-06 — Visibility toggle gates action buttons toggling the switch to Public disables Save as Draft and enables Publish" name="CreateGuidelinePage PAGE-UC-06 — Visibility toggle gates action buttons toggling the switch to Public disables Save as Draft and enables Publish" time="0.269">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-06 — Visibility toggle gates action buttons toggling the switch back to Draft re-enables Save as Draft and disables Publish" name="CreateGuidelinePage PAGE-UC-06 — Visibility toggle gates action buttons toggling the switch back to Draft re-enables Save as Draft and disables Publish" time="0.293">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-03 — Save as Draft shows titleRequired validation error and does not call the service when title is empty" name="CreateGuidelinePage PAGE-UC-03 — Save as Draft shows titleRequired validation error and does not call the service when title is empty" time="0.158">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-03 — Save as Draft calls createGuidelinesDocument with isPublic=false, shows toast and navigates on success" name="CreateGuidelinePage PAGE-UC-03 — Save as Draft calls createGuidelinesDocument with isPublic=false, shows toast and navigates on success" time="0.872">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-05 — Save as Draft service error shows toastSaveError and does not navigate when createGuidelinesDocument rejects" name="CreateGuidelinePage PAGE-UC-05 — Save as Draft service error shows toastSaveError and does not navigate when createGuidelinesDocument rejects" time="0.75">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-04 — Publish validation shows abstractRequired error when abstract is empty and blocks the publish call" name="CreateGuidelinePage PAGE-UC-04 — Publish validation shows abstractRequired error when abstract is empty and blocks the publish call" time="0.693">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-04 — Publish validation shows contentRequired error when abstract is filled but content is empty" name="CreateGuidelinePage PAGE-UC-04 — Publish validation shows contentRequired error when abstract is filled but content is empty" time="1.227">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-04 — Publish happy path calls createGuidelinesDocument then publishGuidelinesDocument and navigates" name="CreateGuidelinePage PAGE-UC-04 — Publish happy path calls createGuidelinesDocument then publishGuidelinesDocument and navigates" time="1.145">
+    </testcase>
+    <testcase classname="CreateGuidelinePage PAGE-UC-05 — Publish service error shows toastPublishError and does not navigate when the service rejects" name="CreateGuidelinePage PAGE-UC-05 — Publish service error shows toastPublishError and does not navigate when the service rejects" time="0.948">
+    </testcase>
+    <testcase classname="CreateGuidelinePage Navigation calls router.back() when Cancel is clicked" name="CreateGuidelinePage Navigation calls router.back() when Cancel is clicked" time="0.079">
+    </testcase>
+  </testsuite>
+  <testsuite name="Navbar" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:29" time="7.288" tests="57">
+    <testcase classname="Navbar renders TrackNest logo text" name="Navbar renders TrackNest logo text" time="0.277">
+    </testcase>
+    <testcase classname="Navbar renders desktop navigation links" name="Navbar renders desktop navigation links" time="0.184">
+    </testcase>
+    <testcase classname="Navbar does not show Login or Dashboard CTA in navbar (desktop CTA removed)" name="Navbar does not show Login or Dashboard CTA in navbar (desktop CTA removed)" time="0.254">
+    </testcase>
+    <testcase classname="Mobile menu mobile menu nav links are hidden initially" name="Mobile menu mobile menu nav links are hidden initially" time="0.077">
+    </testcase>
+    <testcase classname="Mobile menu opens mobile menu on hamburger button click and shows nav links" name="Mobile menu opens mobile menu on hamburger button click and shows nav links" time="0.228">
+    </testcase>
+    <testcase classname="Mobile menu closes mobile menu on second click" name="Mobile menu closes mobile menu on second click" time="0.288">
+    </testcase>
+    <testcase classname="Mobile menu shows all nav links in mobile menu when open" name="Mobile menu shows all nav links in mobile menu when open" time="0.258">
+    </testcase>
+    <testcase classname="Scroll behavior navbar starts with transparent background" name="Scroll behavior navbar starts with transparent background" time="0.057">
+    </testcase>
+    <testcase classname="Scroll behavior registers the scroll event listener on mount" name="Scroll behavior registers the scroll event listener on mount" time="0.05">
+    </testcase>
+    <testcase classname="Scroll behavior invokes scroll handler when window scroll event fires" name="Scroll behavior invokes scroll handler when window scroll event fires" time="0.062">
+    </testcase>
+    <testcase classname="Scroll behavior applies scrolled styles when window.scrollY exceeds 20" name="Scroll behavior applies scrolled styles when window.scrollY exceeds 20" time="0.1">
+    </testcase>
+    <testcase classname="Scroll behavior cleans up scroll listener on unmount" name="Scroll behavior cleans up scroll listener on unmount" time="0.036">
+    </testcase>
+    <testcase classname="Hero section renders all three heading lines" name="Hero section renders all three heading lines" time="0.087">
+    </testcase>
+    <testcase classname="Hero section renders the badge label" name="Hero section renders the badge label" time="0.059">
+    </testcase>
+    <testcase classname="Hero section renders the hero subtext" name="Hero section renders the hero subtext" time="0.079">
+    </testcase>
+    <testcase classname="Hero section renders Open the Dashboard CTA" name="Hero section renders Open the Dashboard CTA" time="0.082">
+    </testcase>
+    <testcase classname="Hero section renders See How It Works button" name="Hero section renders See How It Works button" time="0.084">
+    </testcase>
+    <testcase classname="Hero section renders social proof line" name="Hero section renders social proof line" time="0.064">
+    </testcase>
+    <testcase classname="Hero section renders phone mockup SOS element" name="Hero section renders phone mockup SOS element" time="0.089">
+    </testcase>
+    <testcase classname="Hero section renders family member names in phone mockup" name="Hero section renders family member names in phone mockup" time="0.099">
+    </testcase>
+    <testcase classname="Hero section renders Live badge in phone mockup" name="Hero section renders Live badge in phone mockup" time="0.112">
+    </testcase>
+    <testcase classname="Hero section renders floating All Safe notification" name="Hero section renders floating All Safe notification" time="0.089">
+    </testcase>
+    <testcase classname="Hero section renders floating Alert notification" name="Hero section renders floating Alert notification" time="0.072">
+    </testcase>
+    <testcase classname="Platform section renders section label" name="Platform section renders section label" time="0.09">
+    </testcase>
+    <testcase classname="Platform section renders main heading" name="Platform section renders main heading" time="0.104">
+    </testcase>
+    <testcase classname="Platform section renders platform description" name="Platform section renders platform description" time="0.092">
+    </testcase>
+    <testcase classname="Platform section renders platform feature checklist items" name="Platform section renders platform feature checklist items" time="0.139">
+    </testcase>
+    <testcase classname="Platform section renders TrackNest Web dashboard card" name="Platform section renders TrackNest Web dashboard card" time="0.158">
+    </testcase>
+    <testcase classname="Platform section renders dashboard stat labels" name="Platform section renders dashboard stat labels" time="0.173">
+    </testcase>
+    <testcase classname="Features section renders section tag" name="Features section renders section tag" time="0.137">
+    </testcase>
+    <testcase classname="Features section renders section heading" name="Features section renders section heading" time="0.111">
+    </testcase>
+    <testcase classname="Features section renders section description" name="Features section renders section description" time="0.074">
+    </testcase>
+    <testcase classname="Features section renders Live Location Streams feature card" name="Features section renders Live Location Streams feature card" time="0.073">
+    </testcase>
+    <testcase classname="Features section renders Emergency Requests feature card" name="Features section renders Emergency Requests feature card" time="0.084">
+    </testcase>
+    <testcase classname="Features section renders Family Circles feature card" name="Features section renders Family Circles feature card" time="0.061">
+    </testcase>
+    <testcase classname="Safety section renders community powered label" name="Safety section renders community powered label" time="0.05">
+    </testcase>
+    <testcase classname="Safety section renders Safety With Real Data heading" name="Safety section renders Safety With Real Data heading" time="0.09">
+    </testcase>
+    <testcase classname="Safety section renders safety description" name="Safety section renders safety description" time="0.075">
+    </testcase>
+    <testcase classname="Safety section renders Crime Reports and Heatmaps item" name="Safety section renders Crime Reports and Heatmaps item" time="0.056">
+    </testcase>
+    <testcase classname="Safety section renders Missing Person Response item" name="Safety section renders Missing Person Response item" time="0.09">
+    </testcase>
+    <testcase classname="Safety section renders Neighborhood Safety card" name="Safety section renders Neighborhood Safety card" time="0.1">
+    </testcase>
+    <testcase classname="Safety section renders Responder Console card" name="Safety section renders Responder Console card" time="0.104">
+    </testcase>
+    <testcase classname="Safety section renders Safety Guidelines Library card" name="Safety section renders Safety Guidelines Library card" time="0.093">
+    </testcase>
+    <testcase classname="Safety section renders Incident Signal label" name="Safety section renders Incident Signal label" time="0.136">
+    </testcase>
+    <testcase classname="Stats bar renders all four stat values" name="Stats bar renders all four stat values" time="0.062">
+    </testcase>
+    <testcase classname="Stats bar renders all four stat labels" name="Stats bar renders all four stat labels" time="0.087">
+    </testcase>
+    <testcase classname="CTA section renders Start today label" name="CTA section renders Start today label" time="0.049">
+    </testcase>
+    <testcase classname="CTA section renders CTA heading" name="CTA section renders CTA heading" time="0.101">
+    </testcase>
+    <testcase classname="CTA section renders CTA description" name="CTA section renders CTA description" time="0.049">
+    </testcase>
+    <testcase classname="CTA section renders Go to Login link" name="CTA section renders Go to Login link" time="0.033">
+    </testcase>
+    <testcase classname="CTA section Go to Login link points to /login" name="CTA section Go to Login link points to /login" time="0.091">
+    </testcase>
+    <testcase classname="Footer renders copyright notice with 2026" name="Footer renders copyright notice with 2026" time="0.037">
+    </testcase>
+    <testcase classname="Footer renders footer brand" name="Footer renders footer brand" time="0.034">
+    </testcase>
+    <testcase classname="Footer renders Product column heading" name="Footer renders Product column heading" time="0.041">
+    </testcase>
+    <testcase classname="Footer renders Product column links" name="Footer renders Product column links" time="0.041">
+    </testcase>
+    <testcase classname="Footer renders Resources column links" name="Footer renders Resources column links" time="0.04">
+    </testcase>
+    <testcase classname="Footer renders Company column links" name="Footer renders Company column links" time="0.046">
+    </testcase>
+  </testsuite>
+  <testsuite name="CrimeReportForm" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:13" time="25.41" tests="14">
+    <testcase classname="CrimeReportForm FORM-UC-01 — Create crime report renders the create-mode heading and submit button" name="CrimeReportForm FORM-UC-01 — Create crime report renders the create-mode heading and submit button" time="0.551">
+    </testcase>
+    <testcase classname="CrimeReportForm FORM-UC-01 — Create crime report shows titleRequired error and does not open the review modal when title is empty" name="CrimeReportForm FORM-UC-01 — Create crime report shows titleRequired error and does not open the review modal when title is empty" time="0.372">
+    </testcase>
+    <testcase classname="CrimeReportForm FORM-UC-01 — Create crime report opens the review modal with the report summary after a valid form submit" name="CrimeReportForm FORM-UC-01 — Create crime report opens the review modal with the report summary after a valid form submit" time="1.265">
+    </testcase>
+    <testcase classname="CrimeReportForm FORM-UC-01 — Create crime report closes the review modal without calling the service when Back to Edit is clicked" name="CrimeReportForm FORM-UC-01 — Create crime report closes the review modal without calling the service when Back to Edit is clicked" time="0.991">
+    </testcase>
+    <testcase classname="CrimeReportForm FORM-UC-01 — Create crime report calls submitCrimeReport and onSave after the reporter confirms in the review modal" name="CrimeReportForm FORM-UC-01 — Create crime report calls submitCrimeReport and onSave after the reporter confirms in the review modal" time="1.152">
+    </testcase>
+    <testcase classname="CrimeReportForm FORM-UC-01 — Create crime report shows a toast error and does not call onSave when the service rejects" name="CrimeReportForm FORM-UC-01 — Create crime report shows a toast error and does not call onSave when the service rejects" time="1.235">
+    </testcase>
+    <testcase classname="CrimeReportForm FORM-UC-02 — Edit crime report renders the edit-mode heading and pre-fills the title from the existing report" name="CrimeReportForm FORM-UC-02 — Edit crime report renders the edit-mode heading and pre-fills the title from the existing report" time="0.07">
+    </testcase>
+    <testcase classname="CrimeReportForm FORM-UC-02 — Edit crime report calls onSave directly (no update API) after confirming in the review modal" name="CrimeReportForm FORM-UC-02 — Edit crime report calls onSave directly (no update API) after confirming in the review modal" time="0.428">
+    </testcase>
+    <testcase classname="CrimeReportForm FORM-UC-02 — Edit crime report shows a toast error and does not call onSave when onSave rejects in edit mode" name="CrimeReportForm FORM-UC-02 — Edit crime report shows a toast error and does not call onSave when onSave rejects in edit mode" time="0.642">
+    </testcase>
+    <testcase classname="CrimeReportForm Severity selection reflects the selected severity in the review modal and the API call" name="CrimeReportForm Severity selection reflects the selected severity in the review modal and the API call" time="0.895">
+    </testcase>
+    <testcase classname="CrimeReportForm Arrested toggle reflects the arrested state in the API call when the toggle is activated" name="CrimeReportForm Arrested toggle reflects the arrested state in the API call when the toggle is activated" time="0.858">
+    </testcase>
+    <testcase classname="CrimeReportForm Numeric field validation shows victimsNonNegative error for a negative numberOfVictims and blocks review modal" name="CrimeReportForm Numeric field validation shows victimsNonNegative error for a negative numberOfVictims and blocks review modal" time="0.405">
+    </testcase>
+    <testcase classname="CrimeReportForm Numeric field validation shows offendersNonNegative error for a negative numberOfOffenders and blocks review modal" name="CrimeReportForm Numeric field validation shows offendersNonNegative error for a negative numberOfOffenders and blocks review modal" time="0.344">
+    </testcase>
+    <testcase classname="CrimeReportForm Navigation calls onCancel when the Cancel button is clicked" name="CrimeReportForm Navigation calls onCancel when the Cancel button is clicked" time="0.14">
+    </testcase>
+  </testsuite>
+  <testsuite name="GuidelinesListPage — null user" errors="0" failures="0" skipped="0" timestamp="2026-06-04T03:22:13" time="25.578" tests="46">
+    <testcase classname="GuidelinesListPage — null user returns null when user is null" name="GuidelinesListPage — null user returns null when user is null" time="0.108">
+    </testcase>
+    <testcase classname="GuidelinesListPage — loading state shows loader while fetching" name="GuidelinesListPage — loading state shows loader while fetching" time="0.114">
+    </testcase>
+    <testcase classname="GuidelinesListPage — header &amp; navigation renders Safety Guidelines heading" name="GuidelinesListPage — header &amp; navigation renders Safety Guidelines heading" time="0.031">
+    </testcase>
+    <testcase classname="GuidelinesListPage — header &amp; navigation renders Create New Guideline button" name="GuidelinesListPage — header &amp; navigation renders Create New Guideline button" time="0.033">
+    </testcase>
+    <testcase classname="GuidelinesListPage — header &amp; navigation navigates to create page when Create New Guideline clicked" name="GuidelinesListPage — header &amp; navigation navigates to create page when Create New Guideline clicked" time="0.032">
+    </testcase>
+    <testcase classname="GuidelinesListPage — status filter tabs renders All Guides, Published, and Drafts tabs" name="GuidelinesListPage — status filter tabs renders All Guides, Published, and Drafts tabs" time="0.03">
+    </testcase>
+    <testcase classname="GuidelinesListPage — status filter tabs calls listGuidelinesDocuments with isPublic=undefined when All Guides clicked" name="GuidelinesListPage — status filter tabs calls listGuidelinesDocuments with isPublic=undefined when All Guides clicked" time="0.513">
+    </testcase>
+    <testcase classname="GuidelinesListPage — status filter tabs calls listGuidelinesDocuments with isPublic=true when Published clicked" name="GuidelinesListPage — status filter tabs calls listGuidelinesDocuments with isPublic=true when Published clicked" time="0.476">
+    </testcase>
+    <testcase classname="GuidelinesListPage — status filter tabs calls listGuidelinesDocuments with isPublic=false when Drafts clicked" name="GuidelinesListPage — status filter tabs calls listGuidelinesDocuments with isPublic=false when Drafts clicked" time="0.476">
+    </testcase>
+    <testcase classname="GuidelinesListPage — search input renders search input" name="GuidelinesListPage — search input renders search input" time="0.028">
+    </testcase>
+    <testcase classname="GuidelinesListPage — card rendering renders guideline title in card" name="GuidelinesListPage — card rendering renders guideline title in card" time="0.011">
+    </testcase>
+    <testcase classname="GuidelinesListPage — card rendering renders guideline abstract in card" name="GuidelinesListPage — card rendering renders guideline abstract in card" time="0.457">
+    </testcase>
+    <testcase classname="GuidelinesListPage — card rendering renders Draft badge for non-public guideline" name="GuidelinesListPage — card rendering renders Draft badge for non-public guideline" time="0.485">
+    </testcase>
+    <testcase classname="GuidelinesListPage — card rendering renders Published badge for public guideline" name="GuidelinesListPage — card rendering renders Published badge for public guideline" time="0.043">
+    </testcase>
+    <testcase classname="GuidelinesListPage — card rendering renders Continue button for draft guideline" name="GuidelinesListPage — card rendering renders Continue button for draft guideline" time="0.487">
+    </testcase>
+    <testcase classname="GuidelinesListPage — card rendering navigates to detail page when Continue clicked (draft)" name="GuidelinesListPage — card rendering navigates to detail page when Continue clicked (draft)" time="0.479">
+    </testcase>
+    <testcase classname="GuidelinesListPage — card rendering renders View and Edit buttons for published guideline" name="GuidelinesListPage — card rendering renders View and Edit buttons for published guideline" time="0.477">
+    </testcase>
+    <testcase classname="GuidelinesListPage — card rendering navigates to detail page when View guideline clicked" name="GuidelinesListPage — card rendering navigates to detail page when View guideline clicked" time="0.524">
+    </testcase>
+    <testcase classname="GuidelinesListPage — card rendering navigates to edit page when Edit guideline clicked" name="GuidelinesListPage — card rendering navigates to edit page when Edit guideline clicked" time="0.478">
+    </testcase>
+    <testcase classname="GuidelinesListPage — delete flow opens confirm modal when delete button clicked" name="GuidelinesListPage — delete flow opens confirm modal when delete button clicked" time="0.485">
+    </testcase>
+    <testcase classname="GuidelinesListPage — delete flow calls deleteGuidelinesDocument when confirmed" name="GuidelinesListPage — delete flow calls deleteGuidelinesDocument when confirmed" time="0.506">
+    </testcase>
+    <testcase classname="GuidelinesListPage — delete flow closes confirm modal when cancel clicked" name="GuidelinesListPage — delete flow closes confirm modal when cancel clicked" time="0.472">
+    </testcase>
+    <testcase classname="GuidelinesListPage — empty state shows empty state message when list is empty" name="GuidelinesListPage — empty state shows empty state message when list is empty" time="0.457">
+    </testcase>
+    <testcase classname="GuidelinesListPage — pagination shows pagination when totalPages &gt; 0" name="GuidelinesListPage — pagination shows pagination when totalPages &gt; 0" time="0.45">
+    </testcase>
+    <testcase classname="GuidelinesListPage — pagination shows Showing X-Y of Z entries" name="GuidelinesListPage — pagination shows Showing X-Y of Z entries" time="0.44">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — null user returns null when user is null" name="GuidelineDetailPage — null user returns null when user is null" time="0.005">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — loading state shows loader while fetching" name="GuidelineDetailPage — loading state shows loader while fetching" time="0.002">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — loaded state renders guideline title as heading" name="GuidelineDetailPage — loaded state renders guideline title as heading" time="0.053">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — loaded state renders guideline abstract" name="GuidelineDetailPage — loaded state renders guideline abstract" time="0.018">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — loaded state renders ChatbotPanel" name="GuidelineDetailPage — loaded state renders ChatbotPanel" time="0.03">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — loaded state shows Delete button" name="GuidelineDetailPage — loaded state shows Delete button" time="0.102">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — loaded state shows Edit Guideline button" name="GuidelineDetailPage — loaded state shows Edit Guideline button" time="0.084">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — loaded state shows confirm modal when Delete button clicked" name="GuidelineDetailPage — loaded state shows confirm modal when Delete button clicked" time="0.108">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — loaded state calls deleteGuidelinesDocument and navigates when confirmed" name="GuidelineDetailPage — loaded state calls deleteGuidelinesDocument and navigates when confirmed" time="0.219">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — loaded state shows Guideline Not Found when fetch fails" name="GuidelineDetailPage — loaded state shows Guideline Not Found when fetch fails" time="0.06">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — loaded state renders HTML content when content starts with &lt;" name="GuidelineDetailPage — loaded state renders HTML content when content starts with &lt;" time="0.039">
+    </testcase>
+    <testcase classname="GuidelineDetailPage — loaded state renders iframe when content is a URL" name="GuidelineDetailPage — loaded state renders iframe when content is a URL" time="0.04">
+    </testcase>
+    <testcase classname="CreateGuidelinePage — null user shows Unauthorized Access when user is null" name="CreateGuidelinePage — null user shows Unauthorized Access when user is null" time="0.008">
+    </testcase>
+    <testcase classname="CreateGuidelinePage — null user renders Go Back button when unauthorized" name="CreateGuidelinePage — null user renders Go Back button when unauthorized" time="0.009">
+    </testcase>
+    <testcase classname="CreateGuidelinePage — form renders Create New Guideline heading" name="CreateGuidelinePage — form renders Create New Guideline heading" time="0.067">
+    </testcase>
+    <testcase classname="CreateGuidelinePage — form renders Cancel, Save as Draft, and Publish buttons" name="CreateGuidelinePage — form renders Cancel, Save as Draft, and Publish buttons" time="0.098">
+    </testcase>
+    <testcase classname="CreateGuidelinePage — form renders Guideline Title input" name="CreateGuidelinePage — form renders Guideline Title input" time="0.038">
+    </testcase>
+    <testcase classname="CreateGuidelinePage — form renders rich text editor for content" name="CreateGuidelinePage — form renders rich text editor for content" time="0.038">
+    </testcase>
+    <testcase classname="CreateGuidelinePage — form allows typing a title" name="CreateGuidelinePage — form allows typing a title" time="0.035">
+    </testcase>
+    <testcase classname="CreateGuidelinePage — form navigates back on Cancel" name="CreateGuidelinePage — form navigates back on Cancel" time="0.06">
+    </testcase>
+    <testcase classname="CreateGuidelinePage — save as draft calls createGuidelinesDocument without publishGuidelinesDocument on Save as Draft" name="CreateGuidelinePage — save as draft calls createGuidelinesDocument without publishGuidelinesDocument on Save as Draft" time="0.097">
+    </testcase>
+  </testsuite>
+</testsuites>

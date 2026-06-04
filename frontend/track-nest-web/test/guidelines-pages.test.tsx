@@ -527,32 +527,32 @@ describe("CreateGuidelinePage — null user", () => {
   it("shows Unauthorized Access when user is null", () => {
     mockUser = null;
     render(<CreateGuidelinePage />);
-    expect(screen.getByText("Unauthorized Access")).toBeInTheDocument();
+    expect(screen.getByText("unauthorizedTitle")).toBeInTheDocument();
   });
 
   it("renders Go Back button when unauthorized", () => {
     mockUser = null;
     render(<CreateGuidelinePage />);
-    expect(screen.getByRole("button", { name: /Go Back/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "back" })).toBeInTheDocument();
   });
 });
 
 describe("CreateGuidelinePage — form", () => {
   it("renders Create New Guideline heading", () => {
     render(<CreateGuidelinePage />);
-    expect(screen.getByText("Create New Guideline")).toBeInTheDocument();
+    expect(screen.getByText("createHeading")).toBeInTheDocument();
   });
 
   it("renders Cancel, Save as Draft, and Publish buttons", () => {
     render(<CreateGuidelinePage />);
     expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Save as Draft/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "saveDraftButton" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Publish/i })).toBeInTheDocument();
   });
 
   it("renders Guideline Title input", () => {
     render(<CreateGuidelinePage />);
-    expect(screen.getByLabelText(/Guideline Title/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("formGuidelineTitle")).toBeInTheDocument();
   });
 
   it("renders rich text editor for content", () => {
@@ -562,7 +562,7 @@ describe("CreateGuidelinePage — form", () => {
 
   it("allows typing a title", () => {
     render(<CreateGuidelinePage />);
-    const titleInput = screen.getByLabelText(/Guideline Title/i);
+    const titleInput = screen.getByLabelText("formGuidelineTitle");
     fireEvent.change(titleInput, { target: { value: "My Guide" } });
     expect(titleInput).toHaveValue("My Guide");
   });
@@ -577,10 +577,10 @@ describe("CreateGuidelinePage — form", () => {
 describe("CreateGuidelinePage — save as draft", () => {
   it("calls createGuidelinesDocument without publishGuidelinesDocument on Save as Draft", async () => {
     render(<CreateGuidelinePage />);
-    fireEvent.change(screen.getByLabelText(/Guideline Title/i), {
+    fireEvent.change(screen.getByLabelText("formGuidelineTitle"), {
       target: { value: "My Guide" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /Save as Draft/i }));
+    fireEvent.click(screen.getByRole("button", { name: "saveDraftButton" }));
     await waitFor(() => {
       expect(mockCreateGuidelinesDocument).toHaveBeenCalled();
       expect(mockPublishGuidelinesDocument).not.toHaveBeenCalled();

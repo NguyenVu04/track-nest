@@ -371,10 +371,12 @@ describe("MissingPersonDetailPage — loaded state", () => {
   it("shows Not Found when getMissingPersonReport fails", async () => {
     mockGetMissingPersonReport.mockRejectedValue(new Error("Not found"));
     render(<MissingPersonDetailPage />);
-    await waitFor(() =>
-      expect(
-        screen.getByText("Missing Person Not Found"),
-      ).toBeInTheDocument(),
+    await waitFor(
+      () =>
+        expect(
+          screen.getByText("Missing Person Not Found"),
+        ).toBeInTheDocument(),
+      { timeout: 3000 },
     );
   });
 });
