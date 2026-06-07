@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/components/ui/utils";
 import { Button } from "../ui/button";
+import { criminalReportsService } from "@/services/criminalReportsService";
 
 interface MissingPersonListProps {
   persons: MissingPerson[];
@@ -120,7 +121,11 @@ export const MissingPersonList = memo(function MissingPersonList({
                       <div className="flex items-center gap-4">
                         <Avatar className="w-10 h-10 rounded-xl border border-gray-100 shadow-sm shrink-0">
                           <AvatarImage
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${person.fullName}`}
+                            src={
+                              person.photo
+                                ? criminalReportsService.getMissingPersonPhotoUrl(person.id)
+                                : `https://api.dicebear.com/7.x/avataaars/svg?seed=${person.fullName}`
+                            }
                           />
                           <AvatarFallback className="bg-brand-50 text-brand-600 font-black text-xs rounded-xl">
                             {person.fullName.substring(0, 2).toUpperCase()}
