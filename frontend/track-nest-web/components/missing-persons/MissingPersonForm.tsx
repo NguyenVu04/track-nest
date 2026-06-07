@@ -173,6 +173,7 @@ export function MissingPersonForm({
     register,
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -226,6 +227,37 @@ export function MissingPersonForm({
       isActive = false;
     };
   }, [mode, person?.id, person?.photo]);
+
+  useEffect(() => {
+    if (mode !== "edit" || !person?.content) return;
+    const contentValue = person.content;
+    if (contentValue.trim().startsWith("<")) return;
+
+    let isActive = true;
+    const load = async () => {
+      try {
+        let html: string;
+        if (contentValue.startsWith("http")) {
+          const res = await fetch(contentValue);
+          html = await res.text();
+        } else {
+          const url = await criminalReportsService.getFileUrl(
+            "criminal-reports",
+            contentValue,
+          );
+          const res = await fetch(url);
+          html = await res.text();
+        }
+        if (isActive) setValue("content", html);
+      } catch (error) {
+        console.error("Failed to load report content:", error);
+      }
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, [mode, person?.content, setValue]);
 
   const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -331,7 +363,7 @@ export function MissingPersonForm({
           personalId: data.personalId,
           photo: photoUrl || undefined,
           date: data.date,
-          content: physicalDetailsHtml,
+          content: data.content,
           latitude: coordinates[0],
           longitude: coordinates[1],
           contactEmail: data.contactEmail || undefined,

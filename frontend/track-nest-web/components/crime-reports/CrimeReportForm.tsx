@@ -163,6 +163,37 @@ export function CrimeReportForm({
     };
   }, [previewUrls]);
 
+  useEffect(() => {
+    if (mode !== "edit" || !report?.content) return;
+    const contentValue = report.content;
+    if (contentValue.trim().startsWith("<")) return;
+
+    let isActive = true;
+    const load = async () => {
+      try {
+        let html: string;
+        if (contentValue.startsWith("http")) {
+          const res = await fetch(contentValue);
+          html = await res.text();
+        } else {
+          const url = await criminalReportsService.getFileUrl(
+            "criminal-reports",
+            contentValue,
+          );
+          const res = await fetch(url);
+          html = await res.text();
+        }
+        if (isActive) setValue("content", html);
+      } catch (error) {
+        console.error("Failed to load report content:", error);
+      }
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, [mode, report?.content, setValue]);
+
   const totalPhotos = existingPhotos.length + selectedFiles.length;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -660,13 +691,17 @@ export function CrimeReportForm({
                 </button>
 
                 {/* Previews: Existing */}
-                {existingPhotos.map((url, idx) => (
+                {existingPhotos.map((objectName, idx) => (
                   <div
                     key={`existing-${idx}`}
                     className="group relative aspect-square rounded-3xl overflow-hidden border border-gray-200 shadow-sm"
                   >
                     <Image
-                      src={url}
+                      src={
+                        report
+                          ? criminalReportsService.getCrimeReportPhotoUrl(report.id, objectName)
+                          : objectName
+                      }
                       alt="Evidence"
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -849,9 +884,27 @@ export function CrimeReportForm({
                     {t("reviewMediaCount", { count: totalPhotos })}
                   </p>
                   <div className="flex flex-wrap gap-3">
-                    {[...existingPhotos, ...previewUrls].map((url, idx) => (
+                    {existingPhotos.map((objectName, idx) => (
                       <div
-                        key={`rev-${idx}`}
+                        key={`rev-ex-${idx}`}
+                        className="relative w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 shadow-sm"
+                      >
+                        <Image
+                          src={
+                            report
+                              ? criminalReportsService.getCrimeReportPhotoUrl(report.id, objectName)
+                              : objectName
+                          }
+                          alt=""
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    ))}
+                    {previewUrls.map((url, idx) => (
+                      <div
+                        key={`rev-new-${idx}`}
                         className="relative w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 shadow-sm"
                       >
                         <Image
