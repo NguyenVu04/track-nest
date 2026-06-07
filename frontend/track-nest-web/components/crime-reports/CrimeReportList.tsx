@@ -9,6 +9,8 @@ import { EmptyState } from "../shared/EmptyState";
 import { useTranslations } from "next-intl";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { criminalReportsService } from "@/services/criminalReportsService";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -118,6 +120,18 @@ export const CrimeReportList = memo(function CrimeReportList({
                      <td className="px-8 py-6">
                        <div className="flex items-center gap-4">
                          {getIncidentIcon(report.title)}
+                         <Avatar className="w-10 h-10 rounded-xl border border-gray-100 shadow-sm shrink-0">
+                           <AvatarImage
+                             src={
+                               report.photos && report.photos.length > 0
+                                 ? criminalReportsService.getCrimeReportPhotoUrl(report.id, report.photos[0])
+                                 : `https://api.dicebear.com/7.x/avataaars/svg?seed=${report.title}`
+                             }
+                           />
+                           <AvatarFallback className="bg-brand-50 text-brand-600 font-black text-xs rounded-xl">
+                             {report.title.substring(0, 2).toUpperCase()}
+                           </AvatarFallback>
+                         </Avatar>
                          <div>
                            <p className="font-bold text-gray-800 leading-tight group-hover:text-brand-600 transition-colors">
                              {report.title}
