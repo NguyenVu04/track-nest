@@ -7,11 +7,11 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { defer, from, switchMap, takeUntil } from "rxjs";
+import { distinctUntilChanged, skip, takeUntil } from "rxjs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
 import { authService } from "@/services/authService";
-import stompService from "@/services/stompService";
+import { emergencyOpsStomp } from "@/services/stompService";
 import {
   createDestroy$,
   completeDestroy$,
@@ -59,22 +59,15 @@ export function EmergencyRequestRealtimeProvider({
   useEffect(() => {
     if (!user) return;
 
-    const token = authService.getAccessToken();
-    if (!token) return;
-
     const isEmergencyService = user?.role?.includes("Emergency Service");
     const destroy$ = createDestroy$();
 
-    // Lazy connect — re-executes on each subscription (Strict Mode safe)
-    const connect$ = defer(() => from(stompService.connect(token)));
-
+    // The managed stomp service auto-connects on first subscribe and pulls
+    // a fresh JWT through authService.getFreshAccessToken() each handshake.
+    // No need to capture the token here.
     if (isEmergencyService) {
-      // Emergency request channel
-      connect$
-        .pipe(
-          switchMap(() => fromStompChannel("/user/queue/emergency-request")),
-          takeUntil(destroy$),
-        )
+      fromStompChannel(emergencyOpsStomp, "/user/queue/emergency-request")
+        .pipe(takeUntil(destroy$))
         .subscribe({
           next: (message) => {
             try {
@@ -96,12 +89,8 @@ export function EmergencyRequestRealtimeProvider({
             console.error("[STOMP] emergency channel error:", err),
         });
 
-      // Live location channel
-      connect$
-        .pipe(
-          switchMap(() => fromStompChannel("/user/queue/user-location")),
-          takeUntil(destroy$),
-        )
+      fromStompChannel(emergencyOpsStomp, "/user/queue/user-location")
+        .pipe(takeUntil(destroy$))
         .subscribe({
           next: (message) => {
             try {
@@ -120,14 +109,8 @@ export function EmergencyRequestRealtimeProvider({
             console.error("[STOMP] location channel error:", err),
         });
     } else {
-      // USER role: receive status updates when their emergency request is acted on
-      connect$
-        .pipe(
-          switchMap(() =>
-            fromStompChannel("/user/queue/emergency-request-status"),
-          ),
-          takeUntil(destroy$),
-        )
+      fromStompChannel(emergencyOpsStomp, "/user/queue/emergency-request-status")
+        .pipe(takeUntil(destroy$))
         .subscribe({
           next: (message) => {
             try {
@@ -154,9 +137,26 @@ export function EmergencyRequestRealtimeProvider({
         });
     }
 
+    // Re-handshake the socket whenever Keycloak issues a refreshed JWT.
+    // skip(1) discards the BehaviorSubject's current value so we only react
+    // to actual refresh events, not the initial replay.
+    authService.token$
+      .pipe(skip(1), distinctUntilChanged(), takeUntil(destroy$))
+      .subscribe((token) => {
+        if (token) {
+          emergencyOpsStomp
+            .reconnect()
+            .catch((err) =>
+              console.error("[STOMP] reconnect after token refresh failed:", err),
+            );
+        }
+      });
+
     return () => {
       completeDestroy$(destroy$);
-      stompService.disconnect();
+      // Intentionally do NOT call emergencyOpsStomp.disconnect() here:
+      // the service is a module-level singleton shared with any other
+      // mounted consumer. Subscriptions clean themselves up via destroy$.
     };
   }, [user, addNotification]);
 

@@ -10,6 +10,9 @@ import org.springframework.web.server.ResponseStatusException;
 import project.tracknest.criminalreports.core.entity.MissingPersonReport;
 import project.tracknest.criminalreports.core.entity.MissingPersonReportStatus;
 import project.tracknest.criminalreports.core.entity.Reporter;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher.EventType;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher.ReportType;
 import project.tracknest.criminalreports.domain.reportmanager.dto.MissingPersonReportResponse;
 import project.tracknest.criminalreports.domain.repository.MissingPersonReportRepository;
 import project.tracknest.criminalreports.domain.repository.MissingPersonReportStatusRepository;
@@ -29,6 +32,7 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
     private final MissingPersonReportRepository missingPersonReportRepository;
     private final MissingPersonReportStatusRepository statusRepository;
     private final ReporterRepository reporterRepository;
+    private final ReportEventPublisher reportEventPublisher;
 
     private static final String DEFAULT_STATUS = ReportStatusConstants.PENDING;
 
@@ -82,6 +86,7 @@ class MissingPersonRequestReceiverServiceImpl implements MissingPersonRequestRec
         MissingPersonReport saved = missingPersonReportRepository.saveAndFlush(report);
         entityManager.refresh(saved);
         log.info("Missing person report submitted successfully: {}", saved.getId());
+        reportEventPublisher.publish(ReportType.MISSING_PERSON, EventType.CREATED, saved.getId(), saved.getTitle());
         return mapToResponse(saved);
     }
 

@@ -1,6 +1,6 @@
 import { Subject, Observable, fromEventPattern } from "rxjs";
 import type { IMessage } from "@stomp/stompjs";
-import stompService from "@/services/stompService";
+import type { ManagedStompService } from "@/services/stompService";
 
 /** Creates a Subject that signals component teardown. */
 export function createDestroy$(): Subject<void> {
@@ -18,12 +18,17 @@ export function completeDestroy$(subject: Subject<void>): void {
 
 /**
  * Wraps a STOMP destination into an Observable<IMessage>.
- * Calls stompService.subscribe on subscribe and unsubscribes on teardown.
- * Must be used after stompService.connect() has resolved.
+ *
+ * The managed STOMP service handles auto-connect + queueing internally, so
+ * callers do not need to await connect() first. Each Observable subscriber
+ * causes exactly one STOMP subscription; teardown unsubscribes cleanly.
  */
-export function fromStompChannel(destination: string): Observable<IMessage> {
+export function fromStompChannel(
+  service: ManagedStompService,
+  destination: string,
+): Observable<IMessage> {
   return fromEventPattern<IMessage>(
-    (handler) => stompService.subscribe(destination, handler),
-    (_, sub: ReturnType<typeof stompService.subscribe>) => sub?.unsubscribe(),
+    (handler) => service.subscribe(destination, handler as (m: IMessage) => void),
+    (_, sub: { unsubscribe: () => void }) => sub?.unsubscribe(),
   );
 }

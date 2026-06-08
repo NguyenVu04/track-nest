@@ -11,7 +11,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 import project.tracknest.emergencyops.configuration.cache.ServerRedisMessagePublisher;
@@ -22,6 +21,7 @@ import project.tracknest.emergencyops.core.entity.EmergencyRequest;
 import project.tracknest.emergencyops.core.entity.EmergencyRequestStatus;
 import project.tracknest.emergencyops.core.entity.EmergencyService;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.*;
+import project.tracknest.emergencyops.domain.notificationoutbox.service.NotificationOutboxService;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -47,7 +47,7 @@ class EmergencyRequestReceiverServiceImplTest {
     @Mock
     private ServerRedisMessagePublisher redisPublisher;
     @Mock
-    private SimpMessagingTemplate messagingTemplate;
+    private NotificationOutboxService notificationOutbox;
     @Mock
     private KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
 
@@ -325,8 +325,8 @@ class EmergencyRequestReceiverServiceImplTest {
 
             service.receiveEmergencyRequestMessage(SERVICE_ID, message);
 
-            verify(messagingTemplate).convertAndSendToUser(
-                    eq(SERVICE_ID.toString()),
+            verify(notificationOutbox).sendToUser(
+                    eq(SERVICE_ID),
                     eq("/queue/emergency-request"),
                     eq(message)
             );

@@ -287,6 +287,7 @@ services:
       - emergency_ops_postgres_data:/var/lib/postgresql/data
       - ../database/01-emergency-ops-init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ../database/02-emergency-ops-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - ../database/03-emergency-ops-pending-notification.sql:/docker-entrypoint-initdb.d/03-pending-notification.sql
     networks:
       - track_nest
     healthcheck:
