@@ -11,6 +11,9 @@ import project.tracknest.criminalreports.configuration.objectstorage.ObjectStora
 import project.tracknest.criminalreports.core.entity.CrimeReport;
 import project.tracknest.criminalreports.core.entity.GuidelinesDocument;
 import project.tracknest.criminalreports.core.entity.MissingPersonReport;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher.EventType;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher.ReportType;
 import project.tracknest.criminalreports.domain.repository.CrimeReportRepository;
 import project.tracknest.criminalreports.domain.repository.GuidelinesDocumentRepository;
 import project.tracknest.criminalreports.domain.repository.MissingPersonReportRepository;
@@ -26,6 +29,7 @@ class ReportAdminServiceImpl implements ReportAdminService {
     private final CrimeReportRepository crimeReportRepository;
     private final GuidelinesDocumentRepository guidelinesDocumentRepository;
     private final ObjectStorage objectStorage;
+    private final ReportEventPublisher reportEventPublisher;
 
     @Value("${app.minio.buckets.criminal-reports:criminal-reports}")
     private String bucketName;
@@ -36,8 +40,10 @@ class ReportAdminServiceImpl implements ReportAdminService {
         MissingPersonReport report = missingPersonReportRepository.findById(reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Missing person report not found"));
         String photo = report.getPhoto();
+        String title = report.getTitle();
         missingPersonReportRepository.delete(report);
         if (photo != null && !photo.isBlank()) objectStorage.deleteFile(bucketName, photo);
+        reportEventPublisher.publish(ReportType.MISSING_PERSON, EventType.DELETED, reportId, title);
         log.info("Deleted missing person report as admin: {}", reportId);
     }
 
@@ -46,7 +52,9 @@ class ReportAdminServiceImpl implements ReportAdminService {
     public void deleteCrimeReportAsAdmin(UUID reportId) {
         CrimeReport report = crimeReportRepository.findById(reportId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Crime report not found"));
+        String title = report.getTitle();
         crimeReportRepository.delete(report);
+        reportEventPublisher.publish(ReportType.CRIME, EventType.DELETED, reportId, title);
         log.info("Deleted crime report as admin: {}", reportId);
     }
 
@@ -55,7 +63,9 @@ class ReportAdminServiceImpl implements ReportAdminService {
     public void deleteGuidelinesDocumentAsAdmin(UUID documentId) {
         GuidelinesDocument document = guidelinesDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Guidelines document not found"));
+        String title = document.getTitle();
         guidelinesDocumentRepository.delete(document);
+        reportEventPublisher.publish(ReportType.GUIDELINE, EventType.DELETED, documentId, title);
         log.info("Deleted guidelines document as admin: {}", documentId);
     }
 }

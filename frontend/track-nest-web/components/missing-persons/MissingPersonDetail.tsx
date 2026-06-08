@@ -10,8 +10,9 @@ import {
   User,
   ExternalLink
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { MissingPerson, UserRole } from "@/types";
+import { reverseGeocode } from "@/utils/geocoding";
 import { MapView } from "../shared/MapView";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { ChatbotPanel } from "../shared/ChatbotPanel";
@@ -40,6 +41,19 @@ export function MissingPersonDetail({
   const [confirmAction, setConfirmAction] = useState<
     "publish" | "delete" | null
   >(null);
+
+  const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (person.latitude == null || person.longitude == null) return;
+    let cancelled = false;
+    reverseGeocode(person.latitude, person.longitude).then((label) => {
+      if (!cancelled) setResolvedAddress(label);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [person.latitude, person.longitude]);
 
   const handleConfirmPublish = () => {
     onPublish(person.id);
@@ -74,13 +88,13 @@ export function MissingPersonDetail({
 
           {(userRole.includes("Reporter") || userRole.includes("User")) && (
             <div className="flex items-center gap-3">
-              <button
+              {!isPublished && <button
                 onClick={() => onEdit(person)}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors shadow-sm"
               >
                 <Edit className="w-4 h-4" />
                 <span className="hidden sm:inline">{tCommon("edit")}</span>
-              </button>
+              </button>}
               {isPending && (
                 <button
                   onClick={() => setConfirmAction("publish")}
@@ -236,6 +250,15 @@ export function MissingPersonDetail({
                     ]}
                   />
                 </div>
+
+                {resolvedAddress && (
+                  <div className="flex items-start gap-3 mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <MapPin className="w-4 h-4 text-brand-500 shrink-0 mt-0.5" />
+                    <span className="text-sm font-medium text-gray-700 leading-snug">
+                      {resolvedAddress}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 

@@ -33,18 +33,16 @@ export default function EditCrimeReportPage() {
         let contentValue = response.content;
         if (contentValue) {
           try {
-            let contentUrl = contentValue;
             if (
-              !contentUrl.trim().startsWith("<") &&
-              !contentUrl.startsWith("http")
+              !contentValue.trim().startsWith("<") &&
+              !contentValue.startsWith("http")
             ) {
-              contentUrl = await criminalReportsService.getFileUrl(
+              contentValue = await criminalReportsService.getFileContent(
                 "criminal-reports",
-                contentUrl,
+                contentValue,
               );
-            }
-            if (contentUrl.startsWith("http")) {
-              const contentResponse = await fetch(contentUrl);
+            } else if (contentValue.startsWith("http")) {
+              const contentResponse = await fetch(contentValue);
               contentValue = await contentResponse.text();
             }
           } catch (error) {

@@ -69,6 +69,54 @@ public class ReportViewerController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/missing-person-reports/{reportId}/content")
+    public ResponseEntity<byte[]> viewMissingPersonReportContent(@PathVariable UUID reportId) {
+        MissingPersonReportResponse report = service.viewMissingPersonReport(reportId);
+        String content = report.getContent();
+        if (content == null || content.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (content.trim().startsWith("<")) {
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+        try (InputStream stream = objectStorage.downloadFile(bucketName, content)) {
+            byte[] bytes = stream.readAllBytes();
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .header("Cache-Control", "public, max-age=3600")
+                    .body(bytes);
+        } catch (Exception e) {
+            log.error("Failed to serve content for missing person report {}: {}", reportId, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/guidelines/{documentId}/content")
+    public ResponseEntity<byte[]> viewGuidelinesDocumentContent(@PathVariable UUID documentId) {
+        GuidelinesDocumentResponse document = service.viewGuidelinesDocument(documentId);
+        String content = document.getContent();
+        if (content == null || content.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (content.trim().startsWith("<")) {
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+        try (InputStream stream = objectStorage.downloadFile(bucketName, content)) {
+            byte[] bytes = stream.readAllBytes();
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .header("Cache-Control", "public, max-age=3600")
+                    .body(bytes);
+        } catch (Exception e) {
+            log.error("Failed to serve content for guidelines document {}: {}", documentId, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/crime-reports/{reportId}/content")
     public ResponseEntity<byte[]> viewCrimeReportContent(@PathVariable UUID reportId) {
         CrimeReportResponse report = service.viewCrimeReport(reportId);

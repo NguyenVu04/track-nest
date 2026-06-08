@@ -7,11 +7,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import project.tracknest.criminalreports.core.dto.ReportNotificationMessage;
 import project.tracknest.criminalreports.configuration.objectstorage.ObjectStorage;
 import project.tracknest.criminalreports.core.datatype.PageResponse;
 import project.tracknest.criminalreports.core.datatype.ReportStatusConstants;
@@ -20,6 +18,9 @@ import project.tracknest.criminalreports.core.entity.GuidelinesDocument;
 import project.tracknest.criminalreports.core.entity.MissingPersonReport;
 import project.tracknest.criminalreports.core.entity.MissingPersonReportStatus;
 import project.tracknest.criminalreports.core.entity.Reporter;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher.EventType;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher.ReportType;
 import project.tracknest.criminalreports.domain.reportmanager.dto.*;
 import project.tracknest.criminalreports.domain.repository.CrimeReportRepository;
 import project.tracknest.criminalreports.domain.repository.GuidelinesDocumentRepository;
@@ -43,27 +44,15 @@ class ReportManagerServiceImpl implements ReportManagerService {
     private final ReporterRepository reporterRepository;
     private final MissingPersonReportStatusRepository statusRepository;
     private final ObjectStorage objectStorage;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final ReportEventPublisher reportEventPublisher;
 
     @Value("${app.minio.buckets.criminal-reports:criminal-reports}")
     private String bucketName;
 
     private static final String DEFAULT_STATUS = ReportStatusConstants.PENDING;
-    private static final String TOPIC_MISSING_PERSON = "/topic/reports/missing-person";
-    private static final String TOPIC_CRIME          = "/topic/reports/crime";
-    private static final String TOPIC_GUIDELINE      = "/topic/reports/guideline";
 
-    private void broadcast(String topic, String eventType, UUID reportId, String title, String reportType) {
-        try {
-            messagingTemplate.convertAndSend(topic, ReportNotificationMessage.builder()
-                    .eventType(eventType)
-                    .reportId(reportId)
-                    .title(title)
-                    .reportType(reportType)
-                    .build());
-        } catch (Exception e) {
-            log.warn("Failed to broadcast {} notification for {}: {}", eventType, reportId, e.getMessage());
-        }
+    private void broadcast(ReportType type, String eventType, UUID reportId, String title) {
+        reportEventPublisher.publish(type, EventType.valueOf(eventType), reportId, title);
     }
 
     // ── Missing Person Reports ────────────────────────────────────────────────
@@ -95,7 +84,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .build();
 
         MissingPersonReportResponse response = mapToMissingPersonReportResponse(missingPersonReportRepository.save(report));
-        broadcast(TOPIC_MISSING_PERSON, "CREATED", response.getId(), response.getTitle(), "missing-person");
+        broadcast(ReportType.MISSING_PERSON, "CREATED", response.getId(), response.getTitle());
         return response;
     }
 
@@ -123,7 +112,9 @@ class ReportManagerServiceImpl implements ReportManagerService {
         if (request.getContent() != null) {
             String oldContent = report.getContent();
             report.setContent(uploadHtmlContent(request.getContent()));
-            if (oldContent != null && !oldContent.isBlank()) objectStorage.deleteFile(bucketName, oldContent);
+            if (oldContent != null && !oldContent.isBlank() && !oldContent.trim().startsWith("<")) {
+                objectStorage.deleteFile(bucketName, oldContent);
+            }
         }
         report.setDate(request.getDate());
         if (request.getLatitude() != null) report.setLatitude(request.getLatitude());
@@ -141,7 +132,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
         String title = report.getTitle();
         missingPersonReportRepository.delete(report);
         if (photo != null && !photo.isBlank()) objectStorage.deleteFile(bucketName, photo);
-        broadcast(TOPIC_MISSING_PERSON, "DELETED", reportId, title, "missing-person");
+        broadcast(ReportType.MISSING_PERSON, "DELETED", reportId, title);
     }
 
     @Override
@@ -157,7 +148,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "PUBLISHED status not found"));
         report.setStatus(publishedStatus);
         MissingPersonReportResponse response = mapToMissingPersonReportResponse(missingPersonReportRepository.save(report));
-        broadcast(TOPIC_MISSING_PERSON, "PUBLISHED", response.getId(), response.getTitle(), "missing-person");
+        broadcast(ReportType.MISSING_PERSON, "PUBLISHED", response.getId(), response.getTitle());
         return response;
     }
 
@@ -215,7 +206,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .build();
 
         CrimeReportResponse response = mapToCrimeReportResponse(crimeReportRepository.save(report));
-        broadcast(TOPIC_CRIME, "CREATED", response.getId(), response.getTitle(), "crime");
+        broadcast(ReportType.CRIME, "CREATED", response.getId(), response.getTitle());
         return response;
     }
 
@@ -259,7 +250,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
         }
         report.setPublic(true);
         CrimeReportResponse response = mapToCrimeReportResponse(crimeReportRepository.save(report));
-        broadcast(TOPIC_CRIME, "PUBLISHED", response.getId(), response.getTitle(), "crime");
+        broadcast(ReportType.CRIME, "PUBLISHED", response.getId(), response.getTitle());
         return response;
     }
 
@@ -269,7 +260,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
         CrimeReport report = findCrimeReportOwned(reporterId, reportId);
         String title = report.getTitle();
         crimeReportRepository.delete(report);
-        broadcast(TOPIC_CRIME, "DELETED", reportId, title, "crime");
+        broadcast(ReportType.CRIME, "DELETED", reportId, title);
     }
 
     @Override
@@ -310,7 +301,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .build();
 
         GuidelinesDocumentResponse response = mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
-        broadcast(TOPIC_GUIDELINE, "CREATED", response.getId(), response.getTitle(), "guideline");
+        broadcast(ReportType.GUIDELINE, "CREATED", response.getId(), response.getTitle());
         return response;
     }
 
@@ -348,7 +339,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
         }
         document.setPublic(true);
         GuidelinesDocumentResponse response = mapToGuidelinesDocumentResponse(guidelinesDocumentRepository.save(document));
-        broadcast(TOPIC_GUIDELINE, "PUBLISHED", response.getId(), response.getTitle(), "guideline");
+        broadcast(ReportType.GUIDELINE, "PUBLISHED", response.getId(), response.getTitle());
         return response;
     }
 
@@ -358,7 +349,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
         GuidelinesDocument document = findGuidelinesDocumentOwned(reporterId, documentId);
         String title = document.getTitle();
         guidelinesDocumentRepository.delete(document);
-        broadcast(TOPIC_GUIDELINE, "DELETED", documentId, title, "guideline");
+        broadcast(ReportType.GUIDELINE, "DELETED", documentId, title);
     }
 
     @Override

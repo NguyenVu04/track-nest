@@ -718,7 +718,7 @@ export const criminalReportsService = {
     await api.delete(`/file/${bucket}/${filename}`);
   },
 
-  getFileUrl: async (bucket: string, filename: string): Promise<string> => {
+  getFileContent: async (bucket: string, filename: string): Promise<string> => {
     const response = await api.get<string>(`/file/${bucket}/${filename}`);
     return response.data;
   },

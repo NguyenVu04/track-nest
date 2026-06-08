@@ -22,25 +22,25 @@ interface MissingPersonListProps {
 
 const STATUS_MAP: Record<
   string,
-  { label: string; dot: string; shadow: string }
+  { labelKey: string; dot: string; shadow: string }
 > = {
   PUBLISHED: {
-    label: "Active Search",
+    labelKey: "tabActiveSearch",
     dot: "bg-red-500",
     shadow: "shadow-[0_0_8px_rgba(239,68,68,0.5)]",
   },
   PENDING: {
-    label: "Pending",
+    labelKey: "filterPending",
     dot: "bg-amber-400",
     shadow: "shadow-[0_0_8px_rgba(251,191,36,0.5)]",
   },
   RESOLVED: {
-    label: "Found",
+    labelKey: "tabFound",
     dot: "bg-gray-400",
     shadow: "",
   },
   REJECTED: {
-    label: "Rejected",
+    labelKey: "filterRejected",
     dot: "bg-slate-400",
     shadow: "",
   },
@@ -79,18 +79,20 @@ export const MissingPersonList = memo(function MissingPersonList({
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-50 bg-gray-50/30">
-                {[
-                  "SUBJECT INFO",
-                  "DATE REPORTED",
-                  "CONTACT LEAD",
-                  "STATUS",
-                  "ACTIONS",
-                ].map((h) => (
+                {(
+                  [
+                    "tableSubjectInfo",
+                    "tableDateReported",
+                    "tableContactLead",
+                    "tableStatus",
+                    "tableActions",
+                  ] as const
+                ).map((key) => (
                   <th
-                    key={h}
+                    key={key}
                     className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest"
                   >
-                    {h}
+                    {t(key)}
                   </th>
                 ))}
               </tr>
@@ -167,7 +169,7 @@ export const MissingPersonList = memo(function MissingPersonList({
                           )}
                         />
                         <span className="text-sm font-bold text-gray-700">
-                          {status.label}
+                          {t(status.labelKey as Parameters<typeof t>[0])}
                         </span>
                       </div>
                     </td>

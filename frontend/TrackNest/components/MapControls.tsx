@@ -1,6 +1,6 @@
 import Fab from "@/components/Fab";
 import SosFab from "@/components/SosFab";
-import { MapControls as MapControlsLang } from "@/constant/languages";
+import { MapControls as MapControlsLang, crimeHeatmap as crimeHeatmapLang } from "@/constant/languages";
 import { useSafeLayout } from "@/hooks/useSafeLayout";
 import { useTranslation } from "@/hooks/useTranslation";
 import { scale } from "@/utils/responsive";
@@ -12,7 +12,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import React, { useCallback, useRef } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { MapType } from "react-native-maps";
 
 type Props = {
@@ -27,6 +27,9 @@ type Props = {
   mapType?: MapType;
   showHeatmap?: boolean;
   showSafeZones?: boolean;
+  isLoadingHeatmap?: boolean;
+  heatmapCrimeCount?: number;
+  heatmapRiskLevel?: "low" | "medium" | "high";
 };
 
 export default function MapControls({
@@ -41,10 +44,14 @@ export default function MapControls({
   mapType = "standard",
   showHeatmap = false,
   showSafeZones = true,
+  isLoadingHeatmap = false,
+  heatmapCrimeCount = 0,
+  heatmapRiskLevel = "low",
 }: Props) {
   const tabBarHeight = useBottomTabBarHeight();
   const { insets } = useSafeLayout();
   const t = useTranslation(MapControlsLang);
+  const tHeatmap = useTranslation(crimeHeatmapLang);
 
   const sheetRef = useRef<BottomSheetModal>(null);
 
@@ -162,22 +169,38 @@ export default function MapControls({
           )}
 
           {onToggleHeatmap && (
-            <Pressable style={styles.optionRow} onPress={onToggleHeatmap}>
+            <Pressable
+              style={styles.optionRow}
+              onPress={onToggleHeatmap}
+              disabled={isLoadingHeatmap}
+            >
               <View
                 style={[
                   styles.optionIconWrap,
                   { backgroundColor: showHeatmap ? "#fde8e8" : "#f3f4f6" },
                 ]}
               >
-                <Ionicons
-                  name={showHeatmap ? "flame" : "flame-outline"}
-                  size={22}
-                  color={showHeatmap ? "#e74c3c" : "#757575"}
-                />
+                {isLoadingHeatmap ? (
+                  <ActivityIndicator size="small" color="#e74c3c" />
+                ) : (
+                  <Ionicons
+                    name={showHeatmap ? "flame" : "flame-outline"}
+                    size={22}
+                    color={showHeatmap ? "#e74c3c" : "#757575"}
+                  />
+                )}
               </View>
               <View style={styles.optionMeta}>
                 <Text style={styles.optionLabel}>{t.crimeHeatmapLabel}</Text>
-                <Text style={styles.optionDesc}>{t.crimeHeatmapDesc}</Text>
+                <Text style={styles.optionDesc}>
+                  {isLoadingHeatmap
+                    ? t.crimeHeatmapLoading
+                    : showHeatmap
+                      ? t.crimeHeatmapActive
+                          .replace("{{count}}", String(heatmapCrimeCount))
+                          .replace("{{risk}}", tHeatmap[`risk${heatmapRiskLevel.charAt(0).toUpperCase()}${heatmapRiskLevel.slice(1)}` as keyof typeof tHeatmap] as string)
+                      : t.crimeHeatmapDesc}
+                </Text>
               </View>
               <View
                 style={[

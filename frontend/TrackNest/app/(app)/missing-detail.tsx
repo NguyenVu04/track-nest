@@ -49,13 +49,17 @@ export default function MissingDetailScreen() {
           : undefined;
         setPerson({ ...data, photo: resolvedPhoto });
 
+        console.log("Loaded missing person report:", data);
+
         // Fetch the HTML body from MinIO — the content field is a MinIO object
         // name, not human-readable text, mirroring the guideline-detail pattern.
         try {
           const html = await criminalReportsService.getMissingPersonContent(id);
+          console.log("Fetched HTML content:", html);
           setHtmlContent(html);
         } catch {
           // Falls back to plain-text description below.
+          console.warn("Failed to load HTML content for missing person report", id);
         }
       } catch (err) {
         console.error("Failed to load missing person:", err);

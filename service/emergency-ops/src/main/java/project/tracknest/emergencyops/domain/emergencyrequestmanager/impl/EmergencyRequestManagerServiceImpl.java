@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.emergencyops.configuration.cache.ServerRedisMessage;
@@ -23,6 +22,7 @@ import project.tracknest.emergencyops.core.entity.EmergencyServiceUser;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.*;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.service.EmergencyRequestManagerService;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.service.EmergencyRequestManagerSubscriber;
+import project.tracknest.emergencyops.domain.notificationoutbox.service.NotificationOutboxService;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -45,7 +45,7 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
     private final KeycloakService keycloakService;
     private final KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
     private final ServerRedisMessagePublisher redisPublisher;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationOutboxService notificationOutbox;
 
     @Value("${app.kafka.topics[1]}")
     private String TRACKING_NOTIFICATION_TOPIC;
@@ -83,8 +83,8 @@ class EmergencyRequestManagerServiceImpl implements EmergencyRequestManagerServi
 
     @Override
     public void receiveEmergencyStatusMessage(UUID senderId, EmergencyStatusMessage message) {
-        messagingTemplate.convertAndSendToUser(senderId.toString(), EMERGENCY_REQUEST_STATUS_QUEUE, message);
-        log.info("Sent STOMP status {} to sender {}", message.status(), senderId);
+        notificationOutbox.sendToUser(senderId, EMERGENCY_REQUEST_STATUS_QUEUE, message);
+        log.info("Routed STOMP status {} to sender {} via outbox", message.status(), senderId);
     }
 
     private GetEmergencyRequestsResponse mapToGetEmergencyRequestsResponse(

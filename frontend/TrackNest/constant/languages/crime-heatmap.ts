@@ -24,6 +24,16 @@ export const English = {
   // List states
   loading: "Loading...",
   emptyList: "No crime reports found in this region.",
+
+  // Risk badge
+  riskLow: "Low risk",
+  riskMedium: "Moderate risk",
+  riskHigh: "High risk",
+  noIncidents: "No incidents",
+
+  // Legend
+  legendSafe: "Safe",
+  legendDangerous: "Dangerous",
 };
 
 export const Vietnamese = {
@@ -52,4 +62,14 @@ export const Vietnamese = {
   // List states
   loading: "Đang tải...",
   emptyList: "Không tìm thấy báo cáo tội phạm trong khu vực này.",
+
+  // Risk badge
+  riskLow: "Rủi ro thấp",
+  riskMedium: "Rủi ro trung bình",
+  riskHigh: "Rủi ro cao",
+  noIncidents: "Không có vụ việc",
+
+  // Legend
+  legendSafe: "An toàn",
+  legendDangerous: "Nguy hiểm",
 };

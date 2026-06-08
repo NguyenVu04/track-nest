@@ -8,6 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import project.tracknest.criminalreports.core.entity.CrimeReport;
 import project.tracknest.criminalreports.core.entity.Reporter;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher.EventType;
+import project.tracknest.criminalreports.domain.reporteventpublisher.service.ReportEventPublisher.ReportType;
 import project.tracknest.criminalreports.domain.reportmanager.dto.CrimeReportResponse;
 import project.tracknest.criminalreports.domain.repository.CrimeReportRepository;
 import project.tracknest.criminalreports.domain.repository.ReporterRepository;
@@ -24,6 +27,7 @@ class CrimeReportRequestReceiverServiceImpl implements CrimeReportRequestReceive
 
     private final CrimeReportRepository crimeReportRepository;
     private final ReporterRepository reporterRepository;
+    private final ReportEventPublisher reportEventPublisher;
 
     @Override
     @Transactional
@@ -69,6 +73,7 @@ class CrimeReportRequestReceiverServiceImpl implements CrimeReportRequestReceive
 
         CrimeReport saved = crimeReportRepository.save(report);
         log.info("Crime report submitted successfully: {}", saved.getId());
+        reportEventPublisher.publish(ReportType.CRIME, EventType.CREATED, saved.getId(), saved.getTitle());
         return mapToResponse(saved);
     }
 

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.tracknest.criminalreports.core.datatype.PageResponse;
@@ -25,7 +24,7 @@ class CrimeLocatorServiceImpl implements CrimeLocatorService {
     @Transactional(readOnly = true)
     public PageResponse<CrimeReportResponse> viewCrimeHeatmap(double longitude, double latitude, double radius, int page, int size) {
         log.info("Viewing crime heatmap around ({}, {}) with radius {}m", longitude, latitude, radius);
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "severity"));
+        PageRequest pageRequest = PageRequest.of(page, size);
         Page<CrimeReport> reports = crimeReportRepository.findAllPublicWithinRadius(longitude, latitude, radius, pageRequest);
         return mapToPageResponse(reports.map(this::mapToCrimeReportResponse));
     }
