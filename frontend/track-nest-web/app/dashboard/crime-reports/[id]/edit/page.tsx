@@ -12,11 +12,13 @@ import {
   criminalReportsService,
   UpdateCrimeReportRequest,
 } from "@/services/criminalReportsService";
+import { useTranslations } from "next-intl";
 
 export default function EditCrimeReportPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const t = useTranslations("crimeReports");
 
   const [report, setReport] = useState<CrimeReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,7 +71,7 @@ export default function EditCrimeReportPage() {
         });
       } catch (error) {
         console.error("Failed to fetch crime report:", error);
-        toast.error("Failed to load crime report");
+        toast.error(t("toastLoadReportError"));
       } finally {
         setIsLoading(false);
       }
@@ -84,12 +86,12 @@ export default function EditCrimeReportPage() {
   if (!report) {
     return (
       <div className="text-gray-900">
-        <h2 className="text-xl font-semibold mb-4">Crime Report Not Found</h2>
+        <h2 className="text-xl font-semibold mb-4">{t("notFound")}</h2>
         <button
           onClick={() => router.back()}
           className="text-indigo-600 hover:text-indigo-700"
         >
-          ← Go Back
+          {t("goBack")}
         </button>
       </div>
     );
@@ -107,7 +109,7 @@ export default function EditCrimeReportPage() {
       photos: updated.photos,
     };
     await criminalReportsService.updateCrimeReport(id, request);
-    toast.success("Report updated successfully");
+    toast.success(t("toastUpdated"));
     router.push(`/dashboard/crime-reports/${id}`);
   };
 
@@ -119,9 +121,9 @@ export default function EditCrimeReportPage() {
     <>
       <Breadcrumbs
         items={[
-          { label: "Crime Reports", href: "/dashboard/crime-reports" },
+          { label: t("breadcrumbParent"), href: "/dashboard/crime-reports" },
           { label: report.title, href: `/dashboard/crime-reports/${report.id}` },
-          { label: "Edit" },
+          { label: t("breadcrumbEdit") },
         ]}
       />
       <CrimeReportForm

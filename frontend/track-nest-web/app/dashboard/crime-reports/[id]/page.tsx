@@ -10,12 +10,14 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 import { criminalReportsService } from "@/services/criminalReportsService";
+import { useTranslations } from "next-intl";
 
 export default function CrimeReportDetailPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { addNotification } = useNotification();
+  const t = useTranslations("crimeReports");
 
   const [report, setReport] = useState<CrimeReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,7 +69,7 @@ export default function CrimeReportDetailPage() {
         });
       } catch (error) {
         console.error("Failed to fetch crime report:", error);
-        toast.error("Failed to load crime report");
+        toast.error(t("toastLoadReportError"));
       } finally {
         setIsLoading(false);
       }
@@ -83,12 +85,12 @@ export default function CrimeReportDetailPage() {
   if (!report) {
     return (
       <div className="text-gray-900">
-        <h2 className="text-xl font-semibold mb-4">Crime Report Not Found</h2>
+        <h2 className="text-xl font-semibold mb-4">{t("notFound")}</h2>
         <button
           onClick={() => router.back()}
           className="text-indigo-600 hover:text-indigo-700"
         >
-          ← Go Back
+          {t("goBack")}
         </button>
       </div>
     );
@@ -102,17 +104,17 @@ export default function CrimeReportDetailPage() {
     try {
       await criminalReportsService.publishCrimeReport(reportId);
       setReport((prev) => (prev ? { ...prev, isPublic: true } : prev));
-      toast.success("Report published successfully");
+      toast.success(t("toastPublished"));
       if (report) {
         addNotification({
           type: "crime",
-          title: "Crime report published",
-          description: `"${report.title}" is now public`,
+          title: t("notifPublishedTitle"),
+          description: t("notifPublishedDesc", { title: report.title }),
           reportId: report.id,
         });
       }
     } catch (error) {
-      toast.error("Error publishing report");
+      toast.error(t("toastPublishError"));
       console.error(error);
     }
   };
@@ -120,18 +122,18 @@ export default function CrimeReportDetailPage() {
   const handleDelete = async (reportId: string) => {
     try {
       await criminalReportsService.deleteCrimeReport(reportId);
-      toast.success("Report deleted successfully");
+      toast.success(t("toastDeleted"));
       if (report) {
         addNotification({
           type: "crime",
-          title: "Crime report deleted",
-          description: `"${report.title}" has been removed`,
+          title: t("notifDeletedTitle"),
+          description: t("notifDeletedDesc", { title: report.title }),
           reportId: report.id,
         });
       }
       router.push("/dashboard/crime-reports");
     } catch (error) {
-      toast.error("Failed to delete crime report");
+      toast.error(t("toastDeleteError"));
       console.error(error);
     }
   };
@@ -144,7 +146,7 @@ export default function CrimeReportDetailPage() {
     <>
       <Breadcrumbs
         items={[
-          { label: "Crime Reports", href: "/dashboard/crime-reports" },
+          { label: t("breadcrumbParent"), href: "/dashboard/crime-reports" },
           { label: report.title },
         ]}
       />
