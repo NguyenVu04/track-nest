@@ -40,7 +40,7 @@ jest.mock("@/services/criminalReportsService", () => ({
     publishCrimeReport: (...args: unknown[]) => mockPublishCrimeReport(...args),
     deleteCrimeReport: (...args: unknown[]) => mockDeleteCrimeReport(...args),
     getCrimeReport: (...args: unknown[]) => mockGetCrimeReport(...args),
-    getFileUrl: (...args: unknown[]) => mockGetFileUrl(...args),
+    getFileContent: (...args: unknown[]) => mockGetFileUrl(...args),
     updateCrimeReport: (...args: unknown[]) => mockUpdateCrimeReport(...args),
     createCrimeReport: (...args: unknown[]) => mockCreateCrimeReport(...args),
   },

@@ -10,7 +10,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import project.tracknest.emergencyops.configuration.cache.ServerRedisMessagePublisher;
 import project.tracknest.emergencyops.configuration.security.KeycloakService;
@@ -22,6 +21,7 @@ import project.tracknest.emergencyops.core.entity.EmergencyRequestStatus;
 import project.tracknest.emergencyops.core.entity.EmergencyService;
 import project.tracknest.emergencyops.core.entity.EmergencyServiceUser;
 import project.tracknest.emergencyops.domain.emergencyrequestmanager.impl.datatype.*;
+import project.tracknest.emergencyops.domain.notificationoutbox.service.NotificationOutboxService;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -53,7 +53,7 @@ class EmergencyRequestManagerServiceImplTest {
     @Mock
     private ServerRedisMessagePublisher redisPublisher;
     @Mock
-    private SimpMessagingTemplate messagingTemplate;
+    private NotificationOutboxService notificationOutbox;
 
     @InjectMocks
     private EmergencyRequestManagerServiceImpl service;
@@ -602,8 +602,8 @@ class EmergencyRequestManagerServiceImplTest {
 
             service.receiveEmergencyStatusMessage(SENDER_ID, msg);
 
-            verify(messagingTemplate).convertAndSendToUser(
-                    SENDER_ID.toString(),
+            verify(notificationOutbox).sendToUser(
+                    SENDER_ID,
                     "/queue/emergency-request-status",
                     msg
             );
@@ -616,8 +616,8 @@ class EmergencyRequestManagerServiceImplTest {
 
             service.receiveEmergencyStatusMessage(SENDER_ID, msg);
 
-            verify(messagingTemplate).convertAndSendToUser(
-                    SENDER_ID.toString(),
+            verify(notificationOutbox).sendToUser(
+                    SENDER_ID,
                     "/queue/emergency-request-status",
                     msg
             );
@@ -631,8 +631,8 @@ class EmergencyRequestManagerServiceImplTest {
 
             service.receiveEmergencyStatusMessage(SENDER_ID, msg);
 
-            verify(messagingTemplate).convertAndSendToUser(
-                    eq(SENDER_ID.toString()),
+            verify(notificationOutbox).sendToUser(
+                    eq(SENDER_ID),
                     eq("/queue/emergency-request-status"),
                     argThat(m -> m instanceof EmergencyStatusMessage esm
                             && "CLOSED".equals(esm.status())

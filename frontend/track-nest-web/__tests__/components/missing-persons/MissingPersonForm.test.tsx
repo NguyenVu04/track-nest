@@ -28,7 +28,7 @@ jest.mock("@/services/criminalReportsService", () => ({
     updateMissingPersonReport: jest.fn(),
     uploadFile: jest.fn(),
     getMissingPersonPhotoUrl: jest.fn(() => "https://example.com/photo.jpg"),
-    getFileUrl: jest.fn(() => Promise.resolve("https://example.com/photo.jpg")),
+    getFileContent: jest.fn(() => Promise.resolve("https://example.com/photo.jpg")),
   },
 }));
 
