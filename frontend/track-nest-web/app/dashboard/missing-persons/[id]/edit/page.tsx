@@ -9,11 +9,13 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 import { criminalReportsService } from "@/services/criminalReportsService";
+import { useTranslations } from "next-intl";
 
 export default function EditMissingPersonPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const t = useTranslations("missingPersons");
 
   const [person, setPerson] = useState<MissingPerson | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +72,7 @@ export default function EditMissingPersonPage() {
         });
       } catch (error) {
         console.error("Failed to fetch missing person report:", error);
-        toast.error("Failed to load report");
+        toast.error(t("toastLoadReportError"));
       } finally {
         setIsLoading(false);
       }
@@ -88,19 +90,19 @@ export default function EditMissingPersonPage() {
   if (!person) {
     return (
       <div className="text-gray-900">
-        <h2 className="text-xl font-semibold mb-4">Missing Person Not Found</h2>
+        <h2 className="text-xl font-semibold mb-4">{t("notFound")}</h2>
         <button
           onClick={() => router.back()}
           className="text-indigo-600 hover:text-indigo-700"
         >
-          ← Go Back
+          {t("goBack")}
         </button>
       </div>
     );
   }
 
   const handleSave = (updated: MissingPerson) => {
-    toast.success("Missing person report updated");
+    toast.success(t("toastUpdated"));
     router.push(`/dashboard/missing-persons/${updated.id}`);
   };
 
@@ -112,9 +114,9 @@ export default function EditMissingPersonPage() {
     <>
       <Breadcrumbs
         items={[
-          { label: "Missing Persons", href: "/dashboard/missing-persons" },
+          { label: t("breadcrumbParent"), href: "/dashboard/missing-persons" },
           { label: person.fullName, href: `/dashboard/missing-persons/${person.id}` },
-          { label: "Edit" },
+          { label: t("breadcrumbEdit") },
         ]}
       />
       <MissingPersonForm

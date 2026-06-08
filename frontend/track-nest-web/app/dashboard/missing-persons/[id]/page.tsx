@@ -10,11 +10,13 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Loading } from "@/components/loading/Loading";
 import { toast } from "sonner";
 import { criminalReportsService } from "@/services/criminalReportsService";
+import { useTranslations } from "next-intl";
 
 export default function MissingPersonDetailPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { addNotification } = useNotification();
+  const t = useTranslations("missingPersons");
   const { id } = useParams<{ id: string }>();
 
   const [person, setPerson] = useState<MissingPerson | null>(null);
@@ -67,7 +69,7 @@ export default function MissingPersonDetailPage() {
         });
       } catch (error) {
         console.error("Failed to fetch missing person report:", error);
-        toast.error("Failed to load report");
+        toast.error(t("toastLoadReportError"));
       } finally {
         setIsLoading(false);
       }
@@ -85,12 +87,12 @@ export default function MissingPersonDetailPage() {
   if (!person) {
     return (
       <div className="text-gray-900">
-        <h2 className="text-xl font-semibold mb-4">Missing Person Not Found</h2>
+        <h2 className="text-xl font-semibold mb-4">{t("notFound")}</h2>
         <button
           onClick={() => router.back()}
           className="text-indigo-600 hover:text-indigo-700"
         >
-          ← Go Back
+          {t("goBack")}
         </button>
       </div>
     );
@@ -109,17 +111,17 @@ export default function MissingPersonDetailPage() {
             }
           : prev,
       );
-      toast.success("Report published successfully");
+      toast.success(t("toastPublished"));
       if (person) {
         addNotification({
           type: "missing-person",
-          title: "Missing person report published",
-          description: `${person.fullName} is now public and visible to users`,
+          title: t("notifPublishedTitle"),
+          description: t("notifPublishedDesc", { name: person.fullName }),
           reportId: person.id,
         });
       }
     } catch (error) {
-      toast.error("Failed to publish report");
+      toast.error(t("toastPublishError"));
       console.error(error);
     }
   };
@@ -127,18 +129,18 @@ export default function MissingPersonDetailPage() {
   const handleDelete = async (reportId: string) => {
     try {
       await criminalReportsService.deleteMissingPersonReport(reportId);
-      toast.success("Report deleted successfully");
+      toast.success(t("toastDeleted"));
       if (person) {
         addNotification({
           type: "missing-person",
-          title: "Missing person report deleted",
-          description: `${person.fullName} report has been removed`,
+          title: t("notifDeletedTitle"),
+          description: t("notifDeletedDesc", { name: person.fullName }),
           reportId: person.id,
         });
       }
       router.push("/dashboard/missing-persons");
     } catch (error) {
-      toast.error("Failed to delete report");
+      toast.error(t("toastDeleteError"));
       console.error(error);
     }
   };
@@ -155,7 +157,7 @@ export default function MissingPersonDetailPage() {
     <>
       <Breadcrumbs
         items={[
-          { label: "Missing Persons", href: "/dashboard/missing-persons" },
+          { label: t("breadcrumbParent"), href: "/dashboard/missing-persons" },
           { label: person.fullName },
         ]}
       />

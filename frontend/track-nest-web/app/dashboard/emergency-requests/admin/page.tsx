@@ -89,10 +89,10 @@ export default function AdminEmergencyRequestsPage() {
   };
 
   const getStatusLabel = (status: string) => {
-    if (status === "ACCEPTED") return "In Progress";
-    if (status === "PENDING") return "Pending Review";
-    if (status === "CLOSED") return "Resolved";
-    return status;
+    if (status === "ACCEPTED") return t("statusLabelInProgress");
+    if (status === "PENDING") return t("statusLabelPendingReview");
+    if (status === "CLOSED") return t("statusLabelResolved");
+    return tStatus(status.toLowerCase() as Parameters<typeof tStatus>[0]);
   };
 
   const getInitials = (first: string, last: string) => {
@@ -119,15 +119,15 @@ export default function AdminEmergencyRequestsPage() {
       <Breadcrumbs
         items={[
           { label: t("pageTitle"), href: "/dashboard/emergency-requests" },
-          { label: "Admin View" },
+          { label: t("adminBreadcrumb") },
         ]}
       />
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Emergency Hub (Admin)</h1>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{t("adminHubTitle")}</h1>
           <p className="text-gray-500 mt-2 max-w-md leading-relaxed text-sm">
-            System-wide oversight of all safety incidents across the entire network.
+            {t("adminHubSubtitle")}
           </p>
         </div>
         
@@ -137,7 +137,7 @@ export default function AdminEmergencyRequestsPage() {
                 <Target className="w-6 h-6" />
              </div>
              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Hub Requests</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t("totalHubRequests")}</p>
                 <p className="text-2xl font-black text-gray-900 leading-none">
                   {requests.length.toLocaleString()}
                 </p>
@@ -149,7 +149,7 @@ export default function AdminEmergencyRequestsPage() {
                 <ClipboardList className="w-6 h-6" />
              </div>
              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pending SOS</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t("pendingSos")}</p>
                 <p className="text-2xl font-black text-gray-900 leading-none">
                   {pendingCount.toString().padStart(2, '0')}
                 </p>
@@ -164,14 +164,14 @@ export default function AdminEmergencyRequestsPage() {
         {/* Left Column: Recent Emergency Alerts */}
         <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col">
           <div className="px-8 py-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h3 className="text-lg font-bold text-[#004d40]">Recent Emergency Alerts</h3>
-            
+            <h3 className="text-lg font-bold text-[#004d40]">{t("recentAlerts")}</h3>
+
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search alerts..."
+                  placeholder={t("searchAlertsPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-48 pl-9 pr-4 py-1.5 border border-gray-200 rounded-full focus:ring-2 focus:ring-cyan-500 text-sm text-gray-800 bg-gray-50 focus:bg-white transition-colors"
@@ -182,11 +182,11 @@ export default function AdminEmergencyRequestsPage() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-32 px-3 py-1.5 border border-gray-200 rounded-full focus:ring-2 focus:ring-cyan-500 text-sm text-gray-800 bg-gray-50 focus:bg-white cursor-pointer"
               >
-                <option value="">All Status</option>
-                <option value="PENDING">Pending</option>
-                <option value="ACCEPTED">In Progress</option>
-                <option value="REJECTED">Rejected</option>
-                <option value="CLOSED">Resolved</option>
+                <option value="">{t("statusFilterAll")}</option>
+                <option value="PENDING">{t("statusLabelPendingReview")}</option>
+                <option value="ACCEPTED">{t("statusLabelInProgress")}</option>
+                <option value="REJECTED">{tStatus("rejected")}</option>
+                <option value="CLOSED">{t("statusLabelResolved")}</option>
               </select>
             </div>
           </div>
@@ -195,17 +195,17 @@ export default function AdminEmergencyRequestsPage() {
             <table className="w-full text-sm text-left">
               <thead className="bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">
                 <tr>
-                  <th className="px-8 py-4">Sender & Service</th>
-                  <th className="px-8 py-4">Type</th>
-                  <th className="px-8 py-4">Status</th>
-                  <th className="px-8 py-4 text-right">Actions</th>
+                  <th className="px-8 py-4">{t("colSenderService")}</th>
+                  <th className="px-8 py-4">{t("colType")}</th>
+                  <th className="px-8 py-4">{t("tableStatus")}</th>
+                  <th className="px-8 py-4 text-right">{t("tableActions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredRequests.length === 0 ? (
                   <tr>
                      <td colSpan={4} className="px-8 py-12 text-center text-gray-500">
-                        No emergency alerts found.
+                        {t("noAlertsFound")}
                      </td>
                   </tr>
                 ) : (
@@ -222,7 +222,7 @@ export default function AdminEmergencyRequestsPage() {
                               </p>
                               <p className="text-[11px] text-gray-400 font-medium">ID: #{request.id.substring(0, 6).toUpperCase()}</p>
                               {request.serviceUsername && (
-                                <p className="text-[11px] text-cyan-600 font-medium mt-0.5">Assigned: @{request.serviceUsername}</p>
+                                <p className="text-[11px] text-cyan-600 font-medium mt-0.5">{t("assignedToService", { username: request.serviceUsername })}</p>
                               )}
                            </div>
                         </div>
@@ -235,10 +235,10 @@ export default function AdminEmergencyRequestsPage() {
                              <AlertTriangle className="w-[16px] h-[16px] text-gray-500 shrink-0" strokeWidth={2.5} />
                            )}
                            <span className={`font-bold ${request.status === 'PENDING' || request.status === 'ACCEPTED' ? 'text-red-600' : 'text-gray-700'}`}>
-                             SOS Trigger
+                             {t("sosTrigger")}
                            </span>
                         </div>
-                        <p className="text-[12px] text-gray-500 ml-[26px]">Emergency Alert</p>
+                        <p className="text-[12px] text-gray-500 ml-[26px]">{t("emergencyAlertType")}</p>
                       </td>
                       <td className="px-8 py-4">
                         <span className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide ${getStatusColor(request.status)}`}>
@@ -252,7 +252,7 @@ export default function AdminEmergencyRequestsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-lg border-gray-100 p-1">
                              <DropdownMenuItem onClick={() => navigateToRequestDetail(request)} className="rounded-lg cursor-pointer font-medium text-gray-700 focus:bg-teal-50 focus:text-[#004d40]">
-                               <Eye className="w-4 h-4 mr-2" /> View Details
+                               <Eye className="w-4 h-4 mr-2" /> {tCommon("viewDetails")}
                              </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -266,7 +266,7 @@ export default function AdminEmergencyRequestsPage() {
           
           <div className="px-8 py-5 border-t border-gray-100 bg-gray-50/30 text-center">
             <button className="text-sm font-bold text-cyan-700 hover:text-cyan-800 transition-colors">
-               View All Alert History
+               {t("viewAllHistory")}
             </button>
           </div>
         </div>
@@ -276,7 +276,7 @@ export default function AdminEmergencyRequestsPage() {
           {/* Active Incidents Map */}
           <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[400px]">
              <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100 z-10 bg-white">
-               <h3 className="text-base font-bold text-[#004d40]">Active Incidents Map</h3>
+               <h3 className="text-base font-bold text-[#004d40]">{t("activeIncidentsMap")}</h3>
                <button className="p-1.5 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full transition-colors">
                   <Maximize2 className="w-4 h-4" />
                </button>
@@ -289,7 +289,7 @@ export default function AdminEmergencyRequestsPage() {
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-400 font-medium text-sm">
-                    No active incidents to map.
+                    {t("noActiveIncidents")}
                   </div>
                 )}
              </div>
@@ -297,15 +297,15 @@ export default function AdminEmergencyRequestsPage() {
 
           {/* Quick Actions */}
           <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6">
-             <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Quick Actions</h3>
+             <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">{t("quickActions")}</h3>
              <div className="grid grid-cols-2 gap-3">
                 <button className="flex flex-col items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 py-4 rounded-2xl transition-colors">
                    <Phone className="w-5 h-5 text-teal-600" />
-                   <span className="text-xs font-bold text-gray-700">Call Local 911</span>
+                   <span className="text-xs font-bold text-gray-700">{t("callLocal911")}</span>
                 </button>
                 <button className="flex flex-col items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 py-4 rounded-2xl transition-colors">
                    <MapPinIcon className="w-5 h-5 text-teal-600" />
-                   <span className="text-xs font-bold text-gray-700">Broadcast Loc</span>
+                   <span className="text-xs font-bold text-gray-700">{t("broadcastLoc")}</span>
                 </button>
              </div>
           </div>
@@ -313,11 +313,11 @@ export default function AdminEmergencyRequestsPage() {
           {/* System Status */}
           <div className="bg-[#f0f9f9] rounded-[2rem] p-6 relative overflow-hidden">
              <div className="relative z-10">
-                <h3 className="text-base font-bold text-cyan-800 mb-3">System Status</h3>
+                <h3 className="text-base font-bold text-cyan-800 mb-3">{t("systemStatus")}</h3>
                 <ul className="space-y-2">
                    <li className="flex items-center gap-2 text-sm font-medium text-cyan-900">
                       <span className="w-1.5 h-1.5 rounded-full bg-cyan-600" />
-                      All GPS nodes active
+                      {t("gpsNodesActive")}
                    </li>
                    <li className="flex items-center gap-2 text-sm font-medium text-cyan-900">
                       <span className="w-1.5 h-1.5 rounded-full bg-cyan-600" />

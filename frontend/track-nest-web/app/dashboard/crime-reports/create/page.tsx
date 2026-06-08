@@ -7,34 +7,36 @@ import type { CrimeReport } from "@/types";
 import { CrimeReportForm } from "@/components/crime-reports/CrimeReportForm";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 export default function CreateCrimeReportPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { addNotification } = useNotification();
+  const t = useTranslations("crimeReports");
 
   if (!user) {
     return (
       <div className="text-gray-900">
-        <h2 className="text-xl font-semibold mb-4">Unauthorized</h2>
+        <h2 className="text-xl font-semibold mb-4">{t("unauthorizedHeading")}</h2>
         <p className="text-gray-600 mb-4">
-          You do not have permission to create crime reports.
+          {t("unauthorizedMessage")}
         </p>
         <button
           onClick={() => router.back()}
           className="text-indigo-600 hover:text-indigo-700"
         >
-          ← Go Back
+          {t("goBack")}
         </button>
       </div>
     );
   }
 
   const handleSave = (report: CrimeReport) => {
-    toast.success("Report created successfully");
+    toast.success(t("toastCreated"));
     addNotification({
       type: "crime",
-      title: "Crime report created",
+      title: t("notifCreatedTitle"),
       description: report.title,
       reportId: report.id,
     });
@@ -49,8 +51,8 @@ export default function CreateCrimeReportPage() {
     <>
       <Breadcrumbs
         items={[
-          { label: "Crime Reports", href: "/dashboard/crime-reports" },
-          { label: "New Report" },
+          { label: t("breadcrumbParent"), href: "/dashboard/crime-reports" },
+          { label: t("newReport") },
         ]}
       />
       <CrimeReportForm

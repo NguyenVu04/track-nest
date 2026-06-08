@@ -96,6 +96,8 @@ export default function SafeZonesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<SafeZone | null>(null);
   const [selectedZone, setSelectedZone] = useState<SafeZone | null>(null);
+  const [flyTarget, setFlyTarget] = useState<{ index: number; key: number } | undefined>(undefined);
+  const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
   const [locationInput, setLocationInput] = useState("");
   const [locationSuggestions, setLocationSuggestions] = useState<GeocodingResult[]>([]);
@@ -199,6 +201,21 @@ export default function SafeZonesPage() {
     z.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  const handleZoneListClick = (zone: SafeZone) => {
+    setSelectedZone(zone);
+    const index = zones.findIndex((z) => z.id === zone.id);
+    if (index >= 0) {
+      setFlyTarget((prev) => ({ index, key: (prev?.key ?? 0) + 1 }));
+    }
+  };
+
+  const handleMarkerClick = (index: number) => {
+    const zone = zones[index];
+    if (!zone) return;
+    setSelectedZone(zone);
+    itemRefs.current.get(zone.id)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
   const getZoneIcon = (name: string) => {
     const lower = name.toLowerCase();
     if (lower.includes('home')) return Home;
@@ -289,11 +306,14 @@ export default function SafeZonesPage() {
           <Card className="rounded-[2.5rem] border-none shadow-2xl shadow-gray-200/50 overflow-hidden relative">
             <div className="h-[600px] w-full">
               <MapView
-                center={selectedZone ? [selectedZone.latitude, selectedZone.longitude] : DEFAULT_CENTER}
+                center={DEFAULT_CENTER}
                 markers={zones.map(z => ({
                   position: [z.latitude, z.longitude],
-                  label: z.name
+                  label: z.name,
                 }))}
+                flyTarget={flyTarget}
+                onMarkerClick={handleMarkerClick}
+                disableAutoFit={!!flyTarget}
               />
             </div>
             
@@ -349,9 +369,13 @@ export default function SafeZonesPage() {
                 {filteredZones.map((zone) => {
                   const Icon = getZoneIcon(zone.name);
                   return (
-                    <div 
+                    <div
                       key={zone.id}
-                      onClick={() => setSelectedZone(zone)}
+                      ref={(el) => {
+                        if (el) itemRefs.current.set(zone.id, el);
+                        else itemRefs.current.delete(zone.id);
+                      }}
+                      onClick={() => handleZoneListClick(zone)}
                       className={cn(
                         "group p-6 rounded-3xl border border-gray-50 transition-all cursor-pointer flex items-center gap-6 hover:shadow-xl hover:shadow-gray-200/50",
                         selectedZone?.id === zone.id ? "bg-brand-50/50 border-brand-100" : "bg-white"

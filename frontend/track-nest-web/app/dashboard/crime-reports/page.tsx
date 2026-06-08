@@ -127,16 +127,16 @@ export default function CrimeReportsPage() {
     const report = crimeReports.find((r) => r.id === id);
     try {
       await criminalReportsService.publishCrimeReport(id);
-      toast.success("Report published successfully");
+      toast.success(t("toastPublished"));
       addNotification({
         type: "crime",
-        title: "Crime report published",
-        description: report?.title ?? "A crime report was published",
+        title: t("notifPublishedTitle"),
+        description: report?.title ?? t("notifPublishedFallback"),
         reportId: id,
       });
       refresh();
     } catch (error) {
-      toast.error("Error publishing report");
+      toast.error(t("toastPublishError"));
       console.error(error);
     }
   }, [crimeReports, addNotification, refresh]);
@@ -148,8 +148,8 @@ export default function CrimeReportsPage() {
       toast.success(t("toastDeleted"));
       addNotification({
         type: "crime",
-        title: "Crime report deleted",
-        description: report?.title ?? "A crime report was removed",
+        title: t("notifDeletedTitle"),
+        description: report?.title ?? t("notifDeletedFallback"),
         reportId: id,
       });
       refresh();
@@ -190,8 +190,8 @@ export default function CrimeReportsPage() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Crime Reports Management</h1>
-            <p className="text-gray-500 mt-2 text-lg">Monitor, assign, and resolve active incidents within your jurisdiction.</p>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t("headerTitle")}</h1>
+            <p className="text-gray-500 mt-2 text-lg">{t("headerSubtitle")}</p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -206,7 +206,7 @@ export default function CrimeReportsPage() {
               className="flex items-center gap-2 px-8 py-3 bg-brand-500 text-white rounded-2xl font-bold text-sm shadow-md hover:bg-brand-600 transition-all hover:-translate-y-0.5"
             >
               <Plus className="w-5 h-5" />
-              Create Report
+              {t("createButton")}
             </button>
           </div>
         </div>
@@ -259,7 +259,7 @@ export default function CrimeReportsPage() {
         {totalPages > 0 && (
           <div className="mt-8 flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
             <p className="text-sm font-bold text-gray-400">
-              Showing {rangeStart}–{rangeEnd} of {totalElements} entries
+              {t("paginationShowing", { start: rangeStart, end: rangeEnd, total: totalElements })}
             </p>
 
             <div className="flex items-center gap-2">
