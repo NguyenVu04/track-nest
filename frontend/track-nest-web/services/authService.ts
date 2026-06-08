@@ -1,5 +1,5 @@
 import Keycloak, { type KeycloakInitOptions } from "keycloak-js";
-import { defer, from, type Observable } from "rxjs";
+import { BehaviorSubject, defer, from, type Observable } from "rxjs";
 import { tap, shareReplay } from "rxjs/operators";
 import { firstValueFrom } from "rxjs";
 
@@ -50,6 +50,13 @@ export interface KeycloakUserInfo {
 let keycloakInstance: Keycloak | null = null;
 // shareReplay(1) replaces the hand-rolled keycloakInitialized + keycloakInitPromise singleton
 let keycloakInit$: Observable<boolean> | null = null;
+
+// Emits the current access token (initial load → refresh → logout).
+// STOMP-backed contexts subscribe to this and reconnect with the fresh JWT
+// instead of capturing it in a closure that goes stale after Keycloak refresh.
+const tokenSubject = new BehaviorSubject<string | null>(
+  typeof window !== "undefined" ? localStorage.getItem("access_token") : null,
+);
 
 const getKeycloak = (): Keycloak => {
   if (!keycloakInstance) {
@@ -163,17 +170,21 @@ export const authService = {
         tap((authenticated) => {
           if (authenticated) {
             persistKeycloakAuth();
+            tokenSubject.next(keycloak.token ?? null);
           } else {
             clearStoredAuth();
+            tokenSubject.next(null);
           }
 
           keycloak.onTokenExpired = async () => {
             try {
               await keycloak.updateToken(30);
               persistKeycloakAuth();
+              tokenSubject.next(keycloak.token ?? null);
             } catch (error) {
               console.error("Failed to refresh Keycloak token:", error);
               clearStoredAuth();
+              tokenSubject.next(null);
             }
           };
         }),
@@ -276,6 +287,7 @@ export const authService = {
     const keycloak = getKeycloak();
 
     clearStoredAuth();
+    tokenSubject.next(null);
     if (!keycloakInit$) {
       return;
     }
@@ -286,6 +298,32 @@ export const authService = {
           ? `${window.location.origin}/login`
           : undefined,
     });
+  },
+
+  // Observable that emits whenever the access token changes.
+  // Long-lived consumers (STOMP, SSE) subscribe to this and re-handshake.
+  token$: tokenSubject.asObservable(),
+
+  // Proactively refresh and return the current access token.
+  // Use this when opening a fresh long-lived connection so a long-idle
+  // JWT does not get used for a brand-new handshake.
+  getFreshAccessToken: async (): Promise<string | null> => {
+    const keycloak = getKeycloak();
+    try {
+      await authService.initKeycloak();
+      if (keycloak.authenticated) {
+        await keycloak.updateToken(30);
+        persistKeycloakAuth();
+        tokenSubject.next(keycloak.token ?? null);
+        return keycloak.token ?? null;
+      }
+    } catch (error) {
+      console.error("[authService] Failed to refresh token:", error);
+    }
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("access_token");
+    }
+    return null;
   },
 
   getAccessToken: (): string | null => {
