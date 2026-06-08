@@ -82,7 +82,7 @@ export default function MissingPersonsPage() {
           totalElements: response.totalElements,
         }))
         .catch(() => {
-          toast.error("Failed to load missing person reports");
+          toast.error(t("toastLoadError"));
           return { content: [], totalPages: 0, totalElements: 0 };
         }),
     "ALL",
@@ -116,8 +116,8 @@ export default function MissingPersonsPage() {
         toast.success(t("toastPublished"));
         addNotification({
           type: "missing-person",
-          title: "Missing person report published",
-          description: `${person.fullName} is now public and visible to users`,
+          title: t("notifPublishedTitle"),
+          description: t("notifPublishedDesc", { name: person.fullName }),
           reportId: person.id,
         });
         refresh();
@@ -137,8 +137,8 @@ export default function MissingPersonsPage() {
         toast.success(t("toastDeleted"));
         addNotification({
           type: "missing-person",
-          title: "Missing person report deleted",
-          description: `${person.fullName} report has been removed`,
+          title: t("notifDeletedTitle"),
+          description: t("notifDeletedDesc", { name: person.fullName }),
           reportId: person.id,
         });
         refresh();
@@ -152,10 +152,10 @@ export default function MissingPersonsPage() {
   if (!user) return null;
 
   const tabs: { id: StatusTab; label: string }[] = [
-    { id: "ALL",       label: "All Reports"   },
-    { id: "PUBLISHED", label: "Active Search" },
-    { id: "PENDING",   label: "Pending"       },
-    { id: "RESOLVED",  label: "Found"         },
+    { id: "ALL",       label: t("tabAll")          },
+    { id: "PUBLISHED", label: t("tabActiveSearch") },
+    { id: "PENDING",   label: t("filterPending")   },
+    { id: "RESOLVED",  label: t("tabFound")        },
   ];
 
   const rangeStart = totalElements === 0 ? 0 : currentPage * PAGE_SIZE + 1;
@@ -177,10 +177,10 @@ export default function MissingPersonsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-              Missing Person Reports
+              {t("pageTitle")}
             </h1>
             <p className="text-gray-500 mt-2 text-lg">
-              Manage and track active search operations.
+              {t("headerSubtitle")}
             </p>
           </div>
           <button
@@ -188,7 +188,7 @@ export default function MissingPersonsPage() {
             className="flex items-center gap-2 px-8 py-3 bg-brand-500 text-white rounded-2xl font-bold text-sm shadow-md hover:bg-brand-600 transition-all hover:-translate-y-0.5"
           >
             <Plus className="w-5 h-5" />
-            Create New Report
+            {t("createNewReport")}
           </button>
         </div>
 
@@ -239,7 +239,7 @@ export default function MissingPersonsPage() {
         {totalPages > 0 && (
           <div className="mt-8 flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
             <p className="text-sm font-bold text-gray-400">
-              Showing {rangeStart}–{rangeEnd} of {totalElements} entries
+              {t("paginationShowing", { start: rangeStart, end: rangeEnd, total: totalElements })}
             </p>
 
             <div className="flex items-center gap-2">
