@@ -38,6 +38,8 @@ import MyInfoSheet from "@/components/BottomSheets/MyInfoSheet";
 import CurrentLocationMarker from "@/components/CurrentLocationMarker";
 import { FollowerInfo } from "@/components/FollowerInfo";
 import FollowerMarker from "@/components/FollowerMarker";
+import HeatmapLegend from "@/components/HeatmapLegend";
+import HeatmapRiskBadge from "@/components/HeatmapRiskBadge";
 import { LocationLoader } from "@/components/Loaders/LocationLoader";
 import { MapViewLoader } from "@/components/Loaders/MapViewLoader";
 import MapControls from "@/components/MapControls";
@@ -55,6 +57,7 @@ import { useAddressFromLocation } from "@/hooks/useAddressFromLocation";
 import useDeviceLocation from "@/hooks/useDeviceLocation";
 import { useFamilyCircle } from "@/hooks/useFamilyCircle";
 import { useFollowers } from "@/hooks/useFollowers";
+import { useHeatmapFetch } from "@/hooks/useHeatmapFetch";
 import { useMapController } from "@/hooks/useMapController";
 import { useStreamedFollowers } from "@/hooks/useStreamedFollowers";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -172,7 +175,7 @@ function MapScreenContent() {
   const { tracking, shareLocation } = useTracking();
   const { user } = useAuth();
   const { isEmergencyActive, refreshActiveEmergencyStatus } = useEmergency();
-  const { crimeHeatmapPoints, loadCrimeHeatmap } =
+  const { crimeHeatmapPoints, isLoadingHeatmap, crimeCount, riskLevel } =
     usePOIAnalytics();
   const { circles, selectedCircle, selectCircle, refreshCircles } =
     useFamilyCircle();
@@ -540,12 +543,8 @@ function MapScreenContent() {
       .catch((err) => console.warn("Failed to load safe zones:", err.message));
   }, [location]);
 
-  // Load crime heatmap when toggled on
-  useEffect(() => {
-    if (showCrimeHeatmap && location) {
-      loadCrimeHeatmap(location.latitude, location.longitude);
-    }
-  }, [showCrimeHeatmap, location, loadCrimeHeatmap]);
+  // Manages heatmap fetch driven by the visible map region (not GPS position)
+  useHeatmapFetch(showCrimeHeatmap, visibleRegion);
 
   const generalInfoRenderItem = useCallback(
     ({ item }: { item: Follower }) => (
@@ -761,6 +760,16 @@ function MapScreenContent() {
           ) : null}
         </MapView>
 
+        <HeatmapLegend visible={showCrimeHeatmap} bottomOffset={tabBarHeight} />
+
+        <HeatmapRiskBadge
+          visible={showCrimeHeatmap}
+          riskLevel={riskLevel}
+          crimeCount={crimeCount}
+          isLoading={isLoadingHeatmap}
+          bottomOffset={tabBarHeight}
+        />
+
         <MapControls
           onCenter={checkBeforeCenterMap}
           centerActive={isCurrentMarkerVisible}
@@ -772,6 +781,9 @@ function MapScreenContent() {
           mapType={mapType}
           showHeatmap={showCrimeHeatmap}
           showSafeZones={showSafeZones}
+          isLoadingHeatmap={isLoadingHeatmap}
+          heatmapCrimeCount={crimeCount}
+          heatmapRiskLevel={riskLevel}
         />
       </View>
       <FollowerInfoSheet
