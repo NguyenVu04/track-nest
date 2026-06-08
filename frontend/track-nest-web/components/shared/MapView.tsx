@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -48,19 +48,28 @@ interface MapViewProps {
   height?: string;
   onMapClick?: (position: [number, number]) => void;
   onMarkerDragEnd?: (position: [number, number]) => void;
+  /** Fly to markers[index] and open its popup. Increment key to re-trigger for the same index. */
+  flyTarget?: { index: number; key: number };
+  /** Called when a marker is clicked, with its index into the markers array. */
+  onMarkerClick?: (index: number) => void;
+  /** When true, suppresses the automatic fitBounds/setView behaviour. */
+  disableAutoFit?: boolean;
 }
 
 // Component to handle map bounds fitting
 function MapBoundsHandler({
   markers,
   center,
+  skip,
 }: {
   markers: MarkerData[];
   center: [number, number];
+  skip?: boolean;
 }) {
   const map = useMap();
 
   useMemo(() => {
+    if (skip) return;
     if (markers.length > 1) {
       const bounds = L.latLngBounds(markers.map((m) => m.position));
       map.fitBounds(bounds, { padding: [50, 50] });
@@ -69,7 +78,41 @@ function MapBoundsHandler({
     } else {
       map.setView(center, 13);
     }
-  }, [map, markers, center]);
+  }, [map, markers, center, skip]);
+
+  return null;
+}
+
+// Animates the map to a target marker and opens its popup.
+function MapFlyController({
+  flyTarget,
+  markers,
+  markerRefs,
+}: {
+  flyTarget?: { index: number; key: number };
+  markers: MarkerData[];
+  markerRefs: React.MutableRefObject<(L.Marker | null)[]>;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!flyTarget) return;
+    const target = markers[flyTarget.index];
+    if (!target) return;
+
+    map.flyTo(target.position, 15, { animate: true, duration: 0.8 });
+
+    const onMoveEnd = () => {
+      markerRefs.current[flyTarget.index]?.openPopup();
+      map.off("moveend", onMoveEnd);
+    };
+    map.on("moveend", onMoveEnd);
+
+    return () => {
+      map.off("moveend", onMoveEnd);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flyTarget]);
 
   return null;
 }
@@ -96,7 +139,12 @@ export function MapView({
   height = "100%",
   onMapClick,
   onMarkerDragEnd,
+  flyTarget,
+  onMarkerClick,
+  disableAutoFit,
 }: MapViewProps) {
+  const markerRefs = useRef<(L.Marker | null)[]>([]);
+
   return (
     <MapContainer
       center={center}
@@ -113,19 +161,23 @@ export function MapView({
       {markers.map((marker, index) => (
         <Marker
           key={index}
+          ref={(m) => { markerRefs.current[index] = m; }}
           position={marker.position}
           icon={defaultIcon}
           draggable={!!onMarkerDragEnd}
-          eventHandlers={
-            onMarkerDragEnd
+          eventHandlers={{
+            ...(onMarkerDragEnd
               ? {
                   dragend(e) {
                     const { lat, lng } = e.target.getLatLng();
                     onMarkerDragEnd([lat, lng]);
                   },
                 }
-              : undefined
-          }
+              : {}),
+            ...(onMarkerClick
+              ? { click: () => onMarkerClick(index) }
+              : {}),
+          }}
         >
           <Popup>{marker.popup || marker.label}</Popup>
         </Marker>
@@ -178,8 +230,8 @@ export function MapView({
         />
       ))}
 
-      {/* Handle map bounds */}
-      <MapBoundsHandler markers={markers} center={center} />
+      <MapBoundsHandler markers={markers} center={center} skip={disableAutoFit} />
+      <MapFlyController flyTarget={flyTarget} markers={markers} markerRefs={markerRefs} />
       <MapClickHandler onMapClick={onMapClick} />
     </MapContainer>
   );
