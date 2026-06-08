@@ -73,7 +73,7 @@ public interface CrimeReportRepository extends JpaRepository<CrimeReport, UUID> 
     @Query("SELECT c FROM CrimeReport c WHERE c.createdAt >= :startDate AND c.createdAt <= :endDate")
     List<CrimeReport> findByCreatedAtBetween(@Param("startDate") OffsetDateTime startDate, @Param("endDate") OffsetDateTime endDate);
 
-    @Query(value = "SELECT * FROM crime_report c WHERE c.public = true AND ST_DWithin(c.geom::geography, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography, :radius) ORDER BY c.created_at DESC",
+    @Query(value = "SELECT * FROM crime_report c WHERE c.public = true AND ST_DWithin(c.geom::geography, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography, :radius) ORDER BY c.severity DESC, c.created_at DESC",
            countQuery = "SELECT count(*) FROM crime_report c WHERE c.public = true AND ST_DWithin(c.geom::geography, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography, :radius)",
            nativeQuery = true)
     Page<CrimeReport> findAllPublicWithinRadius(
