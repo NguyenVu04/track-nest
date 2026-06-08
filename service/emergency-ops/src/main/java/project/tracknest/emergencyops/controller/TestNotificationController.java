@@ -5,13 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import project.tracknest.emergencyops.core.datatype.TrackingNotificationMessage;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.AssignedEmergencyRequestMessage;
+import project.tracknest.emergencyops.domain.notificationoutbox.service.NotificationOutboxService;
 
 import java.util.UUID;
 
@@ -28,7 +28,7 @@ import java.util.UUID;
 @Slf4j
 public class TestNotificationController {
 
-    private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationOutboxService notificationOutbox;
     private final KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
 
     @Value("${app.stomp.queue.emergency-request}")
@@ -77,14 +77,12 @@ public class TestNotificationController {
 
         long now = System.currentTimeMillis();
 
-        // 1. WebSocket push to the emergency-service dashboard
+        // 1. WebSocket push to the emergency-service dashboard (via outbox so
+        // the message is replayed if the service is currently offline).
         AssignedEmergencyRequestMessage wsMessage =
                 new AssignedEmergencyRequestMessage(request.requestId(), now);
-        messagingTemplate.convertAndSendToUser(
-                request.serviceId().toString(),
-                emergencyRequestQueue,
-                wsMessage);
-        log.info("[TEST] WebSocket push → user/{}/queue/emergency-request, requestId={}",
+        notificationOutbox.sendToUser(request.serviceId(), emergencyRequestQueue, wsMessage);
+        log.info("[TEST] outbox routed → user/{}/queue/emergency-request, requestId={}",
                 request.serviceId(), request.requestId());
 
         // 2. Kafka message → user-tracking → FCM push to target user

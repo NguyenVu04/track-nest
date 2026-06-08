@@ -75,6 +75,9 @@ public class EmergencyResponderServiceImpl implements EmergencyResponderService,
 
     @Override
     public void receiveLocationMessage(UUID receiverId, LocationMessage message) {
+        // Location is a high-frequency, transient stream — intentionally NOT
+        // routed through the outbox. Buffered locations would be stale by the
+        // time the recipient reconnects, and the table would balloon.
         messagingTemplate.convertAndSendToUser(
                 receiverId.toString(),
                 userLocationQueue,

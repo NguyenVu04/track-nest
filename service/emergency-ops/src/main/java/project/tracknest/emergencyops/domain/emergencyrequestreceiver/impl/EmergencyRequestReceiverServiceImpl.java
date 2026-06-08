@@ -8,7 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,6 +23,7 @@ import project.tracknest.emergencyops.core.entity.EmergencyService;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.impl.datatype.*;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.service.EmergencyRequestReceiverService;
 import project.tracknest.emergencyops.domain.emergencyrequestreceiver.service.EmergencyRequestReceiverSubscriber;
+import project.tracknest.emergencyops.domain.notificationoutbox.service.NotificationOutboxService;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -47,7 +47,7 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
     private final EmergencyRequestReceiverEmergencyServiceRepository emergencyServiceRepository;
     private final KeycloakService keycloakService;
     private final ServerRedisMessagePublisher redisPublisher;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationOutboxService notificationOutbox;
     private final KafkaTemplate<String, TrackingNotificationMessage> kafkaTemplate;
     @Value("${app.stomp.queue.emergency-request}")
     private String emergencyRequestQueue;
@@ -144,10 +144,7 @@ class EmergencyRequestReceiverServiceImpl implements EmergencyRequestReceiverSer
 
     @Override
     public void receiveEmergencyRequestMessage(UUID receiverId, AssignedEmergencyRequestMessage message) {
-        messagingTemplate.convertAndSendToUser(
-                receiverId.toString(),
-                emergencyRequestQueue,
-                message);
+        notificationOutbox.sendToUser(receiverId, emergencyRequestQueue, message);
     }
 
     private GetTrackerEmergencyRequestsResponse mapToGetTrackerEmergencyRequestsResponse(
