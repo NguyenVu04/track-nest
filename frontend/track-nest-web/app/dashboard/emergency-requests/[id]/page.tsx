@@ -216,15 +216,15 @@ function EmergencyRequestDetailContent() {
   if (!request) {
     return (
       <div>
-        <Breadcrumbs items={[{ label: t("pageTitle"), href: backHref }, { label: "Detail" }]} />
+        <Breadcrumbs items={[{ label: t("pageTitle"), href: backHref }, { label: t("detailBreadcrumb") }]} />
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
-          <p className="text-gray-700">Request not found.</p>
+          <p className="text-gray-700">{t("requestNotFound")}</p>
           <button
             onClick={() => router.push(backHref)}
             className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to list
+            {t("backToList")}
           </button>
         </div>
       </div>
@@ -250,10 +250,10 @@ function EmergencyRequestDetailContent() {
       {/* Custom Breadcrumb matching mockup style somewhat */}
       <div className="flex items-center gap-2 text-sm text-gray-500 font-medium mb-6">
         <button onClick={() => router.push(backHref)} className="hover:text-gray-900 transition-colors">
-          Emergency Hub
+          {t("hubNav")}
         </button>
         <ChevronRight className="w-4 h-4" />
-        <span className="text-brand-700">Request {shortId}</span>
+        <span className="text-brand-700">{t("requestNavItem", { id: shortId })}</span>
       </div>
 
       <div className="flex flex-col gap-6">
@@ -267,10 +267,10 @@ function EmergencyRequestDetailContent() {
               <Wifi className="w-7 h-7 text-brand-800" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">Emergency Request: {shortId}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">{t("requestDetailTitle", { id: shortId })}</h1>
               <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
                 <Clock className="w-4 h-4" />
-                <span>Initiated {formatDateTime(request.openedAt)} ({timeAgo(request.openedAt)})</span>
+                <span>{t("initiatedAt", { datetime: formatDateTime(request.openedAt), timeAgo: timeAgo(request.openedAt) })}</span>
               </div>
             </div>
           </div>
@@ -291,7 +291,7 @@ function EmergencyRequestDetailContent() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2 text-gray-900 font-bold tracking-tight">
                 <MapPin className="w-5 h-5 text-brand-600" />
-                Real-Time Incident Location
+                {t("realTimeLocation")}
                 {isLive && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-600 rounded-full text-[10px] font-bold tracking-wider uppercase">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -305,7 +305,7 @@ function EmergencyRequestDetailContent() {
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-brand-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-brand-300 transition-all shadow-sm"
               >
                 <ExternalLink className="w-4 h-4" />
-                Open in Maps
+                {t("openInMaps")}
               </a>
             </div>
 
@@ -325,17 +325,17 @@ function EmergencyRequestDetailContent() {
 
                {/* Floating Coordinates Overlay */}
                <div className="absolute bottom-5 left-5 z-[400] bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-100/80 min-w-[200px]">
-                 <div className="text-[10px] font-bold tracking-widest text-brand-600 mb-1.5 uppercase">Coordinates</div>
+                 <div className="text-[10px] font-bold tracking-widest text-brand-600 mb-1.5 uppercase">{tCommon("coordinates")}</div>
                  <div className="font-bold text-gray-900 mb-1 text-sm">
                    {Math.abs(markerLat).toFixed(4)}° {markerLat >= 0 ? 'N' : 'S'},{" "}
                    {Math.abs(markerLng).toFixed(4)}° {markerLng >= 0 ? 'E' : 'W'}
                  </div>
                  <div className="text-xs text-gray-500 font-medium mt-1.5">
                    {isLive
-                     ? `Live — updated ${timeAgo(localLocation!.updatedAt)}`
+                     ? t("liveUpdated", { timeAgo: timeAgo(localLocation!.updatedAt) })
                      : localLocation
-                       ? `Last updated ${timeAgo(localLocation.updatedAt)}`
-                       : `Last updated ${timeAgo(request.openedAt)}`}
+                       ? t("lastUpdatedAgo", { timeAgo: timeAgo(localLocation.updatedAt) })
+                       : t("lastUpdatedAgo", { timeAgo: timeAgo(request.openedAt) })}
                  </div>
                </div>
             </div>
@@ -345,19 +345,19 @@ function EmergencyRequestDetailContent() {
           <div className="bg-white rounded-[1.5rem] shadow-sm border border-gray-100 p-6 flex flex-col">
             <div className="flex items-center gap-2 text-gray-900 font-bold tracking-tight mb-8">
               <Activity className="w-5 h-5 text-brand-600" />
-              Case Identifiers
+              {t("caseIdentifiers")}
             </div>
 
             <div className="flex flex-col space-y-6 flex-grow">
-              <DetailItem label="Request ID" value={`#REQ-${shortId}-${new Date(request.openedAt).getFullYear()}`} mono />
-              
+              <DetailItem label={t("tableId")} value={`#REQ-${shortId}-${new Date(request.openedAt).getFullYear()}`} mono />
+
               <div className="w-full h-px bg-gray-100"></div>
-              
-              <DetailItem label="Sender System ID" value={`UID-${request.senderId.substring(0,8).toUpperCase()}`} mono />
-              
+
+              <DetailItem label={t("labelSenderSystemId")} value={`UID-${request.senderId.substring(0,8).toUpperCase()}`} mono />
+
               <div className="w-full h-px bg-gray-100"></div>
-              
-              <DetailItem label="Target System ID" value={`UID-${request.targetId.substring(0,8).toUpperCase()}`} mono />
+
+              <DetailItem label={t("labelTargetSystemId")} value={`UID-${request.targetId.substring(0,8).toUpperCase()}`} mono />
             </div>
 
             <div className="mt-8 bg-gray-50 rounded-xl p-4 flex items-center gap-4 border border-gray-100">
@@ -397,7 +397,7 @@ function EmergencyRequestDetailContent() {
                 <div className="w-12 h-12 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-600">
                   <List className="w-5 h-5" />
                 </div>
-                View Activity Logs
+                {t("viewActivityLogs")}
               </div>
               <ArrowLeft className="w-5 h-5 text-gray-400 rotate-180 group-hover:text-brand-600 transition-colors" />
             </button>
@@ -407,7 +407,7 @@ function EmergencyRequestDetailContent() {
                  <div className="w-12 h-12 rounded-full bg-brand-50 flex items-center justify-center text-brand-600">
                    <Headset className="w-5 h-5" />
                  </div>
-                 Contact Support
+                 {t("contactSupport")}
                </button>
                
                <button className="w-[88px] flex-shrink-0 bg-brand-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-brand-600/30 hover:bg-brand-700 hover:scale-105 transition-all">

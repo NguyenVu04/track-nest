@@ -15,6 +15,7 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { usePagedList } from "@/hooks/usePagedList";
+import { useTranslations } from "next-intl";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -34,6 +35,8 @@ export default function GuidelinesPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { addNotification } = useNotification();
+  const t = useTranslations("guidelines");
+  const tCommon = useTranslations("common");
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -73,7 +76,7 @@ export default function GuidelinesPage() {
           totalElements: response.totalElements,
         }))
         .catch(() => {
-          toast.error("Failed to load guidelines");
+          toast.error(t("toastLoadError"));
           return { content: [], totalPages: 0, totalElements: 0 };
         }),
     "all",
@@ -92,16 +95,16 @@ export default function GuidelinesPage() {
     try {
       await criminalReportsService.deleteGuidelinesDocument(id);
       setConfirmDelete(null);
-      toast.success("Guideline deleted");
+      toast.success(t("toastDeleted"));
       addNotification({
         type: "guideline",
-        title: "Guideline deleted",
-        description: guideline?.title ?? "A guideline was removed",
+        title: t("notifDeletedTitle"),
+        description: guideline?.title ?? t("notifDeletedFallback"),
         reportId: id,
       });
       refresh();
     } catch (error) {
-      toast.error("Failed to delete guideline");
+      toast.error(t("toastDeleteError"));
       console.error(error);
     }
   }, [guidelines, addNotification, refresh]);
@@ -109,9 +112,9 @@ export default function GuidelinesPage() {
   if (!user) return null;
 
   const statusTabs: { id: StatusFilter; label: string }[] = [
-    { id: "all",       label: "All Guides" },
-    { id: "published", label: "Published" },
-    { id: "draft",     label: "Drafts" },
+    { id: "all",       label: t("tabAll") },
+    { id: "published", label: t("tabPublished") },
+    { id: "draft",     label: t("tabDrafts") },
   ];
 
   const rangeStart    = totalElements === 0 ? 0 : currentPage * PAGE_SIZE + 1;
@@ -126,20 +129,20 @@ export default function GuidelinesPage() {
   return (
     <PageTransition>
       <div className="max-w-[1600px] mx-auto pb-12">
-        <Breadcrumbs items={[{ label: "Safety Guidelines" }]} />
+        <Breadcrumbs items={[{ label: t("headerTitle") }]} />
 
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Safety Guidelines</h1>
-            <p className="text-gray-500 mt-2 text-lg">Manage and update your family&apos;s safety protocols and emergency checklists.</p>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t("headerTitle")}</h1>
+            <p className="text-gray-500 mt-2 text-lg">{t("headerSubtitle")}</p>
           </div>
           <button
             onClick={() => router.push("/dashboard/guidelines/create")}
             className="flex items-center gap-2 px-8 py-3 bg-brand-500 text-white rounded-2xl font-bold text-sm shadow-md hover:bg-brand-600 transition-all hover:-translate-y-0.5"
           >
             <Plus className="w-5 h-5" />
-            Create New Guideline
+            {t("createNewGuideline")}
           </button>
         </div>
 
@@ -167,7 +170,7 @@ export default function GuidelinesPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
             <input
               type="text"
-              placeholder="Search guidelines…"
+              placeholder={t("searchPlaceholder")}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-11 pr-5 py-2.5 bg-white border border-gray-100 rounded-2xl text-sm font-medium text-gray-900 focus:ring-4 focus:ring-brand-100 focus:border-brand-400 outline-none transition-all w-full md:w-[260px] shadow-sm"
             />
@@ -182,7 +185,7 @@ export default function GuidelinesPage() {
             {guidelines.length === 0 ? (
               <div className="col-span-full py-20 flex flex-col items-center justify-center bg-white rounded-[2rem] border-2 border-dashed border-gray-100">
                 <FileText className="w-16 h-16 text-gray-100 mb-4" />
-                <p className="text-gray-400 font-bold">No guidelines found in this section</p>
+                <p className="text-gray-400 font-bold">{t("emptySection")}</p>
               </div>
             ) : (
               guidelines.map((guideline, idx) => {
@@ -203,7 +206,7 @@ export default function GuidelinesPage() {
                         isDraft ? "bg-gray-50 text-gray-400 border-gray-100" : "bg-green-50 text-green-500 border-green-100",
                       )}>
                         <div className={cn("w-1.5 h-1.5 rounded-full", isDraft ? "bg-gray-300" : "bg-green-500")} />
-                        {isDraft ? "Draft" : "Published"}
+                        {isDraft ? t("cardStatusDraft") : t("cardStatusPublished")}
                       </div>
                       <button
                         aria-label="Delete guideline"
@@ -238,7 +241,7 @@ export default function GuidelinesPage() {
                             onClick={() => router.push(`/dashboard/guidelines/${guideline.id}`)}
                             className="text-sm font-black text-brand-600 hover:text-brand-700 flex items-center gap-1 group/btn"
                           >
-                            Continue
+                            {t("cardContinue")}
                             <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                           </button>
                         ) : (
@@ -272,7 +275,7 @@ export default function GuidelinesPage() {
         {totalPages > 0 && (
           <div className="mt-10 flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
             <p className="text-sm font-bold text-gray-400">
-              Showing {rangeStart}–{rangeEnd} of {totalElements} entries
+              {t("paginationShowing", { start: rangeStart, end: rangeEnd, total: totalElements })}
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -310,11 +313,11 @@ export default function GuidelinesPage() {
 
       {confirmDelete && (
         <ConfirmModal
-          title="Delete Guideline"
-          message="Are you sure you want to delete this guideline? This action cannot be undone."
+          title={t("deleteTitle")}
+          message={t("deleteMessage")}
           onConfirm={() => handleDelete(confirmDelete)}
           onCancel={() => setConfirmDelete(null)}
-          confirmText="Delete"
+          confirmText={tCommon("delete")}
           confirmStyle="danger"
         />
       )}
