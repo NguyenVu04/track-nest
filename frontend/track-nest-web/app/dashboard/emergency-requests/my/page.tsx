@@ -29,18 +29,19 @@ const STATUS_COLOR: Record<string, string> = {
   CLOSED:   "bg-gray-100 text-gray-600",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING:  "Pending Review",
-  ACCEPTED: "In Progress",
-  REJECTED: "Rejected",
-  CLOSED:   "Resolved",
-};
-
 export default function MyEmergencyRequestsPage() {
   const { user } = useAuth();
   const { refresh } = useEmergencyRequestRealtime();
   const t = useTranslations("emergencyRequests");
   const tCommon = useTranslations("common");
+  const tStatus = useTranslations("status");
+
+  const getStatusLabel = (status: string) => {
+    if (status === "ACCEPTED") return t("statusLabelInProgress");
+    if (status === "PENDING") return t("statusLabelPendingReview");
+    if (status === "CLOSED") return t("statusLabelResolved");
+    return tStatus(status.toLowerCase() as Parameters<typeof tStatus>[0]);
+  };
 
   const [requests, setRequests] = useState<EmergencyRequestResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,18 +76,18 @@ export default function MyEmergencyRequestsPage() {
 
   return (
     <div className="max-w-screen-xl mx-auto pb-10">
-      <Breadcrumbs items={[{ label: "My Emergency Requests" }]} />
+      <Breadcrumbs items={[{ label: t("myPageTitle") }]} />
 
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">My Emergency Requests</h1>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{t("myPageTitle")}</h1>
           <p className="text-sm text-gray-500 mt-2">
-            Your submitted SOS requests — status updates automatically when the emergency service responds.
+            {t("myPageSubtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-gray-400 font-medium">
           <RefreshCw className="w-3.5 h-3.5" />
-          Auto-refreshes via real-time notifications
+          {t("autoRefreshText")}
         </div>
       </div>
 
@@ -94,18 +95,18 @@ export default function MyEmergencyRequestsPage() {
         {requests.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-gray-400">
             <LifeBuoy className="w-12 h-12 mb-4 text-gray-200" />
-            <p className="font-semibold text-base">No emergency requests submitted yet</p>
-            <p className="text-sm mt-1">When you send an SOS, it will appear here.</p>
+            <p className="font-semibold text-base">{t("emptyTitle")}</p>
+            <p className="text-sm mt-1">{t("emptySubtitle")}</p>
           </div>
         ) : (
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">
               <tr>
-                <th className="px-8 py-4">Request ID</th>
-                <th className="px-8 py-4">Target</th>
-                <th className="px-8 py-4">Status</th>
-                <th className="px-8 py-4">Opened At</th>
-                <th className="px-8 py-4">Closed At</th>
+                <th className="px-8 py-4">{t("tableId")}</th>
+                <th className="px-8 py-4">{t("tableTarget")}</th>
+                <th className="px-8 py-4">{t("tableStatus")}</th>
+                <th className="px-8 py-4">{t("colOpenedAt")}</th>
+                <th className="px-8 py-4">{t("colClosedAt")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -128,7 +129,7 @@ export default function MyEmergencyRequestsPage() {
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
                       )}
                       <span className={`px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide ${STATUS_COLOR[req.status] ?? "bg-gray-100 text-gray-700"}`}>
-                        {STATUS_LABEL[req.status] ?? req.status}
+                        {getStatusLabel(req.status)}
                       </span>
                     </div>
                   </td>
