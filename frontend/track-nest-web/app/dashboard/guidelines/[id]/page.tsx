@@ -61,7 +61,7 @@ export default function GuidelineDetailPage() {
           !contentValue.startsWith("http")
         ) {
           try {
-            contentValue = await criminalReportsService.getFileUrl(
+            contentValue = await criminalReportsService.getFileContent(
               "criminal-reports",
               contentValue,
             );

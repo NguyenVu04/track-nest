@@ -29,6 +29,7 @@ import {
   criminalReportsService,
   UpdateMissingPersonReportRequest,
 } from "@/services/criminalReportsService";
+import { parsePhysicalDetailsFromHtml } from "@/utils/parsePhysicalDetails";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -173,7 +174,8 @@ export function MissingPersonForm({
     register,
     control,
     handleSubmit,
-    setValue,
+    reset,
+    getValues,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -215,7 +217,7 @@ export function MissingPersonForm({
 
     let isActive = true;
     criminalReportsService
-      .getFileUrl("criminal-reports", photoValue)
+      .getFileContent("criminal-reports", photoValue)
       .then((url) => {
         if (isActive) setPhotoPreviewUrl(url);
       })
@@ -231,9 +233,28 @@ export function MissingPersonForm({
   useEffect(() => {
     if (mode !== "edit" || !person?.content) return;
     const contentValue = person.content;
-    if (contentValue.trim().startsWith("<")) return;
 
     let isActive = true;
+
+    const populate = (html: string) => {
+      if (!isActive) return;
+      const p = parsePhysicalDetailsFromHtml(html);
+      const updates: Partial<FormValues> = { content: p.content };
+      if (p.age) updates.age = p.age;
+      if (p.gender) updates.gender = p.gender;
+      if (p.height) updates.height = p.height;
+      if (p.weight) updates.weight = p.weight;
+      if (p.hairColor) updates.hairColor = p.hairColor;
+      if (p.eyeColor) updates.eyeColor = p.eyeColor;
+      if (p.distinguishingFeatures) updates.distinguishingFeatures = p.distinguishingFeatures;
+      reset({ ...getValues(), ...updates }, { keepDefaultValues: true });
+    };
+
+    if (contentValue.trim().startsWith("<")) {
+      populate(contentValue);
+      return () => { isActive = false; };
+    }
+
     const load = async () => {
       try {
         let html: string;
@@ -241,14 +262,12 @@ export function MissingPersonForm({
           const res = await fetch(contentValue);
           html = await res.text();
         } else {
-          const url = await criminalReportsService.getFileUrl(
+          html = await criminalReportsService.getFileContent(
             "criminal-reports",
             contentValue,
           );
-          const res = await fetch(url);
-          html = await res.text();
         }
-        if (isActive) setValue("content", html);
+        populate(html);
       } catch (error) {
         console.error("Failed to load report content:", error);
       }
@@ -257,7 +276,7 @@ export function MissingPersonForm({
     return () => {
       isActive = false;
     };
-  }, [mode, person?.content, setValue]);
+  }, [mode, person?.content, reset, getValues]);
 
   const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

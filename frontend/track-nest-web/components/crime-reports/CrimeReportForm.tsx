@@ -176,12 +176,10 @@ export function CrimeReportForm({
           const res = await fetch(contentValue);
           html = await res.text();
         } else {
-          const url = await criminalReportsService.getFileUrl(
+          html = await criminalReportsService.getFileContent(
             "criminal-reports",
             contentValue,
           );
-          const res = await fetch(url);
-          html = await res.text();
         }
         if (isActive) setValue("content", html);
       } catch (error) {

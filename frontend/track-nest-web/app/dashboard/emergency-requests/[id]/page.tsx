@@ -163,9 +163,8 @@ function EmergencyRequestDetailContent() {
   // even when the target is stationary (no Kafka events → no WebSocket push).
   useEffect(() => {
     if (!request) return;
-    const isActive = request.status === "PENDING" || request.status === "ACCEPTED";
     const isEs = user?.role?.includes("Emergency Service");
-    if (!isActive || !isEs) return;
+    if (request.status !== "ACCEPTED" || !isEs) return;
 
     let cancelled = false;
 
@@ -187,7 +186,7 @@ function EmergencyRequestDetailContent() {
     };
 
     poll();
-    const id = setInterval(poll, 5000);
+    const id = setInterval(poll, 15000);
     return () => {
       cancelled = true;
       clearInterval(id);
@@ -391,7 +390,7 @@ function EmergencyRequestDetailContent() {
           />
 
           {/* Actions Stack */}
-          <div className="flex flex-col gap-4">
+          {/* <div className="flex flex-col gap-4">
             <button className="flex-grow flex items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-brand-200 hover:shadow-md transition-all group">
               <div className="flex items-center gap-4 font-bold text-gray-900">
                 <div className="w-12 h-12 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-600">
@@ -414,7 +413,7 @@ function EmergencyRequestDetailContent() {
                  <Plus className="w-8 h-8" />
                </button>
             </div>
-          </div>
+          </div> */}
 
         </div>
       </div>
