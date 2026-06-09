@@ -92,12 +92,12 @@ export const CrimeReportList = memo(function CrimeReportList({
             <thead>
               <tr className="border-b border-gray-50 bg-gray-50/30">
                 {[
-                  "INCIDENT DETAILS",
-                  "DATE & TIME",
-                  "SEVERITY",
-                  "LOCATION",
-                  "STATUS",
-                  "ACTIONS",
+                  t("tableIncidentDetails"),
+                  t("tableDateAndTime"),
+                  t("tableSeverityHeader"),
+                  t("tableLocation"),
+                  t("tableStatusHeader"),
+                  t("tableActions"),
                 ].map((h) => (
                   <th
                     key={h}
@@ -164,7 +164,7 @@ export const CrimeReportList = memo(function CrimeReportList({
                            report.isPublic ? "bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" : "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]"
                          )} />
                          <span className="text-sm font-bold text-gray-700">
-                           {report.isPublic ? "Active" : "Draft"}
+                           {report.isPublic ? t("statusActive") : t("statusDraft")}
                          </span>
                        </div>
                      </td>

@@ -21,6 +21,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { WebView } from "react-native-webview";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
+import { FullscreenWebViewModal } from "@/components/shared/FullscreenWebViewModal";
 
 // Injected JS measures the document height and posts it back so the WebView
 // expands to fit its content without an internal scrollbar inside ScrollView.
@@ -38,6 +39,7 @@ export default function MissingDetailScreen() {
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [webViewHeight, setWebViewHeight] = useState(200);
   const [webViewError, setWebViewError] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
     const loadPerson = async () => {
@@ -51,15 +53,13 @@ export default function MissingDetailScreen() {
 
         console.log("Loaded missing person report:", data);
 
-        // Fetch the HTML body from MinIO — the content field is a MinIO object
-        // name, not human-readable text, mirroring the guideline-detail pattern.
-        try {
-          const html = await criminalReportsService.getMissingPersonContent(id);
-          console.log("Fetched HTML content:", html);
-          setHtmlContent(html);
-        } catch {
-          // Falls back to plain-text description below.
-          console.warn("Failed to load HTML content for missing person report", id);
+        if (data.content) {
+          try {
+            const html = await criminalReportsService.getMissingPersonContent(id);
+            setHtmlContent(html);
+          } catch {
+            // content fetch failed — falls back to placeholder
+          }
         }
       } catch (err) {
         console.error("Failed to load missing person:", err);
@@ -336,8 +336,18 @@ export default function MissingDetailScreen() {
         {/* ── Report Content ── */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="document-text-outline" size={16} color={colors.primary} />
-            <Text style={styles.sectionTitle}>{t.reportContent ?? "Report Details"}</Text>
+            <View style={styles.sectionHeaderLeft}>
+              <Ionicons name="document-text-outline" size={16} color={colors.primary} />
+              <Text style={styles.sectionTitle}>{t.reportContent ?? "Report Details"}</Text>
+            </View>
+            {htmlContent && !webViewError && (
+              <Pressable style={styles.expandBtn} onPress={() => setFullscreen(true)}>
+                <Ionicons name="expand-outline" size={14} color={colors.primary} />
+                <Text style={styles.expandBtnText}>
+                  {t.viewFullscreen ?? "View fullscreen"}
+                </Text>
+              </Pressable>
+            )}
           </View>
           <View style={styles.contentBody}>
             {htmlContent && !webViewError ? (
@@ -403,6 +413,15 @@ export default function MissingDetailScreen() {
         title={person.fullName}
         emptyState="Ask a question about this missing person report."
       />
+
+      {htmlContent && (
+        <FullscreenWebViewModal
+          html={htmlContent}
+          visible={fullscreen}
+          onClose={() => setFullscreen(false)}
+          title={person.fullName}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -527,11 +546,16 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  sectionHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   sectionTitle: {
     fontSize: 15,
@@ -652,6 +676,20 @@ const styles = StyleSheet.create({
   },
   webView: {
     width: "100%",
+  },
+  expandBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    backgroundColor: colors.primaryMuted,
+  },
+  expandBtnText: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: "500",
   },
   contentText: {
     fontSize: 14,

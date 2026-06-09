@@ -21,6 +21,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { WebView } from "react-native-webview";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
+import { FullscreenWebViewModal } from "@/components/shared/FullscreenWebViewModal";
 import { hapticLight, hapticMedium, showToast } from "@/utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -69,13 +70,23 @@ export default function ReportDetailScreen() {
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [webViewHeight, setWebViewHeight] = useState(200);
   const [webViewError, setWebViewError] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  console.log("Report", report?.content);
 
   useEffect(() => {
     if (!id) return;
     const loadReport = async () => {
       try {
         const data = await criminalReportsService.getUserCrimeReportById(id);
-        setReport({ ...data, contentDocId: data.contentDocId ?? "" });
+        const resolvedPhotos = data.photos && data.photos.length > 0
+          ? await Promise.all(
+              data.photos.map((objectName) =>
+                criminalReportsService.getCrimeReportPhotoUrl(data.id, objectName),
+              ),
+            )
+          : data.photos;
+        setReport({ ...data, contentDocId: data.contentDocId ?? "", photos: resolvedPhotos });
         if (data.content) {
           try {
             const html = await criminalReportsService.getCrimeReportContent(data.id);
@@ -186,21 +197,29 @@ export default function ReportDetailScreen() {
   const renderContent = () => {
     if (htmlContent && !webViewError) {
       return (
-        <WebView
-          source={{ html: htmlContent, baseUrl: "" }}
-          style={[styles.webView, { height: webViewHeight }]}
-          scrollEnabled={false}
-          showsVerticalScrollIndicator={false}
-          injectedJavaScript={HEIGHT_SCRIPT}
-          onMessage={(e) => {
-            const h = Number(e.nativeEvent.data);
-            if (h > 0) setWebViewHeight(h);
-          }}
-          onError={() => {
-            setWebViewError(true);
-            showToast(t.contentLoadFailed ?? "Could not load report content", "Error");
-          }}
-        />
+        <View>
+          <WebView
+            source={{ html: htmlContent, baseUrl: "" }}
+            style={[styles.webView, { height: webViewHeight }]}
+            scrollEnabled={false}
+            showsVerticalScrollIndicator={false}
+            injectedJavaScript={HEIGHT_SCRIPT}
+            onMessage={(e) => {
+              const h = Number(e.nativeEvent.data);
+              if (h > 0) setWebViewHeight(h);
+            }}
+            onError={() => {
+              setWebViewError(true);
+              showToast(t.contentLoadFailed ?? "Could not load report content", "Error");
+            }}
+          />
+          <Pressable style={styles.expandBtn} onPress={() => setFullscreen(true)}>
+            <Ionicons name="expand-outline" size={14} color={colors.primary} />
+            <Text style={styles.expandBtnText}>
+              {t.viewFullscreen ?? "View fullscreen"}
+            </Text>
+          </Pressable>
+        </View>
       );
     }
     return (
@@ -379,10 +398,19 @@ export default function ReportDetailScreen() {
 
       {/* Floating Chatbot Panel */}
       <ChatbotPanel
-        documentId={report.contentDocId ?? ""}
+        documentId={report.content.replace(".html", "") ?? ""}
         title={report.title}
         emptyState="Ask a question about this crime report."
       />
+
+      {htmlContent && (
+        <FullscreenWebViewModal
+          html={htmlContent}
+          visible={fullscreen}
+          onClose={() => setFullscreen(false)}
+          title={report.title}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -559,6 +587,22 @@ const styles = StyleSheet.create({
   webView: {
     width: "100%",
     backgroundColor: "transparent",
+  },
+  expandBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-end",
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginTop: 6,
+    borderRadius: 12,
+    backgroundColor: colors.primaryMuted,
+  },
+  expandBtnText: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: "500",
   },
 
   // Photos

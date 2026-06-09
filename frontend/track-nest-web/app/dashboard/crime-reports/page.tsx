@@ -194,13 +194,13 @@ export default function CrimeReportsPage() {
             <p className="text-gray-500 mt-2 text-lg">{t("headerSubtitle")}</p>
           </div>
           <div className="flex items-center gap-3">
-            <button
+            {/* <button
               onClick={() => setViewMode("heatmap")}
               className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-100 text-gray-700 rounded-2xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-all hover:-translate-y-0.5"
             >
               <BarChart3 className="w-5 h-5 text-purple-500" />
               {t("heatmap")}
-            </button>
+            </button> */}
             <button
               onClick={handleCreateNew}
               className="flex items-center gap-2 px-8 py-3 bg-brand-500 text-white rounded-2xl font-bold text-sm shadow-md hover:bg-brand-600 transition-all hover:-translate-y-0.5"

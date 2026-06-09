@@ -74,7 +74,7 @@ export function CrimeReportDetail({
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
-    toast.success("Link copied to clipboard!");
+    toast.success(t("toastCopyLink"));
   };
 
   const getSeverityStyles = (severity: number) => {
@@ -133,14 +133,14 @@ export function CrimeReportDetail({
                     "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border shadow-sm",
                     report.isPublic ? "bg-red-50 text-red-500 border-red-100" : "bg-amber-50 text-amber-500 border-amber-100"
                  )}>
-                    {report.isPublic ? "ACTIVE" : "DRAFT"}
+                    {report.isPublic ? t("statusActive") : t("statusDraft")}
                  </span>
               </div>
            </div>
            <div className="flex items-center gap-2 text-sm text-gray-400 font-medium ml-1">
               <span>Report ID: {formattedId}</span>
               <span className="w-1 h-1 rounded-full bg-gray-300 mx-1" />
-              <span>Logged on {formattedDate}</span>
+              <span>{t("loggedOn", { date: formattedDate })}</span>
            </div>
         </div>
 
@@ -190,7 +190,7 @@ export function CrimeReportDetail({
                  <div className="p-3 bg-blue-50 rounded-2xl">
                     <Info className="w-6 h-6 text-blue-500" />
                  </div>
-                 <h2 className="text-xl font-bold text-gray-800">Incident Details</h2>
+                 <h2 className="text-xl font-bold text-gray-800">{t("sectionIncidentDetails")}</h2>
               </div>
 
               <div className="space-y-10">
@@ -203,7 +203,7 @@ export function CrimeReportDetail({
                     </div>
                     <div>
                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Location</p>
-                       <p className="text-sm font-bold text-gray-800 leading-tight">Coordinates Point</p>
+                       <p className="text-sm font-bold text-gray-800 leading-tight">{t("coordinatesPoint")}</p>
                        <p className="text-xs text-gray-500 font-medium mt-1">
                           {report.latitude.toFixed(4)}° N, {report.longitude.toFixed(4)}° W
                        </p>
@@ -220,7 +220,7 @@ export function CrimeReportDetail({
                     <div>
                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Date & Time</p>
                        <p className="text-sm font-bold text-gray-800 leading-tight">{formattedDate}</p>
-                       <p className="text-xs text-gray-500 font-medium mt-1">{formattedTime} Local Time</p>
+                       <p className="text-xs text-gray-500 font-medium mt-1">{formattedTime} {t("localTime")}</p>
                     </div>
                  </div>
 
@@ -264,7 +264,7 @@ export function CrimeReportDetail({
                           ) : report.content?.trim().startsWith("<") ? (
                              <div dangerouslySetInnerHTML={{ __html: report.content || "" }} />
                           ) : (
-                             <p className="whitespace-pre-line">{report.content || "No detailed description provided."}</p>
+                             <p className="whitespace-pre-line">{report.content || t("reviewNoDescription")}</p>
                           )}
                        </div>
                     </div>
@@ -280,7 +280,7 @@ export function CrimeReportDetail({
                  <div className="p-3 bg-blue-50 rounded-2xl">
                     <Crosshair className="w-6 h-6 text-blue-500" />
                  </div>
-                 <h2 className="text-xl font-bold text-gray-800">Command Map View</h2>
+                 <h2 className="text-xl font-bold text-gray-800">{t("commandMapView")}</h2>
               </div>
 
               <div className="relative flex-1 rounded-[2rem] overflow-hidden border border-gray-50 shadow-inner">
@@ -330,8 +330,8 @@ export function CrimeReportDetail({
                        <Camera className="w-6 h-6 text-teal-500" />
                     </div>
                     <div>
-                       <h2 className="text-xl font-bold text-gray-800">Media Evidence</h2>
-                       <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">COLLECTED ASSETS</p>
+                       <h2 className="text-xl font-bold text-gray-800">{t("sectionMedia")}</h2>
+                       <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">{t("collectedAssets")}</p>
                     </div>
                  </div>
               </div>
@@ -345,7 +345,7 @@ export function CrimeReportDetail({
                        >
                          <Image
                            src={photoUrl}
-                           alt="Crime scene photo"
+                           alt={t("crimeScenePhotoAlt")}
                            fill
                            className="object-cover group-hover:scale-110 transition-transform duration-700"
                            unoptimized
@@ -361,7 +361,7 @@ export function CrimeReportDetail({
               ) : (
                  <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-100 rounded-[2rem] bg-gray-50/50">
                     <Camera className="w-12 h-12 text-gray-200 mb-3" />
-                    <p className="text-gray-400 font-bold text-sm tracking-tight">No media evidence provided</p>
+                    <p className="text-gray-400 font-bold text-sm tracking-tight">{t("noMediaProvided")}</p>
                  </div>
               )}
            </div>
@@ -370,8 +370,8 @@ export function CrimeReportDetail({
 
       <ChatbotPanel
         documentId={report.contentDocId}
-        title="Crime Report Chat"
-        emptyState="Ask a question about this report."
+        title={t("chatTitle")}
+        emptyState={t("chatEmptyState")}
       />
 
       {confirmAction === "publish" && (
