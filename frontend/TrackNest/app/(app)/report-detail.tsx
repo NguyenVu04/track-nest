@@ -72,8 +72,6 @@ export default function ReportDetailScreen() {
   const [webViewError, setWebViewError] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
-  console.log("Report", report?.content);
-
   useEffect(() => {
     if (!id) return;
     const loadReport = async () => {

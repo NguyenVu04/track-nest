@@ -51,8 +51,6 @@ export default function MissingDetailScreen() {
           : undefined;
         setPerson({ ...data, photo: resolvedPhoto });
 
-        console.log("Loaded missing person report:", data);
-
         if (data.content) {
           try {
             const html = await criminalReportsService.getMissingPersonContent(id);

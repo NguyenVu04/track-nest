@@ -128,8 +128,6 @@ export default function GuidelineDetailScreen() {
     );
   };
 
-  console.log("Rendering guideline detail for:", guideline);
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.bgBlob} />
