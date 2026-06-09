@@ -72,7 +72,7 @@ class ReportManagerServiceImpl implements ReportManagerService {
                 .personalId(request.getPersonalId())
                 .photo(request.getPhoto() != null ? request.getPhoto() : "")
                 .date(request.getDate())
-                .content(request.getContent() != null ? request.getContent() : "")
+                .content(uploadHtmlContent(request.getContent()))
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
                 .contactEmail(request.getContactEmail())

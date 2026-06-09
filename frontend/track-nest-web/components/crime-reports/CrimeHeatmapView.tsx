@@ -8,6 +8,7 @@ import { MapView } from "../shared/MapView";
 import { toast } from "sonner";
 import { criminalReportsService } from "@/services/criminalReportsService";
 import { LoadingCard } from "../loading/LoadingCard";
+import { useTranslations } from "next-intl";
 
 const HeatmapCenterPicker = dynamic(
   () =>
@@ -22,6 +23,7 @@ interface CrimeHeatmapViewProps {
 }
 
 export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
+  const t = useTranslations("crimeReports");
   const [hasGenerated, setHasGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [heatmapReports, setHeatmapReports] = useState<CrimeReport[]>([]);
@@ -140,16 +142,16 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h2 className="text-gray-900">Crime Heat Analysis</h2>
+        <h2 className="text-gray-900">{t("heatmapAnalysis")}</h2>
       </div>
 
       {/* Filters and Generate */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
         <div className="mb-4">
           <label className="block text-gray-700 mb-2">
-            Center Location
+            {t("heatmapCenterLocation")}
             <span className="ml-2 text-sm font-normal text-gray-400">
-              (click on the map to select)
+              {t("heatmapCenterHint")}
             </span>
           </label>
           <HeatmapCenterPicker
@@ -160,7 +162,7 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-gray-700 mb-2">Radius (meters)</label>
+            <label className="block text-gray-700 mb-2">{t("heatmapRadius")}</label>
             <input
               type="number"
               step="any"
@@ -178,7 +180,7 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
                 disabled={isGenerating}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
               >
-                {isGenerating ? "Generating..." : "Generate Heatmap"}
+                {isGenerating ? t("heatmapGenerating") : t("heatmap")}
               </button>
               <button
                 onClick={handleDownload}
@@ -186,7 +188,7 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
                 className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-60"
               >
                 <Download className="w-4 h-4" />
-                Download
+                {t("heatmapDownload")}
               </button>
             </div>
           </div>
@@ -196,8 +198,7 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
       {!hasGenerated && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 text-center">
           <p className="text-gray-600">
-            Enter a center coordinate and radius, then click &quot;Generate Heatmap&quot;
-            to load public crime data from the server.
+            {t("heatmapEmptyState")}
           </p>
         </div>
       )}
@@ -206,19 +207,19 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
       {hasGenerated && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <p className="text-gray-600 text-sm">Total Reports</p>
+            <p className="text-gray-600 text-sm">{t("heatmapTotalReports")}</p>
             <p className="text-gray-900 mt-1">{stats.total}</p>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <p className="text-gray-600 text-sm">High Severity</p>
+            <p className="text-gray-600 text-sm">{t("heatmapHighSeverity")}</p>
             <p className="text-red-600 mt-1">{stats.high}</p>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <p className="text-gray-600 text-sm">Medium Severity</p>
+            <p className="text-gray-600 text-sm">{t("heatmapMediumSeverity")}</p>
             <p className="text-yellow-600 mt-1">{stats.medium}</p>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <p className="text-gray-600 text-sm">Low Severity</p>
+            <p className="text-gray-600 text-sm">{t("heatmapLowSeverity")}</p>
             <p className="text-green-600 mt-1">{stats.low}</p>
           </div>
         </div>
@@ -228,7 +229,7 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
       {hasGenerated && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-gray-900">Crime Density Heatmap</h3>
+            <h3 className="text-gray-900">{t("heatmapDensityTitle")}</h3>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-red-600 rounded opacity-60"></div>
@@ -247,8 +248,7 @@ export function CrimeHeatmapView({ onBack }: CrimeHeatmapViewProps) {
             height="600px"
           />
           <p className="text-gray-600 text-sm mt-4">
-            Red circles represent crime hotspots. Darker and larger circles
-            indicate higher crime density.
+            {t("heatmapExplanation")}
           </p>
         </div>
       )}

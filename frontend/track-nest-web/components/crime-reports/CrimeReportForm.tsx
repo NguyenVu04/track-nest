@@ -34,18 +34,32 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+function LocationPickerLoading() {
+  const t = useTranslations("crimeReports");
+  return (
+    <div className="h-full min-h-[300px] rounded-2xl border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center gap-3">
+      <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+      <span className="text-gray-500 font-medium">
+        {t("loadingInteractiveMap")}
+      </span>
+    </div>
+  );
+}
+
+function RichTextEditorLoading() {
+  const t = useTranslations("crimeReports");
+  return (
+    <div className="h-40 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center">
+      <span className="text-gray-400">{t("loadingEditor")}</span>
+    </div>
+  );
+}
+
 const LocationPicker = dynamic(
   () => import("../shared/LocationPicker").then((mod) => mod.LocationPicker),
   {
     ssr: false,
-    loading: () => (
-      <div className="h-full min-h-[300px] rounded-2xl border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center gap-3">
-        <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
-        <span className="text-gray-500 font-medium">
-          Loading interactive map...
-        </span>
-      </div>
-    ),
+    loading: () => <LocationPickerLoading />,
   },
 );
 
@@ -53,11 +67,7 @@ const RichTextEditor = dynamic(
   () => import("../shared/RichTextEditor").then((mod) => mod.RichTextEditor),
   {
     ssr: false,
-    loading: () => (
-      <div className="h-40 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center">
-        <span className="text-gray-400">Loading editor...</span>
-      </div>
-    ),
+    loading: () => <RichTextEditorLoading />,
   },
 );
 

@@ -43,6 +43,7 @@ export const Vietnamese = {
   contentLoadFailed: "Không thể tải nội dung báo cáo",
   errorLoad: "Không thể tải báo cáo",
   retry: "Thử lại",
+  noDescription: "Không có mô tả nào được cung cấp.",
 };
 
 export const English = {
@@ -90,4 +91,5 @@ export const English = {
   contentLoadFailed: "Could not load report content",
   errorLoad: "Could not load report",
   retry: "Retry",
+  noDescription: "No description provided.",
 };

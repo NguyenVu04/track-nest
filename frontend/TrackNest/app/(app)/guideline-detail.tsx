@@ -17,6 +17,7 @@ import { criminalReportsService } from "@/services/criminalReports";
 import type { GuidelinesDocument } from "@/types/criminalReports";
 import { colors, radii, spacing } from "@/styles/styles";
 import { ChatbotPanel } from "@/components/shared/ChatbotPanel";
+import { FullscreenWebViewModal } from "@/components/shared/FullscreenWebViewModal";
 import { showToast } from "@/utils";
 
 // Injected JS measures the document height and posts it back so the WebView
@@ -33,6 +34,7 @@ export default function GuidelineDetailScreen() {
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
   const [webViewHeight, setWebViewHeight] = useState(200);
   const [webViewError, setWebViewError] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
     const loadGuideline = async () => {
@@ -93,21 +95,29 @@ export default function GuidelineDetailScreen() {
   const renderContent = () => {
     if (htmlContent && !webViewError) {
       return (
-        <WebView
-          source={{ html: htmlContent, baseUrl: "" }}
-          style={[styles.webView, { height: webViewHeight }]}
-          scrollEnabled={false}
-          showsVerticalScrollIndicator={false}
-          injectedJavaScript={HEIGHT_SCRIPT}
-          onMessage={(e) => {
-            const h = Number(e.nativeEvent.data);
-            if (h > 0) setWebViewHeight(h);
-          }}
-          onError={() => {
-            setWebViewError(true);
-            showToast(t.contentLoadError, t.errorTitle);
-          }}
-        />
+        <View>
+          <WebView
+            source={{ html: htmlContent, baseUrl: "" }}
+            style={[styles.webView, { height: webViewHeight }]}
+            scrollEnabled={false}
+            showsVerticalScrollIndicator={false}
+            injectedJavaScript={HEIGHT_SCRIPT}
+            onMessage={(e) => {
+              const h = Number(e.nativeEvent.data);
+              if (h > 0) setWebViewHeight(h);
+            }}
+            onError={() => {
+              setWebViewError(true);
+              showToast(t.contentLoadError, t.errorTitle);
+            }}
+          />
+          <Pressable style={styles.expandBtn} onPress={() => setFullscreen(true)}>
+            <Ionicons name="expand-outline" size={14} color={colors.primary} />
+            <Text style={styles.expandBtnText}>
+              {t.viewFullscreen ?? "View fullscreen"}
+            </Text>
+          </Pressable>
+        </View>
       );
     }
     // Plain-text fallback when HTML is unavailable or fails to render.
@@ -160,10 +170,19 @@ export default function GuidelineDetailScreen() {
       </ScrollView>
 
       <ChatbotPanel
-        documentId={guideline.id}
+        documentId={guideline.content.replace(".html", "")}
         title={guideline.title}
         emptyState={t.chatbotEmptyState}
       />
+
+      {htmlContent && (
+        <FullscreenWebViewModal
+          html={htmlContent}
+          visible={fullscreen}
+          onClose={() => setFullscreen(false)}
+          title={guideline.title}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -280,5 +299,21 @@ const styles = StyleSheet.create({
   webView: {
     width: "100%",
     backgroundColor: "transparent",
+  },
+  expandBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-end",
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginTop: 6,
+    borderRadius: 12,
+    backgroundColor: colors.primaryMuted,
+  },
+  expandBtnText: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: "500",
   },
 });

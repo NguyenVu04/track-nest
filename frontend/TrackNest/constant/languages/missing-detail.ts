@@ -28,6 +28,9 @@ export const Vietnamese = {
   reportedOn: "Ngày báo cáo",
   phone: "Điện thoại",
   email: "Email",
+  noContent: "Không có nội dung nào được cung cấp.",
+  reportContent: "Nội dung báo cáo",
+  viewFullscreen: "Xem toàn màn hình",
 };
 
 export const English = {
@@ -60,4 +63,7 @@ export const English = {
   reportedOn: "Reported on",
   phone: "Phone",
   email: "Email",
+  noContent: "No content provided.",
+  reportContent: "Report Content",
+  viewFullscreen: "View Fullscreen",
 };
