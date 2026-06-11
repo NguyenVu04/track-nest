@@ -2,9 +2,7 @@
 
 TrackNest is an event-driven, microservices-based real-time abduction-prevention and emergency-response platform. It provides continuous location tracking, AI-assisted crime/missing-person report management, and coordinated emergency operations — accessible via a mobile app and web interface.
 
-[![CI – Test & Quality Gate](https://github.com/NguyenVu04/track-nest/actions/workflows/test.yaml/badge.svg)](https://github.com/NguyenVu04/track-nest/actions/workflows/test.yaml)
 [![Deploy](https://github.com/NguyenVu04/track-nest/actions/workflows/deploy.yaml/badge.svg)](https://github.com/NguyenVu04/track-nest/actions/workflows/deploy.yaml)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=NguyenVu04_track-nest&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=NguyenVu04_track-nest)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=NguyenVu04_track-nest&metric=coverage)](https://sonarcloud.io/summary/new_code?id=NguyenVu04_track-nest)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=NguyenVu04_track-nest&metric=bugs)](https://sonarcloud.io/summary/new_code?id=NguyenVu04_track-nest)
 
@@ -13,13 +11,13 @@ TrackNest is an event-driven, microservices-based real-time abduction-prevention
 ## Table of Contents
 
 - [Features](#features)
+- [Demo] (#demo)
 - [System Architecture](#system-architecture)
 - [Technology Stack](#technology-stack)
 - [Repository Layout](#repository-layout)
 - [Getting Started](#getting-started)
 - [Contributing](#contributing)
 - [License](#license)
-- [Documentation](#documentation)
 
 ---
 
@@ -30,6 +28,12 @@ TrackNest is an event-driven, microservices-based real-time abduction-prevention
 - **Emergency Response Coordination**: Request lifecycle management, safe location guidance, and real-time WebSocket updates.
 - **Push Notifications**: Firebase Admin SDK integration for mobile push delivery.
 - **Role-Based Access**: Keycloak-backed IAM with separate realms for end users and privileged actors.
+
+---
+
+## Demo
+
+🎥 [Watch Demo](https://youtu.be/oZLZFDScInA)
 
 ---
 
