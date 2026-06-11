@@ -11,7 +11,7 @@ TrackNest is an event-driven, microservices-based real-time abduction-prevention
 ## Table of Contents
 
 - [Features](#features)
-- [Demo] (#demo)
+- [Demo](#demo)
 - [System Architecture](#system-architecture)
 - [Technology Stack](#technology-stack)
 - [Repository Layout](#repository-layout)
